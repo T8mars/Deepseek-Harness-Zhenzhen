@@ -20,6 +20,8 @@ import { Updates } from './Updates.tsx';
 import { ArtSettings, BrandMark, HeroArtwork } from './Art.tsx';
 import { connectDefaultArt } from './default-art-client.ts';
 import { Capabilities } from './Capabilities.tsx';
+import { RagToolView } from './RagSources.tsx';
+import ragCss from './rag.css';
 
 export const inject = ['slots', 'layout', 'theme', 'remote'];
 
@@ -129,4 +131,6 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({ name: 'sidebar.brand.mark' }, TideMark));
   ctx.slots.inject('sidebar.brand.name', () => ctx.slots.register({ name: 'sidebar.brand.name' }, () => <span>DSH-zhen</span>));
   ctx.slots.inject('conversation.hero.brand.mark', () => ctx.slots.register({ name: 'conversation.hero.brand.mark' }, () => <BrandMark kind="hero"/>));
+  ctx.effect(() => { const style = document.createElement('style'); style.textContent = ragCss; document.head.append(style); return () => style.remove(); }, 'zhen: source cards');
+  for (const key of ['zhen_rag_search', 'zhen_rag_open']) ctx.slots.inject('tool.call.toolview', () => ctx.slots.register({ name: 'tool.call.toolview', key }, RagToolView));
 }

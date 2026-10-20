@@ -72,3 +72,10 @@ C30 reads the original native run ledger through strict published Host/Remote an
 C31 exercises confirmed local default-art metadata and <=45KiB raster chunks through the published Typert Registry, RemoteAccess, Gateway owner invocation and strict codecs, followed by the actual client byte-transfer function. JSON round trips are in-process; no physical HTTP/WebSocket or browser-rendering claim is made. The local real-pack verifier records byte hashes, limits and zero credential/network use. No upstream loader or brand kernel is edited. See decision0029.
 
 C32 exercises the published Gateway owner contribution and strict Remote codecs with actual MCP stdio. Saved-media import/placement remain UI-only; native auth/store/approval are real fixture modules while copy/ledger are synthetic. Independent Native TEMP database verification exercises original AssetUploadManager, Blob and CanvasPatch with simulated window approval and seeded export metadata; it is not a real downloaded export or installed-app proof. See decision0030.
+
+C35 verifies the pinned tools output.presentationMeta projection and final policy
+block with the actual ToolRuntime. Strict owner Gateway/Remote calls read only
+authorized index windows; client cards consume recorded metadata through the
+published ui-tool keyed slot contract (C6). Actual React SSR checks replay,
+escaping, old-record fallback and error suppression; it does not establish
+browser rendering or live model use. See decision0034.

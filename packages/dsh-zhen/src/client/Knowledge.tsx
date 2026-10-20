@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import type { ZhenRemote } from 'dsh-zhen/remote';
-import type { KnowledgeCollection, KnowledgeHit, KnowledgeBinding } from 'dsh-zhen';
+import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, KnowledgeBinding } from 'dsh-zhen';
+import { SourceWindow } from './RagSources.tsx';
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
 const unwrap = <T,>(result: RemoteResult<T>): T => { if (!result.ok) throw result.error; return result.value; };
 
@@ -8,6 +9,7 @@ export function Knowledge({ api }: { api: ZhenRemote }): React.ReactElement {
   const [project, setProject] = useState('个人创作');
   const [collections, setCollections] = useState<KnowledgeCollection[]>([]);
   const [hits, setHits] = useState<KnowledgeHit[]>([]);
+  const [source, setSource] = useState<{ project: string; value: KnowledgeSource }>();
   const [name, setName] = useState('');
   const [folder, setFolder] = useState('');
   const [query, setQuery] = useState('');
@@ -16,7 +18,7 @@ export function Knowledge({ api }: { api: ZhenRemote }): React.ReactElement {
   const [binding, setBinding] = useState<KnowledgeBinding | null>(null);
   const [workspace, setWorkspace] = useState('');
   useEffect(() => {
-    let active = true; setHits([]);
+    let active = true; setHits([]); setSource(undefined);
     api.knowledgeCollections(project).then(result => { if (active) setCollections(unwrap(result)); }).catch(() => { if (active) setNotice('无法读取资料集合。'); });
     setBinding(null); setWorkspace('');
     api.knowledgeBinding(project).then(result => { if (active) { const value = unwrap(result); setBinding(value); setWorkspace(value?.root ?? ''); } }).catch(() => { if (active) setNotice('无法读取会话绑定。'); });
@@ -51,7 +53,8 @@ export function Knowledge({ api }: { api: ZhenRemote }): React.ReactElement {
       <label className="zhen-checkbox"><input type="checkbox" disabled={busy || !binding || !collection.enabled || collection.cloudProvider !== 'seedance'} checked={collection.agentEnabled} onChange={event => { const enabled = event.target.checked; void action(async () => { unwrap(await api.setKnowledgeAgentAccess(project, collection.id, enabled)); setHits([]); }); }}/>另行允许已绑定工作目录中的 Seedance 会话自动检索此集合片段。</label>
     </section>)}
     <section className="zhen-card"><h2>查找资料</h2><p className="zhen-muted">输入人物、专名或关键词；多个关键词用空格分开，例如“洛川 琵琶”，结果需包含全部关键词。优先展示不同文件，最多返回 12 个片段。</p><form className="zhen-input-row zhen-margin" onSubmit={event => { event.preventDefault(); void action(async () => { const result = unwrap(await api.searchKnowledge(project, query)); setHits(result); if (!result.length) setNotice('没有找到匹配资料。试试更短的关键词，或检查集合访问状态。'); }); }}><input aria-label="知识库关键词" value={query} onChange={event => setQuery(event.target.value)} maxLength={200} placeholder="搜索人物、专名、场景或关键词"/><button className="zhen-primary" disabled={busy || !query.trim() || !project.trim()}>本地检索</button></form></section>
-    {hits.map(hit => <article className="zhen-card" key={hit.id}><div className="zhen-section-heading"><h2>{hit.collectionName}</h2><span>{hit.path} : {hit.line}</span></div><pre className="zhen-excerpt">{hit.text}</pre><button type="button" className="zhen-secondary" disabled={busy || collections.find(collection => collection.id === hit.collectionId)?.cloudProvider !== 'seedance'} onClick={() => void action(async () => { const current = unwrap(await api.knowledgeCitation(project, hit.id, hit.epoch, 'seedance')); await navigator.clipboard.writeText(`[资料引用：${current.path}:${current.line}]\n${current.text}`); setNotice('已复制获准引用。可粘贴到 Seedance 会话中；尚未自动发送。'); })}>复制获准引用</button></article>)}
+    {hits.map(hit => <article className="zhen-card" key={hit.id}><div className="zhen-section-heading"><h2>{hit.collectionName}</h2><span>{hit.path} : {hit.line}</span></div><pre className="zhen-excerpt">{hit.text}</pre><div className="zhen-actions zhen-wrap"><button type="button" className="zhen-secondary" disabled={busy} onClick={() => void action(async () => { setSource(undefined); const value = unwrap(await api.knowledgeSource(project, hit.id, hit.epoch)); setSource({ project, value }); })}>查看来源上下文</button><button type="button" className="zhen-secondary" disabled={busy || collections.find(collection => collection.id === hit.collectionId)?.cloudProvider !== 'seedance'} onClick={() => void action(async () => { const current = unwrap(await api.knowledgeCitation(project, hit.id, hit.epoch, 'seedance')); await navigator.clipboard.writeText(`[资料引用：${current.path}:${current.line}]\n${current.text}`); setNotice('已复制获准引用。可粘贴到 Seedance 会话中；尚未自动发送。'); })}>复制获准引用</button></div></article>)}
+    {source && source.project === project && collections.some(collection => collection.enabled && collection.id === source.value.sections[0]?.collectionId && collection.epoch === source.value.sections[0]?.epoch) && <section className="zhen-card"><div className="zhen-section-heading"><h2>来源上下文</h2><button type="button" className="zhen-link" onClick={() => setSource(undefined)}>关闭</button></div><SourceWindow source={source.value} onNavigate={busy ? undefined : (id, epoch) => void action(async () => { const value = unwrap(await api.knowledgeSource(project, id, epoch)); setSource({ project, value }); })}/><p className="zhen-muted">仅在本地查看索引快照，不代表源文件实时内容，不会自动发送给模型。</p></section>}
     {notice && <div className="zhen-notice" role="status">{notice}</div>}
   </div>;
 }

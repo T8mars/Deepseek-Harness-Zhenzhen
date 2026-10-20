@@ -5,7 +5,9 @@ import type { RemoteResult, TypertRemoteCodecSpec, TypertRemoteMethodSpec } from
 import type { Wallet, ZhenStatus } from './index.ts';
 import { githubAccessSchema, githubCredentialValue } from './github-access-schema.ts';
 import type { GithubAccessInfo } from './github-access-schema.ts';
-import type { KnowledgeCollection, KnowledgeHit, ImportResult } from './knowledge.ts';
+import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
+import { ragSourceSchema } from './rag-schema.ts';
+export { ragPresentationSchema } from './rag-schema.ts';
 import { skillId, digestSchema, marketItemSchema, skillPackageSchema, skillFeedSnapshotSchema, skillAutoPolicySchema } from './market-schema.ts';
 import type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } from './market-schema.ts';
 import type { CanvasConnection } from './canvas.ts';
@@ -161,6 +163,7 @@ export interface ZhenRemote {
   searchKnowledge(project: string, query: string): Promise<RemoteResult<KnowledgeHit[]>>;
   setKnowledgeAccess(project: string, collectionId: string, enabled: boolean, cloudProvider: string): Promise<RemoteResult<void>>;
   knowledgeCitation(project: string, hitId: string, epoch: number, provider: string): Promise<RemoteResult<KnowledgeHit>>;
+  knowledgeSource(project: string, hitId: string, epoch: number): Promise<RemoteResult<KnowledgeSource>>;
 }
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
@@ -300,5 +303,6 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/searchKnowledge': method('searchKnowledge', z.array(hitSchema), 'Search only the selected project.', [['project', projectInput], ['query', z.string().max(200)]]),
   'zhen/setKnowledgeAccess': method('setKnowledgeAccess', z.void(), 'Change collection permissions.', [['project', projectInput], ['collectionId', z.string().uuid()], ['enabled', z.boolean()], ['cloudProvider', z.enum(['', 'seedance'])]]),
   'zhen/knowledgeCitation': method('knowledgeCitation', hitSchema, 'Revalidate a citation before use.', [['project', projectInput], ['hitId', z.string().uuid()], ['epoch', z.number().int().positive()], ['provider', z.literal('seedance')]]),
+  'zhen/knowledgeSource': method('knowledgeSource', ragSourceSchema, 'Read an authorized index snapshot; no arbitrary path or cloud transfer.', [['project', projectInput], ['hitId', z.string().uuid()], ['epoch', z.number().int().positive()]]),
 } }, z);
 export default TYPERT_REMOTE;

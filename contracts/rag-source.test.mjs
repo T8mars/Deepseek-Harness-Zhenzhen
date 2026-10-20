@@ -1,0 +1,57 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,rmSync,realpathSync} from 'node:fs';
+import {join,resolve,relative,isAbsolute} from 'node:path';
+import {tmpdir} from 'node:os';
+import {createRequire} from 'node:module';
+import {build} from 'esbuild';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {Context} from '@deepseek-ai/cordis';
+import Typert from '@deepseek-ai/dsh-typert-registry';
+import Access from '@deepseek-ai/dsh-api-remote-access';
+import Gateway from '@deepseek-ai/dsh-api-gateway';
+import SystemPrompt from '@deepseek-ai/dsh-system-prompt';
+import ToolRuntime from '@deepseek-ai/dsh-tools';
+import ZhenService from '../packages/dsh-zhen/lib/index.js';
+import {TYPERT} from '../packages/dsh-zhen/lib/typert.js';
+import {TYPERT_REMOTE,ragPresentationSchema} from '../packages/dsh-zhen/lib/remote.js';
+const require=createRequire(import.meta.url);
+
+test('C35: real Host/Gateway and ToolRuntime preserve source ownership, metadata replay and final-block privacy',async()=>{
+  const root=realpathSync.native(mkdtempSync(join(tmpdir(),'dsh-rag-source-contract-'))),home=join(root,'EXAMPLE_HOME'),folder=join(root,'EXAMPLE_DOCS'),workspace=join(root,'EXAMPLE_WORKSPACE');mkdirSync(folder);mkdirSync(workspace);
+  writeFileSync(join(folder,'EXAMPLE.md'),'EXAMPLE_SOURCE_MARKER\n洛川弹琵琶。\n<script>EXAMPLE_UNTRUSTED_TEXT</script>');
+  const previousHome=process.env.DSH_HOME,previousFetch=globalThis.fetch;process.env.DSH_HOME=home;
+  const ctx=new Context(),lifetime=new AbortController();let credentialReads=0,network=0,directory=workspace,changeDirectory=false;
+  ctx.provide('credentials',{describe:async()=>({configured:false,writable:true}),resolve:async()=>{credentialReads++;throw Error('EXAMPLE_NO_SECRET');}});
+  ctx.provide('workingDirectory',{ensure:async()=>{const captured=directory;if(changeDirectory){directory=root;changeDirectory=false;}return captured;}});
+  globalThis.fetch=async()=>{network++;throw Error('EXAMPLE_NO_NETWORK');};
+  try {
+    await ctx.plugin(Typert);await ctx.plugin(Access);await ctx.plugin(SystemPrompt);await ctx.plugin(ToolRuntime);await ctx.plugin(ZhenService);ctx.typert.register(TYPERT);await ctx.plugin(Gateway,{});
+    const peer={id:'EXAMPLE_RAG_OWNER',ctx,principal:{kind:'owner'},signal:lifetime.signal,interactions:'none',dispose:async()=>{}};
+    const call=async(method,args,principal=peer.principal)=>{const value=await ctx.typertGateway.invoke({namespace:'zhen',method,args:JSON.parse(JSON.stringify(args)),peer:{...peer,principal}});return TYPERT_REMOTE.methods['zhen/'+method].result.create().parse(value===undefined?undefined:JSON.parse(JSON.stringify(value)));};
+    const collection=await call('createKnowledge',{project:'EXAMPLE_PROJECT',name:'示例资料',folder});await call('indexKnowledge',{project:'EXAMPLE_PROJECT',collectionId:collection.id});
+    let hit=(await call('searchKnowledge',{project:'EXAMPLE_PROJECT',query:'琵琶'}))[0];
+    const local=await call('knowledgeSource',{project:'EXAMPLE_PROJECT',hitId:hit.id,epoch:hit.epoch});assert.equal(local.anchorId,hit.id,'local source view needs no cloud-send consent');
+    await assert.rejects(call('knowledgeSource',{project:'EXAMPLE_PROJECT',hitId:hit.id,epoch:hit.epoch},{kind:'anonymous'}));
+    await assert.rejects(call('knowledgeSource',{project:'EXAMPLE_OTHER_PROJECT',hitId:hit.id,epoch:hit.epoch}));
+    await assert.rejects(call('knowledgeSource',{project:'EXAMPLE_PROJECT',hitId:hit.id,epoch:hit.epoch,path:'EXAMPLE_ARBITRARY_FILE'}));
+    await call('bindKnowledge',{project:'EXAMPLE_PROJECT',directory:workspace});await call('setKnowledgeAccess',{project:'EXAMPLE_PROJECT',collectionId:collection.id,enabled:true,cloudProvider:'seedance'});await call('setKnowledgeAgentAccess',{project:'EXAMPLE_PROJECT',collectionId:collection.id,enabled:true});
+    const agent={session:{id:'EXAMPLE_SOURCE_SESSION'},options:{provider:'seedance'}};
+    const run=(name,args,caller=agent)=>ctx.tools.execute({callId:'EXAMPLE_'+Math.random(),name,arguments:args,agent:caller,signal:lifetime.signal});
+    hit=(await call('searchKnowledge',{project:'EXAMPLE_PROJECT',query:'琵琶'}))[0];assert.equal((await run('zhen_rag_open',{id:hit.id,epoch:hit.epoch})).isError,true,'manual reads cannot create model retrieval grants');
+    const search=await run('zhen_rag_search',{query:'琵琶'});assert.equal(search.isError,false);hit=search.value.hits[0];assert.equal(ragPresentationSchema.parse(JSON.parse(JSON.stringify(search.meta))).kind,'search');
+    const opened=await run('zhen_rag_open',{id:hit.id,epoch:hit.epoch});assert.equal(opened.isError,false);assert.equal(opened.value.source.anchorId,hit.id);assert.equal(ragPresentationSchema.parse(opened.meta).kind,'source');assert.equal(JSON.stringify(opened.value).includes(folder),false);
+    assert.equal((await run('zhen_rag_open',{id:hit.id,epoch:hit.epoch},{...agent,session:{id:'EXAMPLE_DIFFERENT_SESSION'}})).isError,true);
+    assert.equal((await run('zhen_rag_open',{id:'../EXAMPLE.txt',epoch:hit.epoch})).isError,true);
+    changeDirectory=true;assert.equal((await run('zhen_rag_open',{id:hit.id,epoch:hit.epoch})).isError,true,'a changed directory between read and publication rejects the source');directory=workspace;
+    const file=join(root,'EXAMPLE_RAG_VIEW.cjs');await build({entryPoints:[resolve('packages/dsh-zhen/src/client/RagSources.tsx')],outfile:file,bundle:true,platform:'node',format:'cjs',packages:'external',alias:{react:require.resolve('react'),'react/jsx-runtime':require.resolve('react/jsx-runtime'),zod:require.resolve('zod'),'@deepseek-ai/dsh-typert-protocol/remote-info':require.resolve('@deepseek-ai/dsh-typert-protocol/remote-info'),'dsh-zhen/remote':resolve('packages/dsh-zhen/lib/remote.js')},logLevel:'silent'});
+    const {RagToolView}=require(file),render=result=>renderToStaticMarkup(React.createElement(RagToolView,{phase:'result',toolName:'zhen_rag_search',block:{isError:result.isError,content:result.content??[],meta:JSON.parse(JSON.stringify(result.meta??null))}}));
+    const html=render(search);assert.ok(html.includes('EXAMPLE.md'));assert.ok(html.includes('琵琶'));assert.ok(html.includes('&lt;script&gt;'));assert.equal(html.includes('<script>'),false);assert.equal(render(opened).includes('资料来源上下文'),true);
+    assert.ok(render({...search,meta:undefined}).includes('EXAMPLE_SOURCE_MARKER'),'legacy results remain readable without a metadata migration');
+    const stop=ctx.on('tools/post-execute',async(exec,_result,next)=>exec.name==='zhen_rag_search'?{kind:'block',feedback:[{type:'text',text:'EXAMPLE_POLICY_REFUSED'}]}:next());
+    const blocked=await run('zhen_rag_search',{query:'琵琶'});assert.equal(blocked.isError,true);assert.equal(render(blocked).includes('EXAMPLE_SOURCE_MARKER'),false);assert.equal(render({...search,isError:true}).includes('EXAMPLE_SOURCE_MARKER'),false);stop();
+    await call('setKnowledgeAgentAccess',{project:'EXAMPLE_PROJECT',collectionId:collection.id,enabled:false});assert.equal((await run('zhen_rag_open',{id:hit.id,epoch:hit.epoch})).isError,true);await assert.rejects(call('knowledgeSource',{project:'EXAMPLE_PROJECT',hitId:hit.id,epoch:hit.epoch}));
+    assert.equal(credentialReads,0);assert.equal(network,0);
+  } finally {lifetime.abort();await ctx.fiber.dispose();globalThis.fetch=previousFetch;if(previousHome===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previousHome;const rel=relative(realpathSync.native(tmpdir()),root);assert.ok(rel&&!rel.startsWith('..')&&!isAbsolute(rel));rmSync(root,{recursive:true,force:true});}
+});

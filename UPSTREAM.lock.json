@@ -343,6 +343,25 @@
       "furtherNativeEditsFromDsh": false,
       "releaseState": "deferred-by-user",
       "handoff": "docs/handoffs/canvas-agent.md"
+    },
+    "ragSourceContext": {
+      "schema": 1,
+      "indexSchema": 2,
+      "maxSections": 3,
+      "readAuthority": "current owned index only",
+      "agentAuthority": "existing same-session retrieval grant + exact current workspace/provider/collection epochs",
+      "publishedContract": "C35",
+      "publishedUiTool": "0.2.1-rc.2",
+      "newSourceUnits": 3,
+      "reactRendering": "actual server-side fixture only",
+      "browserVerified": false,
+      "liveModelVerified": false,
+      "fullDshCheck": {
+        "tests": 279,
+        "passed": 279,
+        "liveProviderCalls": 0
+      },
+      "installedEntrySha256": "e8563374d37aa41466d5cccffc0b8575f948e83306e8b3bf66d2185bb063b904"
     }
   }
 }

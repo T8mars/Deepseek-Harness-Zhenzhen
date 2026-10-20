@@ -6,6 +6,7 @@ import { dirname, resolve, relative, isAbsolute, extname, join } from 'node:path
 
 export interface KnowledgeCollection { id: string; project: string; name: string; root: string; epoch: number; enabled: boolean; cloudProvider: string; agentEnabled: boolean; documents: number; }
 export interface KnowledgeHit { id: string; collectionId: string; collectionName: string; path: string; line: number; text: string; epoch: number; }
+export interface KnowledgeSource { anchorId: string; sections: KnowledgeHit[]; firstSection: number; totalSections: number; earlierId: string | null; laterId: string | null; }
 export interface ImportResult { indexed: number; skipped: number; failed: number; }
 export interface KnowledgeBinding { project: string; root: string; epoch: number; }
 interface CollectionRow { id: string; project: string; name: string; root: string; epoch: number; enabled: number; cloud_provider: string; agent_enabled: number; }
@@ -216,6 +217,36 @@ export class KnowledgeStore {
       FROM diversified result JOIN chunks ch ON ch.id=result.id JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
       ORDER BY result.document_position,result.score,d.path,ch.line,ch.id LIMIT 12`).all(terms.join(' AND '), project, provider, provider);
     return rows.map(row => ({ id: String(row.id), collectionId: String(row.collection_id), collectionName: String(row.name), path: String(row.path), line: Number(row.line), text: String(row.text), epoch: Number(row.epoch) }));
+  }
+  /** Read a bounded window of the authorized local index, without a cloud grant. */
+  source(project: string, hitId: string, epoch: number): KnowledgeSource {
+    const anchor = this.db.prepare(`SELECT ch.id,ch.document_id,ch.rowid AS ordinal,ch.line,ch.text,c.id AS collection_id,c.name,c.epoch,d.path
+      FROM chunks ch JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
+      WHERE ch.id=? AND c.project=? AND c.enabled=1 AND c.epoch=?`).get(hitId, project, epoch);
+    if (!anchor) throw new Error('资料引用已过期、已撤回，或不属于当前资料空间。');
+    // Own index rows are inserted in source order. rowid breaks ties when many
+    // overlapping chunks begin on the same physical line; no source file opens.
+    const before = this.db.prepare('SELECT id,line,text,rowid AS ordinal FROM chunks WHERE document_id=? AND rowid<? ORDER BY rowid DESC LIMIT 2').all(anchor.document_id!, anchor.ordinal!);
+    const after = this.db.prepare('SELECT id,line,text,rowid AS ordinal FROM chunks WHERE document_id=? AND rowid>? ORDER BY rowid LIMIT 2').all(anchor.document_id!, anchor.ordinal!);
+    const rows = [...before.slice(0, 1), anchor, ...after.slice(0, 1)];
+    const sections = rows.map(row => ({ id: String(row.id), collectionId: String(anchor.collection_id), collectionName: String(anchor.name), path: String(anchor.path), line: Number(row.line), text: String(row.text), epoch: Number(anchor.epoch) }));
+    const firstSection = Number(this.db.prepare('SELECT count(*) AS n FROM chunks WHERE document_id=? AND rowid<?').get(anchor.document_id!, rows[0]!.ordinal!)?.n) + 1;
+    const totalSections = Number(this.db.prepare('SELECT count(*) AS n FROM chunks WHERE document_id=?').get(anchor.document_id!)?.n);
+    if (this.collection(project, String(anchor.collection_id)).epoch !== epoch) throw new Error('资料引用已变化，请重新检索。');
+    return { anchorId: hitId, sections, firstSection, totalSections, earlierId: before[1] ? String(before[1].id) : null, laterId: after[1] ? String(after[1].id) : null };
+  }
+  /** Model reads require a previous retrieval grant in this exact bound session. */
+  async sourceForAgent(sessionId: string, provider: string, directory: string, hitId: string, epoch: number): Promise<KnowledgeSource> {
+    if (!sessionId || provider !== 'seedance') throw new Error('当前会话未获准读取此资料引用。');
+    const physical = await realpath(directory);
+    const root = process.platform === 'win32' ? physical.toLowerCase() : physical;
+    await this.assertSessionAllowed(sessionId, provider, root);
+    const allowed = this.db.prepare(`SELECT c.project FROM chunks ch JOIN documents d ON d.id=ch.document_id
+      JOIN collections c ON c.id=d.collection_id JOIN workspace_bindings b ON b.project=c.project
+      JOIN session_grants g ON g.collection_id=c.id AND g.project=c.project AND g.epoch=c.epoch AND g.binding_epoch=b.epoch AND g.root=b.root
+      WHERE ch.id=? AND c.epoch=? AND c.enabled=1 AND c.agent_enabled=1 AND c.cloud_provider=? AND b.root=? AND g.session_id=?`).get(hitId, epoch, provider, root, sessionId);
+    if (!allowed) throw new Error('请先在当前会话检索已授权资料；引用也可能已过期或撤回。');
+    return this.source(String(allowed.project), hitId, epoch);
   }
   /** Revalidate a selected citation at use time. Caller must separately obtain cloud-send permission. */
   citation(project: string, hitId: string, epoch: number, provider: string): KnowledgeHit {

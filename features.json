@@ -70,7 +70,7 @@
     {
       "id": "local-rag",
       "status": "in-progress",
-      "verification": "Text import/search, exact workspace binding, separate agent consent and persistent pre-provider revocation guard implemented. Authorized matches now return distinct-document rounds before repeated chunks; 21 invented keyword cases pass, including source coverage, Chinese names, mixed scripts and citations. C11 uses published ToolRuntime for diversity/permission/revocation. Schema 2 and keyword intersection remain. Real-corpus relevance, new UI, live chat and optional PDF/OCR/vector remain unverified."
+      "verification": "Text import/search, exact workspace binding, separate agent consent and persistent pre-provider revocation guard implemented. Authorized matches now return distinct-document rounds before repeated chunks; 21 invented keyword cases pass, including source coverage, Chinese names, mixed scripts and citations. C11 uses published ToolRuntime for diversity/permission/revocation. Schema 2 and keyword intersection remain. Real-corpus relevance, new UI, live chat and optional PDF/OCR/vector remain unverified. Source cards and bounded indexed-source pagination are now implemented. Model open needs an existing exact same-session grant; manual local viewing does not grant cloud access. Three source units and C35 actual Host/Gateway/ToolRuntime plus React SSR pass; legacy results remain readable, final policy blocks hide success metadata, and directory races refuse publication. Schema 2 unchanged. Full check279 and official same-version replacement smoke pass; browser/live model/real-corpus acceptance remain unverified. See decision0034."
     },
     {
       "id": "canvas-mcp",

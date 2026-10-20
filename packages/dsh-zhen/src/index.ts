@@ -8,7 +8,7 @@ import type { Wallet } from './gateway.ts';
 import type {} from './remote.ts';
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths';
 import { KnowledgeStore } from './knowledge.ts';
-import type { KnowledgeCollection, KnowledgeHit, ImportResult } from './knowledge.ts';
+import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
 import type {} from '@deepseek-ai/dsh-host-webserver';
 import type {} from '@deepseek-ai/dsh-skill';
 import { SkillMarket, readBundledCatalog } from './market.ts';
@@ -44,7 +44,7 @@ import type { CanvasToolCatalog } from './canvas-contract.ts';
 import { UpdateMonitor } from './updates.ts';
 import type { UpdateBaseline } from './updates.ts';
 import type { UpdateReport } from './update-schema.ts';
-import { createRagTool } from './rag-tool.ts';
+import { createRagTool, createRagOpenTool } from './rag-tool.ts';
 import type {} from '@deepseek-ai/dsh-working-directory';
 import type {} from '@deepseek-ai/dsh-agent';
 import type {} from '@deepseek-ai/dsh-llm';
@@ -85,7 +85,7 @@ export type { GithubAccessInfo } from './github-access-schema.ts';
 export type { KnowledgeBinding } from './knowledge.ts';
 export type { McpMarketView } from './mcp-market-schema.ts';
 export type { CapabilityCatalog, CapabilityItem, CapabilityCheck } from './capability-schema.ts';
-export type { KnowledgeCollection, KnowledgeHit, ImportResult } from './knowledge.ts';
+export type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
 export type { GatewayCheckPreview, GatewayCheckReceipt } from './gateway-check-schema.ts';
 export type { LocalSkillDraft, LocalSkillView, LocalSkillBody, LocalSkillMode } from './local-skills-schema.ts';
 export type { GithubSkillSpec, GithubSkillSourceView, GithubSkillSummary, GithubSkillPreview, GithubSkillFilePreview } from './github-skills-schema.ts';
@@ -208,11 +208,13 @@ export default class ZhenService extends TypertRemoteService {
       const runtime = this.mcpRuntime = new CuratedMcpRuntime(inner, this.mcps());
       void runtime.sync().catch(() => {});
       inner.effect(() => () => { if (this.mcpRuntime === runtime) this.mcpRuntime = undefined; }, 'zhen: curated MCP runtime');
-      inner.tools.register(createRagTool(() => this.knowledge(), async execution => {
+      const retrievalContext = async (execution: import('@deepseek-ai/dsh-tools').ToolRunContext) => {
         if (!execution.agent) throw new Error('知识库检索需要当前会话。');
         const directory = await inner.workingDirectory.ensure(execution.agent, execution.signal);
         return { sessionId: execution.agent.session.id, provider: execution.agent.options.provider ?? '', directory };
-      }));
+      };
+      inner.tools.register(createRagTool(() => this.knowledge(), retrievalContext));
+      inner.tools.register(createRagOpenTool(() => this.knowledge(), retrievalContext));
     });
     const service = this;
     ctx.on('llm/stream', async function* (options, next) {
@@ -585,6 +587,10 @@ export default class ZhenService extends TypertRemoteService {
   /** Read a selected citation after current project, epoch, and provider checks. */
   @Remote
   knowledgeCitation(project: string, hitId: string, epoch: number, provider: string): KnowledgeHit { return this.knowledge().citation(project, hitId, epoch, provider); }
+
+  /** Read indexed source context locally; does not grant cloud or agent permission. */
+  @Remote
+  knowledgeSource(project: string, hitId: string, epoch: number): KnowledgeSource { return this.knowledge().source(project, hitId, epoch); }
 
   /** Read configuration presence without returning a credential or probing a paid endpoint. */
   @Remote
