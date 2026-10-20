@@ -888,6 +888,96 @@
         "durationMs": 12229.0174,
         "exactDecoderErrorRetained": false
       }
+    },
+    "canvasModelWorkflows": {
+      "decision": "0049",
+      "contracts": [
+        "C49",
+        "C27"
+      ],
+      "nativeSourceCommit": "b813be15df9e3e6ce2d1316250c4602513c08d48",
+      "nativeVersion": "3.3.7",
+      "nativeCompiledModules": 75,
+      "nativeCompiledSourceDigest": "7a847a2534e0753258e56213c01701254fdb55b0c85101a17848db72bb46b8d0",
+      "remoteMethod": "canvasWorkflowModels",
+      "modelKinds": [
+        "llm",
+        "image",
+        "video",
+        "audio"
+      ],
+      "creativeKinds": [
+        "image",
+        "video",
+        "audio",
+        "script",
+        "story"
+      ],
+      "scopedPublicMetadataOnly": true,
+      "requiresRuntimeCheckIsNotIndependentBlocker": true,
+      "explicitReadinessAndRegionRequired": true,
+      "requestedModelAndParametersMatchRequired": true,
+      "originalNativeTempCases": [
+        {
+          "kind": "image",
+          "provider": "seedance-nz",
+          "model": "seedream-v5-pro-t2i",
+          "readinessExecutable": true,
+          "requiresRuntimeCheck": true,
+          "planModelMatched": true,
+          "actualNewNativeNodesPreserveModel": true,
+          "newMediaNodes": 2,
+          "requestedCandidates": 2,
+          "options": {
+            "ratio": "9:16"
+          },
+          "revision": 20
+        },
+        {
+          "kind": "video",
+          "provider": "seedance-nz",
+          "model": "fast",
+          "readinessExecutable": true,
+          "requiresRuntimeCheck": true,
+          "planModelMatched": true,
+          "actualNewNativeNodesPreserveModel": true,
+          "newMediaNodes": 2,
+          "requestedCandidates": 2,
+          "options": {
+            "ratio": "16:9",
+            "duration": 8
+          },
+          "revision": 14
+        },
+        {
+          "kind": "audio",
+          "provider": "seedance-nz",
+          "model": "suno",
+          "readinessExecutable": true,
+          "requiresRuntimeCheck": true,
+          "planModelMatched": true,
+          "actualNewNativeNodesPreserveModel": true,
+          "newMediaNodes": 1,
+          "requestedCandidates": 1,
+          "options": {},
+          "revision": 6
+        }
+      ],
+      "fullCheck": {
+        "tests": 355,
+        "passed": 355
+      },
+      "targetedTests": 24,
+      "nativeRepositoryCleanAfterVerification": true,
+      "nativeProtectedHashesPreserved": true,
+      "nativeRepositoryWrites": 0,
+      "nativeInstalledWrites": 0,
+      "userDatabaseRead": false,
+      "temporaryNativePatchVerified": true,
+      "realWindow": false,
+      "providerNetworkAttempts": 0,
+      "paidCalls": 0,
+      "savedCliPinAutomaticallyChanged": false
     }
   }
 }

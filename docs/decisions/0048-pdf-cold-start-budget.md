@@ -29,3 +29,8 @@ C47和PDF两组单测16/16通过，不能据此声称已修复该Node路径错�
 最终本地全量348/348通过。本机新包SHA为
 `88ea1ca76bbd6f40998f65525a5d77cc239438c33201e8491a51f4fdf29ba9d1`。
 新远端结果另行核对，不把之前的dev18或本地成功当成dev20的CI结果。
+
+后续核实：dev20的[Windows CI39445861129](https://github.com/T8mars/Deepseek-Harness-Zhenzhen/actions/runs/39445861129)
+实际348/348、129文件打包、官方CLI临时安装、已安装PDF worker及Host启动
+全部成功，C47为3532.812ms；这不证明前次超时的精确内部原因。本段随0049
+实际功能更新同步，原失败和Node路径错误证据保留。

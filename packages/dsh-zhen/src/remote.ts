@@ -15,8 +15,8 @@ import { canvasDiscoverySchema } from './canvas-discovery-schema.ts';
 import type { CanvasDiscovery } from './canvas-discovery-schema.ts';
 import { canvasPairingSchema } from './canvas-pairing-schema.ts';
 import type { CanvasPairingView } from './canvas-pairing-schema.ts';
-import { canvasWorkflowInput, canvasWorkflowSchema, canvasWorkspacesSchema } from './canvas-workflow-schema.ts';
-import type { CanvasWorkflowInput, CanvasWorkflowView, CanvasWorkspaces } from './canvas-workflow-schema.ts';
+import { canvasWorkflowInput, canvasWorkflowSchema, canvasWorkspacesSchema, canvasModelsQuery, canvasModelsSchema } from './canvas-workflow-schema.ts';
+import type { CanvasWorkflowInput, CanvasWorkflowView, CanvasWorkspaces, CanvasModels, CanvasModelsQuery } from './canvas-workflow-schema.ts';
 import { canvasCandidatesSchema } from './canvas-inbox-schema.ts';
 import type { CanvasCandidateView } from './canvas-inbox-schema.ts';
 import { canvasRunViewSchema, canvasRunNodesSchema, canvasRunSelection } from './canvas-run-schema.ts';
@@ -127,6 +127,7 @@ export interface ZhenRemote {
   canvasTools(): Promise<RemoteResult<CanvasToolCatalog | null>>;
   canvasWorkflowSnapshot(): Promise<RemoteResult<CanvasWorkflowView | null>>;
   canvasWorkspaces(): Promise<RemoteResult<CanvasWorkspaces>>;
+  canvasWorkflowModels(input:CanvasModelsQuery):Promise<RemoteResult<CanvasModels>>;
   canvasWorkflowPreview(input: CanvasWorkflowInput): Promise<RemoteResult<CanvasWorkflowView>>;
   canvasWorkflowApprove(id: string, confirmation: boolean): Promise<RemoteResult<CanvasWorkflowView>>;
   canvasWorkflowComplete(id: string): Promise<RemoteResult<CanvasWorkflowView>>;
@@ -267,6 +268,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/canvasTools': method('canvasTools', canvasToolCatalogSchema.nullable(), 'Read and cross-check the existing versioned Canvas planning catalog.'),
   'zhen/canvasWorkflowSnapshot': method('canvasWorkflowSnapshot', canvasWorkflowSchema.nullable(), 'Read non-secret native workflow application progress.'),
   'zhen/canvasWorkspaces': method('canvasWorkspaces', canvasWorkspacesSchema, 'List native Canvas targets for explicit UI planning.'),
+  'zhen/canvasWorkflowModels':method('canvasWorkflowModels',canvasModelsSchema,'Read scoped public native models/readiness for explicit UI selection without settings or credentials.',[['input',canvasModelsQuery]]),
   'zhen/canvasWorkflowPreview': method('canvasWorkflowPreview', canvasWorkflowSchema, 'Prepare a native creative plan without writes or Provider calls.', [['input', canvasWorkflowInput]]),
   'zhen/canvasWorkflowApprove': method('canvasWorkflowApprove', canvasWorkflowSchema, 'Human UI confirmation requests authoritative Canvas window approval.', [['id', z.uuid()], ['confirmation', z.boolean()]]),
   'zhen/canvasWorkflowComplete': method('canvasWorkflowComplete', canvasWorkflowSchema, 'Explicitly check a native window approval and apply its bound structure once.', [['id', z.uuid()]]),

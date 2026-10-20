@@ -7,6 +7,7 @@ const http = require('node:http');
 const https = require('node:https');
 const Module = require('node:module');
 const [root, temporary] = process.argv.slice(2);
+const includeModelChoices=process.argv.includes('--include-model-choices');
 assert.ok(root && temporary && fs.realpathSync.native(temporary) === temporary);
 const below = value => { const rel = path.relative(temporary, path.resolve(String(value))); return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel)); };
 let sqliteOpens = 0, externalAttempts = 0, dropRunApproval = false, dropRunComplete = false, dropAssetApproval = false, dropAssetComplete = false;
@@ -40,7 +41,7 @@ const { compatibilitySnapshot } = requireCanvas('./backend/src/services/agentCon
 const manifest = compatibilitySnapshot();
 const version = requireCanvas('./package.json').version;
 const database = new ProjectDatabase(path.join(temporary, 'EXAMPLE_NATIVE.sqlite3'), { autoBackup: false });
-const canvases = ['image', 'video', 'script', 'story'].map(kind => {
+const canvases = ['image', 'video', 'script', 'story',...(includeModelChoices?['audio']:[])].map(kind => {
   const id = `EXAMPLE_NATIVE_${kind}`; database.ensureCanvas(id, { nodes: [], edges: [], viewport: { x: 0, y: 0, zoom: 1 } }, DEFAULT_PROJECT_ID); return { id, kind, projectId: DEFAULT_PROJECT_ID };
 });
 const auth = createAgentControlAuthService(), approvals = createAgentControlApprovalService();
@@ -92,6 +93,7 @@ process.on('message', async message => {
     else if (message.action === 'drop-asset-create') { dropAssetApproval = true; result = { armed: true }; }
     else if (message.action === 'drop-asset-complete') { dropAssetComplete = true; result = { armed: true }; }
     else if (message.action === 'stats') result = stats();
+    else if(message.action==='model-facts'&&includeModelChoices)result=canvases.map(canvas=>({id:canvas.id,kind:canvas.kind,nodes:database.getCanvas(canvas.id).nodes.slice(0,100).map(node=>({id:node.id,type:node.type,model:node.data?.model??'',providerSource:node.data?.providerSource??'',apiModel:node.data?.apiModel??'',providerModel:node.data?.providerModel??'',seedanceNzModel:node.data?.seedanceNzModel??''}))}));
     else if (message.action === 'stop') { process.send({ requestId: message.requestId, result: stats() }); await stop(); return; }
     else throw Error('EXAMPLE_ACTION_REFUSED');
     process.send({ requestId: message.requestId, result });

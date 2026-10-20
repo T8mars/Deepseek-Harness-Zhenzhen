@@ -90,3 +90,13 @@ keywords prevents registration, so the actual ToolRuntime search/open compositio
 is part of this contract. The installed standalone decoder is probed separately
 from Host composition; public `plugin exec` alone does not supply Host peer
 resolution, and this check does not import development-only peers. See0047.
+
+C49 verifies an owner-only scoped model catalog through the published Host/Gateway/
+Remote and native auth/client/store/approval fixtures, with no new Agent mutation
+tools. The native3.3.7 public readiness `requiresRuntimeCheck=true` may coexist
+with `executable=true`; selection also requires explicit known/installed/credential/
+region/available/executable readiness and no blockers. Exact native provider/model
+and explicit output facts are checked after planning, with CLI/session checks after
+each awaited call. Original native production routes and fresh TEMP Patch nodes
+are separately verified by `verify:canvas-native --include-model-choices`; this is
+not real window, installed-user or Provider proof. See0049.

@@ -19,8 +19,9 @@ import { CanvasPairing } from '../packages/dsh-zhen/lib/canvas-pairing.js';
 import { CanvasWorkflow } from '../packages/dsh-zhen/lib/canvas-workflow.js';
 import { CanvasRuns } from '../packages/dsh-zhen/lib/canvas-run.js';
 import { inspectCanvasCli } from '../packages/dsh-zhen/lib/canvas.js';
-const originalArgs = process.argv.slice(2), includeRun = originalArgs.includes('--include-run-intent'), includeAssets = originalArgs.includes('--include-asset-transfer');
-const args = originalArgs.filter(value => !['--include-run-intent', '--include-asset-transfer'].includes(value)), evidenceName = includeAssets ? 'asset-transfer' : includeRun ? 'run-intent' : 'workflow';
+const originalArgs = process.argv.slice(2), includeRun = originalArgs.includes('--include-run-intent'), includeAssets = originalArgs.includes('--include-asset-transfer'),includeModels=originalArgs.includes('--include-model-choices');
+if(includeModels&&(includeRun||includeAssets))throw Error('Model-choice verification is separate from run/asset verification.');
+const args = originalArgs.filter(value => !['--include-run-intent', '--include-asset-transfer','--include-model-choices'].includes(value)), evidenceName = includeModels?'model-choices':includeAssets ? 'asset-transfer' : includeRun ? 'run-intent' : 'workflow';
 if (args.length !== 2 || args[0] !== '--canvas-root' || !isAbsolute(args[1])) throw Error('Usage: npm run verify:canvas-native -- --canvas-root <absolute trusted Canvas source repository>');
 const root = realpathSync.native(args[1]);
 const dshEntrySha256 = createHash('sha256').update(readFileSync(new URL('../packages/dsh-zhen/lib/index.js', import.meta.url))).digest('hex');
@@ -40,7 +41,7 @@ const previousAuth = process.env.ZCANVAS_AUTH_STORE, previousRegistry = process.
 process.env.DSH_HOME = join(temporary, 'EXAMPLE_HOST_HOME');
 process.env.ZCANVAS_AUTH_STORE = authFile; process.env.ZCANVAS_INSTANCE_DIR = registry;
 const electron = process.platform === 'win32' ? 'electron.exe' : process.platform === 'darwin' ? 'Electron.app/Contents/MacOS/Electron' : 'electron';
-const child = spawn(join(root, 'node_modules/electron/dist', electron), ['--max-old-space-size=768', fileURLToPath(new URL('./native-canvas-workflow-worker.cjs', import.meta.url)), root, temporary], { cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+const child = spawn(join(root, 'node_modules/electron/dist', electron), ['--max-old-space-size=768', fileURLToPath(new URL('./native-canvas-workflow-worker.cjs', import.meta.url)), root, temporary,...(includeModels?['--include-model-choices']:[])], { cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
 let priorityLowered = false; try { setPriority(child.pid, constants.priority.PRIORITY_BELOW_NORMAL); priorityLowered = true; } catch {}
 let output = '', request = 0; const waiting = new Map();
 for (const stream of [child.stdout, child.stderr]) stream.on('data', bytes => { output = (output + String(bytes)).slice(-128 * 1024); });
@@ -54,9 +55,10 @@ try {
   pairing = new CanvasPairing(join(temporary, 'EXAMPLE_PAIRING.json'), () => config);
   workflow = new CanvasWorkflow(join(temporary, 'EXAMPLE_WORKFLOW.json'), () => config);
 const pending = await pairing.begin(false, true, includeRun, includeAssets); assert.equal(pending.state, 'pending'); await control('pair-approve'); assert.equal((await pairing.complete()).state, 'paired');
-  const targets = await workflow.workspaces(); assert.equal(targets.canvases.length, 4);
+  const targets = await workflow.workspaces(); assert.equal(targets.canvases.length, includeModels?5:4);
   const results = [];
   for (const canvas of instance.canvases) {
+    if(includeModels&&canvas.kind==='audio')continue;
     const plan = await workflow.preview({ projectId: canvas.projectId, canvasId: canvas.id, kind: canvas.kind, prompt: `EXAMPLE ${canvas.kind} simple sunrise creative workflow` });
     assert.equal(plan.ready, true); assert.equal(plan.phase, 'preview');
     const staged = await workflow.approve(plan.id, true); assert.equal(staged.phase, 'pending'); assert.equal((await workflow.complete(plan.id)).phase, 'pending');
@@ -116,9 +118,21 @@ const pending = await pairing.begin(false, true, includeRun, includeAssets); ass
     const checked = await control('stats'); assert.equal(checked.assetCount, 1); assert.equal(checked.assetsInsideTemp, true); assert.equal(checked.assetHttp.approvalPosts, 2); assert.equal(checked.assetHttp.completePosts, 3);
     mediaTransfer = { receiptMetadataSeeded: true, realExportDownload: false, realNativeAssetUpload: true, originalSourcePreserved: true, previewDidNotCreateImportStorage: true, lostApprovalRecoveredByGet: true, lostImportRecoveredByHash: true, lostPlacementRecoveredByPatch: true, repeatedHandoffReusedAssetAndPatch: true, assets: checked.assetCount, imageNodes: checked.canvases[0].nodes, appliedRevision: placed.appliedRevision, assetHttp: checked.assetHttp };
   }
+  const modelChoices=[];
+  if(includeModels){
+    for(const [kind,model]of [['image','seedream-v5-pro-t2i'],['video','fast'],['audio','suno']]){
+      const canvas=instance.canvases.find(canvas=>canvas.kind===kind),page=await service.canvasWorkflowModels({projectId:canvas.projectId,canvasId:canvas.id,kind,query:model});
+      const selected=page.items.find(item=>item.provider==='seedance-nz'&&item.model===model);assert.ok(selected?.executable,'Native EXAMPLE configured model was not executable: '+kind);
+      const beforeIds=new Set((await control('model-facts')).find(item=>item.id===canvas.id).nodes.map(node=>node.id)),candidateCount=kind==='audio'?1:2,options=kind==='image'?{ratio:'9:16'}:kind==='video'?{ratio:'16:9',duration:8}:{};
+      const plan=await service.canvasWorkflowPreview({projectId:canvas.projectId,canvasId:canvas.id,kind,prompt:`EXAMPLE ONLY ${kind} creative model choice`,profile:'economy',candidates:candidateCount,...options,modelChoices:{[kind]:{provider:selected.provider,model:selected.model}}});assert.ok(plan.models.includes(`seedance-nz / ${model}`));
+      await service.canvasWorkflowApprove(plan.id,true);assert.equal((await service.canvasWorkflowComplete(plan.id)).phase,'pending');await control('approve');const applied=await service.canvasWorkflowComplete(plan.id);assert.equal(applied.phase,'applied');
+      const facts=(await control('model-facts')).find(item=>item.id===canvas.id),newNodes=facts.nodes.filter(node=>!beforeIds.has(node.id)),mediaNodes=newNodes.filter(node=>node.type===(kind==='video'?'seedance':kind));assert.equal(mediaNodes.length,candidateCount);assert.ok(mediaNodes.every(node=>[node.model,node.apiModel,node.providerModel,node.seedanceNzModel].includes(model)),'Chosen model was not preserved in newly created native TEMP nodes');
+      modelChoices.push({kind,provider:selected.provider,model,readinessExecutable:true,requiresRuntimeCheck:selected.requiresRuntimeCheck,planModelMatched:true,actualNewNativeNodesPreserveModel:true,newMediaNodes:mediaNodes.length,requestedCandidates:candidateCount,options,revision:applied.revision});
+    }
+  }
   const stats = await control('stats'); assert.equal(stats.externalAttempts, 0); assert.equal(providerCredentialReads, 0); assert.ok(stats.sqliteOpens >= 1); assert.ok(stats.canvases.every(canvas => canvas.nodes > 0)); for (const [table, count] of Object.entries(stats.ledger)) assert.equal(count, includeRun && table === 'run_intents' ? 1 : 0); assert.ok(stats.compiledModules > 0); assert.match(stats.compiledSourceDigest, /^[a-f0-9]{64}$/);
   assert.equal(createHash('sha256').update(readFileSync(new URL('../packages/dsh-zhen/lib/index.js', import.meta.url))).digest('hex'), dshEntrySha256, 'DSH bundle changed during native verification');
-  const report = { canvasHead, gates, priorityLowered, dshEntrySha256, chat, graph, run, mediaTransfer, at: new Date().toISOString(), realNativeRoutes: true, realNativeCreative: true, realNativePatchDatabase: true, databaseFreshSystemTemp: true, simulatedWindowApproval: true, actualDesktopWindow: false, cliDigest: config.digest, results, stats, paidCalls: 0, userDatabaseRead: false };
+  const report = { canvasHead, gates, priorityLowered, dshEntrySha256, chat, graph, run, mediaTransfer,modelChoices, at: new Date().toISOString(), realNativeRoutes: true, realNativeCreative: true, realNativePatchDatabase: true, databaseFreshSystemTemp: true, simulatedWindowApproval: true, actualDesktopWindow: false, cliDigest: config.digest, results, stats, paidCalls: 0, userDatabaseRead: false };
   writeFileSync(`.runtime/evidence/native-canvas-${evidenceName}.json`, JSON.stringify(report, null, 2) + '\n'); console.log(JSON.stringify(report));
 } finally {
   clearTimeout(timeout); await context?.fiber.dispose(); pairing?.close(); workflow?.close();

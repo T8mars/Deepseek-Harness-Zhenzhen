@@ -5,8 +5,9 @@ import { z } from 'zod';
 import { CanvasBridge, CanvasError, inspectCanvasCli } from './canvas.ts';
 import type { CanvasConfig, CanvasWorkflowRuntime } from './canvas.ts';
 import { canvasEntity, canvasInstance } from './canvas-contract.ts';
-import { canvasWorkflowInput, canvasWorkflowSchema, canvasWorkspacesSchema } from './canvas-workflow-schema.ts';
-import type { CanvasWorkflowInput, CanvasWorkflowView, CanvasWorkspaces } from './canvas-workflow-schema.ts';
+import { canvasWorkflowInput, canvasWorkflowSchema, canvasWorkspacesSchema, canvasModelsQuery } from './canvas-workflow-schema.ts';
+import type { CanvasWorkflowInput, CanvasWorkflowView, CanvasWorkspaces, CanvasModels, CanvasModelsQuery, CanvasModelKind } from './canvas-workflow-schema.ts';
+import {canvasModelsView} from './canvas-models.ts';
 import { nativeCreativePlanSchema, nativePlanView } from './canvas-native-plan.ts';
 import type { NativeCreativePlan } from './canvas-native-plan.ts';
 import type { CanvasInboxEntry } from './canvas-inbox.ts';
@@ -53,6 +54,16 @@ export class CanvasWorkflow {
     const session = runtime.store.loadSession(record.instanceId);
     if (!session || session.sessionId !== record.sessionId || session.origin !== record.origin || session.accessToken !== runtime.accessToken || Date.parse(session.expiresAt) <= Date.now()) throw new CanvasError('WORKFLOW_CONNECTION_CHANGED', '配对已变化或过期，请重新检查。');
   }
+  private currentSession(config:CanvasConfig,runtime:CanvasWorkflowRuntime):void {
+    this.current(config);const session=runtime.store.loadSession(runtime.instance.instanceId);
+    if(!session||session.sessionId!==runtime.sessionId||session.origin!==runtime.instance.origin||session.accessToken!==runtime.accessToken||Date.parse(session.expiresAt)<=Date.now())throw new CanvasError('WORKFLOW_CONNECTION_CHANGED','配对已变化或过期，请重新检查。');
+  }
+  private async readModels(input:CanvasModelsQuery,config:CanvasConfig,runtime:CanvasWorkflowRuntime):Promise<CanvasModels> {
+    this.currentSession(config,runtime);const query=new URLSearchParams({projectId:input.projectId,canvasId:input.canvasId,kind:input.kind,query:input.query??''});
+    const data=(await runtime.client.requestAgentControl(runtime.instance,'/api/agent-control/v1/models?'+query.toString(),{accessToken:runtime.accessToken})).data;
+    this.currentSession(config,runtime);return canvasModelsView(input,data);
+  }
+  models(input:CanvasModelsQuery):Promise<CanvasModels>{return this.serial(async()=>{const request=canvasModelsQuery.parse(input),{config,runtime}=await this.binding();return this.readModels(request,config,runtime);});}
   private required(id: string): Stored {
     const record = this.read(); if (!record || record.view.id !== id) throw new CanvasError('WORKFLOW_CHANGED', '方案进度已变化，请刷新后再操作。');
     if (Date.parse(record.view.expiresAt) <= Date.now()) throw new CanvasError('WORKFLOW_EXPIRED', '方案或窗口审批已过期，请重新规划。');
@@ -91,9 +102,13 @@ export class CanvasWorkflow {
   preview(input: CanvasWorkflowInput): Promise<CanvasWorkflowView> { return this.serial(async () => {
     const request = canvasWorkflowInput.parse(input); this.available();
     const { config, runtime } = await this.binding();
-    const plan = nativeCreativePlanSchema.parse((await runtime.client.requestAgentControl(runtime.instance, '/api/agent-control/v1/creative-plans', { accessToken: runtime.accessToken, method: 'POST', body: { projectId: request.projectId, canvasId: request.canvasId, input: { kind: request.kind, prompt: request.prompt, candidates: 1, profile: 'economy' } } })).data);
-    this.current(config);
+    const choices=Object.entries(request.modelChoices??{}).filter(([,choice])=>choice!==undefined) as [CanvasModelKind,{provider:string;model:string}][];
+    for(const [kind,choice]of choices){const page=await this.readModels({projectId:request.projectId,canvasId:request.canvasId,kind,query:choice.model.slice(0,200)},config,runtime);if(!page.items.some(item=>item.provider===choice.provider&&item.model===choice.model&&item.executable))throw new CanvasError('WORKFLOW_MODEL_UNAVAILABLE','所选模型尚未在画布核验为可执行，请检查画布配置后重新选取。');}
+    const modelFields=Object.fromEntries(choices.flatMap(([kind,choice])=>[[kind+'Provider',choice.provider],[kind+'Model',choice.model]]));
+    const plan = nativeCreativePlanSchema.parse((await runtime.client.requestAgentControl(runtime.instance, '/api/agent-control/v1/creative-plans', { accessToken: runtime.accessToken, method: 'POST', body: { projectId: request.projectId, canvasId: request.canvasId, input: { kind: request.kind, prompt: request.prompt, candidates: request.candidates??1, profile: request.profile??'economy',...(request.ratio===undefined?{}:{ratio:request.ratio}),...(request.duration===undefined?{}:{duration:request.duration}),...modelFields } } })).data);
+    this.currentSession(config,runtime);
     if (plan.projectId !== request.projectId || plan.canvasId !== request.canvasId || plan.kind !== request.kind || plan.brief.goal !== request.prompt || plan.action !== `create.${request.kind}` || Date.parse(plan.expiresAt) <= Date.now() || Date.parse(plan.expiresAt) > Date.now() + 31 * 60 * 1000) throw new CanvasError('WORKFLOW_PLAN_MISMATCH', '画布返回的计划与本次目标不一致。');
+    if(choices.some(([kind,choice])=>plan.visibleAssumptions.models[kind]?.provider!==choice.provider||plan.visibleAssumptions.models[kind]?.model!==choice.model)||request.candidates!==undefined&&plan.candidateCount!==request.candidates||request.ratio!==undefined&&plan.visibleAssumptions.ratio!==request.ratio||request.duration!==undefined&&plan.visibleAssumptions.durationSec!==request.duration||request.profile!==undefined&&plan.brief.profile!==request.profile)throw new CanvasError('WORKFLOW_MODEL_MISMATCH','画布返回的模型或输出参数与选择不一致，请重新核对；本方案未进入审批。');
     return this.stage(plan, config, runtime);
   }); }
   approve(id: string, confirmation: boolean): Promise<CanvasWorkflowView> { return this.serial(async () => {

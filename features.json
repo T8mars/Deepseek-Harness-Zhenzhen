@@ -96,7 +96,7 @@
     {
       "id": "canvas-reviewed-workflow-application",
       "status": "in-progress",
-      "verification": "Explicit UI selects native workspace and previews image/video/script/Story plans, then human DSH confirmation requests authoritative Canvas window approval. Native secureStore retains poll secrets; own schema 1 keeps references, the reviewed creative goal and bounded preview/progress. Original goal is checked and shown; edits require a new preview. Pending/denied, restart, scope/session/config/plan binding, duplicate clicks, lost responses and result mismatch are covered by isolated HTTP plus immutable native auth/client/store/approval modules. C27 uses published Host/Remote/ToolRuntime; ten Agent read/plan tools unchanged and Provider credential resolutions zero. C27 plan construction/database mutation are synthetic. Separate native working-source verification now exercises actual routes/creative/Patch TEMP database and actual MCP chat adoption; IPC simulates window approval. Real installed application/window/new UI and paid execution remain unverified."
+      "verification": "Explicit UI selects native workspace and previews image/video/script/Story plans, then human DSH confirmation requests authoritative Canvas window approval. Native secureStore retains poll secrets; own schema 1 keeps references, the reviewed creative goal and bounded preview/progress. Original goal is checked and shown; edits require a new preview. Pending/denied, restart, scope/session/config/plan binding, duplicate clicks, lost responses and result mismatch are covered by isolated HTTP plus immutable native auth/client/store/approval modules. C27 uses published Host/Remote/ToolRuntime; ten Agent read/plan tools unchanged and Provider credential resolutions zero. C27 plan construction/database mutation are synthetic. Separate native working-source verification now exercises actual routes/creative/Patch TEMP database and actual MCP chat adoption; IPC simulates window approval. Real installed application/window/new UI and paid execution remain unverified. Decision0049 adds owner-scoped public native model readiness, explicit provider/model and output matching, audio planning and UI selection. C49 actual published Gateway/Remote and native auth/client/store/approval fixtures plus client SSR/event checks pass. Separate original3.3.7 fresh-TEMP routes/decisions/Patch preserve selected Seedream/video/Suno in newly created nodes (image/video2,audio1); simulated window, no Provider network or user DB. Full355 and targeted24 pass. Actual browser/window, installed-user pairing and paid generation remain unverified."
     },
     {
       "id": "canvas-chat-plan-inbox",
@@ -166,6 +166,11 @@
       "id": "client-build-reproducibility",
       "status": "implemented",
       "verification": "Actual automatic source checkout and existing workspace differed only in embedded CSS newlines. CSS-only loader normalization now yields the exact same125-file archive SHA. C42 real esbuild LF/CRLF/CR and unchanged non-CSS tests, full check333, public-CLI client-only same-version replacement and main installed client hash5357835b checks pass. Host entry/patch unchanged; stylesheet source/layout and user art/config remain unchanged. Browser rendering remains unverified. See decision0042."
+    },
+    {
+      "id": "canvas-explicit-model-workflows",
+      "status": "in-progress",
+      "verification": "Audio plus scoped native model selection and per-preview readiness/identity checks implemented through existing Canvas public control plane. Candidate/output controls and optional legacy-compatible plan facts; 355 local checks,24 targeted and actual Native fresh-TEMP image/video/audio node identity pass. Native repo remains clean/protected; saved real CLI pin unchanged. No direct DSH paid media submitter. Browser/live window/Provider and complete protocol coverage remain pending; see0049 and canvas-agent-api-coverage handoff."
     }
   ]
 }

@@ -18,17 +18,24 @@ export function assertNativeApprovalFixture() {
 export async function canvasWorkflowFixture({ writable = true, runnable = false, assetTransfer = false, dpapi = false, stdio = false, autoPair = true } = {}) {
   const f = await canvasPairingFixture({ transactionStore: true, dpapi, stdio });
   mkdirSync(join(f.root, 'generated'), { recursive: true }); writeFileSync(join(f.root, 'generated/creative-capability-surfaces.json'), JSON.stringify(canvasFacts)); f.changeConfig(inspectCanvasCli(f.root));
-  const approvals = createAgentControlApprovalService(), state = { revision: 7, plans: 0, requests: 0, completes: 0, mutations: 0, latest: null, dropCreate: false, dropComplete: false, mismatch: false, afterPlan: undefined, afterCreate: undefined, afterComplete: undefined };
+  const approvals = createAgentControlApprovalService(), state = { revision: 7, plans: 0, requests: 0, completes: 0, mutations: 0, latest: null, dropCreate: false, dropComplete: false, mismatch: false, afterPlan: undefined, afterCreate: undefined, afterComplete: undefined,modelReads:0,modelItems:[],afterModels:undefined,lastInput:null };
   f.state.route = async (req, body, auth, res) => {
     const authenticate = scopes => auth.authenticate(String(req.headers.authorization || '').replace(/^Bearer /, ''), scopes);
     if (req.url === '/api/agent-control/v1/capability-tools') { authenticate(['canvas:read']); return structuredClone(canvasCatalog); }
     if (req.url === '/api/agent-control/v1/workspaces') { authenticate(['canvas:read']); return { projectId: 'EXAMPLE_PROJECT', canvases: [{ id: 'EXAMPLE_CANVAS', projectId: 'EXAMPLE_PROJECT', revision: state.revision, name: 'EXAMPLE empty canvas', nodeCount: 0, createdAt: 0 }], total: 1 }; }
+    if(req.url.startsWith('/api/agent-control/v1/models?')){authenticate(['canvas:read']);const query=new URL(req.url,'http://127.0.0.1').searchParams;if(query.get('projectId')!=='EXAMPLE_PROJECT'||query.get('canvasId')!=='EXAMPLE_CANVAS')throw Object.assign(Error('EXAMPLE_SCOPE'),{code:'CREATIVE_SCOPE_NOT_FOUND',status:404});state.modelReads++;const items=structuredClone(state.modelItems.filter(item=>item.kind===query.get('kind')&&(`${item.model} ${item.provider}`).toLowerCase().includes((query.get('query')??'').toLowerCase())));const result={items:items.slice(0,500),total:items.length};state.afterModels?.();return result;}
     if (req.url === '/api/agent-control/v1/creative-plans' || req.url === '/api/agent-control/v1/capability-tools/invoke') {
       const session = authenticate(['canvas:read']); state.plans++;
       const tool = req.url.endsWith('/invoke') ? canvasCatalog.tools.find(tool => tool.name === body.tool && tool.version === body.version && tool.directOperations.includes(body.operation)) : undefined;
       if (req.url.endsWith('/invoke') && !tool) throw Object.assign(Error('EXAMPLE_UNSUPPORTED_CAPABILITY'), { code: 'EXAMPLE_UNSUPPORTED_CAPABILITY', status: 400 });
       const kind = body.input.kind || tool?.capabilityId.replace(/^create\./, '') || 'image';
+      state.lastInput=structuredClone(body.input);
       const plan = { schema: 't8-creative-plan-v1', planId: randomUUID(), planDigest: '6'.repeat(64), projectId: body.projectId, canvasId: body.canvasId, canvasRevision: state.revision, action: tool?.capabilityId || `create.${kind}`, kind, brief: { goal: body.input.prompt || '' }, ready: true, candidateCount: 1, questions: [], impact: { patchOperationCount: 3 }, visibleAssumptions: { models: { image: { provider: 'EXAMPLE_PROVIDER', model: 'EXAMPLE_MODEL' } } }, patchId: randomUUID(), expiresAt: new Date(Date.now() + 30 * 60_000).toISOString() };
+      if(body.input.profile!==undefined)plan.brief.profile=body.input.profile;
+      if(body.input.candidates!==undefined)plan.candidateCount=body.input.candidates;
+      if(body.input.ratio!==undefined)plan.visibleAssumptions.ratio=body.input.ratio;
+      if(body.input.duration!==undefined)plan.visibleAssumptions.durationSec=body.input.duration;
+      for(const modelKind of ['llm','image','video','audio'])if(body.input[modelKind+'Model'])plan.visibleAssumptions.models[modelKind]={provider:body.input[modelKind+'Provider'],model:body.input[modelKind+'Model']};
       plan.approvalBinding = createAgentControlApprovalBinding({ action: 'creative.apply', sessionId: session.sessionId, projectId: plan.projectId, canvasId: plan.canvasId, subject: { kind: 'creative-plan', action: plan.action, creativeKind: plan.kind }, subjectVersionDigest: plan.planDigest, planDigest: plan.planDigest, boundary: { providerTransfer: { status: 'approval-required', occursNow: false, scope: 'canvas-structure-only' } } });
       state.latest = { plan, session }; state.afterPlan?.(plan);
       if (!tool) return plan;
