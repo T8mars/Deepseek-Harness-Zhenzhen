@@ -160,7 +160,12 @@
     {
       "id": "source-checkout-updates",
       "status": "in-progress",
-      "verification": "C39 actual published DSH WebServer blocks source fetch/preparation while occupied. Genuine Git-object tests cover dirty/staged/untracked/hidden-index protection, source/candidate changes, divergence, historical private paths, links, ignored art conflicts, hooks, daily policy, cancellation and fresh-process restart. Full check322. Actual private GitHub dev8-to-dev9 source fast-forward and fresh historical --check bootstrap passed in a temporary clone. Current owned source-aware entry started locally with automatic updates off. Real wrapper self-update, interactive Windows review, OS-kill recovery and signed installer/update remain unverified."
+      "verification": "C39 published DSH WebServer prevents fetch/preparation while occupied; genuine Git-object regressions cover protected history, data, branches, hooks, cancellation and fresh-process restart. Real private GitHub manual dev8-to-dev9 and automatic dev10-to-dev12 fast-forwards passed. Actual fresh child and public CLI configuration check observed; seven fake local files preserved. The three updater files had identical bytes across this real update; changing updater code itself remains synthetic coverage. Default automatic stays off. Windows interactive review, OS-kill recovery and signed installer/update remain unverified. See decisions0039/0042. Full check333 passes; CSS normalization produces the exact same archive as the fresh GitHub candidate, and actual public-CLI client-only same-version replacement passes."
+    },
+    {
+      "id": "client-build-reproducibility",
+      "status": "implemented",
+      "verification": "Actual automatic source checkout and existing workspace differed only in embedded CSS newlines. CSS-only loader normalization now yields the exact same125-file archive SHA. C42 real esbuild LF/CRLF/CR and unchanged non-CSS tests, full check333, public-CLI client-only same-version replacement and main installed client hash5357835b checks pass. Host entry/patch unchanged; stylesheet source/layout and user art/config remain unchanged. Browser rendering remains unverified. See decision0042."
     }
   ]
 }

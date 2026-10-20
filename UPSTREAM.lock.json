@@ -541,7 +541,29 @@
         "modelCalls": 0,
         "paidCalls": 0
       },
-      "verification": "C39 actual published DSH WebServer blocks source fetch/preparation while occupied. Genuine Git-object tests cover dirty/staged/untracked/hidden-index protection, source/candidate changes, divergence, historical private paths, links, ignored art conflicts, hooks, daily policy, cancellation and fresh-process restart. Full check322. Actual private GitHub dev8-to-dev9 source fast-forward and fresh historical --check bootstrap passed in a temporary clone. Current owned source-aware entry started locally with automatic updates off. Real wrapper self-update, interactive Windows review, OS-kill recovery and signed installer/update remain unverified."
+      "verification": "C39 published DSH WebServer prevents fetch/preparation while occupied; genuine Git-object regressions cover protected history, data, branches, hooks, cancellation and fresh-process restart. Real private GitHub manual dev8-to-dev9 and automatic dev10-to-dev12 fast-forwards passed. Actual fresh child and public CLI configuration check observed; seven fake local files preserved. The three updater files had identical bytes across this real update; changing updater code itself remains synthetic coverage. Default automatic stays off. Windows interactive review, OS-kill recovery and signed installer/update remain unverified. See decisions0039/0042. Full check333 passes; CSS normalization produces the exact same archive as the fresh GitHub candidate, and actual public-CLI client-only same-version replacement passes.",
+      "actualAutomaticGithubVerification": {
+        "before": "de37d060e7a8dbda0d5b9af3dd87034a6ecb27bd",
+        "candidate": "18d74a105b70ea7252f7f048e776e97e7d94fe86",
+        "realPrivateTransport": true,
+        "automaticFastForwardApplied": true,
+        "actualFreshChildObserved": true,
+        "wrapperSourceBytesChanged": false,
+        "realUpdaterByteChangeVerified": false,
+        "publicCliConfigurationCheckPassed": true,
+        "privateFakeResearchPreserved": 4,
+        "fakeMaterialsDataAndArtPreserved": true,
+        "temporaryRefsRemoved": true,
+        "remoteTrackingRefUnchanged": true,
+        "fetchHeadUnchanged": true,
+        "temporaryCloneRemoved": true,
+        "hostStarted": false,
+        "browserOpened": false,
+        "applicationCredentialReads": 0,
+        "modelCalls": 0,
+        "paidCalls": 0,
+        "nativeWrites": 0
+      }
     },
     "localCreativeMaterials": {
       "root": "创作资料",
@@ -628,6 +650,34 @@
       "credentialReads": 0,
       "nativeWrites": 0,
       "verification": "Five synthetic compound/vocabulary/authorization/query-budget regressions plus C41 actual published ToolRuntime; full check331 and125-file public-CLI same-version replacement smoke pass. Fixed criteria unchanged; owner explicitly adopted these10 questions and80% first-version reference baseline after measurement. Score8/10 passes that baseline. Browser/live-model/fullM3 and general relevance/SLA remain unverified. See decision0041 and approval record."
+    },
+    "clientBuildNormalization": {
+      "decision": "0042",
+      "cssNewlines": "CRLF/CR to LF at text-loader input only",
+      "sourceCssModified": false,
+      "nonCssTextModified": false,
+      "esbuild": "0.25.11",
+      "contract": "C42",
+      "publicReference": "https://www.w3.org/TR/css-syntax-3/#input-preprocessing",
+      "sameSourcePackageProof": {
+        "originalWorkspaceSha256": "08b470b8327484f8c6b658b29288b1af3afde59fa72d9f0cd1a850cb6421b89c",
+        "freshAutomaticCheckoutSha256": "ab5696027db9bd4b140f539bdfd70f424868b3b49bbbf329f7576ff0f04c27f3",
+        "normalizedWorkspaceSha256": "ab5696027db9bd4b140f539bdfd70f424868b3b49bbbf329f7576ff0f04c27f3",
+        "byteIdenticalToFreshCheckout": true,
+        "files": 125,
+        "originalDifferingPayloadFiles": [
+          "lib/client.js"
+        ]
+      },
+      "installedClientIdentityVerified": true,
+      "browserRenderingVerified": false,
+      "clientOnlyReplacementVerified": true,
+      "mainRuntimePublicCliVerified": true,
+      "fullCheck": {
+        "tests": 333,
+        "passed": 333
+      },
+      "installedClientSha256": "5357835beb4b33c36ebbb22382a77b2d2e19830289d2a47d5889a764020973c1"
     }
   }
 }

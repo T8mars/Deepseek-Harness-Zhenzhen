@@ -2,6 +2,7 @@ import { build } from 'esbuild';
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { buildSkillCatalog } from './skill-catalog.mjs';
+import { cssTextPlugin } from './css-text.mjs';
 import { parse } from 'yaml';
 
 const root = process.cwd();
@@ -25,7 +26,7 @@ await build({ entryPoints: [resolve(pkg, 'src/client/art-validation.ts')], outfi
 await build({ entryPoints: ['default-art-transfer', 'art-overlay'].map(name => resolve(pkg, `src/client/${name}.ts`)), outdir: resolve(pkg, 'lib'), bundle: true, platform: 'node', target: 'node22', format: 'esm', packages: 'external' });
 const browser = await build({ entryPoints: [resolve(pkg, 'src/client/index.tsx')], outfile: resolve(pkg, 'lib/client.js'), metafile: true,
   bundle: true, platform: 'browser', target: 'es2022', format: 'cjs',
-  external: ['react', 'react/jsx-runtime'], loader: { '.css': 'text' },
+  external: ['react', 'react/jsx-runtime'], loader: { '.css': 'text' }, plugins: [cssTextPlugin()],
   define: { 'process.env.NODE_ENV': '"production"' },
   banner: { js: `window.__ModuleLoader__.load({id:${JSON.stringify(manifest.name)},factory:(require)=>{var module={exports:{}};var exports=module.exports;` },
   footer: { js: 'return module.exports;}});' },
