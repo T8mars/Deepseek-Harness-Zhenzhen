@@ -4,6 +4,7 @@ import { realpath, lstat, open, opendir } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve, relative, isAbsolute, extname, join } from 'node:path';
 import { extractPdfPages } from './pdf-text.ts';
+import {extractDocxText} from './docx-text.ts';
 
 export interface KnowledgeCollection { id: string; project: string; name: string; root: string; epoch: number; enabled: boolean; cloudProvider: string; agentEnabled: boolean; documents: number; }
 export interface KnowledgeHit { id: string; collectionId: string; collectionName: string; path: string; line: number; text: string; epoch: number; page?: number; }
@@ -11,7 +12,7 @@ export interface KnowledgeSource { anchorId: string; sections: KnowledgeHit[]; f
 export interface ImportResult { indexed: number; skipped: number; failed: number; }
 export interface KnowledgeBinding { project: string; root: string; epoch: number; }
 interface CollectionRow { id: string; project: string; name: string; root: string; epoch: number; enabled: number; cloud_provider: string; agent_enabled: number; }
-const allowedExtensions = new Set(['.md', '.txt', '.csv', '.json', '.pdf']);
+const allowedExtensions = new Set(['.md', '.txt', '.csv', '.json', '.pdf', '.docx']);
 const excludedDirectories = new Set(['node_modules', 'vendor', 'dist', 'lib', 'coverage']);
 const maxFileBytes = 2 * 1024 * 1024;
 
@@ -225,6 +226,9 @@ export class KnowledgeStore {
           if (extname(file).toLowerCase() === '.pdf') {
             sections = await extractPdfPages(bytes, () => { if (this.collection(project,id).epoch !== collection.epoch) throw new Error('资料权限已变化，本次导入已停止。'); });
             if (!sections.length) { skipped++; continue; }
+          } else if(extname(file).toLowerCase()==='.docx') {
+            const text=await extractDocxText(bytes,()=>{if(this.collection(project,id).epoch!==collection.epoch)throw Error('资料权限已变化，本次导入已停止。');});
+            if(!text.trim()){skipped++;continue;}sections=[{text}];
           } else {
             const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
             if (text.includes('\0')) { skipped++; continue; }

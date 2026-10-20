@@ -12,8 +12,8 @@ export function SourceWindow({ source, onNavigate }: { source: KnowledgeSource; 
   const first = source.sections[0]!;
   return <section className="zhen-rag-source" aria-label="资料来源上下文">
     <p>{first.collectionName} · {first.path}</p>
-    <p className="zhen-rag-note">索引快照 · 第 {source.firstSection}–{source.firstSection + source.sections.length - 1} / {source.totalSections} 个片段。相邻片段可能重叠或从行中开始。{source.sections.some(hit=>hit.page)&&'PDF 行号指页内提取文本，阅读顺序可能与排版不同。'}</p>
-    {source.sections.map(hit => <details key={hit.id} open={hit.id === source.anchorId}><summary>{hit.page ? knowledgeLocation(hit) : `第 ${hit.line} 行附近`}{hit.id === source.anchorId ? ' · 当前引用' : ''}</summary><pre tabIndex={0}>{hit.text}</pre></details>)}
+    <p className="zhen-rag-note">索引快照 · 第 {source.firstSection}–{source.firstSection + source.sections.length - 1} / {source.totalSections} 个片段。相邻片段可能重叠或从行中开始。{source.sections.some(hit=>hit.page)&&'PDF 行号指页内提取文本，阅读顺序可能与排版不同。'}{source.sections.some(hit=>/\.docx$/i.test(hit.path))&&'Word 行号指提取正文的位置，不代表 Word 页码或排版。'}</p>
+    {source.sections.map(hit => <details key={hit.id} open={hit.id === source.anchorId}><summary>{hit.page || /\.docx$/i.test(hit.path) ? knowledgeLocation(hit) : `第 ${hit.line} 行附近`}{hit.id === source.anchorId ? ' · 当前引用' : ''}</summary><pre tabIndex={0}>{hit.text}</pre></details>)}
     {onNavigate && <nav aria-label="来源片段翻页">
       <button type="button" disabled={!source.earlierId} onClick={() => { if (source.earlierId) onNavigate(source.earlierId, first.epoch); }}>更早片段</button>
       <button type="button" disabled={!source.laterId} onClick={() => { if (source.laterId) onNavigate(source.laterId, first.epoch); }}>后续片段</button>
@@ -29,7 +29,7 @@ export function RagToolView(props: ToolCallViewProps): React.ReactElement {
     <strong>{value.kind === 'search' ? `本地资料 · ${value.hits.length} 个片段` : '资料来源上下文'}</strong>
     {value.kind === 'source' ? <SourceWindow source={value.source}/> : <>
       <p className="zhen-rag-note">{value.query}</p>
-      {value.hits.map(hit => <details key={hit.id}><summary>{hit.collectionName} · {hit.page ? knowledgeLocation(hit) : `${hit.path} · 第 ${hit.line} 行附近`}</summary><pre tabIndex={0}>{hit.text}</pre></details>)}
+      {value.hits.map(hit => <details key={hit.id}><summary>{hit.collectionName} · {hit.page || /\.docx$/i.test(hit.path) ? knowledgeLocation(hit) : `${hit.path} · 第 ${hit.line} 行附近`}</summary><pre tabIndex={0}>{hit.text}</pre></details>)}
       {value.hits.length > 0 && <p className="zhen-rag-note">需要更多上下文时，可让助手继续查看此引用。</p>}
     </>}
     <p className="zhen-rag-note">{value.notice}</p>

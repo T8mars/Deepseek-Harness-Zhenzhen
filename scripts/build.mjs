@@ -9,7 +9,7 @@ const root = process.cwd();
 const pkg = resolve(root, 'packages/dsh-zhen');
 const manifest = JSON.parse(await readFile(resolve(pkg, 'package.json'), 'utf8'));
 await buildSkillCatalog(pkg);
-await build({entryPoints:['canvas-assets','canvas-reference-schema'].map(name=>resolve(pkg,`src/${name}.ts`)),outdir:resolve(pkg,'lib'),bundle:true,platform:'node',target:'node22',format:'esm',packages:'external',sourcemap:false});
+await build({entryPoints:['canvas-assets','canvas-reference-schema','docx-text','docx-parse','docx-text-worker'].map(name=>resolve(pkg,`src/${name}.ts`)),outdir:resolve(pkg,'lib'),bundle:true,platform:'node',target:'node22',format:'esm',packages:'external',sourcemap:false});
 const upstream = JSON.parse(await readFile(resolve(root, 'UPSTREAM.lock.json'), 'utf8'));
 const compatibility = await readFile(resolve(pkg, 'src/compatibility.ts'), 'utf8');
 if (!compatibility.includes(`export const SUPPORTED_DSH = '${upstream.dsh.version}';`) || manifest.engines.dsh !== upstream.dsh.version) throw new Error('Runtime compatibility pin and package engine differ from the reviewed lock.');
@@ -46,5 +46,8 @@ for (const name of embedded) {
   const license = await readFile(resolve(packageRoot, 'LICENSE'), 'utf8');
   notices += `\n## ${name} ${metadata.version}\n\n${license.trim()}\n`;
 }
+const saxesLicense=(await readFile(resolve(pkg,'licenses/saxes-6.0.0.txt'),'utf8')).replace(/\r\n/g,'\n');
+const {createHash}=await import('node:crypto');if(createHash('sha256').update(saxesLicense).digest('hex')!=='0fac2374380621b22e6b50451057721a9c52935b02d16d106a9f04897f061d0e')throw Error('Reviewed saxes license changed.');
+for(const [name,version,license]of [['saxes','6.0.0','ISC'],['xmlchars','2.2.0','MIT']]){const metadata=JSON.parse(await readFile(resolve(root,'node_modules',name,'package.json'),'utf8'));if(metadata.version!==version||metadata.license!==license)throw Error('Review changed DOCX dependency license/version.');const text=name==='saxes'?saxesLicense:await readFile(resolve(root,'node_modules',name,'LICENSE'),'utf8');notices+='\n## '+name+' '+version+' (external local DOCX decoder)\n\n'+text.trim()+'\n';}
 await writeFile(resolve(pkg, 'THIRD_PARTY_NOTICES.md'), notices);
 console.log('Built DSH-zhen Host, typed Remote codecs, and browser plugin.');

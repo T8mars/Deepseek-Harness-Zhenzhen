@@ -11,7 +11,7 @@ checkRepository(root);
 mkdirSync(resolve(root, '.runtime/packages'), { recursive: true });
 const npm = process.env.npm_execpath;
 if (!npm) throw new Error('Run with npm run pack:bundle.');
-const allowed = /^(package\.json|NOTICE\.md|THIRD_PARTY_NOTICES\.md|LICENSE|lib\/(index\.js|client\.js|remote\.js|typert\.js|canvas-server\.js|mcp-server\.js|pdf-text-worker\.js|(?:types|client-types)\/.*\.d\.ts)|cordis\.patch\.yml|skills\/[^/]+\/(SKILL\.md|manifest\.json)|catalog\/[^/]+\.json)$/;
+const allowed = /^(package\.json|NOTICE\.md|THIRD_PARTY_NOTICES\.md|LICENSE|lib\/(index\.js|client\.js|remote\.js|typert\.js|canvas-server\.js|mcp-server\.js|(?:pdf-text|docx-text)-worker\.js|(?:types|client-types)\/.*\.d\.ts)|cordis\.patch\.yml|skills\/[^/]+\/(SKILL\.md|manifest\.json)|catalog\/[^/]+\.json)$/;
 function validate(files) {
   checkPackList(files);
   checkDeclarations(root, files, manifest);

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-20T16:35:57.147Z",
+  "checkedAt": "2026-10-20T17:04:43.370Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1062,7 +1062,63 @@
         "tests": 362,
         "passed": 362
       },
-      "newTargetedTests": 7
+      "newTargetedTests": 7,
+      "publicCi": {
+        "run": 39459477068,
+        "commit": "13ada1f177b22fbe36c0369994ea8b7649767f24",
+        "conclusion": "success",
+        "tests": 362,
+        "packageFiles": 134
+      }
+    },
+    "docxLocalRag": {
+      "decision": "0051",
+      "contract": "C51",
+      "databaseSchema": 3,
+      "migrationAdded": false,
+      "parser": "saxes",
+      "parserVersion": "6.0.0",
+      "parserLicense": "ISC; original MIT retained",
+      "parserRepositoryArchived": true,
+      "xmlcharsVersion": "2.2.0",
+      "xmlcharsLicense": "MIT",
+      "licenseSourceSha256": "0fac2374380621b22e6b50451057721a9c52935b02d16d106a9f04897f061d0e",
+      "inputBytes": 2097152,
+      "xmlBytes": 8388608,
+      "metadataBytes": 262144,
+      "textBytes": 2097152,
+      "archiveEntries": 512,
+      "xmlDepth": 128,
+      "timeoutMs": 30000,
+      "heapMiB": 256,
+      "pending": 4,
+      "mainPartRelationshipVerified": true,
+      "crcVerified": true,
+      "forgedInflatedSizeBounded": true,
+      "citation": "extracted-body-lines",
+      "wordPageNumbers": false,
+      "independentFixtureProducer": "python-docx1.2.0",
+      "independentFixtureSha256": "b77efcd8dc0301a3f28e4fd390db0eff53ae30ad686472836e97fa12d771c301",
+      "fullCheck": {
+        "tests": 369,
+        "passed": 369
+      },
+      "targetedTests": 7,
+      "temporaryHostGatewayToolRuntimeVerified": true,
+      "actualWordUi": false,
+      "browserVerified": false,
+      "modelCalls": 0,
+      "paidCalls": 0,
+      "nativeWrites": 0,
+      "packageFiles": 138,
+      "packageSha256": "3c58f381ff8fdd580f0245bdbcc28d4b28b7335f6f7eaafadc127b80f55a65b3",
+      "installedDecoderVerified": true,
+      "installedDecoderSha256": "e830afb4f30eee2846c12e4236af9db7ffd9866a0efc9135234dfae3feb6e579",
+      "installedDecoderOnly": true,
+      "installedFullKnowledgeUiVerified": false,
+      "installedPdfDecoderStillVerified": true,
+      "ownIndexRecordsPreserved": true,
+      "ownIndexSchema": 2
     }
   }
 }

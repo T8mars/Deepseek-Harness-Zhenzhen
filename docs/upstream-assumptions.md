@@ -102,3 +102,5 @@ are separately verified by `verify:canvas-native --include-model-choices`; this 
 not real window, installed-user or Provider proof. See0049.
 
 C50 adds owner-only asset metadata via the published Host/Gateway/Remote and Native auth/client/store/approval fixture. Fixed receipt-v1 attachment vectors originate independently from Native source3.3.7. DSH refuses order/hash/revision drift and non-ready required decisions. Original Native fresh-TEMP image/edit-image/edit-video Patch binding is verified separately with a simulated window and no Provider traffic. Native image hash binding, duplicate slots and atomic asset revalidation remain open; see0050 and the reference-assets handoff.
+
+C51 verifies DOCX extracted-line results through the published Host/Gateway/ToolRuntime and unchanged source/session grant boundary, with the real local fixed worker and an independent python-docx fixture. No Word pages or new DSH protocol/session format is assumed. CRC, bounded native inflation, OPC main selection and strict XML checks are separately covered; see0051.
