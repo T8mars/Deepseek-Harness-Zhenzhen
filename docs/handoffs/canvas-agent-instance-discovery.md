@@ -2,7 +2,10 @@
 
 2026-10-21。用户现场只读诊断；DSH Agent 未修改画布源码、安装版、配置、CLI 或实例目录。
 
-当前优先问题：用户已在DSH审阅并改选源码CLI，公开状态OK；点击配对已得到验证码，
+后续用户已改用真实桌面画布，当前原因是源码CLI与安装版摘要错配，见
+[0054最新交接](canvas-agent-installed-cli-compat.md)。以下保留之前的现场，不当作当前进程状态。
+
+此前问题：用户已在DSH审阅并改选源码CLI，公开状态OK；点击配对已得到验证码，
 但当前Chrome画布页没有审批弹窗。原生`src/components/AgentControlPairingModal.tsx`
 的`refresh`及挂载effect均在缺少`window.t8pc?.agentControl`时直接返回，
 `electron/preload.cjs`才提供`listPendingPairings`/`approvePairing`等IPC桥。

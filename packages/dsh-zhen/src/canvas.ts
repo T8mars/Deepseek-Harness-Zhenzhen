@@ -4,10 +4,12 @@ import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { isAbsolute, join, relative } from 'node:path';
 import { canvasPlanRequest, canvasInspectionRequest, canvasInspectionResultSchema, canvasToolCatalogSchema, projectCanvasSurfaces, sameCanvasCatalog, canvasPlanResultSchema } from './canvas-contract.ts';
 import type { CanvasPlanRequest, CanvasInspectionRequest, CanvasToolCatalog } from './canvas-contract.ts';
+import {canvasConnectionCheckSchema} from './canvas-setup-schema.ts';
+import type {CanvasConnectionCheck} from './canvas-setup-schema.ts';
 
 export interface CanvasConfig { root: string; digest: string; instance: string; }
 export interface CanvasConnection { configured: boolean; root: string; digest: string; instance?: string; connected: boolean; code: string; message: string; compat: unknown; }
-type Instance = { instanceId: string; origin: string };
+type Instance = { instanceId: string; origin: string; appVersion?: string };
 type CliClient = { selectInstance(id: string): Promise<Instance>; requestAgentControl(instance: Instance, path: string, options?: { accessToken?: string; method?: 'POST'; body?: unknown; timeoutMs?: number }): Promise<{ data: Record<string, unknown>; ok: boolean }> };
 type CliDiscovery = { discoverInstances(): Promise<Instance[]> };
 type CliStore = { loadSession(id: string): { accessToken: string; expiresAt: string } | null };
@@ -183,16 +185,46 @@ export class CanvasBridge {
       return { configured: true, root: this.config.root, digest: this.config.digest, instance: this.config.instance, connected: false, code: safe.code, message: safe.message, compat: null };
     }
   }
+  /** Owner UI diagnosis only. Native exact handshake, no pairing or credential-store reads. */
+  async connectionCheck():Promise<CanvasConnectionCheck>{
+    let instances:CanvasConnectionCheck['instances']=[];
+    const result=(state:CanvasConnectionCheck['state'],code:string,message:string)=>canvasConnectionCheckSchema.parse({binding:this.config,state,code,message,instances});
+    try{
+      const {client,discovery}=this.load(),live=await discovery.discoverInstances();
+      for(const item of live.slice(0,16)){
+        try{const value={id:item.instanceId,version:String(item.appVersion??'').slice(0,64),port:Number(new URL(item.origin).port)};
+          const parsed=canvasConnectionCheckSchema.shape.instances.element.safeParse(value);if(parsed.success)instances.push(parsed.data);
+        }catch{/* No untrusted discovery detail is returned. */}
+      }
+      if(live.length>16)return result('error','TOO_MANY_INSTANCES','检测到过多画布窗口。请关闭不使用的画布后重新检测。');
+      if(!live.length)return result('not-running','APP_NOT_RUNNING','尚未找到运行中的画布。请启动桌面画布，再点击“重新检测”。');
+      if(this.config.instance&&!live.some(item=>item.instanceId===this.config.instance))return result('choose-instance','INSTANCE_CHANGED','原先连接的画布已关闭或重启，请从下方选择当前窗口。');
+      if(!this.config.instance&&live.length>1)return result('choose-instance','APP_INSTANCE_AMBIGUOUS','检测到多个运行中的画布，请选择本次要使用的窗口。无需填写实例 ID。');
+      this.load();await client.selectInstance(this.config.instance);this.load();
+      return result('ready','COMPATIBLE','画布版本与连接工具匹配，可以在下方完成窗口配对。');
+    }catch(error){
+      const safe=safeCanvasError(error);
+      if(safe.code==='CLI_CHANGED'||safe.code==='ENOENT')return result('needs-review',safe.code,'连接工具已更新或移动。请重新检测，选择正在运行的桌面画布并连接。');
+      if(safe.code.endsWith('_MISMATCH')||safe.code==='APP_VERSION_INCOMPATIBLE')return result('incompatible',safe.code,'当前连接工具与画布版本不同。请点击“重新检测”，优先连接“正在运行的桌面画布”。');
+      return result(safe.code==='APP_NOT_RUNNING'?'not-running':'error',safe.code,safe.message);
+    }
+  }
 }
 
 export function safeCanvasError(error: unknown): CanvasError {
   if (error instanceof CanvasError) return error;
   const code = typeof error === 'object' && error && 'code' in error ? String(error.code) : 'CANVAS_UNAVAILABLE';
   const messages: Record<string, string> = {
+    APP_NOT_RUNNING:'尚未找到运行中的画布，请启动桌面画布后在画布连接页重新检测。',
+    APP_INSTANCE_AMBIGUOUS:'检测到多个画布，请在画布连接页选择要使用的窗口。',
+    AGENT_CONTROL_TIMEOUT:'连接画布超时，请确认画布仍在运行，再在画布连接页重新检测。',
+    APP_CONNECTION_FAILED:'画布暂时无法响应，请在画布连接页重新检测。',
+    PAIRING_REQUIRED:'画布尚未完成配对，请在画布连接页连接，并在桌面画布窗口批准。',
     CREDENTIAL_STORE_BUSY: '另一进程正在更新画布配对，请稍后重试。',
     PAIRING_PROGRESS_CHANGED: '配对进度已被其他进程更新，请检查当前配对。',
     PAIRING_ALREADY_PENDING: '画布已有待确认连接，请先在画布窗口处理。',
   };
+  if(/^[A-Z][A-Z0-9_]{0,80}$/.test(code)&&code.endsWith('_MISMATCH'))return new CanvasError(code,'画布与连接工具的版本不匹配。请在画布连接页重新检测，连接正在运行的桌面画布；不要重复发起配对。');
   if (/^[A-Z][A-Z0-9_]{0,80}$/.test(code)) return new CanvasError(code, messages[code] ?? '画布操作未完成，请检查应用、配对与 CLI 兼容状态。');
   return new CanvasError('CANVAS_UNAVAILABLE', '画布操作未完成，请检查应用与连接设置。');
 }

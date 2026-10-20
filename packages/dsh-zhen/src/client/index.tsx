@@ -50,12 +50,14 @@ function Workspace({ ctx }: { ctx: Context }): React.ReactElement {
   return <div className="zhen-workspace">
     <header className="zhen-topbar">
       <div className="zhen-wordmark"><TideMark size={22}/><span>创作空间</span><span className="zhen-edition">COMMUNITY</span></div>
-      <div className="zhen-actions">
-        <button type="button" className="zhen-link" onClick={() => setSection('updates')}>更新</button>
-        <button type="button" className="zhen-link" onClick={() => setSection(section === 'home' ? 'settings' : 'home')}>{section === 'home' ? '连接与设置' : '返回首页'}</button>
+      <div className="zhen-actions zhen-wrap">
+        <button type="button" className="zhen-link" onClick={() => setSection('settings')}>模型与钱包</button>
         <button type="button" className="zhen-icon-button" aria-label="切换浅色或深色主题" onClick={() => ctx.theme.setTheme(document.body.hasAttribute('data-ds-dark-theme') ? 'light' : 'dark')}>◐</button>
       </div>
     </header>
+    <nav className="zhen-actions zhen-wrap" aria-label="创作空间导航">
+      {([['home','首页'],['connections','画布连接'],['knowledge','本地知识库'],['market','技能市场'],['tasks','任务'],['updates','更新']] as const).map(([id,label])=><button key={id} type="button" className={section===id?'zhen-secondary':'zhen-link'} aria-current={section===id?'page':undefined} onClick={()=>setSection(id)}>{label}</button>)}
+    </nav>
     <main className="zhen-content">
       {section === 'home' ? <><div className="zhen-eyebrow"><span className="zhen-line"/>YOUR IDEAS, IN MOTION</div>
       <div className="zhen-hero">

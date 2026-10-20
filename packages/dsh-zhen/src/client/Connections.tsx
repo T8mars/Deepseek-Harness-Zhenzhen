@@ -1,61 +1,76 @@
-import React, { useEffect, useState } from 'react';
-import type { ZhenRemote } from 'dsh-zhen/remote';
-import type { CanvasConnection, CanvasToolCatalog, CanvasDiscovery } from 'dsh-zhen';
-import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
-import { McpMarket } from './McpMarket.tsx';
-import { CanvasPairingPanel } from './CanvasPairing.tsx';
-import { CanvasWorkflowPanel } from './CanvasWorkflow.tsx';
-import { CanvasRunPanel } from './CanvasRun.tsx';
-function unwrap<T>(result: RemoteResult<T>): T { if (!result.ok) throw result.error; return result.value; }
+import React,{useEffect,useRef,useState} from 'react';
+import type {ZhenRemote} from 'dsh-zhen/remote';
+import type {CanvasConnection,CanvasConnectionCheck,CanvasSetupDiscovery,CanvasToolCatalog} from 'dsh-zhen';
+import type {RemoteResult} from '@deepseek-ai/dsh-typert-protocol';
+import {McpMarket} from './McpMarket.tsx';
+import {CanvasPairingPanel} from './CanvasPairing.tsx';
+import {CanvasWorkflowPanel} from './CanvasWorkflow.tsx';
+import {CanvasRunPanel} from './CanvasRun.tsx';
+import {CanvasConnectionChoices} from './CanvasConnectionChoices.tsx';
+function unwrap<T>(result:RemoteResult<T>):T{if(!result.ok)throw result.error;return result.value;}
 
-export function Connections({ api }: { api: ZhenRemote }): React.ReactElement {
-  const [status, setStatus] = useState<CanvasConnection>();
-  const [root, setRoot] = useState('');
-  const [instance, setInstance] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState('');
-  const [catalog, setCatalog] = useState<CanvasToolCatalog>();
-  const [discovery, setDiscovery] = useState<CanvasDiscovery>();
-  const [expectedDigest, setExpectedDigest] = useState('');
-  useEffect(() => { let active = true; api.canvasStatus().then(result => { if (active) { const value = unwrap(result); setStatus(value); setRoot(value.root); setInstance(value.instance ?? ''); } }).catch(() => { if (active) setNotice('连接状态暂时不可用。'); }); return () => { active = false; }; }, [api]);
-  async function action(task: () => Promise<void>): Promise<void> { setBusy(true); setNotice(''); try { await task(); } catch (error) { setNotice(error instanceof Error ? error.message : '连接未完成。'); } finally { setBusy(false); } }
+export function Connections({api}:{api:ZhenRemote}):React.ReactElement{
+  const [status,setStatus]=useState<CanvasConnection>(),[check,setCheck]=useState<CanvasConnectionCheck>();
+  const [root,setRoot]=useState(''),[instance,setInstance]=useState('');
+  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[paired,setPaired]=useState(false);
+  const [catalog,setCatalog]=useState<CanvasToolCatalog>(),[discovery,setDiscovery]=useState<CanvasSetupDiscovery>();
+  const alive=useRef(true),working=useRef(false),generation=useRef(0);
+  const activeApi=useRef(api);activeApi.current=api;
+  const compatible=check?.state==='ready';
+  async function refresh(inventory=false):Promise<void>{
+    const version=generation.current;
+    const results=await Promise.all([api.canvasStatus(),api.canvasConnectionCheck(),inventory?api.canvasSetupDiscover():Promise.resolve(undefined)]);
+    if(!alive.current||activeApi.current!==api||version!==generation.current)return;
+    const value=unwrap(results[0]);setStatus(value);setRoot(value.root);setInstance(value.instance??'');
+    let diagnosis=unwrap(results[1]);
+    const binding=diagnosis.binding;
+    if(value.configured?(!binding||value.root!==binding.root||value.digest!==binding.digest||(value.instance??'')!==binding.instance):binding!==null)diagnosis={...diagnosis,state:'error',code:'CONNECTION_CHANGED',message:'连接在检查期间发生变化，请重新检测，确认当前画布。',instances:[]};
+    setCheck(diagnosis);if(diagnosis.state!=='ready')setPaired(false);
+    if(results[2])setDiscovery(unwrap(results[2]));
+  }
+  async function action(task:()=>Promise<void>):Promise<void>{
+    if(working.current)return;working.current=true;const version=++generation.current;
+    setBusy(true);setNotice('');
+    try{await task();}catch(error){if(alive.current&&generation.current===version)setNotice(error instanceof Error?error.message:'检查未完成，请重新检测；仍有问题可展开诊断信息。');}
+    finally{if(alive.current&&generation.current===version){working.current=false;setBusy(false);}}
+  }
+  useEffect(()=>{alive.current=true;void action(()=>refresh(true));return()=>{alive.current=false;generation.current++;working.current=false;};},[api]);
+  async function connect(path:string,id='',digest=''):Promise<void>{
+    setPaired(false);setCatalog(undefined);unwrap(await api.connectCanvas(path,id,digest));if(alive.current&&activeApi.current===api)await refresh();
+  }
+  const candidates=<CanvasConnectionChoices discovery={discovery} busy={busy} onConnect={(path,digest)=>void action(()=>connect(path,'',digest))}/>;
   return <div className="zhen-settings">
+    <section className="zhen-card"><h2>MCP 与创作工具</h2><p className="zhen-muted">连接画布后，在会话里直接描述想创作的内容。方案会先交给你审阅，生成前仍会确认。</p></section>
     <section className="zhen-card">
-      <div className="zhen-section-heading"><h2>MCP 与创作工具</h2><span>内置连接器</span></div>
-      <p className="zhen-muted">将现有创作工具接入会话。每个连接器显示执行范围与来源，安装和更新后仍使用工具本身的权限。</p>
-    </section>
-    <section className="zhen-card">
-      <div className="zhen-section-heading"><h2>T8 贞贞无限画布</h2><span>{status?.connected ? '控制面在线' : status?.configured ? '已配置，等待应用' : '待连接'}</span></div>
-      <p>查看画布、节点、素材与已有任务，用画布现有的图像、视频、音频、剧本、Story 和编辑能力生成创作方案与预览。</p>
-      <p className="zhen-muted">来源：T8mars/T8-penguin-canvas 的已安装 zcanvas-cli。现提供 10 个检查与规划入口，复用版本化能力清单。方案不会直接修改画布或提交付费生成。</p>
-      <button type="button" className="zhen-secondary" disabled={busy} onClick={() => void action(async () => { setDiscovery(unwrap(await api.canvasDiscover())); })}>检测本机画布</button>
-      {discovery && <div className="zhen-margin" role="region" aria-label="检测到的画布安装">
-        <p className="zhen-muted">{discovery.candidates.length ? '找到以下安装。选择后再信任连接，兼容性以画布实际报告为准。' : '未找到完整的 Agent 工具安装。请在画布设置中安装或修复，也可手动填写已有目录。'}</p>
-        {discovery.candidates.map(candidate => <div className="zhen-card zhen-margin" key={candidate.root}>
-          <strong>画布 Agent 工具 · {candidate.cliVersion}</strong><p className="zhen-source-path">{candidate.root}</p>
-          <details><summary>版本摘要</summary><p className="zhen-source-path">CLI {candidate.digest}<br/>节点 {candidate.nodeSchemaDigest}<br/>模型 {candidate.providerCatalogDigest}</p></details>
-          <button type="button" className="zhen-secondary zhen-margin" disabled={busy} onClick={() => { setRoot(candidate.root); setExpectedDigest(candidate.digest); setNotice('已选择检测到的安装。检查目录与版本后，点击“信任此 CLI 并连接”。'); }}>选择此安装</button>
-        </div>)}
-        {discovery.issues.map((message, index) => <p key={index} className="zhen-muted">{message}</p>)}
+      <div className="zhen-section-heading"><h2>T8 贞贞无限画布</h2><span>{busy?'正在检查…':paired?'已连接':compatible?'等待窗口配对':check?.state==='choose-instance'?'请选择画布':'连接向导'}</span></div>
+      <ol><li>打开桌面画布，选择下方检测到的画布。</li><li>在桌面画布核对验证码并批准，返回完成连接。</li><li>回到会话描述创作需求，审阅方案后再应用或生成。</li></ol>
+      {check&&<p className="zhen-notice" role="status">{paired?'画布已连接。可以回到会话描述创作需求，或在下方审阅方案。':check.message}</p>}
+      <button type="button" className="zhen-secondary zhen-margin" disabled={busy} onClick={()=>void action(()=>refresh(true))}>重新检测</button>
+      {compatible?<details className="zhen-margin"><summary>更换画布或修复连接</summary>{candidates}</details>:candidates}
+      {check?.state==='choose-instance'&&<div className="zhen-margin" aria-label="选择运行中的画布">
+        {check.instances.map((item,index)=><button type="button" className="zhen-secondary zhen-margin" disabled={busy||!status?.configured} key={item.id} onClick={()=>void action(()=>connect(status!.root,item.id,status!.digest))}>使用画布 {index+1} · {item.version||'版本待确认'} · 端口 {item.port}</button>)}
       </div>}
-      <form onSubmit={event => { event.preventDefault(); void action(async () => { setCatalog(undefined); setStatus(unwrap(await api.connectCanvas(root, instance, expectedDigest))); setNotice('连接配置已保存。应用在线后，可在下方发起画布窗口配对。'); }); }}>
-        <label className="zhen-label" htmlFor="zhen-canvas-root">已安装的 zcanvas-cli 目录</label>
-        <input id="zhen-canvas-root" className="zhen-input" value={root} onChange={event => { setRoot(event.target.value); setExpectedDigest(''); }} placeholder="包含 manifest.json 和 src 的绝对目录" maxLength={4096} disabled={busy}/>
-        <p className="zhen-muted">DSH-zhen 将加载这个目录的本地 CLI 代码，复用其配对存储与兼容检查；仅选择你信任的已安装版本。目录内容变化时会要求重新连接。</p>
-        <label className="zhen-label" htmlFor="zhen-canvas-instance">实例 ID（仅多个画布实例时填写）</label>
-        <input id="zhen-canvas-instance" className="zhen-input" value={instance} onChange={event => setInstance(event.target.value)} maxLength={128} disabled={busy}/>
-        <div className="zhen-actions zhen-wrap zhen-margin"><button className="zhen-primary" disabled={busy || !root.trim()}>信任此 CLI 并连接</button><button type="button" className="zhen-secondary" disabled={busy || !status?.configured} onClick={() => void action(async () => { setCatalog(undefined); setStatus(unwrap(await api.canvasStatus())); })}>检查连接</button><button type="button" className="zhen-secondary" disabled={busy || !status?.connected} onClick={() => void action(async () => { setCatalog(undefined); setCatalog(unwrap(await api.canvasTools()) ?? undefined); })}>读取创作能力</button>{status?.configured && <button type="button" className="zhen-link" disabled={busy} onClick={() => void action(async () => { unwrap(await api.disconnectCanvas()); setCatalog(undefined); setStatus(unwrap(await api.canvasStatus())); setNotice('已断开 DSH-zhen 连接。画布中的配对可在画布端单独撤销。'); })}>断开连接</button>}</div>
-      </form>
-      {status && <p className="zhen-muted zhen-margin" role="status">{status.message} · {status.code}</p>}
-      {status?.configured && <CanvasPairingPanel key={`${status.root}:${status.digest}:${status.instance ?? ''}`} api={api} online={status.connected}/>}
-      {status?.configured && <CanvasWorkflowPanel key={`workflow:${status.root}:${status.digest}:${status.instance ?? ''}`} api={api} online={status.connected}/>}
-      {status?.configured && <CanvasRunPanel key={`run:${status.root}:${status.digest}:${status.instance ?? ''}`} api={api} online={status.connected}/>}
-      {status?.compat != null && <details><summary>画布兼容报告（原样回报）</summary><pre className="zhen-excerpt">{JSON.stringify(status.compat, null, 2)}</pre></details>}
-      {catalog && <details className="zhen-margin" open><summary>可规划的创作能力 · {catalog.tools.length} 项</summary><p className="zhen-muted">版本 {catalog.capabilityManifestVersion}。调用时保留项目、画布与能力版本；本地素材与交付预览仍需画布配对中相应的权限。</p><ul className="zhen-canvas-tool-list" tabIndex={0} aria-label="画布创作能力">{catalog.tools.map(tool => <li key={tool.name}><strong>{tool.creatorLabel}</strong> · {tool.directOperations.join(' / ')}<br/><code>{tool.name}</code></li>)}</ul></details>}
-      <details className="zhen-margin"><summary>已开放工具</summary><p className="zhen-muted">canvas_status、canvas_capabilities、canvas_workspaces、canvas_models、canvas_capability_graph、canvas_task_status、canvas_creator_session、canvas_capability_tools、canvas_inspect、canvas_plan</p></details>
+      <details className="zhen-margin"><summary>高级连接（通常不需要）</summary>
+        <form onSubmit={event=>{event.preventDefault();void action(()=>connect(root,instance));}}>
+          <label className="zhen-label" htmlFor="zhen-canvas-root">已安装的 zcanvas-cli 目录</label>
+          <input id="zhen-canvas-root" className="zhen-input" value={root} onChange={event=>setRoot(event.currentTarget.value)} maxLength={4096} disabled={busy}/>
+          <p className="zhen-muted">连接会加载此目录的本机工具代码，仅选择你信任的画布安装。目录内容变化后需要重新审阅。普通用户请优先使用上方推荐按钮。</p>
+          <label className="zhen-label" htmlFor="zhen-canvas-instance">实例 ID（仅排查时使用）</label>
+          <input id="zhen-canvas-instance" className="zhen-input" value={instance} onChange={event=>setInstance(event.currentTarget.value)} maxLength={128} disabled={busy}/>
+          <button className="zhen-secondary zhen-margin" disabled={busy||!root.trim()}>信任并使用指定目录</button>
+        </form>
+      </details>
+      {status?.configured&&<CanvasPairingPanel key={`${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible} onPairedChange={setPaired}/>}
+      {paired&&status&&<><CanvasWorkflowPanel key={`workflow:${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible}/><CanvasRunPanel key={`run:${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible}/></>}
+      {status?.configured&&<div className="zhen-actions zhen-wrap zhen-margin">
+        <button type="button" className="zhen-secondary" disabled={busy||!paired} onClick={()=>void action(async()=>setCatalog(unwrap(await api.canvasTools())??undefined))}>查看创作能力</button>
+        <button type="button" className="zhen-link" disabled={busy} onClick={()=>void action(async()=>{unwrap(await api.disconnectCanvas());setCatalog(undefined);setPaired(false);await refresh();})}>断开连接</button>
+      </div>}
+      {catalog&&<details className="zhen-margin" open><summary>可规划的创作能力 · {catalog.tools.length} 项</summary><ul className="zhen-canvas-tool-list" tabIndex={0} aria-label="画布创作能力">{catalog.tools.map(tool=><li key={tool.name}><strong>{tool.creatorLabel}</strong> · {tool.directOperations.join(' / ')}</li>)}</ul></details>}
+      <details className="zhen-margin"><summary>诊断信息</summary><p className="zhen-muted">检查代码：{check?.code??'检查中'}。服务响应、版本匹配与窗口配对是分别检查的步骤。</p>{status?.compat!=null&&<pre className="zhen-excerpt">{JSON.stringify(status.compat,null,2)}</pre>}</details>
       <a className="zhen-link" href="https://github.com/T8mars/T8-penguin-canvas" target="_blank" rel="noreferrer">打开画布项目 ↗</a>
+      {notice&&<p className="zhen-notice" role="status">{notice}</p>}
     </section>
-    {notice && <div className="zhen-notice" role="status">{notice}</div>}
     <McpMarket api={api}/>
   </div>;
 }

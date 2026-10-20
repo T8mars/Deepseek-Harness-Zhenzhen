@@ -15,6 +15,8 @@ import type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } fro
 import type { CanvasConnection } from './canvas.ts';
 import { canvasDiscoverySchema } from './canvas-discovery-schema.ts';
 import type { CanvasDiscovery } from './canvas-discovery-schema.ts';
+import {canvasSetupDiscoverySchema,canvasConnectionCheckSchema} from './canvas-setup-schema.ts';
+import type {CanvasSetupDiscovery,CanvasConnectionCheck} from './canvas-setup-schema.ts';
 import { canvasPairingSchema } from './canvas-pairing-schema.ts';
 import type { CanvasPairingView } from './canvas-pairing-schema.ts';
 import { canvasWorkflowInput, canvasWorkflowSchema, canvasWorkspacesSchema, canvasModelsQuery, canvasModelsSchema } from './canvas-workflow-schema.ts';
@@ -124,6 +126,8 @@ export interface ZhenRemote {
   marketVersions(id: string): Promise<RemoteResult<SkillPackage[]>>;
   marketFork(id: string, digest: string, body: string, version?: string): Promise<RemoteResult<string>>;
   canvasDiscover(): Promise<RemoteResult<CanvasDiscovery>>;
+  canvasSetupDiscover():Promise<RemoteResult<CanvasSetupDiscovery>>;
+  canvasConnectionCheck():Promise<RemoteResult<CanvasConnectionCheck>>;
   canvasPairingSnapshot(): Promise<RemoteResult<CanvasPairingView>>;
   canvasPairingBegin(handoff?: boolean, writable?: boolean, runnable?: boolean, assetTransfer?: boolean): Promise<RemoteResult<CanvasPairingView>>;
   canvasPairingComplete(): Promise<RemoteResult<CanvasPairingView>>;
@@ -267,6 +271,8 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/marketVersions': method('marketVersions', z.array(skillPackageSchema), 'List retained local versions.', [['id', skillId]]),
   'zhen/marketFork': method('marketFork', skillId, 'Save an independent personal skill.', [['id', skillId], ['digest', digestSchema], ['body', z.string().min(1).max(60000)], ['version', selectedVersion]]),
   'zhen/canvasDiscover': method('canvasDiscover', canvasDiscoverySchema, 'Find and fingerprint local managed Canvas CLI installations without executing them.'),
+  'zhen/canvasSetupDiscover':method('canvasSetupDiscover',canvasSetupDiscoverySchema,'Owner setup: read bounded desktop executable paths and CLI metadata; never execute candidates or pair.'),
+  'zhen/canvasConnectionCheck':method('canvasConnectionCheck',canvasConnectionCheckSchema,'Owner setup: discover live instances and perform the already-reviewed CLI exact handshake without reading credentials or pairing.'),
   'zhen/canvasPairingSnapshot': method('canvasPairingSnapshot', canvasPairingSchema, 'Read this connection UI pairing progress or verify a stored session without returning secrets.'),
   'zhen/canvasPairingBegin': method('canvasPairingBegin', canvasPairingSchema, 'Explicitly request pairing for the authoritative Canvas window to approve.', [['handoff', z.boolean().default(false)], ['writable', z.boolean().default(false)], ['runnable', z.boolean().default(false)], ['assetTransfer', z.boolean().default(false)]]),
   'zhen/canvasPairingComplete': method('canvasPairingComplete', canvasPairingSchema, 'Claim a window-approved pairing once and save only through the original CLI secureStore.'),

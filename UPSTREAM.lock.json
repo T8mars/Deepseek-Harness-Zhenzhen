@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-20T18:16:39.833Z",
+  "checkedAt": "2026-10-20T18:59:13.066Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -18,11 +18,12 @@
     "commit": "b813be15df9e3e6ce2d1316250c4602513c08d48",
     "version": "3.3.7",
     "runtimeVerified": true,
-    "runtimeVerificationScope": "Source backend only: two anonymous loopback public status GETs200; exact HTTP compatibility fields matched by native CLI. No pairing, GUI, installed application, project/business operation or paid call.",
+    "runtimeVerificationScope": "Installed desktop3.3.7: original native exact handshake and authenticated session check paired after owner explicitly selected bundled CLI; four read-only MCP tools and one ready image L0 plan passed. No apply/run/approval, user database file read, native repository/install/config/tool write or generation submission.",
     "releaseTag": "v3.3.7",
     "releaseCommit": "dc4893656379c743bd67d5de2de764b7f2d163ff",
     "releaseMetadataVerified": true,
-    "releaseAssetBytesReverified": false
+    "releaseAssetBytesReverified": false,
+    "installedCliDigest": "dbc9c5e55401bb0c9995608509092e66243ea8c08e956d12d00524697a13ba20"
   },
   "seedance": {
     "docs": "https://api.seedance.nz/docs/llms.txt",
@@ -1134,6 +1135,31 @@
       "decision": "0053",
       "verified": true,
       "scope": "Public CLI in fresh TEMP only: stop owned Host, remove dsh-zhen with scripts disabled, deep-compare complete composed configuration against its original shipped Web template; EXAMPLE PDF/DOCX unchanged. No real profile uninstall or user database/session downgrade."
+    },
+    "canvasGuidedSetup": {
+      "decision": "0055",
+      "localTests": 387,
+      "scope": "Windows bounded read-only executable path lookup plus inert bundled CLI inventory, explicit reviewed pin, native exact handshake state separate from public status. Owner-only strict Remote; no new MCP/Agent tool or automatic trust/pairing.",
+      "liveDesktopDiscoveryVerified": true,
+      "liveExactHandshakeVerified": true,
+      "liveBrowserUiVerified": false,
+      "installedBundleSha256": "a170b48d430d56d56a68823acca14acec0f644e21b9a7eab92699fb2c05e2ad7",
+      "installedViaPublicCli": true,
+      "installedEntryAndClientMatch": true,
+      "pairedSessionPreserved": true,
+      "concurrentConnectionBindingVerified": true,
+      "finalLocalTests": 387
+    },
+    "canvasChatRouting": {
+      "decision": "0055",
+      "skillVersion": "1.0.2",
+      "realFlashRequests": 4,
+      "scope": "Two initial EXAMPLE-result model turns stayed on MCP but harness lacked valid models/inspect handlers; two new turns reached a bound MCP plan after filling that harness. No shell call. Separate real installed native L0 image plan ready with zero reported canvas/provider/file effects. No real generation."
+    },
+    "realFileToolRoundtrip": {
+      "decision": "0055",
+      "realFlashRequests": 2,
+      "scope": "Default bundled Seedance Flash; published runtime and ToolRuntime read one fixed real EXAMPLE file in fresh system TEMP, return it to model, exact answer and normal stream finish; file unchanged and TEMP cleaned. No user project, Native write or official Desktop conversation proof."
     }
   }
 }

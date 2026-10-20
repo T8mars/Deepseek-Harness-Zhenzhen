@@ -1,5 +1,9 @@
 # DSH-zhen · 交接文档（给接手实现的 AGENT）
 
+> 2026-10-21检查点0055：连接向导优先检测运行桌面的配套工具，原生精确握手与配对分别显示；会话提示/内置技能统一画布MCP，修正认证策略误读及全局CLI回退。387/387、真实Flash四请求及一次真实原生L0小鸟方案通过窄范围验证；没有实际出图，见`docs/decisions/0055-guided-canvas-and-chat-routing.md`。
+
+> 2026-10-21检查点0054：真实桌面3.3.7与源码CLI图谱摘要不同；用户审阅改选安装资源CLI后，原生精确握手及会话检查通过，状态paired。完整创作仍未验；用户追加要求简化DSH连接流程，继续开发。见`docs/decisions/0054-installed-canvas-cli-selection.md`与`docs/handoffs/canvas-agent-installed-cli-compat.md`。
+
 > 2026-10-21检查点0053：dev24验收包已通过公共CLI换装到实际本机Host，默认模型/隐私、美术、连接和自有索引元信息保持；不是实际用户导入或原生窗口审批验收。见`docs/decisions/0053-verified-local-activation.md`。
 
 > 2026-10-21检查点0052：本地导入详情与画布现场交接，见`docs/decisions/0052-import-diagnostics-and-canvas-handoff.md`；完整375/375通过，打包及远端CI另行核对；实际用户Host仍dev23，不打断待确认配对。Chrome审批桥问题交画布Agent，见`docs/handoffs/canvas-agent-instance-discovery.md`。

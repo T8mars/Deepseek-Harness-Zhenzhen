@@ -26,6 +26,9 @@ import { CanvasBridge, inspectCanvasCli, safeCanvasError } from './canvas.ts';
 import type { CanvasConfig, CanvasConnection } from './canvas.ts';
 import { CanvasError } from './canvas.ts';
 import { discoverCanvasInstalls } from './canvas-discovery.ts';
+import { canvasGuidance } from './canvas-guidance.ts';
+import {discoverCanvasSetup} from './canvas-desktop-discovery.ts';
+import type {CanvasConnectionCheck,CanvasSetupDiscovery} from './canvas-setup-schema.ts';
 import type { CanvasDiscovery } from './canvas-discovery-schema.ts';
 import { CanvasPairing } from './canvas-pairing.ts';
 import { CanvasWorkflow } from './canvas-workflow.ts';
@@ -73,6 +76,7 @@ import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-sc
 export type { Wallet } from './gateway.ts';
 export type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } from './market-schema.ts';
 export type { CanvasConnection } from './canvas.ts';
+export type {CanvasConnectionCheck,CanvasSetupDiscovery} from './canvas-setup-schema.ts';
 export type { CanvasDiscovery, CanvasInstallCandidate } from './canvas-discovery-schema.ts';
 export type { CanvasPairingView } from './canvas-pairing-schema.ts';
 export type { CanvasWorkflowInput, CanvasWorkflowView, CanvasWorkspaces, CanvasModels, CanvasModelsQuery, CanvasModelKind, CanvasModelChoices } from './canvas-workflow-schema.ts';
@@ -164,6 +168,10 @@ export default class ZhenService extends TypertRemoteService {
     ctx.effect(() => () => this.canvasTransfer?.close(), 'zhen: explicit saved-media handoff');
     ctx.effect(() => () => this.artDefaults.close(), 'zhen: local default art');
     ctx.effect(() => () => { this.canvasInbox.clear(); this.canvasCaptures.clear(); }, 'zhen: process-local Canvas plan inbox');
+    ctx.inject(['systemPrompt'], inner => inner.systemPrompt.section({
+      name: 'zhen:canvas-entry', order: inner.systemPrompt.getSectionOrder('MCP_SERVERS'),
+      interpolate: false, text: () => this.canvasConfig() ? canvasGuidance : '',
+    }));
     ctx.on('tools/execute', async (execution, next) => {
       if (execution.name === 'mcp__t8canvas__canvas_plan' && execution.agent?.session.id) {
         try { const config = this.canvasConfig(); if (config) {
@@ -395,6 +403,16 @@ export default class ZhenService extends TypertRemoteService {
   }
   @Remote
   canvasDiscover(): CanvasDiscovery { return discoverCanvasInstalls(); }
+  @Remote
+  canvasSetupDiscover():Promise<CanvasSetupDiscovery>{return discoverCanvasSetup();}
+  @Remote
+  async canvasConnectionCheck():Promise<CanvasConnectionCheck>{
+    const config=this.canvasConfig();
+    if(!config)return {binding:null,state:'not-configured',code:'NOT_CONFIGURED',message:'启动桌面画布，再选择下方检测到的画布。无需查找目录或填写实例 ID。',instances:[]};
+    const result=await new CanvasBridge(config).connectionCheck(),current=this.canvasConfig();
+    if(!current||current.root!==config.root||current.digest!==config.digest||current.instance!==config.instance)return {...result,state:'error',code:'CONNECTION_CHANGED',message:'连接已被其他窗口更改，请点击“重新检测”，确认当前画布。',instances:[]};
+    return result;
+  }
   private pairings(): CanvasPairing { return this.canvasPairing ??= new CanvasPairing(dshHomePath('dsh-zhen', 'canvas-pairing.json'), () => this.canvasConfig()); }
   private async pairingOperation(work: () => Promise<CanvasPairingView>): Promise<CanvasPairingView> {
     try { return await work(); }

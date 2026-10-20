@@ -3,7 +3,7 @@ import { dirname, isAbsolute, join } from 'node:path';
 import { homedir } from 'node:os';
 import { inspectCanvasCli } from './canvas.ts';
 import { canvasDiscoverySchema, canvasInstallCandidateSchema } from './canvas-discovery-schema.ts';
-import type { CanvasDiscovery } from './canvas-discovery-schema.ts';
+import type { CanvasDiscovery, CanvasInstallCandidate } from './canvas-discovery-schema.ts';
 
 const safeVersion = (value: unknown): value is string => typeof value === 'string' && /^[0-9A-Za-z](?:[0-9A-Za-z._+-]{0,62}[0-9A-Za-z])?$/.test(value) && !value.includes('..');
 function localPath(value: string): void {
@@ -25,6 +25,16 @@ function jsonFile(path: string): Record<string, unknown> {
   const value: unknown = JSON.parse(bytes.toString('utf8'));
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('METADATA_INVALID');
   return value as Record<string, unknown>;
+}
+
+/** Inert inventory of an application-bundled CLI. Does not execute its code. */
+export function inspectCanvasInstall(root: string): CanvasInstallCandidate {
+  localPath(root);
+  const manifest=jsonFile(join(root,'manifest.json'));
+  if (!safeVersion(manifest.cliVersion)||!safeVersion(manifest.skillVersion)||manifest.responseSchema!=='t8-agent-control-response-v1'||manifest.canvasPatchProtocol!=='t8-canvas-patch-v1') throw new Error('MANIFEST_INVALID');
+  const config=inspectCanvasCli(root);
+  if(JSON.stringify(jsonFile(join(root,'manifest.json')))!==JSON.stringify(manifest))throw new Error('MANIFEST_CHANGED');
+  return canvasInstallCandidateSchema.parse({root:config.root,digest:config.digest,cliVersion:manifest.cliVersion,skillVersion:manifest.skillVersion,nodeSchemaDigest:manifest.nodeSchemaDigest,providerCatalogDigest:manifest.providerCatalogDigest});
 }
 
 /** Match the Canvas installer's documented default/managed discovery roots.

@@ -38,7 +38,7 @@ export function createCanvasMcp(bridge: CanvasReader): McpServer {
   };
   const call = (operation: CanvasOperation, id?: string) => response(() => bridge.read(operation, id), operation === 'status');
   for (const [name, operation, description] of [
-    ['canvas_status', 'status', 'Read the existing canvas status; preserve its compat report without bypassing it.'],
+    ['canvas_status', 'status', 'Read the native public compatibility report unchanged. pairingRequired:true is an authentication policy, NOT the current pairing state. Use canvas_workspaces next to check existing access; never switch to shell or another CLI.'],
     ['canvas_capabilities', 'capabilities', 'Read current canvas capabilities after the official CLI handshake.'],
     ['canvas_workspaces', 'workspaces', 'List projects and canvases allowed by the existing pairing.'],
     ['canvas_models', 'models', 'Read the canvas model catalog. Does not generate or submit.'],
