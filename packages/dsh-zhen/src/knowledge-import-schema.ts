@@ -1,0 +1,6 @@
+import {z} from 'zod';import {documentFailureCodes} from './document-error.ts';
+export const knowledgeImportIssueCode=z.enum([...documentFailureCodes,'HIDDEN_OR_LINK','EXCLUDED_DIRECTORY','UNSUPPORTED_FORMAT','FILE_TOO_LARGE','SOURCE_CHANGED','NON_TEXT','NO_TEXT','FILE_READ_FAILED']);
+const relativePath=z.string().min(1).max(4096).refine(path=>!/^[/\\]|^[a-z]:[/\\]/i.test(path)&&!path.split('/').includes('..'),'Expected a collection-relative path.');
+export const knowledgeImportReportSchema=z.object({project:z.string().min(1).max(200),collectionId:z.uuid(),epoch:z.number().int().positive(),createdAt:z.iso.datetime(),examined:z.number().int().min(0).max(5000),indexed:z.number().int().min(0).max(5000),skipped:z.number().int().min(0).max(5000),failed:z.number().int().min(0).max(5000),issues:z.array(z.object({path:relativePath,pathTruncated:z.boolean(),outcome:z.enum(['skipped','failed']),code:knowledgeImportIssueCode}).strict()).max(50),omitted:z.number().int().min(0).max(5000)}).strict().refine(value=>value.issues.length+value.omitted===value.skipped+value.failed&&value.indexed+value.skipped+value.failed<=value.examined,'Import issue counts must agree.');
+export type KnowledgeImportReport=z.infer<typeof knowledgeImportReportSchema>;
+export type KnowledgeImportIssue=KnowledgeImportReport['issues'][number];

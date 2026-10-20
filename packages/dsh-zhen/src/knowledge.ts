@@ -5,6 +5,9 @@ import { mkdirSync } from 'node:fs';
 import { dirname, resolve, relative, isAbsolute, extname, join } from 'node:path';
 import { extractPdfPages } from './pdf-text.ts';
 import {extractDocxText} from './docx-text.ts';
+import {documentFailure, documentFailureCodes} from './document-error.ts';
+import type {DocumentFailureCode} from './document-error.ts';
+import type {KnowledgeImportReport, KnowledgeImportIssue} from './knowledge-import-schema.ts';
 
 export interface KnowledgeCollection { id: string; project: string; name: string; root: string; epoch: number; enabled: boolean; cloudProvider: string; agentEnabled: boolean; documents: number; }
 export interface KnowledgeHit { id: string; collectionId: string; collectionName: string; path: string; line: number; text: string; epoch: number; page?: number; }
@@ -88,6 +91,7 @@ function inside(root: string, path: string): boolean {
 /** Own local index only. Collection authorization is evaluated on every search and citation read. */
 export class KnowledgeStore {
   private readonly db: DatabaseSync;
+  private readonly importReports = new Map<string, KnowledgeImportReport>();
   constructor(path: string) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(path);
@@ -109,7 +113,13 @@ export class KnowledgeStore {
     this.db.exec('PRAGMA user_version=3; COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); this.db.close(); throw error; }
   }
-  close(): void { this.db.close(); }
+  close(): void { this.importReports.clear(); this.db.close(); }
+  /** Local owner diagnostics only; never return stale paths after an epoch change. */
+  importReport(project: string, id: string): KnowledgeImportReport | null {
+    const collection = this.collection(project, id, true), report = this.importReports.get(id);
+    if (!collection.enabled || report?.epoch !== collection.epoch) { this.importReports.delete(id); return null; }
+    return report ? structuredClone(report) : null;
+  }
   binding(project: string): KnowledgeBinding | null {
     const row = this.db.prepare('SELECT * FROM workspace_bindings WHERE project=?').get(project);
     return row ? { project: String(row.project), root: String(row.root), epoch: Number(row.epoch) } : null;
@@ -175,33 +185,45 @@ export class KnowledgeStore {
     this.collection(project, id, true);
     if (!['', 'seedance'].includes(cloudProvider)) throw new Error('不支持该外发目标。');
     this.db.prepare("UPDATE collections SET enabled=?,cloud_provider=?,agent_enabled=CASE WHEN ?=1 AND ?='seedance' THEN agent_enabled ELSE 0 END,epoch=epoch+1 WHERE id=?").run(enabled ? 1 : 0, cloudProvider, enabled ? 1 : 0, cloudProvider, id);
+    this.importReports.delete(id);
   }
   setAgentAccess(project: string, id: string, enabled: boolean): void {
     const collection = this.collection(project, id);
     if (enabled && (collection.cloud_provider !== 'seedance' || !this.binding(project))) throw new Error('请先绑定工作目录，并允许该集合向 Seedance 提供引用。');
     this.db.prepare('UPDATE collections SET agent_enabled=?,epoch=epoch+1 WHERE id=?').run(enabled ? 1 : 0, id);
+    this.importReports.delete(id);
   }
   async index(project: string, id: string): Promise<ImportResult> {
     const collection = this.collection(project, id);
+    this.importReports.delete(id);
     const root = await realpath(collection.root);
     if (root !== collection.root) throw new Error('资料根目录已变化，请重新授权。');
     const files: string[] = [];
     let examined = 0;
     let skipped = 0;
+    let failed = 0;
+    const issues: KnowledgeImportIssue[] = [];
+    const issue = (file: string, outcome: KnowledgeImportIssue['outcome'], code: KnowledgeImportIssue['code']): void => {
+      if (outcome === 'skipped') skipped++; else failed++;
+      if (issues.length >= 50) return;
+      const path = relative(root, file).replaceAll('\\', '/');
+      let end = Math.min(path.length, 4096);
+      if (end < path.length && /[\uD800-\uDBFF]/.test(path[end - 1]!)) end--;
+      issues.push({path: path.slice(0, end), pathTruncated: end < path.length, outcome, code});
+    };
     const walk = async (directory: string): Promise<void> => {
       const entries = await opendir(directory);
       for await (const entry of entries) {
         if (++examined > 5000) throw new Error('资料条目超过 5000 个，请选择更小的文件夹。');
-        if (entry.name.startsWith('.') || entry.isSymbolicLink()) { skipped++; continue; }
         const path = join(directory, entry.name);
-        if (entry.isDirectory()) { if (!excludedDirectories.has(entry.name)) await walk(path); else skipped++; }
+        if (entry.name.startsWith('.') || entry.isSymbolicLink()) { issue(path, 'skipped', 'HIDDEN_OR_LINK'); continue; }
+        if (entry.isDirectory()) { if (!excludedDirectories.has(entry.name)) await walk(path); else issue(path, 'skipped', 'EXCLUDED_DIRECTORY'); }
         else if (entry.isFile() && allowedExtensions.has(extname(entry.name).toLowerCase())) files.push(path);
-        else skipped++;
+        else issue(path, 'skipped', 'UNSUPPORTED_FORMAT');
       }
     };
     await walk(root);
     const documents: Array<{ path: string; digest: string; sections: Array<{text:string;page?:number}> }> = [];
-    let failed = 0;
     let totalBytes = 0;
     let extractedBytes = 0;
     for (const file of files) {
@@ -209,36 +231,45 @@ export class KnowledgeStore {
       if (this.collection(project, id).epoch !== collection.epoch) throw new Error('资料权限已变化，本次导入已停止。');
       try {
         const physical = await realpath(file);
-        if (!inside(root, physical) || (await lstat(file)).isSymbolicLink()) { skipped++; continue; }
-        const handle = await open(file, 'r');
+        if (!inside(root, physical) || (await lstat(file)).isSymbolicLink()) { issue(file, 'skipped', 'SOURCE_CHANGED'); continue; }
+        const handle = await open(physical, 'r');
         try {
-          const stat = await handle.stat();
-          if (!stat.isFile() || stat.size > maxFileBytes) { skipped++; continue; }
+          const stat = await handle.stat({bigint: true});
+          if (!stat.isFile()) { issue(file, 'skipped', 'UNSUPPORTED_FORMAT'); continue; }
+          if (stat.size > BigInt(maxFileBytes)) { issue(file, 'skipped', 'FILE_TOO_LARGE'); continue; }
           // Fixed buffer also bounds a file that grows after fstat.
           const buffer = Buffer.alloc(maxFileBytes + 1);
           let size = 0;
           while (size < buffer.length) { const { bytesRead } = await handle.read(buffer, size, buffer.length - size, null); if (!bytesRead) break; size += bytesRead; }
-          if (size > maxFileBytes || !inside(root, await realpath(file))) { skipped++; continue; }
+          if (size > maxFileBytes) { issue(file, 'skipped', 'FILE_TOO_LARGE'); continue; }
+          const after = await lstat(file, {bigint: true});
+          if (await realpath(file) !== physical || after.isSymbolicLink() || !after.isFile() || after.dev !== stat.dev || after.ino !== stat.ino || after.size !== stat.size || BigInt(size) !== stat.size || after.mtimeNs !== stat.mtimeNs || after.ctimeNs !== stat.ctimeNs) { issue(file, 'skipped', 'SOURCE_CHANGED'); continue; }
           totalBytes += size;
           if (totalBytes > 32 * 1024 * 1024) throw new Error('IMPORT_BUDGET');
           const bytes = buffer.subarray(0, size);
           let sections:Array<{text:string;page?:number}>;
           if (extname(file).toLowerCase() === '.pdf') {
             sections = await extractPdfPages(bytes, () => { if (this.collection(project,id).epoch !== collection.epoch) throw new Error('资料权限已变化，本次导入已停止。'); });
-            if (!sections.length) { skipped++; continue; }
+            if (!sections.length) { issue(file, 'skipped', 'NO_TEXT'); continue; }
           } else if(extname(file).toLowerCase()==='.docx') {
             const text=await extractDocxText(bytes,()=>{if(this.collection(project,id).epoch!==collection.epoch)throw Error('资料权限已变化，本次导入已停止。');});
-            if(!text.trim()){skipped++;continue;}sections=[{text}];
+            if(!text.trim()){issue(file, 'skipped', 'NO_TEXT');continue;}sections=[{text}];
           } else {
-            const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-            if (text.includes('\0')) { skipped++; continue; }
+            let text: string;
+            try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+            catch { throw documentFailure('TEXT_ENCODING', '文本不是有效的 UTF-8 编码。'); }
+            if (text.includes('\0')) { issue(file, 'skipped', 'NON_TEXT'); continue; }
             sections = [{text}];
           }
           extractedBytes += sections.reduce((size,section)=>size+Buffer.byteLength(section.text),0);
           if (extractedBytes > 32 * 1024 * 1024) throw new Error('IMPORT_BUDGET');
           documents.push({ path: relative(root, file).replaceAll('\\', '/'), digest: createHash('sha256').update(bytes).digest('hex'), sections });
         } finally { await handle.close(); }
-      } catch (error) { if (error instanceof Error && error.message === 'IMPORT_BUDGET') throw new Error('本次导入超过 32 MiB，请拆分资料集合。'); failed++; }
+      } catch (error) {
+        if (error instanceof Error && error.message === 'IMPORT_BUDGET') throw new Error('本次导入超过 32 MiB，请拆分资料集合。');
+        const code = error && typeof error === 'object' && 'documentFailureCode' in error ? error.documentFailureCode : undefined;
+        issue(file, 'failed', documentFailureCodes.includes(code as DocumentFailureCode) ? code as DocumentFailureCode : 'FILE_READ_FAILED');
+      }
     }
     if (this.collection(project, id).epoch !== collection.epoch) throw new Error('资料权限已变化，本次导入已停止。');
     this.db.exec('BEGIN IMMEDIATE');
@@ -264,7 +295,10 @@ export class KnowledgeStore {
       this.db.prepare('UPDATE collections SET epoch=epoch+1 WHERE id=?').run(id);
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
-    return { indexed: documents.length, skipped, failed };
+    const result = { indexed: documents.length, skipped, failed };
+    this.importReports.set(id, {project, collectionId: id, epoch: collection.epoch + 1, createdAt: new Date().toISOString(), examined, ...result, issues, omitted: skipped + failed - issues.length});
+    while (this.importReports.size > 32) this.importReports.delete(this.importReports.keys().next().value!);
+    return result;
   }
   search(project: string, query: string, provider = ''): KnowledgeHit[] {
     if (query.length > 200) throw new Error('检索内容请控制在 200 字以内。');

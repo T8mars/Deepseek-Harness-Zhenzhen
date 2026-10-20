@@ -25,7 +25,8 @@ export function CanvasPairingPanel({ api, online }: { api: ZhenRemote; online: b
   }
   return <section className="zhen-margin" aria-label="画布窗口配对">
     <h3>画布窗口配对</h3>
-    <p className="zhen-muted">在这里发起请求，到画布窗口核对验证码并批准，再返回完成配对。无需手动运行命令。</p>
+    <p className="zhen-muted">在这里发起请求，到配套的 Electron 桌面画布窗口核对验证码并批准，再返回完成配对。无需手动运行命令。</p>
+    <p className="zhen-muted">当前画布的浏览器页面不显示桌面审批弹窗。控制面在线但没有弹窗时，请确认已打开与当前后端配套的桌面画布窗口；不要重复发起配对。</p>
     <p className="zhen-muted">默认只申请读取画布、任务和素材。修改工作流与执行生成分别申请，每次运行仍需独立核对和画布窗口批准。</p>
     {pairing?.state === 'paired' && <p className="zhen-muted">重新配对会更新该画布实例的 CLI 登录；其他使用同一工具的会话也会使用新配对。</p>}
     <label className="zhen-checkbox"><input type="checkbox" checked={assetTransfer} disabled={busy || pairing?.state === 'pending'} onChange={event => setAssetTransfer(event.currentTarget.checked)}/>额外申请素材交接权限，用于把已保存结果送入画布素材中心</label>

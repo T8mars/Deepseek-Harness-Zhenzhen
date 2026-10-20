@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-20T17:04:43.370Z",
+  "checkedAt": "2026-10-20T17:57:47.922Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1119,6 +1119,11 @@
       "installedPdfDecoderStillVerified": true,
       "ownIndexRecordsPreserved": true,
       "ownIndexSchema": 2
+    },
+    "ragImportDiagnostics": {
+      "status": "implemented; local375/375 verified",
+      "report": "Owner-only current-epoch memory report, max50 issues/32 collections, no document bodies, absolute roots, raw errors, persistence or Agent tool",
+      "verification": "Five local tests and C52 actual published Host/Gateway/ToolRuntime plus report SSR pass; full375/375 and clean declaration checks pass. Pairing guidance text additionally clarifies the existing Electron approval bridge. Package/install and real browser acceptance are separate. Query/ranking/schema and adopted8/10 historical baseline unchanged."
     }
   }
 }

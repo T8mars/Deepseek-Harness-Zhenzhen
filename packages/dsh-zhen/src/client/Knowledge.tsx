@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import type { ZhenRemote } from 'dsh-zhen/remote';
 import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, KnowledgeBinding } from 'dsh-zhen';
+import type {KnowledgeImportReport} from 'dsh-zhen';
+import {ImportReport} from './KnowledgeImportReport.tsx';
 import { SourceWindow } from './RagSources.tsx';
 import { knowledgeLocation } from './rag-location.ts';
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
@@ -11,6 +13,7 @@ export function Knowledge({ api }: { api: ZhenRemote }): React.ReactElement {
   const [collections, setCollections] = useState<KnowledgeCollection[]>([]);
   const [hits, setHits] = useState<KnowledgeHit[]>([]);
   const [source, setSource] = useState<{ project: string; value: KnowledgeSource }>();
+  const [report, setReport] = useState<KnowledgeImportReport | null>(null);
   const [name, setName] = useState('');
   const [folder, setFolder] = useState('');
   const [query, setQuery] = useState('');
@@ -19,7 +22,7 @@ export function Knowledge({ api }: { api: ZhenRemote }): React.ReactElement {
   const [binding, setBinding] = useState<KnowledgeBinding | null>(null);
   const [workspace, setWorkspace] = useState('');
   useEffect(() => {
-    let active = true; setHits([]); setSource(undefined);
+    let active = true; setHits([]); setSource(undefined); setReport(null);
     api.knowledgeCollections(project).then(result => { if (active) setCollections(unwrap(result)); }).catch(() => { if (active) setNotice('无法读取资料集合。'); });
     setBinding(null); setWorkspace('');
     api.knowledgeBinding(project).then(result => { if (active) { const value = unwrap(result); setBinding(value); setWorkspace(value?.root ?? ''); } }).catch(() => { if (active) setNotice('无法读取会话绑定。'); });
@@ -31,10 +34,19 @@ export function Knowledge({ api }: { api: ZhenRemote }): React.ReactElement {
     catch (error) { setNotice(error instanceof Error ? error.message : '操作未完成。'); try { setCollections(unwrap(await api.knowledgeCollections(project))); } catch {} }
     finally { setBusy(false); }
   }
+  async function readReport(collectionId: string, afterImport = false): Promise<void> {
+    try {
+      const next = unwrap(await api.knowledgeImportReport(project, collectionId)); setReport(next);
+      if (!next && !afterImport) setNotice('当前没有导入报告。报告在本次运行期间保留，可更新索引后查看。');
+    } catch (error) {
+      if (!afterImport) throw error;
+      setNotice(previous => previous + ' 导入详情暂时无法读取，可稍后点击“查看导入详情”。');
+    }
+  }
   return <div className="zhen-settings">
     <section className="zhen-card"><h2>你的资料，留在本地</h2><p className="zhen-muted">导入 Markdown、TXT、CSV、JSON、DOCX 正文或带文字层的 PDF，按中文关键词查找。单文件上限 2 MiB，每次原文件和提取文本分别最多 32 MiB。PDF 最多 200 页、提取文字最多 2 MiB，单次解析限时 30 秒；无文字扫描件会跳过，密码保护或解析失败的文件计入失败，当前不做 OCR。Word 提取正文段落及表格，引用为提取文本行；不还原页码、自动编号、脚注、页眉页脚、文本框或图片，旧版 DOC 和加密文档暂不支持。</p>
       <label className="zhen-label" htmlFor="zhen-project">资料所属空间</label><input className="zhen-input" id="zhen-project" value={project} disabled={busy} maxLength={200} onChange={event => setProject(event.target.value)}/>
-      <form onSubmit={event => { event.preventDefault(); void action(async () => { const collection = unwrap(await api.createKnowledge(project, name, folder)); const result = unwrap(await api.indexKnowledge(project, collection.id)); setName(''); setFolder(''); setNotice(`导入完成：${result.indexed} 个文件，跳过 ${result.skipped} 个，读取失败 ${result.failed} 个。`); }); }}>
+      <form onSubmit={event => { event.preventDefault(); void action(async () => { setReport(null); const collection = unwrap(await api.createKnowledge(project, name, folder)); const result = unwrap(await api.indexKnowledge(project, collection.id)); setName(''); setFolder(''); setNotice(`导入完成：${result.indexed} 个文件，跳过 ${result.skipped} 个，读取失败 ${result.failed} 个。`); await readReport(collection.id, true); }); }}>
         <div className="zhen-input-pair"><label className="zhen-label">集合名称<input className="zhen-input" value={name} onChange={event => setName(event.target.value)} maxLength={100} required placeholder="例如：分镜参考"/></label><label className="zhen-label">本机资料文件夹<input className="zhen-input" value={folder} onChange={event => setFolder(event.target.value)} maxLength={4096} required placeholder="粘贴完整文件夹路径"/></label></div>
         <button className="zhen-primary" disabled={busy || !project.trim()}>授权此文件夹并在本地索引</button>
         <p className="zhen-muted">此操作只读取所选目录中的文本。不会把资料上传给模型。</p>
@@ -47,11 +59,13 @@ export function Knowledge({ api }: { api: ZhenRemote }): React.ReactElement {
     {collections.map(collection => <section className="zhen-card" key={collection.id}>
       <div className="zhen-section-heading"><h2>{collection.name}</h2><span>{collection.enabled ? '可检索' : '已撤回'} · {collection.documents} 个文件</span></div>
       <p className="zhen-source-path">{collection.root}</p><div className="zhen-actions zhen-wrap">
-        <button className="zhen-secondary" disabled={busy || !collection.enabled} onClick={() => void action(async () => { const result = unwrap(await api.indexKnowledge(project, collection.id)); setHits([]); setNotice(`重新索引：${result.indexed} 个文件，跳过 ${result.skipped} 个，失败 ${result.failed} 个。`); })}>更新索引</button>
+        <button className="zhen-secondary" disabled={busy || !collection.enabled} onClick={() => void action(async () => { setReport(null); const result = unwrap(await api.indexKnowledge(project, collection.id)); setHits([]); setNotice(`重新索引：${result.indexed} 个文件，跳过 ${result.skipped} 个，失败 ${result.failed} 个。`); await readReport(collection.id, true); })}>更新索引</button>
+        <button className="zhen-secondary" disabled={busy || !collection.enabled} onClick={() => void action(() => readReport(collection.id))}>查看导入详情</button>
         <button className="zhen-link" disabled={busy} onClick={() => void action(async () => { unwrap(await api.setKnowledgeAccess(project, collection.id, !collection.enabled, '')); setHits([]); })}>{collection.enabled ? '撤回访问' : '重新允许本地检索'}</button>
       </div>
       <label className="zhen-checkbox"><input type="checkbox" disabled={busy || !collection.enabled} checked={collection.cloudProvider === 'seedance'} onChange={event => { const allowed = event.target.checked; void action(async () => { unwrap(await api.setKnowledgeAccess(project, collection.id, true, allowed ? 'seedance' : '')); setHits([]); }); }}/>允许选中引用发送给 Seedance。资料全文仍保留在本地。</label>
       <label className="zhen-checkbox"><input type="checkbox" disabled={busy || !binding || !collection.enabled || collection.cloudProvider !== 'seedance'} checked={collection.agentEnabled} onChange={event => { const enabled = event.target.checked; void action(async () => { unwrap(await api.setKnowledgeAgentAccess(project, collection.id, enabled)); setHits([]); }); }}/>另行允许已绑定工作目录中的 Seedance 会话自动检索此集合片段。</label>
+      {report && report.project === project && report.collectionId === collection.id && collection.enabled && report.epoch === collection.epoch && <ImportReport report={report}/>}
     </section>)}
     <section className="zhen-card"><h2>查找资料</h2><p className="zhen-muted">可输入人物、专名、关键词或常见中文问题。空格分开的关键词需全部匹配；问句会尝试词语匹配，请核对片段是否涵盖你的问题。优先展示不同文件，最多返回 12 个片段。</p><form className="zhen-input-row zhen-margin" onSubmit={event => { event.preventDefault(); void action(async () => { const result = unwrap(await api.searchKnowledge(project, query)); setHits(result); if (!result.length) setNotice('没有找到匹配资料。试试更短的关键词，或检查集合访问状态。'); }); }}><input aria-label="知识库检索内容" value={query} onChange={event => setQuery(event.target.value)} maxLength={200} placeholder="例如：如何用场景转折表现人物动机？"/><button className="zhen-primary" disabled={busy || !query.trim() || !project.trim()}>本地检索</button></form></section>
     {hits.map(hit => <article className="zhen-card" key={hit.id}><div className="zhen-section-heading"><h2>{hit.collectionName}</h2><span>{knowledgeLocation(hit)}</span></div><pre className="zhen-excerpt">{hit.text}</pre><div className="zhen-actions zhen-wrap"><button type="button" className="zhen-secondary" disabled={busy} onClick={() => void action(async () => { setSource(undefined); const value = unwrap(await api.knowledgeSource(project, hit.id, hit.epoch)); setSource({ project, value }); })}>查看来源上下文</button><button type="button" className="zhen-secondary" disabled={busy || collections.find(collection => collection.id === hit.collectionId)?.cloudProvider !== 'seedance'} onClick={() => void action(async () => { const current = unwrap(await api.knowledgeCitation(project, hit.id, hit.epoch, 'seedance')); await navigator.clipboard.writeText(`[资料引用：${knowledgeLocation(current)}]\n${current.text}`); setNotice('已复制获准引用。可粘贴到 Seedance 会话中；尚未自动发送。'); })}>复制获准引用</button></div></article>)}

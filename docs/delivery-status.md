@@ -1,6 +1,6 @@
 # DSH-zhen 当前交付状态
 
-2026-10-21，开发检查点0051。项目可本地运行，整体仍在开发，尚未完成稳定版交付。
+2026-10-21，开发检查点0052。项目可本地运行，整体仍在开发，尚未完成稳定版交付。
 本文按原始需求区分实现与验收，不将接口目录、模拟调用或代码备份写成完整功能验收。
 
 | 需求 | 已验证 | 待验证 | 未验证或尚未实现 |
@@ -22,6 +22,8 @@
 画布侧事项请将 [3.3.7复核交接](handoffs/canvas-agent-v3.3.7-review.md) 交给其负责 Agent；
 本文件不授权画布发版、改变仓库可见性或自动发生费用。
 
-实现与验证细节见 [0051](decisions/0051-docx-local-rag.md)、[0050](decisions/0050-canvas-reference-workflows.md)、[0049](decisions/0049-native-model-workflows.md)、[0048](decisions/0048-pdf-cold-start-budget.md)、[0047](decisions/0047-pdf-local-rag.md)、[0046](decisions/0046-immutable-fixture-checkout.md)、[0045](decisions/0045-public-anonymous-host.md)、[0044](decisions/0044-published-skill-update.md)、[0043](decisions/0043-mcp-session-filesystem.md)、[0042](decisions/0042-source-auto-build.md)、[0041](decisions/0041-rag-compound-words.md)、[0040](decisions/0040-canvas337-readonly-review.md)、[0039](decisions/0039-source-checkout-updates.md)、[源码更新](source-updates.md)、[0038](decisions/0038-rag-chinese-questions.md)、[0037](decisions/0037-chat-image-inputs.md)、[0036](decisions/0036-seedance-credential-events.md)、[0035](decisions/0035-one-click-source-start.md)、
+实现与验证细节见 [0052](decisions/0052-import-diagnostics-and-canvas-handoff.md)、[0051](decisions/0051-docx-local-rag.md)、[0050](decisions/0050-canvas-reference-workflows.md)、[0049](decisions/0049-native-model-workflows.md)、[0048](decisions/0048-pdf-cold-start-budget.md)、[0047](decisions/0047-pdf-local-rag.md)、[0046](decisions/0046-immutable-fixture-checkout.md)、[0045](decisions/0045-public-anonymous-host.md)、[0044](decisions/0044-published-skill-update.md)、[0043](decisions/0043-mcp-session-filesystem.md)、[0042](decisions/0042-source-auto-build.md)、[0041](decisions/0041-rag-compound-words.md)、[0040](decisions/0040-canvas337-readonly-review.md)、[0039](decisions/0039-source-checkout-updates.md)、[源码更新](source-updates.md)、[0038](decisions/0038-rag-chinese-questions.md)、[0037](decisions/0037-chat-image-inputs.md)、[0036](decisions/0036-seedance-credential-events.md)、[0035](decisions/0035-one-click-source-start.md)、
 [0034](decisions/0034-rag-source-context.md)、[功能状态](../features.json) 与
 [上游锁](../UPSTREAM.lock.json)。本机日志和个人资料不进入 GitHub。
+
+现场连接补充：用户已看到实际DSH界面，并审阅改选源码CLI，公开状态OK。旧已安装CLI的实例截断/资源不同步与Chrome无Electron审批桥，见[当前交接](handoffs/canvas-agent-instance-discovery.md)。请求已生成验证码，尚未完成画布窗口配对，不能把控制面OK当作业务验收。新增本地导入诊断的实际用户Host换装/浏览器验收另行记录。

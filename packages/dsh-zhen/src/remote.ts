@@ -6,6 +6,8 @@ import type { Wallet, ZhenStatus } from './index.ts';
 import { githubAccessSchema, githubCredentialValue } from './github-access-schema.ts';
 import type { GithubAccessInfo } from './github-access-schema.ts';
 import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
+import {knowledgeImportReportSchema} from './knowledge-import-schema.ts';
+import type {KnowledgeImportReport} from './knowledge-import-schema.ts';
 import { ragSourceSchema } from './rag-schema.ts';
 export { ragPresentationSchema } from './rag-schema.ts';
 import { skillId, digestSchema, marketItemSchema, skillPackageSchema, skillFeedSnapshotSchema, skillAutoPolicySchema } from './market-schema.ts';
@@ -164,6 +166,7 @@ export interface ZhenRemote {
   knowledgeCollections(project: string): Promise<RemoteResult<KnowledgeCollection[]>>;
   createKnowledge(project: string, name: string, folder: string): Promise<RemoteResult<KnowledgeCollection>>;
   indexKnowledge(project: string, collectionId: string): Promise<RemoteResult<ImportResult>>;
+  knowledgeImportReport(project: string, collectionId: string): Promise<RemoteResult<KnowledgeImportReport | null>>;
   searchKnowledge(project: string, query: string): Promise<RemoteResult<KnowledgeHit[]>>;
   setKnowledgeAccess(project: string, collectionId: string, enabled: boolean, cloudProvider: string): Promise<RemoteResult<void>>;
   knowledgeCitation(project: string, hitId: string, epoch: number, provider: string): Promise<RemoteResult<KnowledgeHit>>;
@@ -306,6 +309,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/knowledgeCollections': method('knowledgeCollections', z.array(collectionSchema), 'List local collections.', [['project', projectInput]]),
   'zhen/createKnowledge': method('createKnowledge', collectionSchema, 'Authorize a local folder.', [['project', projectInput], ['name', z.string().min(1).max(100)], ['folder', z.string().min(1).max(4096)]]),
   'zhen/indexKnowledge': method('indexKnowledge', importSchema, 'Index an authorized local collection.', [['project', projectInput], ['collectionId', z.string().uuid()]]),
+  'zhen/knowledgeImportReport': method('knowledgeImportReport', knowledgeImportReportSchema.nullable(), 'Read bounded local import diagnostics for the current collection revision.', [['project', projectInput], ['collectionId', z.string().uuid()]]),
   'zhen/searchKnowledge': method('searchKnowledge', z.array(hitSchema), 'Search only the selected project.', [['project', projectInput], ['query', z.string().max(200)]]),
   'zhen/setKnowledgeAccess': method('setKnowledgeAccess', z.void(), 'Change collection permissions.', [['project', projectInput], ['collectionId', z.string().uuid()], ['enabled', z.boolean()], ['cloudProvider', z.enum(['', 'seedance'])]]),
   'zhen/knowledgeCitation': method('knowledgeCitation', hitSchema, 'Revalidate a citation before use.', [['project', projectInput], ['hitId', z.string().uuid()], ['epoch', z.number().int().positive()], ['provider', z.literal('seedance')]]),

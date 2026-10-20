@@ -9,6 +9,7 @@ import type {} from './remote.ts';
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths';
 import { KnowledgeStore } from './knowledge.ts';
 import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
+import type {KnowledgeImportReport} from './knowledge-import-schema.ts';
 import type {} from '@deepseek-ai/dsh-host-webserver';
 import type {} from '@deepseek-ai/dsh-skill';
 import { SkillMarket, readBundledCatalog } from './market.ts';
@@ -88,6 +89,7 @@ export type { KnowledgeBinding } from './knowledge.ts';
 export type { McpMarketView } from './mcp-market-schema.ts';
 export type { CapabilityCatalog, CapabilityItem, CapabilityCheck } from './capability-schema.ts';
 export type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
+export type {KnowledgeImportReport, KnowledgeImportIssue} from './knowledge-import-schema.ts';
 export type { GatewayCheckPreview, GatewayCheckReceipt } from './gateway-check-schema.ts';
 export type { LocalSkillDraft, LocalSkillView, LocalSkillBody, LocalSkillMode } from './local-skills-schema.ts';
 export type { GithubSkillSpec, GithubSkillSourceView, GithubSkillSummary, GithubSkillPreview, GithubSkillFilePreview } from './github-skills-schema.ts';
@@ -588,6 +590,10 @@ export default class ZhenService extends TypertRemoteService {
   /** Index only text files inside an authorized collection. */
   @Remote
   async indexKnowledge(project: string, collectionId: string): Promise<ImportResult> { return this.knowledge().index(project, collectionId); }
+
+  /** Read bounded local diagnostics for the current collection revision only. */
+  @Remote
+  knowledgeImportReport(project: string, collectionId: string): KnowledgeImportReport | null { return this.knowledge().importReport(project, collectionId); }
 
   /** Search within the selected project's enabled local collections. */
   @Remote
