@@ -13,6 +13,9 @@ import type {} from '@deepseek-ai/dsh-host-webserver';
 import type {} from '@deepseek-ai/dsh-skill';
 import { SkillMarket, readBundledCatalog } from './market.ts';
 import { SkillFeed } from './skill-feed.ts';
+import { GithubAccess } from './github-access.ts';
+import { FIRST_PARTY_REPOSITORY, githubCredentialValue } from './github-access-schema.ts';
+import type { GithubAccessInfo } from './github-access-schema.ts';
 import type { MarketItem, SkillPackage, SkillAutoPolicy } from './market-schema.ts';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -78,6 +81,7 @@ export type { DefaultArtInfo, DefaultArtAsset, DefaultArtChunkRequest, DefaultAr
 export type { CanvasTransferInput, CanvasTransferView } from './canvas-transfer-schema.ts';
 export type { CanvasToolCatalog } from './canvas-contract.ts';
 export type { UpdateReport } from './update-schema.ts';
+export type { GithubAccessInfo } from './github-access-schema.ts';
 export type { KnowledgeBinding } from './knowledge.ts';
 export type { McpMarketView } from './mcp-market-schema.ts';
 export type { CapabilityCatalog, CapabilityItem, CapabilityCheck } from './capability-schema.ts';
@@ -101,6 +105,7 @@ declare module '@deepseek-ai/cordis' {
 }
 
 const seedanceCredential = credentialRef('SEEDANCE_API_KEY');
+const githubCredential = credentialRef('DSH_ZHEN_GITHUB_TOKEN');
 
 /** Creator workspace Host operations, guarded by DSH's authenticated Remote access. */
 export default class ZhenService extends TypertRemoteService {
@@ -108,6 +113,7 @@ export default class ZhenService extends TypertRemoteService {
   private knowledgeStore?: KnowledgeStore;
   private skillMarket?: SkillMarket;
   private skillFeed?: SkillFeed;
+  private githubReader?: GithubAccess;
   private mountCanvas?: (config?: CanvasConfig) => Promise<void>;
   private updateMonitor?: UpdateMonitor;
   private mcpMarket?: McpMarket;
@@ -136,6 +142,8 @@ export default class ZhenService extends TypertRemoteService {
     ctx.effect(() => () => this.gatewayChecks?.close(), 'zhen: explicit connection checks');
     ctx.effect(() => () => { this.localSkillSources?.close(); }, 'zhen: local skill directories');
     ctx.effect(() => () => { this.githubSkillSources?.close(); }, 'zhen: GitHub skill snapshots');
+    ctx.effect(() => () => { this.githubReader?.close(); }, 'zhen: fixed first-party GitHub access');
+    ctx.on('credentials/reference-updated', ref => { if (ref === githubCredential) this.githubReader?.invalidate(); });
     ctx.effect(() => () => this.mediaTasks?.close(), 'zhen: existing gateway tasks');
     ctx.effect(() => () => this.mediaExports?.close(), 'zhen: explicit media exports');
     ctx.effect(() => () => this.canvasPairing?.close(), 'zhen: explicit Canvas pairing');
@@ -308,7 +316,7 @@ export default class ZhenService extends TypertRemoteService {
   private market(): SkillMarket {
     if (!this.skillMarket) {
       this.skillMarket = new SkillMarket(dshHomePath('dsh-zhen', 'skills.sqlite'), readBundledCatalog());
-      this.skillFeed = new SkillFeed(dshHomePath('dsh-zhen', 'skills-feed.json'), this.skillMarket);
+      this.skillFeed = new SkillFeed(dshHomePath('dsh-zhen', 'skills-feed.json'), this.skillMarket, fetch, this.githubAccess());
     }
     return this.skillMarket;
   }
@@ -326,7 +334,31 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   marketPauseAuto(id: string, paused: boolean): void { this.feed().pauseAutoUpdate(id, paused); }
   private updates(): UpdateMonitor {
-    return this.updateMonitor ??= new UpdateMonitor(dshHomePath('dsh-zhen', 'updates.json'), JSON.parse(readFileSync(new URL('../catalog/runtime.json', import.meta.url), 'utf8')) as UpdateBaseline);
+    return this.updateMonitor ??= new UpdateMonitor(dshHomePath('dsh-zhen', 'updates.json'), JSON.parse(readFileSync(new URL('../catalog/runtime.json', import.meta.url), 'utf8')) as UpdateBaseline, fetch, this.githubAccess());
+  }
+  private githubAccess(): GithubAccess {
+    return this.githubReader ??= new GithubAccess(async () => {
+      if (!(await this.ctx.credentials.describe(githubCredential)).configured) return undefined;
+      return (await this.ctx.credentials.resolve(githubCredential))?.value;
+    });
+  }
+  @Remote
+  async githubAccessInfo(): Promise<GithubAccessInfo> {
+    const info = await this.ctx.credentials.describe(githubCredential);
+    return { repository: FIRST_PARTY_REPOSITORY, configured: info.configured, writable: info.writable };
+  }
+  @Remote
+  async githubSaveCredential(value: string): Promise<void> {
+    if (!githubCredentialValue.safeParse(value).success) throw new RemoteError('zhen/refused', '请输入有效 GitHub 只读凭据，不包含空格或换行。', { reason: 'INVALID_GITHUB_CREDENTIAL' });
+    this.githubReader?.invalidate();
+    try { await this.ctx.credentials.set(githubCredential, value); }
+    finally { this.githubReader?.invalidate(); }
+  }
+  @Remote
+  async githubRemoveCredential(): Promise<void> {
+    this.githubReader?.invalidate();
+    try { await this.ctx.credentials.unset(githubCredential); }
+    finally { this.githubReader?.invalidate(); }
   }
   @Remote
   updatesSnapshot(): UpdateReport { return this.updates().snapshot(); }

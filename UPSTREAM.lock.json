@@ -295,6 +295,24 @@
         "liveProviderCalls": 0
       },
       "nativeVerificationDshEntry": "282f0e90f2d6e7ebdd961663db5860e34bd2d8af4624fa6e5425dc2bb7ec9b33"
+    },
+    "optionalGithubReadAccess": {
+      "repository": "T8mars/Deepseek-Harness-Zhenzhen",
+      "credentialRef": "DSH_ZHEN_GITHUB_TOKEN",
+      "storage": "ctx.credentials only",
+      "default": "anonymous",
+      "privateTransport": "api.github.com only; fixed commit/contents/releases GET; redirect error",
+      "apiVersion": "2026-03-10",
+      "publishedContract": "C33",
+      "nativeCredentialProviderVerified": true,
+      "applicationBearerTransportVerified": false,
+      "browserVerified": false,
+      "repositoryVisibilityChanged": false,
+      "fullDshCheck": {
+        "tests": 274,
+        "passed": 274,
+        "liveProviderCalls": 0
+      }
     }
   }
 }

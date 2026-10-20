@@ -4,7 +4,7 @@
     {
       "id": "privacy-release-guard",
       "status": "implemented",
-      "verification": "Ignore patterns, local hooks, history-tree and npm file-list checks tested. Remote CI not activated."
+      "verification": "Ignore patterns, local hooks, complete commit trees and npm file lists checked. First code checkpoint/tag pushed with no private roots. Remote CI did not start because GitHub account billing/spending limits block jobs."
     },
     {
       "id": "seedance-chat",
@@ -110,7 +110,7 @@
     {
       "id": "github-update-candidates",
       "status": "in-progress",
-      "verification": "Daily Host metadata monitoring and exact published-package candidate preparation implemented. Separate read-only validation and pure write-job publisher enforce a fixed file list; 42 guide identities and 190 public template rows with key/default-value digests require hash-bound review. C15, semantic precedence, publisher, Git collection and personal-skill compatibility tests passed. Real 23-package metadata matches the lock and next is unchanged. Running Host updates are refused before mutation. Workflow is local only; a real newer release, canary, promotion and signed activation remain."
+      "verification": "Daily Host metadata monitoring and exact published-package candidate preparation implemented. Separate read-only validation and pure write-job publisher enforce a fixed file list; 42 guide identities and 190 public template rows with key/default-value digests require hash-bound review. C15, semantic precedence, publisher, Git collection and personal-skill compatibility tests passed. Real 23-package metadata matches the lock and next is unchanged. Running Host updates are refused before mutation. Workflow is now in the private repository but GitHub Actions account billing/spending limits prevent execution; a real newer release, canary, promotion and signed activation remain."
     },
     {
       "id": "signed-desktop-update",
@@ -126,6 +126,11 @@
       "id": "canvas-saved-media-transfer",
       "status": "in-progress",
       "verification": "Owned saved-result references, ordinary-file/hash checks, independent asset-transfer pairing opt-in, separate human/native import and placement approvals, and GET-only recovery implemented. C32 uses actual published Gateway owner JSON and MCP stdio with synthetic copy/ledger fixtures; separate original Native TEMP SQLite/AssetUploadManager/Blob/Patch verifies one asset/placement and lost acknowledgements without Provider calls. Real saved download, new UI/window and installed application remain unverified. Actual installed 3.3.6 control status fails missing compatibility manifest; canonical source repair is tested but unreleased. See decision0030."
+    },
+    {
+      "id": "optional-first-party-github-access",
+      "status": "in-progress",
+      "verification": "Optional fixed-repository read access uses ctx.credentials, native reference-updated invalidation and before/after checks. Private contents are pinned to the resolved commit via api.github.com; anonymous behavior remains. Seven units and C33 actual published LocalCredentialProvider/Registry/RemoteAccess/Gateway cover persisted secrets, reopen, native external revocation, strict results, non-owner refusal and model-secret isolation. C33 HTTP is synthetic. Separate real private gh CLI read matched all 15 packages and current REST raw media type. Real application Bearer transport/new UI remain unverified. Repository remains private per owner. See decision0031."
     }
   ]
 }

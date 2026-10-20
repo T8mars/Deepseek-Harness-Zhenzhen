@@ -19,6 +19,8 @@
     "repository": "https://github.com/T8mars/Deepseek-Harness-Zhenzhen",
     "branch": "main",
     "policy": "commit-and-push-validated-updates",
-    "firstCheckpointTag": "v0.1.0-dev.1"
-  }
+    "firstCheckpointTag": "v0.1.0-dev.1",
+    "latestCheckpointTag": "v0.1.0-dev.2"
+  },
+  "repositoryVisibility": "private-until-owner-explicitly-changes"
 }

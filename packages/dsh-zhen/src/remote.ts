@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { createTypertRemoteInfo } from '@deepseek-ai/dsh-typert-protocol/remote-info';
 import type { RemoteResult, TypertRemoteCodecSpec, TypertRemoteMethodSpec } from '@deepseek-ai/dsh-typert-protocol';
 import type { Wallet, ZhenStatus } from './index.ts';
+import { githubAccessSchema, githubCredentialValue } from './github-access-schema.ts';
+import type { GithubAccessInfo } from './github-access-schema.ts';
 import type { KnowledgeCollection, KnowledgeHit, ImportResult } from './knowledge.ts';
 import { skillId, digestSchema, marketItemSchema, skillPackageSchema, skillFeedSnapshotSchema, skillAutoPolicySchema } from './market-schema.ts';
 import type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } from './market-schema.ts';
@@ -48,6 +50,9 @@ import { gatewayMediaTicketSchema, gatewayMediaReceiptSchema } from './gateway-m
 import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-schema.ts';
 
 export interface ZhenRemote {
+  githubAccessInfo(): Promise<RemoteResult<GithubAccessInfo>>;
+  githubSaveCredential(value: string): Promise<RemoteResult<void>>;
+  githubRemoveCredential(): Promise<RemoteResult<void>>;
   gatewayMediaPreview(id: string): Promise<RemoteResult<GatewayMediaTicket[]>>;
   gatewayMediaSave(id: string, folder: string): Promise<RemoteResult<GatewayMediaReceipt>>;
   gatewayMediaList(): Promise<RemoteResult<GatewayMediaReceipt[]>>;
@@ -232,6 +237,9 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/mcpDisable': method('mcpDisable', z.void(), 'Block new calls immediately and drain ongoing calls.', [['id', mcpId]]),
   'zhen/mcpForget': method('mcpForget', z.void(), 'Remove a disabled connection while retaining data and installed versions.', [['id', mcpId]]),
   'zhen/status': method('status', statusSchema, 'Read provider credential presence without a paid request.'),
+  'zhen/githubAccessInfo': method('githubAccessInfo', githubAccessSchema, 'Read first-party GitHub credential presence only.'),
+  'zhen/githubSaveCredential': method('githubSaveCredential', z.void(), 'Save a first-party GitHub read credential through Host credentials.', [['value', githubCredentialValue]]),
+  'zhen/githubRemoveCredential': method('githubRemoveCredential', z.void(), 'Remove the writable first-party GitHub credential and stop pending source reads.'),
   'zhen/saveCredential': method('saveCredential', z.void(), 'Save a credential through the Host credential service.', [['value', z.string().min(8).max(4096).regex(/^\S+$/)]]),
   'zhen/removeCredential': method('removeCredential', z.void(), 'Remove the locally stored Seedance credential.'),
   'zhen/wallet': method('wallet', walletSchema, 'Read the Seedance wallet from the Host.'),

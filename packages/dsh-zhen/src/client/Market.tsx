@@ -62,7 +62,7 @@ export function Market({ api }: { api: ZhenRemote }): React.ReactElement {
       <p role="status">{feed?.message ?? '正在读取本机目录状态…'}</p>
       {feed?.checkedAt && <p className="zhen-muted">最近检查：{new Date(feed.checkedAt).toLocaleString()}{feed.revision ? ` · 已校验提交 ${feed.revision.slice(0, 12)} · ${feed.count} 项候选` : ''}</p>}
       <label className="zhen-checkbox"><input type="checkbox" disabled={busy || !feed} checked={feed?.automatic ?? false} onChange={event => { const enabled = event.target.checked; void act(async () => { unwrap(await api.marketFeedAutomatic(enabled)); }); }}/><span>每日自动检查并下载候选正文</span></label>
-      <p className="zhen-muted">检查不附带令牌、会话或本地资料。内容固定到具体提交并校验摘要；下载不会更换正在使用的技能。</p>
+      <p className="zhen-muted">默认匿名检查；私有来源可到更新中心配置只读凭据，Host 仅向固定 GitHub API 发送。会话与本地资料不会发送。内容固定到具体提交并校验摘要；下载不会更换正在使用的技能。</p>
       <label className="zhen-checkbox"><input type="checkbox" disabled={busy || !policy} checked={policy?.enabled ?? false} onChange={event => { const enabled = event.target.checked; void act(async () => { unwrap(await api.marketAutoUpdates(enabled)); setNotice(enabled ? '已信任此发布源的纯文字更新；符合条件的已启用技能将自动安排下次启动更新。' : '已关闭自动安排，并取消自动队列；你手动审阅的待启用版本保留。'); }); }}/><span>信任此发布源，自动安排已启用技能的纯文字更新</span></label>
       <p className="zhen-muted">默认关闭。开启后不再逐版确认，更新在下次启动生效。指令会影响模型行为；不会自动安装新技能、覆盖个人副本或扩大工具权限。每日检查与自动安排可分别关闭。</p>
       {policy && policy.pendingAutomatic > 0 && <p className="zhen-margin" role="status">已有 {policy.pendingAutomatic} 项自动更新等待下次启动。请先完成当前工作，再重新启动 DSH-zhen。</p>}

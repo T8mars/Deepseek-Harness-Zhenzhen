@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname } from 'node:path';
 import { updateReportSchema } from './update-schema.ts';
 import type { UpdateSource, UpdateReport } from './update-schema.ts';
+import type { GithubAccess, GithubReadSession } from './github-access.ts';
 export interface UpdateBaseline { dsh: string; canvas: string; canvasRevision?: string; zhen: string; gateway: string; }
 type Fetcher = typeof fetch;
 const version = /^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/i;
@@ -23,7 +24,7 @@ export async function readPublic(url: string, fetcher: Fetcher = fetch, signal?:
 }
 
 /** Public metadata only. Discovery never downloads or executes application code. */
-export async function discoverUpdates(baseline: UpdateBaseline, fetcher: Fetcher = fetch, signal?: AbortSignal): Promise<UpdateSource[]> {
+export async function discoverUpdates(baseline: UpdateBaseline, fetcher: Fetcher = fetch, signal?: AbortSignal, github?: GithubAccess): Promise<UpdateSource[]> {
   const descriptors = [
     { id: 'dsh', title: 'DSH 上游', current: baseline.dsh, url: 'https://github.com/deepseek-ai/deepseek-harness/tags' },
     { id: 'canvas', title: 'T8 画布', current: baseline.canvas, url: 'https://github.com/T8mars/T8-penguin-canvas/commits/main' },
@@ -31,6 +32,7 @@ export async function discoverUpdates(baseline: UpdateBaseline, fetcher: Fetcher
     { id: 'gateway', title: 'Seedance API 文档', current: baseline.gateway.toLowerCase(), url: 'https://api.seedance.nz/docs/llms.txt' },
   ] as const;
   return Promise.all(descriptors.map(async descriptor => {
+    let source: GithubReadSession | undefined;
     try {
       let available = '', revision = '';
       if (descriptor.id === 'dsh') {
@@ -45,7 +47,8 @@ export async function discoverUpdates(baseline: UpdateBaseline, fetcher: Fetcher
         if (!version.test(pkg.version)) throw new Error('Invalid version.');
         available = pkg.version;
       } else if (descriptor.id === 'zhen') {
-        const releases: unknown = JSON.parse(await readPublic('https://api.github.com/repos/T8mars/Deepseek-Harness-Zhenzhen/releases?per_page=20', fetcher, signal));
+        source = await github?.begin(signal);
+        const releases: unknown = JSON.parse(source ? await source.releases() : await readPublic('https://api.github.com/repos/T8mars/Deepseek-Harness-Zhenzhen/releases?per_page=20', fetcher, signal));
         if (!Array.isArray(releases)) throw new Error('Invalid release list.');
         const stable = releases.find(release => release && typeof release === 'object' && release.draft === false && release.prerelease === false && typeof release.tag_name === 'string' && version.test(release.tag_name.replace(/^v/, '')));
         if (!stable) return { ...descriptor, available: '', revision: '', changed: false, state: 'unpublished' as const, message: '尚未发现正式发行版。' };
@@ -57,14 +60,14 @@ export async function discoverUpdates(baseline: UpdateBaseline, fetcher: Fetcher
       const changed = available !== descriptor.current || (descriptor.id === 'canvas' && !!baseline.canvasRevision && revision !== baseline.canvasRevision);
       return { ...descriptor, available, revision, changed, state: 'checked' as const, message: changed ? '发现候选变更，需要兼容验证。' : '与当前记录一致。' };
     } catch {
-      return { ...descriptor, available: '', revision: '', changed: false, state: 'error' as const, message: '检查暂时不可用，保留当前版本。' };
-    }
+      return { ...descriptor, available: '', revision: '', changed: false, state: 'error' as const, message: descriptor.id === 'zhen' ? 'GitHub 来源暂不可用；私有仓库可在本页配置对应仓库的只读凭据。' : '检查暂时不可用，保留当前版本。' };
+    } finally { source?.close(); }
   }));
 }
 
 export class UpdateMonitor {
   private pending?: Promise<UpdateReport>;
-  constructor(private readonly filename: string, private readonly baseline: UpdateBaseline, private readonly fetcher: Fetcher = fetch) {}
+  constructor(private readonly filename: string, private readonly baseline: UpdateBaseline, private readonly fetcher: Fetcher = fetch, private readonly github?: GithubAccess) {}
   snapshot(): UpdateReport {
     if (!existsSync(this.filename)) return { checkedAt: '', automatic: true, sources: [] };
     try { const value = readFileSync(this.filename); if (value.length > 65536) throw new Error(); return updateReportSchema.parse(JSON.parse(value.toString('utf8'))); }
@@ -79,7 +82,7 @@ export class UpdateMonitor {
   async check(signal?: AbortSignal): Promise<UpdateReport> {
     if (this.pending) return this.pending;
     const promise = (async () => {
-      const sources = await discoverUpdates(this.baseline, this.fetcher, signal);
+      const sources = await discoverUpdates(this.baseline, this.fetcher, signal, this.github);
       const value = { automatic: this.snapshot().automatic, checkedAt: new Date().toISOString(), sources };
       if (!signal?.aborted) this.save(value);
       return value;

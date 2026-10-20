@@ -10,16 +10,20 @@ The Host checks the fixed source
 [T8mars/Deepseek-Harness-Zhenzhen](https://github.com/T8mars/Deepseek-Harness-Zhenzhen)
 daily, unless disabled in the market. A manual check is also available. It reads
 the main commit, then downloads `market/skills.v1.json` at that exact commit.
-No credentials, conversation content or local documents accompany these reads.
-The source must be reachable publicly; private-repository authentication is not
-implemented. The source was unavailable during the actual Web check, and the
-local catalog continued to work.
+Anonymous reads carry no credentials, conversation content or local documents.
+The repository is intentionally private until the owner decides to make it
+public. An optional read credential in Updates supports this private phase;
+public repositories continue to work anonymously. Authenticated reads use only
+the fixed repository's GitHub API and commit-pinned contents endpoint, never a
+raw-domain request or redirect. The native DSH credential service owns storage.
+See [0031](decisions/0031-optional-private-github-reads.md).
 
 `npm run build` generates the public feed from the closed `skills/<id>/` folders.
 Each folder contains only SKILL.md and manifest.json. The feed includes complete
 instruction packages with exact versions and SHA-256 bodies; it does not scan
 other workspace documents. Publishing the reviewed feed to the designated
-repository is a separate operation and has not occurred locally.
+repository is a separate operation. The initial development checkpoint now
+contains the feed in the private repository; this is not a stable product release.
 
 Downloads become candidates. By default, the interface shows the current body
 next to a candidate for review; selecting a changed version stages it for the
@@ -36,7 +40,7 @@ future program/resource/license/permission support needs a separate policy.
 
 | Control | Effect |
 |---|---|
-| Daily checks/downloads | Controls future public reads; does not cancel an existing queue |
+| Daily checks/downloads | Controls future source reads; does not cancel an existing queue |
 | Trust source text updates | Automatically schedules eligible releases; turning it off cancels only automatic selections |
 | Fix this skill's selection | Pauses its automatic updates and cancels its automatic queue; manual choices remain |
 | Skip this automatic update | Cancels that exact release, including repeated checks/restarts; a later release can still be eligible |
@@ -84,10 +88,16 @@ reference/script/asset directories through the separate [local source provider](
 Curated executable MCP programs use a distinct
 [program installer and project permission lifecycle](mcp-market.md).
 
-The complete check currently passes 146 tests. C17 exercises the actual published
+C17 exercises the actual published
 DSH SkillRegistry and Host/Remote policy methods across two Host lifetimes with
 a synthetic fixed-source feed: old text stays live before restart, the new text
 appears afterward, and personal content remains unchanged. Persistence, migration,
 skip/pause/rollback, late-download opt-out, transaction failure and cache rewriting
-are also covered. The new controls' browser UI and a positive live published-feed
-update remain unverified; no remote publication occurred.
+are also covered. C33 additionally uses the published native credential provider
+and Gateway with fresh TEMP storage: optional credentials survive Host restart,
+reference updates abort pending reads, non-owner access is refused and model
+credentials stay separate. Its HTTP responses are synthetic. A separate real
+private-source read through the existing gh CLI matched all fifteen packages;
+that does not prove the application's real Bearer transport or browser UI.
+Removing the optional credential cancels old reads while retaining downloaded
+content and independent activation preferences.

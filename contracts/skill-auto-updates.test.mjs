@@ -22,7 +22,7 @@ test('C17: actual Host/SkillRegistry keeps live text and personal forks while tr
     assert.equal(url,`https://raw.githubusercontent.com/T8mars/Deepseek-Harness-Zhenzhen/${revision}/market/skills.v1.json`);
     return Response.json({schemaVersion:1,publisher:'T8mars/Deepseek-Harness-Zhenzhen',skills:[update]});
   };
-  const boot=async()=>{const context=new Context();context.provide('credentials',{resolve:async()=>{credentialReads++;throw Error('EXAMPLE_ONLY_CREDENTIAL_NOT_NEEDED');}});await context.plugin(SkillRegistry);await context.plugin(ZhenService);return context;};
+  const boot=async()=>{const context=new Context();context.provide('credentials',{describe:async ref=>{assert.equal(ref,'DSH_ZHEN_GITHUB_TOKEN');return{configured:false,writable:true};},resolve:async()=>{credentialReads++;throw Error('EXAMPLE_ONLY_CREDENTIAL_NOT_NEEDED');}});await context.plugin(SkillRegistry);await context.plugin(ZhenService);return context;};
   try{
     ctx=await boot();const service=ctx.get('zhen');
     assert.equal(service.marketAutoPolicy().enabled,false);

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import type { UpdateReport } from 'dsh-zhen';
 import type { ZhenRemote } from 'dsh-zhen/remote';
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
+import { GithubAccessPanel } from './GithubAccess.tsx';
 function unwrap<T>(result: RemoteResult<T>): T { if (!result.ok) throw result.error; return result.value; }
 function short(value: string): string { return value.length > 45 ? value.slice(0, 20) + '…' : value; }
 
@@ -12,10 +13,11 @@ export function Updates({ api }: { api: ZhenRemote }): React.ReactElement {
   useEffect(() => { let active = true; api.updatesSnapshot().then(result => { if (active) setReport(unwrap(result)); }).catch(() => { if (active) setNotice('更新记录暂时不可用。'); }); return () => { active = false; }; }, [api]);
   async function action(task: () => Promise<void>): Promise<void> { setBusy(true); setNotice(''); try { await task(); } catch (error) { setNotice(error instanceof Error ? error.message : '检查未完成。'); } finally { setBusy(false); } }
   return <div className="zhen-settings">
+    <GithubAccessPanel api={api}/>
     <section className="zhen-card">
       <div className="zhen-section-heading"><h2>更新中心</h2><button type="button" className="zhen-primary" disabled={busy} onClick={() => void action(async () => { setReport(unwrap(await api.updatesCheck())); })}>{busy ? '正在检查…' : '检查更新'}</button></div>
       <p>分别跟进 DSH 上游、DSH-zhen、画布与网关文档，先确认变化，再验证兼容。</p>
-      <label className="zhen-checkbox"><input type="checkbox" disabled={busy || !report} checked={report?.automatic ?? false} onChange={event => { const enabled = event.target.checked; void action(async () => { unwrap(await api.updatesAutomatic(enabled)); setReport(unwrap(await api.updatesSnapshot())); }); }}/><span>每天自动检查公开版本信息</span></label>
+      <label className="zhen-checkbox"><input type="checkbox" disabled={busy || !report} checked={report?.automatic ?? false} onChange={event => { const enabled = event.target.checked; void action(async () => { unwrap(await api.updatesAutomatic(enabled)); setReport(unwrap(await api.updatesSnapshot())); }); }}/><span>每天自动检查版本信息</span></label>
       <p className="zhen-muted">检查访问 GitHub、npm 注册表与 Seedance 文档，不发送会话或本地资料。当前阶段仅发现候选更新；安装包签名与自动激活流程仍在建设中。</p>
       <p className="zhen-muted">{report?.checkedAt ? `最近检查：${new Date(report.checkedAt).toLocaleString()}` : '尚未完成首次检查。'}</p>
     </section>

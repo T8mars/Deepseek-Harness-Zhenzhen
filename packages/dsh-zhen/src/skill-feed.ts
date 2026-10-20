@@ -5,6 +5,8 @@ import { skillPackageSchema, skillFeedSnapshotSchema } from './market-schema.ts'
 import type { SkillPackage, SkillFeedSnapshot } from './market-schema.ts';
 import type { SkillMarket } from './market.ts';
 import { readPublic } from './updates.ts';
+import type { GithubAccess, GithubReadSession } from './github-access.ts';
+import { githubReadMessage } from './github-access.ts';
 
 const SOURCE = 'https://github.com/T8mars/Deepseek-Harness-Zhenzhen' as const;
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -14,14 +16,14 @@ export const skillFeedSchema = z.object({
 }).strict();
 const cacheSchema = z.object({ status: skillFeedSnapshotSchema, catalog: z.array(skillPackageSchema).max(100) }).strict();
 
-/** Fixed, unauthenticated first-party instruction source. No arbitrary URLs,
+/** Fixed first-party instruction source. No arbitrary URLs,
  * program resources or dependency installation. Optional user-scoped scheduling
  * still waits for the next Host startup; this class never changes active bodies. */
 export class SkillFeed {
   private status: SkillFeedSnapshot = { source: SOURCE, automatic: true, checkedAt: '', revision: '', state: 'idle', count: 0, message: '内置技能可离线使用；远端目录尚未检查。' };
   private catalog: SkillPackage[] = [];
   private pending?: Promise<SkillFeedSnapshot>;
-  constructor(private readonly filename: string, private readonly market: SkillMarket, private readonly fetcher: typeof fetch = fetch) {
+  constructor(private readonly filename: string, private readonly market: SkillMarket, private readonly fetcher: typeof fetch = fetch, private readonly github?: GithubAccess) {
     if (!existsSync(filename)) return;
     try {
       if (statSync(filename).size > MAX_BYTES) throw new Error();
@@ -63,20 +65,23 @@ export class SkillFeed {
   async check(signal?: AbortSignal): Promise<SkillFeedSnapshot> {
     if (this.pending) return this.pending;
     const promise = (async () => {
+      let source: GithubReadSession | undefined;
       try {
-        const commit = JSON.parse(await readPublic('https://api.github.com/repos/T8mars/Deepseek-Harness-Zhenzhen/commits/main', this.fetcher, signal, 256 * 1024));
+        source = await this.github?.begin(signal);
+        const commit = JSON.parse(source ? await source.commit() : await readPublic('https://api.github.com/repos/T8mars/Deepseek-Harness-Zhenzhen/commits/main', this.fetcher, signal, 256 * 1024));
         if (typeof commit.sha !== 'string' || !/^[a-f0-9]{40}$/.test(commit.sha)) throw new Error();
-        const remote = skillFeedSchema.parse(JSON.parse(await readPublic(`https://raw.githubusercontent.com/T8mars/Deepseek-Harness-Zhenzhen/${commit.sha}/market/skills.v1.json`, this.fetcher, signal, MAX_BYTES - 4096)));
+        const remote = skillFeedSchema.parse(JSON.parse(source ? await source.feed(commit.sha, MAX_BYTES - 4096) : await readPublic(`https://raw.githubusercontent.com/T8mars/Deepseek-Harness-Zhenzhen/${commit.sha}/market/skills.v1.json`, this.fetcher, signal, MAX_BYTES - 4096)));
         const catalog = this.market.validateRemoteCatalog(remote.skills);
+        await source?.assertCurrent();
         signal?.throwIfAborted();
         const status = { ...this.status, checkedAt: new Date().toISOString(), revision: commit.sha, state: 'checked' as const, count: catalog.length, message: '已下载并校验候选正文，可按已选更新策略安排下次启动启用；当前加载的正文保持不变。' };
         this.save(status, catalog);
         this.market.recordVerifiedFeed(catalog, commit.sha);
         this.market.offerRemoteCatalog(catalog);
         this.market.stageAutomaticUpdates(catalog, commit.sha);
-      } catch {
-        if (!signal?.aborted) this.save({ ...this.status, checkedAt: new Date().toISOString(), state: 'error', message: '远端目录暂不可用或校验未通过，保留已下载目录和当前技能。' });
-      }
+      } catch (error) {
+        if (!signal?.aborted) this.save({ ...this.status, checkedAt: new Date().toISOString(), state: 'error', message: this.github ? githubReadMessage(error) : '远端目录暂不可用或校验未通过，保留已下载目录和当前技能。' });
+      } finally { source?.close(); }
       return this.snapshot();
     })();
     this.pending = promise;
