@@ -8,6 +8,11 @@ stream: fixed text, max_tokens 32, one request, normal completion, reported usag
 41 input / 11 output tokens. No reply text or credential is retained. This is an
 isolated production-service/runtime check, not a browser or full Agent-loop test.
 
+Current narrow live evidence, using the same pinned published SDK:
+
+- [0058](decisions/0058-published-agent-loop-validation.md): an actual AgentLoop/default-model/file-tool turn completes normally in two real Flash requests; a separate Native L0 plan-to-card test is intentionally cancelled after planning.
+- [0059](decisions/0059-default-flash-image-validation.md): one real default Flash request through the actual AgentLoop and durable attachment store correctly identifies the left-to-right order of three randomly selected color blocks. The inline image matches the native projection; max_tokens is256 and the turn completes normally. This is a simple synthetic-image check, not general vision quality, other-model, browser or Desktop proof.
+
 The complete bundle config selects provider `seedance`, model
 `deepseek/deepseek-v4.1-flash`, OpenAI Chat Completions and the Host credential
 reference `SEEDANCE_API_KEY`. The gateway's [chat documentation](https://api.seedance.nz/docs/llms.txt)
@@ -23,8 +28,8 @@ for the distinction between model records, observed media actions and execution.
 
 | 已验证 | 待验证 | 未验证 |
 | --- | --- | --- |
-| `node --test contracts/seedance-stream.test.mjs`: the actual published adapter sends the full model id to loopback `/v1/chat/completions`, streams Chinese text and preserves synthetic usage 7 input / 2 output / 9 total | Gateway SSE field variation, error payloads and actual token accounting | Full live conversations, other model permissions and billing beyond the separate fixed Flash check |
-| Fragmented tool arguments assemble correctly; the real ToolRuntime executes a synthetic lookup once; its call id and result reach the second request | Real Agent loop behavior with actual gateway tool responses | Media generation, uploads, actual filesystem tools or paid tool execution |
+| `node --test contracts/seedance-stream.test.mjs`: the actual published adapter sends the full model id to loopback `/v1/chat/completions`, streams Chinese text and preserves synthetic usage 7 input / 2 output / 9 total | Gateway SSE field variation, error payloads and actual token accounting | Other-model/full UI conversations and precise billing; actual default-model file/image turns are separately recorded above |
+| Fragmented tool arguments/ToolRuntime loopback; 0058 actual published AgentLoop performs a real TEMP file read, sends its canonical tool result to Flash and completes normally | Broader tools, free-form turns and official Desktop entry | Media generation, browser uploads or paid Native tool execution |
 | Missing/revoked named credentials make no HTTP request; synthetic values pass through `ctx.credentials` | Live credential rotation and broader account scope | Credential-file layout is never depended on; real fixed wallet/Flash reads are separate checks |
 | Synthetic 401 → AUTH, 402 → PI_AI_ERROR, 429 → RATE_LIMIT, 500 → SERVER; each sends one request | Distinct 402 / quota reporting through a future supported adapter seam | Precise insufficient-balance classification |
 | Active cancellation closes the local connection; idle watchdog closes a held stream; truncated tool calls are not executable | Service-side cancellation and real streaming failure behavior | Cancellation refunds or recovery of accepted paid jobs |
@@ -39,9 +44,12 @@ checks do not establish gateway idempotency or permit retrying paid tools.
 Fifteen explicitly documented routes now declare text and image input. C37 uses
 the published durable attachment store and adapter against loopback SSE, comparing
 the actual ordered inline bytes with native request projections. The three other
-routes retain native text placeholders. Browser uploads and real vision quality
-remain unverified. Audio/video inputs, reasoning, structured output and cache
-pricing remain disabled or unverified; the one real Flash check used text only.
+routes retain native text placeholders. C60 additionally verifies that the actual
+AgentLoop preserves a default-model image through the adapter wire. Decision0059
+records one real simple-image result. Browser uploads, other-model vision and
+general visual quality remain unverified. Audio/video inputs, reasoning, structured
+output and cache pricing remain disabled or unverified. The historical0037 fixed
+connection check remains text-only; it is separate from0058/0059.
 
 ## Explicit short connection check
 

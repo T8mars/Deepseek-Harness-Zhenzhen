@@ -113,3 +113,6 @@ C58（0057）：已发布Cordis ctx.provide绑定服务到插件作用域，受�
 
 
 C59（0058）：实际已发布AgentRegistry/AgentLoop、SessionStore、SessionProjection及默认模型服务驱动作用域工具到下一轮并正常结束，使用公开create/setup/followup/whenIdle/deriveMessages/dispose。schemas省略ScopeKey读取全局，显式Agent才看到其作用域工具；ToolResultMessage的关联字段为toolCallId。真实Flash文件会话正常completed独立验证；真实Native计划测试在首份结果后刻意取消，不称正常完整创作或Desktop。所有测试会话仅全新TEMP、内存SessionStore，不修改任何上游持久化格式或真实会话。新增四个精确SDK开发依赖，753项既有锁定版本/完整性/来源保持。
+
+
+C60（0059）：公开createUserMessage的image attachment引用经实际AgentLoop、默认模型服务、LocalAttachments和pi-ai到回环HTTP，保持原生投影字节、完整模型ID和输出上限，正常completed。C37仍验证全部十五条图片路由/顺序及文本占位。独立一次真实默认Flash请求另证明简单随机色块识别；回环夹具不提供视觉质量证据。不修改上游消息/会话/附件格式或生产配置。

@@ -93,7 +93,7 @@
       "activation": "next-host-start",
       "verification": "C17 actual published SkillRegistry/Host/Remote synthetic-feed contracts remain. Decision0044 additionally reads genuinely published 1.0.0/1.0.1 GitHub bytes via an explicit existing gh CLI adapter; three actual independent Node processes verify live-old staging, new startup activation and reviewed old-version rollback/automatic pause. Personal, disabled and uninstalled choices preserved; TEMP removed. This is not production application Bearer/fetch or browser proof, and not a publisher signature."
     },
-    "seedanceProtocolVerification": "Published pi-ai loopback SSE/tool round trip/cancellation/errors/usage; explicit max_tokens compatibility. 0037: one authorized real fixed default Flash text stream passed, requestCount1; no live tools or vision test.",
+    "seedanceProtocolVerification": "Published pi-ai loopback SSE/tool round trip/cancellation/errors/usage; explicit max_tokens compatibility. 0037: one authorized real fixed default Flash text stream passed, requestCount1; no live tools or vision test. 0058 actual published AgentLoop real Flash file-tool turn completed normally; 0059 one real default-model image turn correctly identifies random color order and preserves native projection bytes, completed normally. C60 loopback regression covers that full transport seam. No all-model, browser or general vision proof.",
     "skillFeedSchema": 1,
     "skillFeedVerification": "Commit-pinned real first-party feed publication and source receipts, verified offline cache, optional trusted scheduling, immutable version and rollback checks. Decision0044 uses actual GitHub bytes via gh CLI adapter (constructed Response envelopes), five authenticated CLI reads and three Node registry/tool lifetimes. Application Bearer HTTPS and new browser controls remain unverified. Decision0045 additionally verifies the actual production Host/GithubAccess/SkillFeed path using original fetch and six anonymous HTTPS GETs after the owner made the repository public. No Response adapter; three independent Node lifetimes verify staging/activation/reviewed rollback and preserved choices. Browser and private Bearer remain unverified.",
     "mcpProgramRecipes": {
@@ -1210,6 +1210,23 @@
       "packageFiles": 150,
       "byteIdenticalToInstalled0057Archive": true,
       "reinstallOrRestartPerformed": false
+    },
+    "defaultImageVerification": {
+      "sdkVersion": "0.2.1-rc.2",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "requests": 1,
+      "maxOutputTokens": 256,
+      "httpStatus": 200,
+      "nativeProjectionBytesVerified": true,
+      "normalAgentCompletion": true,
+      "syntheticImageOnly": true,
+      "allImageRoutesLiveVerified": false,
+      "browserVerified": false,
+      "verification": "0059: actual published AgentLoop/default-model/LocalAttachments/pi-ai and native credentials; random three-color ordering matches one real response. C60 loopback tests the same native integration seam with a synthetic reply. No production code/config change or Native Canvas operation; no general vision/all-model/precise billing claim.",
+      "localTests": 399,
+      "localPassed": 399,
+      "packageFiles": 150,
+      "byteIdenticalToInstalled0057Archive": true
     }
   }
 }

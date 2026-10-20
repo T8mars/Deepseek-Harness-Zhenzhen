@@ -10,7 +10,7 @@ operation records. These are inventory counts, not executable feature counts.
 
 | Category | Planned owner | Current behavior |
 | --- | --- | --- |
-| Chat | DSH | 18 exact text routes, 15 explicit image-input routes; local streaming and native attachment contracts pass; one real fixed Flash text check passes |
+| Chat | DSH | 18 exact text routes, 15 declared image-input routes; local contracts, actual default Flash file-tool turn and one simple-image turn pass; broader models/UI remain unverified |
 | Video, image, enhancement, motion, audio | Canvas | Documented models/protocol distinctions indexed; execution adapters remain |
 | Suno, Flow Music/Lyria, Midjourney | Canvas | Distinct actions, billing SKUs, reference types, required fields, versions and synchronous exceptions indexed |
 | MiniMax H3 V2 | Canvas | Exact case-sensitive model and separate V2 protocol recorded |
@@ -29,9 +29,14 @@ about each gateway model's maximum. Native conversation model selection can
 use the configured catalog after a credential is supplied. C14 mounts the
 published adapter and confirms that each exact id is offered and sent unchanged
 to an isolated SSE fixture. C37 verifies native attachment bytes and image order
-for all 15 declared image routes. A separately authorized single real Flash text
-stream passes; real vision quality, the full Agent loop, audio/video, reasoning,
-search and structured-output support remain open. See [0037](decisions/0037-chat-image-inputs.md).
+for all15 declared image routes. C60 verifies default-model image transport through
+the actual AgentLoop. Separate real tests now include a normally completed
+AgentLoop/Flash/file-tool turn (0058) and one default Flash image with randomly
+ordered color blocks (0059). Other-model vision, general image quality, official
+Desktop/browser entry, audio/video, reasoning, search and structured output remain
+open. See [0037](decisions/0037-chat-image-inputs.md),
+[0058](decisions/0058-published-agent-loop-validation.md) and
+[0059](decisions/0059-default-flash-image-validation.md).
 
 `zhen_capabilities` gives agents a bounded, paginated metadata search without
 reading a credential or sending user data. It provides no arbitrary HTTP tool,
