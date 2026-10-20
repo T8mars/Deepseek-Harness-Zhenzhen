@@ -23,7 +23,7 @@ Each folder contains only SKILL.md and manifest.json. The feed includes complete
 instruction packages with exact versions and SHA-256 bodies; it does not scan
 other workspace documents. Publishing the reviewed feed to the designated
 repository is a separate operation. The initial development checkpoint now
-contains the feed in the private repository; this is not a stable product release.
+contains the feed in this repository; this is not a stable product release.
 
 Downloads become candidates. By default, the interface shows the current body
 next to a candidate for review; selecting a changed version stages it for the
@@ -123,3 +123,14 @@ automatic updates paused. Personal text, disabled and uninstalled choices were
 preserved; owned TEMP data/processes were removed. This verifies the downstream
 market/provider lifecycle and published data; application Bearer HTTPS remains
 unverified.
+
+
+After the owner made the repository public, decision0045 passed the complete
+production Host source-read path with original fetch: no gh adapter or fabricated
+Response envelope, six anonymous HTTPS GETs and zero secret resolutions. Three
+independent Node processes verified live-old staging, new-version activation and
+reviewed rollback with automatic pause; independent personal/disabled/uninstalled
+choices survived. TEMP data and processes were removed. Run
+`node scripts/smoke-skill-public-host.mjs --baseline <old-sha> --expected-commit <main-sha> --out-name <new-name.json>`
+for distinct evidence. The test uses an isolated Host service/registry, not the
+user browser or a physical Gateway connection; private Bearer remains unverified.

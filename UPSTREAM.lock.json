@@ -94,7 +94,7 @@
     },
     "seedanceProtocolVerification": "Published pi-ai loopback SSE/tool round trip/cancellation/errors/usage; explicit max_tokens compatibility. 0037: one authorized real fixed default Flash text stream passed, requestCount1; no live tools or vision test.",
     "skillFeedSchema": 1,
-    "skillFeedVerification": "Commit-pinned real first-party feed publication and source receipts, verified offline cache, optional trusted scheduling, immutable version and rollback checks. Decision0044 uses actual GitHub bytes via gh CLI adapter (constructed Response envelopes), five authenticated CLI reads and three Node registry/tool lifetimes. Application Bearer HTTPS and new browser controls remain unverified.",
+    "skillFeedVerification": "Commit-pinned real first-party feed publication and source receipts, verified offline cache, optional trusted scheduling, immutable version and rollback checks. Decision0044 uses actual GitHub bytes via gh CLI adapter (constructed Response envelopes), five authenticated CLI reads and three Node registry/tool lifetimes. Application Bearer HTTPS and new browser controls remain unverified. Decision0045 additionally verifies the actual production Host/GithubAccess/SkillFeed path using original fetch and six anonymous HTTPS GETs after the owner made the repository public. No Response adapter; three independent Node lifetimes verify staging/activation/reviewed rollback and preserved choices. Browser and private Bearer remain unverified.",
     "mcpProgramRecipes": {
       "memory": "2026.8.31",
       "filesystem": "2026.8.31",
@@ -323,12 +323,16 @@
       "nativeCredentialProviderVerified": true,
       "applicationBearerTransportVerified": false,
       "browserVerified": false,
-      "repositoryVisibilityChanged": false,
       "fullDshCheck": {
         "tests": 274,
         "passed": 274,
         "liveProviderCalls": 0
-      }
+      },
+      "applicationAnonymousTransportVerified": true,
+      "applicationAnonymousDecision": "0045",
+      "repositoryVisibilityChangedByThisAgent": false,
+      "ownerReportedPublic": true,
+      "actualVisibility": "public"
     },
     "canvasIntegrationDelivery": {
       "baseCommit": "e6702dc7770bcbe7d4895be22a06f4c7123a085b",
@@ -763,6 +767,34 @@
       "paidCalls": 0,
       "nativeWrites": 0,
       "applicationHttpsFetchVerified": false
+    },
+    "publicSkillHost": {
+      "decision": "0045",
+      "repositoryVisibility": "public",
+      "ownerChangedVisibility": true,
+      "visibilityChangedByThisAgent": false,
+      "baseline": "3411be420da0bdc92c88fddfea2caf0aca306ce1",
+      "revision": "88fbc0527d4629910a33a30e9a479622eb39ec95",
+      "productionHost": true,
+      "publishedNativeSkillTool": true,
+      "fetchReplaced": false,
+      "responseAdapterUsed": false,
+      "realAnonymousHttpsRequests": 6,
+      "independentProcesses": 3,
+      "activationAndReviewedRollbackVerified": true,
+      "personalDisabledAndUninstalledPreserved": true,
+      "temporaryDataAndProcessesRemoved": true,
+      "credentialResolves": 0,
+      "modelCalls": 0,
+      "paidCalls": 0,
+      "nativeWrites": 0,
+      "browserVerified": false,
+      "fullCheck": {
+        "tests": 334,
+        "passed": 334
+      },
+      "packageSha256": "9af31c6167b91b1a21a7ffd6a2da5fd2d301d2f53c37be56e355f8193928c8ab",
+      "packageUnchangedFrom0044": true
     }
   }
 }

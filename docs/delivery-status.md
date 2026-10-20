@@ -1,6 +1,6 @@
 # DSH-zhen 当前交付状态
 
-2026-10-20，开发检查点0044。项目可本地运行，整体仍在开发，尚未完成稳定版交付。
+2026-10-20，开发检查点0045。项目可本地运行，整体仍在开发，尚未完成稳定版交付。
 本文按原始需求区分实现与验收，不将接口目录、模拟调用或代码备份写成完整功能验收。
 
 | 需求 | 已验证 | 待验证 | 未验证或尚未实现 |
@@ -8,7 +8,7 @@
 | 默认 Seedance / Flash | 默认不变；18条文字路由及本地工具往返；用户授权的一次真实固定Flash短流正常结束，输入41/输出11 tokens、请求数1；15条图片声明及原生附件到实际请求字节的C37通过 | 真实多轮/工具/视觉、其他模型、错误分类及实际计费；浏览器附图交互 | 单条文本验收不证明全部模型或图片理解质量；音频/视频对话仍未实现 |
 | API 网站的其他功能 | 275条能力目录、8类已有任务查询及本机媒体导出；生产钱包读取器使用本机凭据实际GET返回200、字段解析通过；原生凭据事件撤销旧操作的C36通过 | 实际任务结算、CDN/TLS及媒体文件；钱包新交互浏览器验收 | 目录覆盖不等于图像、视频、音乐等全部生成流程可执行；钱包不证明聊天权限 |
 | 好用的鲸鱼娘界面 | 创作空间、主题与角色容器；本机已确认的独立二创包自动选择及字节传输校验；内嵌CSS换行归一后与全新GitHub检出包字节相同，客户端单独换装及本机摘要核对通过 | 新增控件的真实浏览器交互、四底色/窄屏完整验收 | 本机二创美术未随公开源码/npm分发；新克隆默认使用水纹降级。SSR与构建比较不等于浏览器实显 |
-| SKILL市场及方便更新 | 15项内置技能（带出处创作1.0.1）、仅目录变更官方CLI换装、预览/安装/停用/个人副本/保留版本；本地目录、GitHub资源快照；可选纯文字自动暂存、下次Host启动激活；实际发布的GitHub正文经gh读取适配器，在三独立进程验证暂存/新版生效/手动回退及个人选择保留 | 应用内私有仓库Bearer读取、新界面及完整创作流程 | 更广泛第三方来源、签名/撤销治理未完成；默认不信任自动更新 |
+| SKILL市场及方便更新 | 15项内置技能（带出处创作1.0.1）、仅目录变更官方CLI换装、预览/安装/停用/个人副本/保留版本；本地目录、GitHub资源快照；可选纯文字自动暂存、下次Host启动激活；实际发布的GitHub正文及生产Host原始匿名HTTPS，在三独立进程验证暂存/新版生效/手动回退及个人选择保留；无需GitHub令牌 | 新界面及完整创作流程；可选私有Bearer仍未验 | 更广泛第三方来源、签名/撤销治理未完成；默认不信任自动更新 |
 | MCP市场 | 精选memory/filesystem安装、版本固定、权限、停用/重启/修复/保留程序还原；memory真实程序临时数据修复验证；filesystem真实DSH ToolRuntime/stdio重启、修复、原程序还原后3文件及二进制字节保留；旧会话工具/资源入口撤权C43与完整334项通过 | 新界面、真实用户项目/模型与更多服务器实际运行 | 非任意来源自动执行或免审升级市场 |
 | 本地RAG | 文本导入/检索、目录绑定、独立Agent同意、撤权检查；来源卡片与上下文；授权索引内的问句连续词还原；同1007篇参考文档与未改判据：关键词8/10保持、问句7/10→8/10；负责人已采纳这套10问与80%首版基线，当前达标；C41及完整331项通过 | 真实模型引用和浏览器交互；后续实际创作项目扩展 | 首版参考基线达标不代表完整M3或通用相关性；场景与喜剧两问未达判据；PDF/OCR/向量尚未实现 |
 | 画布完整对接 | 原生Agent已接管并发布3.3.7；源码与GitHub main相符；源码后端两状态GET均200、HTTP兼容字段与CLI逐项相符；DSH兼容报告读取修正，C40及完整325项通过 | 连接页显式重新审阅新CLI，随后真人原生窗口配对；安装版及完整业务验收 | 旧CLI pin未改，当前生产连接正确拒绝CLI_CHANGED；源码状态成功不代表安装版、配对或付费创作已验。DSH Agent未修改画布 |
@@ -22,6 +22,6 @@
 画布侧事项请将 [3.3.7复核交接](handoffs/canvas-agent-v3.3.7-review.md) 交给其负责 Agent；
 本文件不授权画布发版、改变仓库可见性或自动发生费用。
 
-实现与验证细节见 [0044](decisions/0044-published-skill-update.md)、[0043](decisions/0043-mcp-session-filesystem.md)、[0042](decisions/0042-source-auto-build.md)、[0041](decisions/0041-rag-compound-words.md)、[0040](decisions/0040-canvas337-readonly-review.md)、[0039](decisions/0039-source-checkout-updates.md)、[源码更新](source-updates.md)、[0038](decisions/0038-rag-chinese-questions.md)、[0037](decisions/0037-chat-image-inputs.md)、[0036](decisions/0036-seedance-credential-events.md)、[0035](decisions/0035-one-click-source-start.md)、
+实现与验证细节见 [0045](decisions/0045-public-anonymous-host.md)、[0044](decisions/0044-published-skill-update.md)、[0043](decisions/0043-mcp-session-filesystem.md)、[0042](decisions/0042-source-auto-build.md)、[0041](decisions/0041-rag-compound-words.md)、[0040](decisions/0040-canvas337-readonly-review.md)、[0039](decisions/0039-source-checkout-updates.md)、[源码更新](source-updates.md)、[0038](decisions/0038-rag-chinese-questions.md)、[0037](decisions/0037-chat-image-inputs.md)、[0036](decisions/0036-seedance-credential-events.md)、[0035](decisions/0035-one-click-source-start.md)、
 [0034](decisions/0034-rag-source-context.md)、[功能状态](../features.json) 与
 [上游锁](../UPSTREAM.lock.json)。本机日志和个人资料不进入 GitHub。
