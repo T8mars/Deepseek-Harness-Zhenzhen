@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-20T22:55:54.323Z",
+  "checkedAt": "2026-10-20T23:13:45.120Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1276,6 +1276,42 @@
       "actualOwnHostUpdated": true,
       "ownSettingsAndIndexMetadataPreserved": true,
       "originalNativePairingPreserved": true
+    },
+    "defaultStreamLifecycle": {
+      "decision": "0062",
+      "contract": "C67",
+      "targetedTests": 3,
+      "provider": "seedance",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "realRequests": 3,
+      "realMaxTokenBudgets": [
+        16,
+        128,
+        128
+      ],
+      "realLimitEnds": [
+        "max-tokens",
+        "max-tokens"
+      ],
+      "noVisibleTextBeforeLimit": true,
+      "realCancelEnd": "aborted/user",
+      "cancelBeforeVisibleText": true,
+      "terminalFrameInCancelChunk": false,
+      "cancelRequests": 1,
+      "retryRequests": 0,
+      "realAfterTextCancelVerified": false,
+      "backendCancellationOrRefundVerified": false,
+      "reasoningReplayVerified": false,
+      "productionCodeOrConfigChanged": false,
+      "nativeWrites": 0,
+      "browserVerified": false,
+      "verification": "C67 actual published AgentLoop/default-model/pi-ai loopback verifies max-tokens without continuation, post-text user cancel/prefix retention/socket close, pre-text cancel/no fabricated answer. Real default Flash caps16/128 both end max-tokens with no visible text; first combined verifier therefore incomplete, not falsely passed. Separate first-real-delta cancel before terminal frame exits aborted/user in one request. Only metadata observed, bytes forwarded unchanged; no backend billing/refund or reasoning switch/replay claim.",
+      "localTests": 410,
+      "localPassed": 410,
+      "packageFiles": 151,
+      "localPackageSha256": "45238140737c8812df83824e2d0a82ef49eb34c2f7b3dee0402feaff88d26e51",
+      "byteIdenticalToInstalled0061Archive": true,
+      "reinstallOrRestartPerformed": false
     }
   }
 }

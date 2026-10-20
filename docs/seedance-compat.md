@@ -10,6 +10,8 @@ isolated production-service/runtime check, not a browser or full Agent-loop test
 
 Current narrow live evidence, using the same pinned published SDK:
 
+- [0062](decisions/0062-default-stream-lifecycle.md): two real default Flash requests with max_tokens16/128 end as max-tokens before visible text. A separate request is cancelled on its first actual SSE delta, before a terminal frame or visible text; Agent ends aborted/user with no replacement request. Backend stop/refund and live cancellation after visible text are unverified. C67 covers complete AgentLoop limit, post-text cancel and pre-text cancel over loopback.
+
 - [0058](decisions/0058-published-agent-loop-validation.md): an actual AgentLoop/default-model/file-tool turn completes normally in two real Flash requests; a separate Native L0 plan-to-card test is intentionally cancelled after planning.
 - [0059](decisions/0059-default-flash-image-validation.md): one real default Flash request through the actual AgentLoop and durable attachment store correctly identifies the left-to-right order of three randomly selected color blocks. The inline image matches the native projection; max_tokens is256 and the turn completes normally. This is a simple synthetic-image check, not general vision quality, other-model, browser or Desktop proof.
 
@@ -32,7 +34,7 @@ for the distinction between model records, observed media actions and execution.
 | Fragmented tool arguments/ToolRuntime loopback; 0058 actual published AgentLoop performs a real TEMP file read, sends its canonical tool result to Flash and completes normally | Broader tools, free-form turns and official Desktop entry | Media generation, browser uploads or paid Native tool execution |
 | Missing/revoked named credentials make no HTTP request; synthetic values pass through `ctx.credentials` | Live credential rotation and broader account scope | Credential-file layout is never depended on; real fixed wallet/Flash reads are separate checks |
 | Synthetic 401 → AUTH, 402 → PI_AI_ERROR, 429 → RATE_LIMIT, 500 → SERVER; each sends one request | Distinct 402 / quota reporting through a future supported adapter seam | Precise insufficient-balance classification |
-| Active cancellation closes the local connection; idle watchdog closes a held stream; truncated tool calls are not executable | Service-side cancellation and real streaming failure behavior | Cancellation refunds or recovery of accepted paid jobs |
+| C67 actual AgentLoop preserves received text on loopback cancel, exits pre-text waiting and ends max-tokens without continuation; real0062 pre-text cancellation ends aborted/user with one request | Live cancellation after visible text, service-side cancellation and broader real streaming failures | Cancellation refunds, server billing cessation or recovery of accepted paid jobs |
 
 The pinned adapter classifies provider error text and does not retain structured
 HTTP status in these failure events. A generic error must not be represented as

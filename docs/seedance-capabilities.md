@@ -72,3 +72,10 @@ sections, the chat header and the two public action registries. It is not a
 complete schema extraction of every optional parameter or undocumented API.
 The new inventory UI, native model menu after this expansion, and actual paid
 conversations remain unverified while browser access is unavailable.
+
+0062 adds actual default Flash output-limit and pre-text cancellation evidence, plus three
+published AgentLoop loopback lifecycle regressions. The two low-budget requests report
+16/128 output tokens with no visible text; a separate first-delta cancellation exits
+aborted/user without a replacement request. Observed reasoning_content field presence
+does not enable or certify reasoning switches/replay. No catalog/model/default changes;
+see [0062](decisions/0062-default-stream-lifecycle.md).

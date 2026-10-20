@@ -10,7 +10,7 @@
       "id": "seedance-chat",
       "status": "in-progress",
       "liveVerified": false,
-      "verification": "18 reviewed text routes retain the exact Flash default. C14 loopback verifies ids and text; C12 tool/revocation/error contracts remain synthetic. 0037 separately authorized exactly one real fixed Flash32 text stream: normal completion, reported41 input/11 output, no retry. Full liveVerified remains false for all-model/full-Agent/vision coverage. Fifteen documented image routes now use native attachment projection; C37 passes. Reasoning/media/structured402 and broader live verification remain. Decision0058: actual published AgentLoop plus configured default-model service performs a two-request real Flash file-tool turn, canonical result in next request, correct17 answer and normal completed. New C59 covers actual lifecycle with synthetic adapter. Fresh TEMP only; not Desktop/UI or all models.",
+      "verification": "18 reviewed text routes retain the exact Flash default. C14 loopback verifies ids and text; C12 tool/revocation/error contracts remain synthetic. 0037 separately authorized exactly one real fixed Flash32 text stream: normal completion, reported41 input/11 output, no retry. Full liveVerified remains false for all-model/full-Agent/vision coverage. Fifteen documented image routes now use native attachment projection; C37 passes. Reasoning/media/structured402 and broader live verification remain. Decision0058: actual published AgentLoop plus configured default-model service performs a two-request real Flash file-tool turn, canonical result in next request, correct17 answer and normal completed. New C59 covers actual lifecycle with synthetic adapter. Fresh TEMP only; not Desktop/UI or all models. Decision0062: actual default AgentLoop low budgets16/128 end max-tokens before visible text; separate first-delta cancel exits aborted/user without another request. C67 covers full AgentLoop limit and both cancellation timings; backend stop/refund, reasoning replay and real after-text cancel remain unverified.",
       "defaultModelLiveVerified": true
     },
     {
@@ -183,6 +183,14 @@
       "status": "in-progress",
       "verification": "Production helper/DTO and four component handlers plus actual published Host/Gateway pass five targeted tests. Real default Flash with production guidance asks between two synthetic names, completed normally. Original approved installed3.3.7 exact handshake/session/workspaces GET pass after fixing verifier /api/status allowance. Native3.3.9 source/release metadata reviewed, install/repair already implemented by Native Agent; no automatic trust or native changes. Full check/package/install/current CI separate. Full407/407; final151-file archive passes public-CLI TEMP previous-package replacement, worker/Host and complete baseline uninstall. Same artifact activated in own real DSH with settings/index metadata/art/pairing preserved. Current CI remains separate.",
       "realModelClarificationVerified": true,
+      "browserVerified": false
+    },
+    {
+      "id": "seedance-stream-lifecycle",
+      "status": "in-progress",
+      "verification": "C67 actual published AgentLoop/default-model/pi-ai loopback verifies max-tokens without continuation, post-text user cancel/prefix retention/socket close, pre-text cancel/no fabricated answer. Real default Flash caps16/128 both end max-tokens with no visible text; first combined verifier therefore incomplete, not falsely passed. Separate first-real-delta cancel before terminal frame exits aborted/user in one request. Only metadata observed, bytes forwarded unchanged; no backend billing/refund or reasoning switch/replay claim. Full410/410; same151-file archive as actual installed0061, no production source/config or Host restart. Current commit CI is checked separately.",
+      "defaultLimitLiveVerified": true,
+      "defaultPreTextCancellationLiveVerified": true,
       "browserVerified": false
     }
   ]

@@ -122,3 +122,6 @@ C61/C62/C63（0060）：真实Git检出的已知打包文本使用精确LF规则
 
 
 C64/C65/C66（0061）：Native workspaces 的 total/truncated 为可选原生元数据，DSH不补造旧响应的完整性，拒绝重复项目/画布身份及不足行数的total；实际已发布Host/Gateway/Remote验证Owner访问和严格投影。四个生产组件真实处理器验证组合身份、重排保留、目标消失清空及迟到响应失效，不将fake hooks/SSR当浏览器。3.3.9路由只读复核仍无当前窗口标志，不据此断言其他API不存在；精确握手及当前3.3.7 pin保持。
+
+
+C67（0062）：已发布AgentLoop对原生finish max-tokens直接结束turn，不自行追加请求；用户取消按aborted/user记录，正文前不制造assistant回答，正文后保留已收到片段。三个actual loopback/SDK回归检查公开followup/whenIdle/cancel及dispose和连接关闭，不修改会话格式。真实默认Flash两请求触顶和一次首SSE delta取消另验证；SSE观察器原样转交字节，终帧前取消，不宣称后端停算或退款。
