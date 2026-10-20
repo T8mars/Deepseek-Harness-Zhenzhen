@@ -1,0 +1,13 @@
+{
+  "id": "zhen-story-brief",
+  "version": "1.0.0",
+  "title": "故事创意简报",
+  "description": "把用户的故事想法整理成可继续写作的创意简报；适用于短片、短剧和品牌叙事。",
+  "category": "writing",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

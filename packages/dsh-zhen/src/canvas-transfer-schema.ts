@@ -1,0 +1,11 @@
+import { z } from 'zod';
+import { canvasEntity } from './canvas-contract.ts';
+const digest = z.string().regex(/^[a-f0-9]{64}$/);
+export const canvasTransferInput = z.object({ receiptId: z.uuid(), projectId: canvasEntity.max(160), canvasId: canvasEntity.max(160) }).strict();
+export type CanvasTransferInput = z.infer<typeof canvasTransferInput>;
+export const transferFileSchema = z.object({ name: z.string().min(1).max(240), size: z.number().int().positive().max(2 * 1024 ** 3), sha256: digest, mime: z.string().min(1).max(100) }).strict();
+export const transferAssetSchema = z.object({ id: canvasEntity, projectId: canvasEntity, contentHash: digest, kind: z.enum(['image', 'video', 'audio', 'text', 'model3d']), mime: z.string().min(1).max(100), size: z.number().int().positive().max(2 * 1024 ** 3) }).strict();
+const position = z.object({ x: z.number().finite().min(-1000000).max(1000000), y: z.number().finite().min(-1000000).max(1000000) }).strict();
+export const transferPlacementSchema = z.object({ nodeId: canvasEntity, patchId: canvasEntity, previewDigest: digest, baseRevision: z.number().int().positive(), position }).strict();
+export const canvasTransferViewSchema = canvasTransferInput.extend({ id: z.uuid(), canvasRevision: z.number().int().positive(), file: transferFileSchema, maxImportBytes: z.number().int().positive().max(2 * 1024 ** 3), stage: z.enum(['import', 'place']), phase: z.enum(['preview', 'requesting', 'pending', 'submitting', 'available', 'applied', 'denied', 'unknown', 'expired', 'reverted']), asset: transferAssetSchema.nullable(), assetSource: z.enum(['none', 'import-response', 'catalog-match']), placement: transferPlacementSchema.nullable(), approvalRequestId: z.string().max(100), expiresAt: z.iso.datetime(), submissionAttempted: z.boolean(), appliedRevision: z.number().int().positive().nullable() }).strict();
+export type CanvasTransferView = z.infer<typeof canvasTransferViewSchema>;

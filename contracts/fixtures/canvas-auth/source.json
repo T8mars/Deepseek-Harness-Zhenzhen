@@ -1,0 +1,27 @@
+{
+  "repository": "https://github.com/T8mars/T8-penguin-canvas",
+  "revision": "e6702dc7770bcbe7d4895be22a06f4c7123a085b",
+  "purpose": "Immutable original auth/client/store contracts; synthetic local pairing only. No user database, production token or approval window.",
+  "files": [
+    {
+      "source": "backend/src/services/agentControlAuth.js",
+      "file": "auth.cjs",
+      "sha256": "142232297d96e8db0dcfe8573a5bb84d6147bf6d130d0e927034a20ee75159e3"
+    },
+    {
+      "source": "tools/zcanvas-cli/src/agentClient.cjs",
+      "file": "agentClient.cjs",
+      "sha256": "41d082ab044315f8100ba525648d4dd3909cc885232d826cbd4bca3f0d6b5495"
+    },
+    {
+      "source": "tools/zcanvas-cli/src/secureStore.cjs",
+      "file": "secureStore.cjs",
+      "sha256": "c1563582aec17169cd81da8d64e17cf8dc9a69517bddaeaf2ad872ff46e418fc"
+    },
+    {
+      "source": "LICENSE",
+      "file": "LICENSE",
+      "sha256": "aff1bd2f769f9114b27e6b00342cc7c734357863e8a3543837466d783e837d24"
+    }
+  ]
+}

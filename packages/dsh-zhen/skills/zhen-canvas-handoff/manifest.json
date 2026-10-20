@@ -1,0 +1,13 @@
+{
+  "id": "zhen-canvas-handoff",
+  "version": "1.0.1",
+  "title": "画布创作交接",
+  "description": "将脚本、镜头和素材需求整理为 T8 画布可审阅的交接包，不代替画布授权执行。",
+  "category": "workflow",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

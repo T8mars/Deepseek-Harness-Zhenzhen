@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/T8mars/T8-penguin-canvas",
+  "baseRevision": "e6702dc7770bcbe7d4895be22a06f4c7123a085b",
+  "status": "unreleased-working-source-snapshot",
+  "purpose": "Native approval read-recovery contract, synthetic TEMP data only; original committed fixtures remain unchanged.",
+  "files": [
+    {
+      "source": "backend/src/services/agentControlApprovals.js",
+      "file": "approvals.cjs",
+      "sha256": "d6b1e5eef4c9829ddc968c352e5c53a2a077289481a662b8539c39a81be396cc"
+    },
+    {
+      "source": "LICENSE",
+      "file": "LICENSE",
+      "sha256": "6127556dd6b4347576088fe25d1ad9f9eba1c6679e2184f76057bab2fce80ba9"
+    }
+  ]
+}

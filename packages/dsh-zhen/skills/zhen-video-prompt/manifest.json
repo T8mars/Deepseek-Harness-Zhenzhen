@@ -1,0 +1,13 @@
+{
+  "id": "zhen-video-prompt",
+  "version": "1.0.0",
+  "title": "视频动作提示词",
+  "description": "将镜头意图写成时间连续的视频生成提示词，明确动作起止、相机与场景约束。",
+  "category": "visual",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

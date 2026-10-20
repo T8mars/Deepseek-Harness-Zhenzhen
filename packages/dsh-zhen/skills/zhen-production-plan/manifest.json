@@ -1,0 +1,13 @@
+{
+  "id": "zhen-production-plan",
+  "version": "1.0.0",
+  "title": "创作制作计划",
+  "description": "将作品目标拆为素材、依赖、阶段验收和可执行的制作安排。",
+  "category": "workflow",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

@@ -1,0 +1,15 @@
+{
+  "baseCommit": "e6702dc7770bcbe7d4895be22a06f4c7123a085b",
+  "status": "unreleased-source-backup",
+  "automaticApplication": false,
+  "files": [
+    "backend/src/routes/agentControl.js",
+    "backend/src/services/agentControlAssets.js",
+    "backend/src/services/agentControlCompatibility.js",
+    "backend/src/services/projectDatabase.js",
+    "tests/agentControlAssets.test.cjs",
+    "tests/agentControlAssetPlace.test.cjs",
+    "tests/agentControlCompatibility.test.cjs"
+  ],
+  "sha256": "fb4bb42cb5912b06bab7a5cfe4bdca3c60d1020ab8fedaebb673d0b555de2121"
+}

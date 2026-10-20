@@ -1,0 +1,344 @@
+diff --git a/backend/src/routes/agentControl.js b/backend/src/routes/agentControl.js
+index 363fe37..f3414bf 100644
+--- a/backend/src/routes/agentControl.js
++++ b/backend/src/routes/agentControl.js
+@@ -555,12 +555,28 @@ function createAgentControlRouter(options = {}) {
+         targetHandle: input.targetHandle,
+       });
+       const patch = scopeAgentPatch(snapshot.patch, scope);
+-      const patchPreview = database().previewCanvasPatch(scope.canvasId, patch, {
+-        actorId: scope.actorId,
+-        sessionId: scope.sessionId,
+-        projectId: scope.projectId,
+-        authority: agentPatchAuthority(),
+-      });
++      // The read-only capability must recover the same immutable placement as
++      // the approval route, rather than simulate adding its existing node again.
++      const recovery = resolveAppliedAssetPlacement(database(), scope.canvasId, { ...snapshot, patch });
++      const patchPreview = recovery.status === 'applied'
++        ? {
++            patchId: recovery.patch.id,
++            baseRevision: recovery.application.baseRevision,
++            currentRevision: recovery.application.baseRevision,
++            previewDigest: recovery.application.previewDigest,
++            summary: recovery.application.summary,
++            diagnosticsResolved: recovery.application.diagnosticsResolved || [],
++            affectedNodeIds: recovery.application.affectedNodeIds || [],
++            affectedEdgeIds: recovery.application.affectedEdgeIds || [],
++            changes: recovery.application.changes || [],
++            warnings: [],
++          }
++        : database().previewCanvasPatch(scope.canvasId, patch, {
++            actorId: scope.actorId,
++            sessionId: scope.sessionId,
++            projectId: scope.projectId,
++            authority: agentPatchAuthority(),
++          });
+       return {
+         preview: {
+           ...patchPreview,
+@@ -659,6 +675,8 @@ function createAgentControlRouter(options = {}) {
+         instanceId: runtimeConfig.BACKEND_INSTANCE_ID,
+         ...compatibility,
+         pairingRequired: true,
++        runControl: { schema: 't8-agent-run-control-v1', singleUsePlan: true, operationLookup: true, approvalLookup: true },
++        assetControl: { schema: 't8-agent-asset-control-v1', approvalLookup: true, hashLookup: true, patchLookup: true, maxImportBytes: Math.max(1, Math.min(2 * 1024 * 1024 * 1024, Number(runtimeConfig.COLLAB_MAX_UPLOAD_BYTES) || 512 * 1024 * 1024)) },
+       },
+     }));
+   });
+@@ -906,6 +924,13 @@ function createAgentControlRouter(options = {}) {
+     }
+   });
+ 
++  router.get('/run-start-approvals/by-operation/:operationId', (req, res, next) => {
++    try {
++      const session = auth.authenticate(bearerToken(req), ['run:execute']);
++      return res.json(response({ data: approvals.inspectOperation({ action: 'run.start', operationId: req.params.operationId, sessionId: session.sessionId, projectId: String(req.query?.projectId || ''), canvasId: String(req.query?.canvasId || '') }) }));
++    } catch (error) { return next(error); }
++  });
++
+   router.post('/run-retry-approvals', (req, res, next) => {
+     try {
+       const session = auth.authenticate(bearerToken(req), ['run:execute']);
+@@ -970,6 +995,15 @@ function createAgentControlRouter(options = {}) {
+     }
+   });
+ 
++  router.get('/run-intents/by-operation/:operationId', (req, res, next) => {
++    try {
++      const session = auth.authenticate(bearerToken(req), ['run:read']);
++      return res.json(response({ data: runs().inspectOperation(req.params.operationId, {
++        projectId: String(req.query?.projectId || ''), canvasId: String(req.query?.canvasId || ''), actorId: session.actorId, sessionId: session.sessionId,
++      }) }));
++    } catch (error) { return next(error); }
++  });
++
+   router.get('/run-intents/:intentId', (req, res, next) => {
+     try {
+       const session = auth.authenticate(bearerToken(req), ['run:read']);
+@@ -1312,13 +1346,14 @@ function createAgentControlRouter(options = {}) {
+         throw new CanvasAgentToolError('agent_scope_not_found', '素材查询目标不存在或不属于当前项目', 404);
+       }
+       return res.json(response({
+-        data: assets().search({
++        data: { projectId, canvasId, canvasRevision: Number(document.revision), ...assets().search({
+           projectId,
+           kind: req.query?.kind,
++          contentHash: req.query?.contentHash,
+           query: req.query?.query,
+           limit: req.query?.limit,
+           offset: req.query?.offset,
+-        }),
++        }) },
+       }));
+     } catch (error) {
+       return next(error);
+@@ -1557,6 +1592,13 @@ function createAgentControlRouter(options = {}) {
+     }
+   });
+ 
++  for (const [path, action, scopes] of [
++    ['/asset-import-approvals/by-operation/:operationId', 'asset.import', ['asset:transfer']],
++    ['/asset-place-approvals/by-operation/:operationId', 'asset.place', ['asset:read', 'canvas:write']],
++  ]) router.get(path, (req, res, next) => {
++    try { const session = auth.authenticate(bearerToken(req), scopes); return res.json(response({ data: approvals.inspectOperation({ action, operationId: req.params.operationId, sessionId: session.sessionId, projectId: String(req.query?.projectId || ''), canvasId: String(req.query?.canvasId || '') }) })); } catch (error) { return next(error); }
++  });
++
+   router.post('/asset-import-approvals', async (req, res, next) => {
+     try {
+       const session = auth.authenticate(bearerToken(req), ['asset:transfer']);
+@@ -1672,6 +1714,18 @@ function createAgentControlRouter(options = {}) {
+     }
+   });
+ 
++  router.get('/patches/:patchId', (req, res, next) => {
++    try {
++      const session = auth.authenticate(bearerToken(req), ['canvas:read']), projectId = String(req.query?.projectId || ''), canvasId = String(req.query?.canvasId || ''), document = database().getCanvas(canvasId);
++      if (!document || document.projectId !== projectId) throw new CanvasAgentToolError('agent_scope_not_found', 'Patch 查询目标不存在或不属于当前项目', 404);
++      // Public receipt fields only: reading a canvas already exposes its graph.
++      // Exact duplicate asset placements may legitimately predate this actor.
++      const application = database().getCanvasPatchApplication(canvasId, req.params.patchId, { actorId: session.actorId, projectId, includeAllActors: true });
++      if (!application) throw new CanvasAgentToolError('PATCH_APPLICATION_NOT_FOUND', '没有这次 Patch 的应用记录', 404);
++      return res.json(response({ data: { projectId, canvasId, patchId: application.patchId, status: application.status, baseRevision: application.baseRevision, appliedRevision: application.appliedRevision, affectedNodeIds: application.affectedNodeIds || [] } }));
++    } catch (error) { return next(error); }
++  });
++
+   router.get('/patches', (req, res, next) => {
+     try {
+       const session = auth.authenticate(bearerToken(req), ['canvas:read']);
+diff --git a/backend/src/services/agentControlAssets.js b/backend/src/services/agentControlAssets.js
+index 7a78a0e..55da701 100644
+--- a/backend/src/services/agentControlAssets.js
++++ b/backend/src/services/agentControlAssets.js
+@@ -216,6 +216,12 @@ function inspectDownloadTarget(target) {
+   };
+ }
+ 
++// AssetUploadManager persists native imported byte counts in metadata.size.
++// Keep older top-level representations compatible without losing that count.
++function assetByteSize(asset) {
++  return Math.max(0, Number(asset?.sizeBytes ?? asset?.size ?? asset?.metadata?.size) || 0);
++}
++
+ function publicDownloadPreview(asset, target, scope = {}) {
+   return {
+     summary: `导出 ${target.basename}`,
+@@ -227,7 +233,7 @@ function publicDownloadPreview(asset, target, scope = {}) {
+       name: target.basename,
+       kind: String(asset.kind || ''),
+       mimeType: String(asset.mimeType || ''),
+-      size: Math.max(0, Number(asset.sizeBytes || asset.size) || 0),
++      size: assetByteSize(asset),
+       sha256: String(asset.contentHash || '').toLowerCase(),
+     },
+     assetId: String(asset.id || ''),
+@@ -260,7 +266,7 @@ function boundedPosition(value, fallback) {
+ }
+ 
+ async function readVerifiedTextAsset(asset, maxBytes = 2 * 1024 * 1024) {
+-  const size = Math.max(0, Number(asset?.sizeBytes || asset?.size) || 0);
++  const size = assetByteSize(asset);
+   if (size > maxBytes) {
+     throw new AgentControlAssetError(
+       'ASSET_PLACE_TEXT_TOO_LARGE',
+@@ -387,8 +393,8 @@ function assetPlacementPatch(asset, document, input = {}, textContent = '') {
+         [fieldPrefix + 'Urls']: [mediaUrl],
+         fileName: filename,
+         fileNames: [filename],
+-        fileSize: Math.max(0, Number(asset.sizeBytes || asset.size) || 0),
+-        fileSizes: [Math.max(0, Number(asset.sizeBytes || asset.size) || 0)],
++        fileSize: assetByteSize(asset),
++        fileSizes: [assetByteSize(asset)],
+         mime: String(asset.mimeType || ''),
+         mimes: [String(asset.mimeType || '')],
+         sourceAssetId: String(asset.id),
+@@ -428,7 +434,7 @@ function assetPlacementPatch(asset, document, input = {}, textContent = '') {
+       contentHash,
+       contentRevision,
+       mimeType: String(asset.mimeType || ''),
+-      size: Math.max(0, Number(asset.sizeBytes || asset.size) || 0),
++      size: assetByteSize(asset),
+     },
+     placement: {
+       nodeId,
+@@ -526,9 +532,9 @@ function resolveAppliedAssetPlacement(database, canvasId, snapshot) {
+ function createAgentControlAssetService(options = {}) {
+   const runtimeConfig = options.config || {};
+   const database = options.database;
+-  const uploadManager = options.uploadManager || (
+-    database ? new AssetUploadManager(runtimeConfig, database, options.uploadOptions || {}) : null
+-  );
++  // Read-only inspection must not create CAS/upload folders or sweep sessions.
++  // Initialize the existing native importer only after approved-file revalidation.
++  let uploadManager = options.uploadManager || null;
+ 
+   async function inspectImport(filename) {
+     return inspectImportFile(filename, {
+@@ -537,11 +543,12 @@ function createAgentControlAssetService(options = {}) {
+   }
+ 
+   async function importFile(expected, context = {}) {
+-    if (!uploadManager) {
++    if (!uploadManager && !database) {
+       throw new AgentControlAssetError('ASSET_IMPORT_UNAVAILABLE', '当前画布没有可用的素材导入服务', 503);
+     }
+     const actual = await inspectImport(expected.absolute);
+     assertSameSnapshot(expected, actual);
++    if (!uploadManager) uploadManager = new AssetUploadManager(runtimeConfig, database, options.uploadOptions || {});
+     const result = await uploadManager.ingestFile(actual.absolute, {
+       filename: actual.basename,
+       sha256: actual.sha256,
+@@ -564,10 +571,12 @@ function createAgentControlAssetService(options = {}) {
+ 
+   function search(input = {}) {
+     if (!database) throw new AgentControlAssetError('ASSET_READ_UNAVAILABLE', '素材中心不可用', 503);
++    if (input.contentHash != null && !/^[a-f0-9]{64}$/.test(String(input.contentHash))) throw new AgentControlAssetError('ASSET_HASH_INVALID', '素材内容摘要格式无效');
+     const limit = Math.min(100, Math.max(1, Math.trunc(Number(input.limit) || 25)));
+     const offset = Math.max(0, Math.trunc(Number(input.offset) || 0));
+     const filters = {
+       projectId: input.projectId,
++      ...(input.contentHash == null ? {} : { contentHash: String(input.contentHash) }),
+       kind: input.kind,
+       query: input.query,
+       limit,
+diff --git a/backend/src/services/agentControlCompatibility.js b/backend/src/services/agentControlCompatibility.js
+index 2c0cfd7..05e7ad8 100644
+--- a/backend/src/services/agentControlCompatibility.js
++++ b/backend/src/services/agentControlCompatibility.js
+@@ -36,6 +36,7 @@ function compatibilityPaths(options = {}) {
+   const providerCatalogPath = existingFile([
+     options.providerCatalogPath,
+     resourcesPath ? path.join(resourcesPath, 'backend', 'shared', 'creativeModelCatalog.json') : '',
++    resourcesPath ? path.join(resourcesPath, 'backend-enc', 'shared', 'creativeModelCatalog.json') : '',
+     path.join(SOURCE_ROOT, 'backend', 'src', 'shared', 'creativeModelCatalog.json'),
+   ]);
+   const capabilityManifestPath = existingFile([
+diff --git a/backend/src/services/projectDatabase.js b/backend/src/services/projectDatabase.js
+index 513ac70..11de7b4 100644
+--- a/backend/src/services/projectDatabase.js
++++ b/backend/src/services/projectDatabase.js
+@@ -27616,6 +27616,7 @@ class ProjectDatabase {
+     const query = String(filters.query || '').trim().toLowerCase();
+     const clauses = ['a.project_id = ?'];
+     const values = [projectId];
++    if (filters.contentHash != null) { clauses.push('a.content_hash = ?'); values.push(String(filters.contentHash)); }
+     if (Array.isArray(filters.assetIds)) {
+       const assetIds = [...new Set(filters.assetIds
+         .map((value) => String(value || '').trim())
+diff --git a/tests/agentControlAssetPlace.test.cjs b/tests/agentControlAssetPlace.test.cjs
+index aaac752..bffb417 100644
+--- a/tests/agentControlAssetPlace.test.cjs
++++ b/tests/agentControlAssetPlace.test.cjs
+@@ -11,10 +11,19 @@ const express = require('express');
+ 
+ const { createAgentControlAuthService } = require('../backend/src/services/agentControlAuth.js');
+ const { createAgentControlApprovalService } = require('../backend/src/services/agentControlApprovals.js');
+-const { createAgentControlAssetService, resolveAppliedAssetPlacement } = require('../backend/src/services/agentControlAssets.js');
++const { createAgentControlAssetService, resolveAppliedAssetPlacement, assetPlacementPatch, publicDownloadPreview } = require('../backend/src/services/agentControlAssets.js');
+ const { canvasPatchRequestDigest, previewCanvasPatch } = require('../backend/src/services/canvasPatch.js');
+ const agentControlRoute = require('../backend/src/routes/agentControl.js');
+ 
++test('native upload metadata size survives placement and export previews', () => {
++  const asset = { id: 'EXAMPLE_ASSET', kind: 'image', filename: 'EXAMPLE.png', mimeType: 'image/png', contentHash: 'a'.repeat(64), metadata: { size: 67 } };
++  const placement = assetPlacementPatch(asset, { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS', revision: 1, nodes: [] });
++  assert.equal(placement.asset.size, 67);
++  assert.equal(placement.patch.operations[0].payload.node.data.fileSize, 67);
++  assert.deepEqual(placement.patch.operations[0].payload.node.data.fileSizes, [67]);
++  assert.equal(publicDownloadPreview(asset, { basename: 'EXAMPLE.png' }).file.size, 67);
++});
++
+ function request(server, options = {}, body = null) {
+   const address = server.address();
+   return new Promise((resolve, reject) => {
+diff --git a/tests/agentControlAssets.test.cjs b/tests/agentControlAssets.test.cjs
+index f10d346..74816ff 100644
+--- a/tests/agentControlAssets.test.cjs
++++ b/tests/agentControlAssets.test.cjs
+@@ -71,6 +71,43 @@ function issueSession(auth, scopes) {
+   });
+ }
+ 
++test('asset content-hash search validates its filter and forwards the same exact scope to list/count', () => {
++  const seen = [], hash = '9'.repeat(64), service = createAgentControlAssetService({ uploadManager: {}, database: {
++    listAssets(filters) { seen.push(filters); return []; }, countAssets(filters) { seen.push(filters); return 0; }, getAssetCatalogRevision() { return 1; },
++  } });
++  assert.throws(() => service.search({ projectId: 'EXAMPLE_PROJECT', contentHash: 'EXAMPLE_INVALID' }), error => error.code === 'ASSET_HASH_INVALID'); assert.equal(seen.length, 0);
++  assert.equal(service.search({ projectId: 'EXAMPLE_PROJECT', contentHash: hash }).total, 0); assert.equal(seen.length, 2); assert.ok(seen.every(filters => filters.projectId === 'EXAMPLE_PROJECT' && filters.contentHash === hash));
++});
++
++test('read-only asset search/import preview do not initialize the copying manager or create storage folders', async t => {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'EXAMPLE_asset_read_')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const image = path.join(root, 'EXAMPLE.png'); fs.writeFileSync(image, pngBytes());
++  const database = { listAssets: () => [], countAssets: () => 0, getAssetCatalogRevision: () => 1 };
++  const service = createAgentControlAssetService({ database, config: { ASSET_BLOB_DIR: path.join(root, 'EXAMPLE_BLOBS'), DATA_DIR: path.join(root, 'EXAMPLE_DATA') } });
++  assert.equal(service.search({ projectId: 'EXAMPLE_PROJECT' }).total, 0); assert.equal((await service.inspectImport(image)).size, pngBytes().length);
++  assert.equal(fs.existsSync(path.join(root, 'EXAMPLE_BLOBS')), false); assert.equal(fs.existsSync(path.join(root, 'EXAMPLE_DATA')), false);
++});
++
++test('asset approval recovery and minimal patch receipt routes preserve native scopes without approving or exposing private ledger fields', async t => {
++  const auth = createAgentControlAuthService(), approvals = createAgentControlApprovalService(), hash = '9'.repeat(64), database = {
++    getCanvas(id) { return id === 'EXAMPLE_CANVAS' ? { projectId: 'EXAMPLE_PROJECT', canvasId: id, revision: 1 } : null; },
++    getCanvasPatchApplication(canvasId, patchId, options) { assert.equal(canvasId, 'EXAMPLE_CANVAS'); assert.equal(options.projectId, 'EXAMPLE_PROJECT'); assert.equal(options.includeAllActors, true); return patchId === 'EXAMPLE_PATCH' ? { patchId, status: 'applied', baseRevision: 1, appliedRevision: 2, affectedNodeIds: ['EXAMPLE_NODE'], requestDigest: 'EXAMPLE_PRIVATE_DIGEST', changes: ['EXAMPLE_PRIVATE_CHANGE'], actorId: 'EXAMPLE_PRIVATE_ACTOR' } : null; },
++  };
++  const app = express(); app.use(express.json()); app.use('/api/agent-control/v1', agentControlRoute.createAgentControlRouter({ auth, approvals, database, config: { PORT: 19030, APP_VERSION: '3.3.6', BACKEND_INSTANCE_ID: 'a'.repeat(43), COLLAB_MAX_UPLOAD_BYTES: 1024 * 1024 } }));
++  const server = http.createServer(app); await new Promise(done => server.listen(0, '127.0.0.1', done)); t.after(() => new Promise(done => server.close(done)));
++  const session = issueSession(auth, ['canvas:read', 'canvas:write', 'asset:read', 'asset:transfer']), headers = { Authorization: `Bearer ${session.accessToken}` };
++  for (const action of ['import', 'place']) {
++    const operationId = `EXAMPLE_ASSET_${action}`, record = approvals.create({ action: `asset.${action}`, sessionId: session.sessionId, projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS', operationId, preview: { file: { sha256: hash } } });
++    const path = `/api/agent-control/v1/asset-${action}-approvals/by-operation/${operationId}?projectId=EXAMPLE_PROJECT&canvasId=EXAMPLE_CANVAS`, read = await request(server, { path, headers }); assert.equal(read.status, 200); assert.equal(read.body.data.approvalRequestId, record.approvalRequestId); assert.equal(read.body.data.status, 'pending');
++    assert.equal(crypto.createHash('sha256').update(read.body.data.pollSecret).digest('hex'), crypto.createHash('sha256').update(record.pollSecret).digest('hex'));
++    assert.equal((await request(server, { path: path.replace('projectId=EXAMPLE_PROJECT', 'projectId=EXAMPLE_OTHER'), headers })).status, 404);
++    const other = issueSession(auth, ['canvas:read', 'canvas:write', 'asset:read', 'asset:transfer']); assert.equal((await request(server, { path, headers: { Authorization: `Bearer ${other.accessToken}` } })).status, 404);
++  }
++  assert.equal(approvals.listPending().length, 2); const status = await request(server, { path: '/api/agent-control/v1/status' }); assert.equal(status.body.data.assetControl.maxImportBytes, 1024 * 1024);
++  const patch = await request(server, { path: '/api/agent-control/v1/patches/EXAMPLE_PATCH?projectId=EXAMPLE_PROJECT&canvasId=EXAMPLE_CANVAS', headers }); assert.equal(patch.status, 200); assert.equal(patch.body.data.appliedRevision, 2); assert.equal(JSON.stringify(patch.body).includes('EXAMPLE_PRIVATE'), false);
++  assert.equal((await request(server, { path: '/api/agent-control/v1/patches/EXAMPLE_PATCH?projectId=EXAMPLE_OTHER&canvasId=EXAMPLE_CANVAS', headers })).status, 404);
++  const readOnly = issueSession(auth, ['asset:read']); assert.equal((await request(server, { path: '/api/agent-control/v1/asset-import-approvals/by-operation/EXAMPLE_ASSET_import?projectId=EXAMPLE_PROJECT&canvasId=EXAMPLE_CANVAS', headers: { Authorization: `Bearer ${readOnly.accessToken}` } })).status, 403);
++});
++
+ test('asset import inspection rejects fake mime and symlinks without writing', async (t) => {
+   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zcanvas-asset-inspect-'));
+   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+diff --git a/tests/agentControlCompatibility.test.cjs b/tests/agentControlCompatibility.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/tests/agentControlCompatibility.test.cjs
+@@ -0,0 +1,19 @@
++'use strict';
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const os = require('node:os');
++const path = require('node:path');
++const { compatibilityPaths, compatibilitySnapshot } = require('../backend/src/services/agentControlCompatibility');
++
++test('compatibility uses the encrypted packaged provider catalog while preserving ordinary-resource precedence', t => {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'EXAMPLE_compat_resources_'));
++  t.after(() => { const rel = path.relative(os.tmpdir(), root); assert.ok(rel && !rel.startsWith('..') && !path.isAbsolute(rel)); fs.rmSync(root, { recursive: true, force: true }); });
++  const encrypted = path.join(root, 'backend-enc', 'shared', 'creativeModelCatalog.json'), ordinary = path.join(root, 'backend', 'shared', 'creativeModelCatalog.json');
++  const original = compatibilityPaths().providerCatalogPath, bytes = fs.readFileSync(original);
++  fs.mkdirSync(path.dirname(encrypted), { recursive: true }); fs.writeFileSync(encrypted, bytes);
++  assert.equal(compatibilityPaths({ resourcesPath: root }).providerCatalogPath, encrypted);
++  assert.deepEqual(compatibilitySnapshot({ resourcesPath: root }), compatibilitySnapshot());
++  fs.mkdirSync(path.dirname(ordinary), { recursive: true }); fs.writeFileSync(ordinary, bytes);
++  assert.equal(compatibilityPaths({ resourcesPath: root }).providerCatalogPath, ordinary);
++});

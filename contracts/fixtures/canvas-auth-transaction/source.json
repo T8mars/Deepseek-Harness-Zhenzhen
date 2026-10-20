@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/T8mars/T8-penguin-canvas",
+  "baseCommit": "e6702dc7770bcbe7d4895be22a06f4c7123a085b",
+  "status": "unreleased-workspace-native-store-transaction-v1",
+  "protocol": "t8-zcanvas-secure-store-transaction-v1",
+  "purpose": "Exact working-source snapshot for DSH integration tests; no production key or user database.",
+  "files": [
+    {
+      "source": "tools/zcanvas-cli/src/secureStore.cjs",
+      "file": "secureStore.cjs",
+      "sha256": "6cd53dc412c6e9c771cd7052cde37cb97bf943d966f3c0227037504677dc8b88",
+      "canonicalSha256": "770da4ce23be2e3d6d014fe94b50ddd41eec020a2eb8a4e7b4fdab5ddbdf04f1"
+    },
+    {
+      "source": "tools/zcanvas-cli/src/secureStoreTransactions.cjs",
+      "file": "secureStoreTransactions.cjs",
+      "sha256": "bc45bde610bca44ebe336a7d5c4ef305ea85b3c96fff856ea5dda5b3775303e5",
+      "canonicalSha256": "bc45bde610bca44ebe336a7d5c4ef305ea85b3c96fff856ea5dda5b3775303e5"
+    }
+  ]
+}

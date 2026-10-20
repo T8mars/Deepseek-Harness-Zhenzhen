@@ -1,0 +1,13 @@
+{
+  "id": "zhen-reference-notes",
+  "version": "1.0.0",
+  "title": "参考片分析笔记",
+  "description": "把用户提供且已实际查看的影像参考整理成可复用的镜头、声音和节奏笔记。",
+  "category": "workflow",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

@@ -1,0 +1,103 @@
+name: Prepare upstream compatibility candidates
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: upstream-candidates
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.repository == 'T8mars/Deepseek-Harness-Zhenzhen' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    outputs:
+      has_proposal: ${{ steps.proposal.outputs.has_proposal }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.19.0'
+          cache: npm
+      - run: node scripts/check-private.mjs
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run check
+      - run: node scripts/update-watch.mjs
+      - id: prepare
+        continue-on-error: true
+        run: node scripts/prepare-upstream.mjs --apply
+      - id: dependencies
+        if: steps.prepare.outcome == 'success' && steps.prepare.outputs.changed == 'true'
+        continue-on-error: true
+        run: |
+          npm install --package-lock-only --ignore-scripts --engine-strict --no-audit --no-fund --registry=https://registry.npmjs.org
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm ci --ignore-scripts --engine-strict --no-audit --no-fund
+      - id: review
+        if: steps.dependencies.outcome == 'success'
+        continue-on-error: true
+        run: node scripts/validate-upstream.mjs
+      - id: contracts
+        if: steps.dependencies.outcome == 'success'
+        continue-on-error: true
+        run: npm run check
+      - id: installation
+        if: steps.contracts.outcome == 'success' && steps.review.outcome == 'success'
+        continue-on-error: true
+        run: |
+          npm run pack:bundle
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm run smoke:install
+      - id: proposal
+        if: always()
+        run: node scripts/collect-update-proposal.mjs
+        env:
+          VALIDATION_PREPARE: ${{ steps.prepare.outcome }}
+          VALIDATION_DEPENDENCIES: ${{ steps.dependencies.outcome }}
+          VALIDATION_REVIEW: ${{ steps.review.outcome }}
+          VALIDATION_CONTRACTS: ${{ steps.contracts.outcome }}
+          VALIDATION_INSTALLATION: ${{ steps.installation.outcome }}
+      - if: always() && steps.proposal.outputs.has_proposal == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: upstream-proposal
+          path: .runtime/update-proposal.json
+          if-no-files-found: error
+          retention-days: 7
+      - if: steps.prepare.outcome == 'failure' || steps.dependencies.outcome == 'failure' || steps.review.outcome == 'failure' || steps.contracts.outcome == 'failure' || steps.installation.outcome == 'failure'
+        run: exit 1
+  publish:
+    needs: prepare
+    if: always() && github.repository == 'T8mars/Deepseek-Harness-Zhenzhen' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && needs.prepare.outputs.has_proposal == 'true'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.19.0'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: upstream-proposal
+          path: .runtime
+      - name: Verify trusted publisher files
+        run: |
+          git diff --quiet
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git diff --cached --quiet
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - run: node scripts/check-private.mjs
+      - run: node scripts/open-update-pr.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}

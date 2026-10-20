@@ -1,0 +1,13 @@
+{
+  "id": "zhen-creative-review",
+  "version": "1.0.0",
+  "title": "创作验收清单",
+  "description": "按用户目标审阅脚本、分镜或成片，输出具体可执行的修改项。",
+  "category": "workflow",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

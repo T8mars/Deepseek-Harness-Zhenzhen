@@ -1,0 +1,16 @@
+import { z } from 'zod';
+import { canvasEntity } from './canvas-contract.ts';
+export const canvasTaskScope = z.object({ projectId: canvasEntity.max(160), canvasId: canvasEntity.max(160) }).strict();
+export type CanvasTaskScope = z.infer<typeof canvasTaskScope>;
+export const canvasTaskReference = canvasTaskScope.extend({ id: canvasEntity.max(128) }).strict();
+export type CanvasTaskReference = z.infer<typeof canvasTaskReference>;
+export const canvasTaskStatus = z.enum(['pending', 'accepted', 'dispatching', 'running', 'completed', 'failed', 'cancelled', 'unknown']);
+const timestamp = z.number().int().nonnegative().max(8640000000000000);
+export const canvasTaskSummary = canvasTaskReference.extend({ canvasRevision: z.number().int().positive(), nodeCount: z.number().int().min(1).max(500), provider: z.string().max(240).nullable(), model: z.string().max(240).nullable(), status: canvasTaskStatus, runId: canvasEntity.nullable(), queueRevision: z.number().int().positive(), createdAt: timestamp, updatedAt: timestamp }).strict();
+export type CanvasTaskSummary = z.infer<typeof canvasTaskSummary>;
+export const canvasTaskListSchema = canvasTaskScope.extend({ items: z.array(canvasTaskSummary).max(100), limit: z.literal(100), atLimit: z.boolean() }).strict();
+export type CanvasTaskList = z.infer<typeof canvasTaskListSchema>;
+export const canvasEvidenceReason = z.enum(['run-incomplete', 'run-missing', 'scope-mismatch', 'node-incomplete', 'attempt-incomplete', 'asset-missing', 'asset-unverified', 'native-unverified', 'inconsistent-evidence']);
+const count = z.number().int().nonnegative().max(5000);
+export const canvasTaskDetailSchema = canvasTaskSummary.extend({ evidence: z.object({ verdict: z.enum(['not-completed', 'unverified', 'verified']), runPresent: z.boolean(), nodeRecords: count, successfulNodes: count, successfulAttempts: count, assetRecords: count, storedAssets: count, hashVerifiedAssets: count, magicVerifiedAssets: count, associatedAssets: count, reasons: z.array(canvasEvidenceReason).max(9) }).strict() }).strict();
+export type CanvasTaskDetail = z.infer<typeof canvasTaskDetailSchema>;

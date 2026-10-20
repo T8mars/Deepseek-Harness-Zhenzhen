@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>新会话 Hero</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="--bg:{{c.bg}};--l1:{{c.l1}};--l2:{{c.l2}};--ov:{{c.ov}};--sb:{{c.sb}};--sba:{{c.sba}};--bub:{{c.bub}};--t1:{{c.t1}};--t2:{{c.t2}};--t3:{{c.t3}};--t4:{{c.t4}};--lk:{{c.lk}};--pri:{{c.pri}};--onpri:{{c.onpri}};--acc:{{c.acc}};--send:{{c.send}};--ok:{{c.ok}};--warn:{{c.warn}};--warnt:{{c.warnt}};--err:{{c.err}};--idle:{{c.idle}};--bd:{{c.bd}};--vio:{{c.vio}};--tf:{{c.tf}};--tt:{{c.tt}};--glow:{{c.glow}};--sh1:{{c.sh1}};--sh3:{{c.sh3}}; display: flex; flex-wrap: wrap; min-height: 880px; background: var(--bg); color: var(--t1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; font-size: 14px; line-height: 22px">
+
+  <!-- 侧栏 -->
+  <div style="flex: 0 0 264px; box-sizing: border-box; background: var(--sb); display: flex; flex-direction: column; gap: 14px; padding: 16px 12px; min-height: 880px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 8px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" role="img" aria-label="DSH-zhen 标志（占位图形）"><circle cx="12" cy="12" r="3" fill="var(--acc)"></circle><circle cx="12" cy="12" r="7.2" opacity="0.65"></circle><circle cx="12" cy="12" r="11" opacity="0.32"></circle></svg>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: 0.2px">DSH-zhen</span>
+    </div>
+    <button type="button" style="display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--l1); color: var(--t1); font: inherit; font-weight: 500; cursor: pointer; box-shadow: 0 0 0 0.5px var(--bd)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg>新会话
+    </button>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--t2); font: inherit; text-align: left; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1.2"></rect><rect x="9" y="2.5" width="4.5" height="4.5" rx="1.2"></rect><rect x="2.5" y="9" width="4.5" height="4.5" rx="1.2"></rect><rect x="10" y="10" width="3.5" height="3.5" rx="1.2"></rect></svg>技能库
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--t2); font: inherit; text-align: left; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M8 2.5 13.5 5.2 8 7.9 2.5 5.2Z"></path><path d="M2.5 8 8 10.7 13.5 8"></path><path d="M2.5 10.8 8 13.5 13.5 10.8"></path></svg>知识库
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--t2); font: inherit; text-align: left; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2.5"></rect><circle cx="5.6" cy="8.4" r="1.1"></circle><circle cx="10.4" cy="6.2" r="1.1"></circle><path d="M6.6 8C8 8.2 8.6 7 9.4 6.6"></path></svg>
+        <span style="flex: 1">画布</span><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok)"></span>
+      </button>
+      <button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: transparent; color: var(--t2); font: inherit; text-align: left; cursor: pointer">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M6 2.5v2.2M10 2.5v2.2M4 4.7h8v3a4 4 0 0 1-8 0Z"></path><path d="M8 11.7v1.8"></path></svg>插件市场
+      </button>
+    </div>
+    <div style="padding: 8px 12px 0; font-size: 12px; line-height: 18px; color: var(--t4)">最近会话</div>
+    <div style="display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--t2)">
+      <div style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: 12px"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--acc); box-sizing: border-box"></span>分镜 · 第 3 集镜头拆分</div>
+      <div style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok)"></span>角色设定 · 三视图提示词</div>
+      <div style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: 12px"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--idle)"></span>商品主视觉方向</div>
+    </div>
+    <div style="flex: 1"></div>
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px">
+      <div style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 12px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); font-size: 13px; font-variant-numeric: tabular-nums; flex: 1">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--acc)" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><rect x="2" y="4" width="12" height="8.5" rx="2"></rect><path d="M11 8.3h1.5"></path></svg>
+        <span style="color: var(--t2)">余额</span><span style="font-weight: 500">¥ 128.40</span>
+      </div>
+      <button type="button" aria-label="设置" style="width: 36px; height: 36px; border: 0; border-radius: 12px; background: transparent; color: var(--t2); cursor: pointer; display: flex; align-items: center; justify-content: center">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M3 5h6M11.5 5H13M3 11h1.5M7 11h6"></path><circle cx="10.2" cy="5" r="1.3"></circle><circle cx="5.7" cy="11" r="1.3"></circle></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 主区 -->
+  <div style="flex: 999 1 560px; min-width: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; padding: 0 32px; box-sizing: border-box; min-height: 880px">
+
+    <!-- 装饰：潮汐带与气泡（原创抽象图形） -->
+    <svg aria-hidden="true" viewBox="0 0 1200 180" preserveAspectRatio="none" style="position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 190px">
+      <defs>
+        <linearGradient id="hg1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color: var(--tf)"></stop><stop offset="1" style="stop-color: var(--tt)"></stop></linearGradient>
+      </defs>
+      <path d="M0 90 C150 40 300 130 460 85 S760 30 920 80 S1100 125 1200 70 L1200 180 L0 180 Z" fill="url(#hg1)" opacity="0.55"></path>
+      <path d="M0 125 C180 85 320 160 520 120 S820 80 1000 120 S1140 150 1200 110 L1200 180 L0 180 Z" fill="url(#hg1)" opacity="0.9"></path>
+    </svg>
+    <div aria-hidden="true" style="position: absolute; left: 9%; bottom: 150px; width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--acc); opacity: 0.45"></div>
+    <div aria-hidden="true" style="position: absolute; left: 14%; bottom: 210px; width: 8px; height: 8px; border-radius: 50%; border: 1px solid var(--acc); opacity: 0.35"></div>
+    <div aria-hidden="true" style="position: absolute; right: 12%; bottom: 170px; width: 11px; height: 11px; border-radius: 50%; border: 1px solid var(--acc); opacity: 0.4"></div>
+    <div aria-hidden="true" style="position: absolute; right: 7%; bottom: 240px; width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--acc); opacity: 0.35"></div>
+
+    <!-- 顶栏：模型与余额 -->
+    <div style="align-self: stretch; display: flex; justify-content: flex-end; align-items: center; gap: 10px; height: 56px; z-index: 1">
+      <div style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 15px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); font-size: 12px; color: var(--t2)">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok)"></span>Seedance 网关 · 已连接
+      </div>
+    </div>
+
+    <!-- 内容列 -->
+    <div style="width: 100%; max-width: 760px; margin-top: 96px; display: flex; flex-direction: column; align-items: center; gap: 12px; z-index: 1">
+      <div role="img" aria-label="角色标记（占位图形）" style="width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, rgba(255,255,255,0.95) 0 7%, transparent 8%), radial-gradient(circle at 50% 50%, var(--tf), var(--tt)); box-shadow: 0 0 0 0.5px var(--bd), 0 0 22px var(--glow)"></div>
+      <h1 style="margin: 0; font-size: 26px; line-height: 32px; font-weight: 500; letter-spacing: 0.2px">今天想创作点什么？</h1>
+      <p style="margin: 0 0 18px; font-size: 14px; line-height: 22px; color: var(--t2)">图像 · 视频 · 分镜 · 提示词，Seedance 网关已就绪</p>
+
+      <!-- Composer -->
+      <div style="position: relative; width: 100%">
+        <!-- A01 角色立绘位（peek 模式：下部被输入框遮住） -->
+        <div aria-hidden="true" style="position: absolute; right: 28px; bottom: calc(100% - 30px); width: 150px; height: 190px; border-radius: 28px 28px 0 0; border: 1px dashed var(--acc); border-bottom: 0; box-sizing: border-box; background: linear-gradient(180deg, var(--l2), transparent); display: flex; flex-direction: column; align-items: center; padding-top: 18px; gap: 8px; opacity: 0.95">
+          <div style="width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, rgba(255,255,255,0.9) 0 7%, transparent 8%), radial-gradient(circle at 50% 50%, var(--tf), var(--tt)); box-shadow: 0 0 20px var(--glow)"></div>
+          <span style="font-size: 11px; line-height: 14px; color: var(--t3); text-align: center">A01 角色立绘位<br>288×384 · 用户美术</span>
+        </div>
+        <div style="position: relative; z-index: 2; background: var(--l2); border-radius: 28px; box-shadow: var(--sh1); padding: 16px 18px 12px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px 0 6px; border-radius: 12px; background: var(--bub); font-size: 12px; line-height: 18px; color: var(--t2)"><span style="width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--idle); box-sizing: border-box"></span>待命</span>
+          </div>
+          <div style="min-height: 44px; font-size: 15px; line-height: 24px; color: var(--t4)">描述你想创作的内容；输入 / 唤起技能，@ 引用画布节点或知识库</div>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <button type="button" aria-label="添加附件" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: var(--bub); color: var(--t2); cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button>
+            <button type="button" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 16px; background: var(--bub); color: var(--t2); font: inherit; font-size: 13px; cursor: pointer"><span style="width: 7px; height: 7px; border-radius: 50%; background: var(--ok)"></span>画布</button>
+            <button type="button" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 16px; background: var(--bub); color: var(--t2); font: inherit; font-size: 13px; cursor: pointer">/ 技能</button>
+            <div style="flex: 1"></div>
+            <button type="button" style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border: 0; border-radius: 16px; background: transparent; color: var(--t2); font: inherit; font-size: 13px; cursor: pointer">deepseek/deepseek-v4.1-flash<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.2 8 10l4-3.8"></path></svg></button>
+            <button type="button" aria-label="发送" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: var(--send); color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12.5v-9M4.5 7 8 3.5 11.5 7"></path></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 选项行 -->
+      <div style="align-self: flex-start; display: flex; gap: 8px; margin-top: 2px">
+        <button type="button" style="height: 30px; padding: 0 12px; border: 0; border-radius: 15px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); color: var(--t2); font: inherit; font-size: 13px; cursor: pointer">工作区 · 分镜-第3集</button>
+        <button type="button" style="height: 30px; padding: 0 12px; border: 0; border-radius: 15px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); color: var(--t2); font: inherit; font-size: 13px; cursor: pointer">智能体预设 · 创作助理</button>
+      </div>
+
+      <!-- 快速开始 -->
+      <div style="width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 10px">
+        <button type="button" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; border: 0; border-radius: 16px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); color: var(--t1); font: inherit; text-align: left; cursor: pointer">
+          <span style="width: 32px; height: 32px; border-radius: 12px; background: linear-gradient(135deg, var(--tf), var(--tt)); display: flex; align-items: center; justify-content: center; color: var(--pri)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3" width="11" height="10" rx="1.6"></rect><path d="M2.5 6.5h11M6 3v3.5M10 3v3.5"></path></svg></span>
+          <span style="font-weight: 500">写分镜</span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">把剧本拆成镜头表</span>
+        </button>
+        <button type="button" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; border: 0; border-radius: 16px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); color: var(--t1); font: inherit; text-align: left; cursor: pointer">
+          <span style="width: 32px; height: 32px; border-radius: 12px; background: linear-gradient(135deg, var(--tf), var(--tt)); display: flex; align-items: center; justify-content: center; color: var(--pri)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="3" width="11" height="10" rx="2"></rect><circle cx="6" cy="6.8" r="1.1"></circle><path d="M2.8 12 6.5 9l2.5 2 2-1.5 2.4 2.2"></path></svg></span>
+          <span style="font-weight: 500">生成一张图</span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">先报价，再提交</span>
+        </button>
+        <button type="button" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; border: 0; border-radius: 16px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); color: var(--t1); font: inherit; text-align: left; cursor: pointer">
+          <span style="width: 32px; height: 32px; border-radius: 12px; background: linear-gradient(135deg, var(--tf), var(--tt)); display: flex; align-items: center; justify-content: center; color: var(--pri)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3.5" width="12" height="9" rx="2"></rect><path d="M7 6.3v3.4l3-1.7Z"></path></svg></span>
+          <span style="font-weight: 500">优化视频提示词</span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">面向 Seedance 2.x</span>
+        </button>
+        <button type="button" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; border: 0; border-radius: 16px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); color: var(--t1); font: inherit; text-align: left; cursor: pointer">
+          <span style="width: 32px; height: 32px; border-radius: 12px; background: linear-gradient(135deg, var(--tf), var(--tt)); display: flex; align-items: center; justify-content: center; color: var(--vio)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="2.5"></rect><circle cx="5.6" cy="8.4" r="1.1"></circle><circle cx="10.4" cy="6.2" r="1.1"></circle><path d="M6.6 8C8 8.2 8.6 7 9.4 6.6"></path></svg></span>
+          <span style="font-weight: 500">连接画布</span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">T8 Penguin Canvas</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]},"$preview":{"width":1360,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = (this.props.theme ?? 'light') === 'dark';
+    const L = {bg:'#F4F9FA',l1:'#FFFFFF',l2:'#FFFFFF',ov:'#E1ECEF',sb:'#EAF3F5',sba:'#D6E8EC',bub:'#E1F2F4',t1:'#0B1F26',t2:'#34494F',t3:'#435C65',t4:'#566F78',lk:'#0A6AA1',pri:'#0F5B6B',onpri:'#FFFFFF',acc:'#0B7A8C',send:'#0B7285',ok:'#0F7D4D',warn:'#B87100',warnt:'#8A5300',err:'#C62D3A',idle:'#6E8790',bd:'rgba(8,70,88,0.14)',vio:'#5B4BC2',tf:'#BFEFF3',tt:'#DCEBFF',glow:'rgba(79,209,220,0.28)',sh1:'0 0 0 0.5px rgba(8,70,88,0.14), 0 6px 20px rgba(8,70,88,0.05), 0 0 28px rgba(79,209,220,0.12)',sh3:'0 0 0 0.5px rgba(8,70,88,0.14), 0 12px 32px rgba(8,70,88,0.10)'};
+    const D = {bg:'#0A1418',l1:'#0F1C21',l2:'#14242A',ov:'#2D434B',sb:'#0C171B',sba:'#1F3A43',bub:'#17323A',t1:'#E8F4F6',t2:'#B7CCD2',t3:'#93AEB6',t4:'#869FA6',lk:'#6CC6F2',pri:'#8FE3EA',onpri:'#04222A',acc:'#4FD1DC',send:'#0C7A8A',ok:'#3DD68C',warn:'#F5B84A',warnt:'#F5B84A',err:'#FF7A85',idle:'#4D6770',bd:'rgba(214,240,245,0.14)',vio:'#B7ACFF',tf:'#0F4F5C',tt:'#14304F',glow:'rgba(79,209,220,0.20)',sh1:'0 0 0 0.5px rgba(214,240,245,0.16), 0 6px 20px rgba(0,0,0,0.26), 0 0 28px rgba(79,209,220,0.10)',sh3:'0 0 0 0.5px rgba(214,240,245,0.16), 0 12px 32px rgba(0,0,0,0.45)'};
+    return { c: dark ? D : L };
+  }
+}
+</script>
+</body>
+</html>

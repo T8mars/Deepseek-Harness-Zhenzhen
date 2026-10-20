@@ -1,0 +1,13 @@
+import { z } from 'zod';
+export const DEFAULT_ART_CHUNK_BYTES = 45 * 1024;
+export const defaultArtDigest = z.string().regex(/^[a-f0-9]{64}$/);
+export const defaultArtSlot = z.enum(['portrait', 'portrait-dark', 'mark', 'mark-dark', 'hero-mark', 'hero-mark-dark']);
+export const defaultArtAsset = z.object({ slot: defaultArtSlot, sha256: defaultArtDigest, name: z.string().min(1).max(200), size: z.number().int().min(24).max(2 * 1024 * 1024), type: z.enum(['image/png', 'image/jpeg', 'image/webp']), width: z.number().int().min(1).max(4096), height: z.number().int().min(1).max(4096) }).strict();
+const pack = z.object({ protocol: z.literal('dsh-zhen-default-art-v1'), chunkBytes: z.number().int().min(16 * 1024).max(DEFAULT_ART_CHUNK_BYTES), id: z.string().min(1).max(100), name: z.string().min(1).max(100), digest: defaultArtDigest, focus: z.object({ x: z.number().min(0).max(1), y: z.number().min(0).max(1), scale: z.number().min(.5).max(1.5) }).strict(), credit: z.object({ artist: z.string().max(200), source: z.string().max(500), url: z.string().max(1000), license: z.string().max(4000), notice: z.string().max(16000) }).strict(), assets: z.array(defaultArtAsset).min(1).max(6) }).strict();
+export const defaultArtInfoSchema = z.discriminatedUnion('state', [z.object({ state: z.literal('ready'), code: z.literal('OK'), pack }).strict(), z.object({ state: z.literal('none'), code: z.literal('ART_NOT_CONFIGURED'), pack: z.null() }).strict(), z.object({ state: z.literal('unavailable'), code: z.literal('ART_SOURCE_UNAVAILABLE'), pack: z.null() }).strict()]);
+export type DefaultArtInfo = z.infer<typeof defaultArtInfoSchema>;
+export type DefaultArtAsset = z.infer<typeof defaultArtAsset>;
+export const defaultArtChunkRequest = z.object({ digest: defaultArtDigest, sha256: defaultArtDigest, offset: z.number().int().nonnegative().max(2 * 1024 * 1024) }).strict();
+export type DefaultArtChunkRequest = z.infer<typeof defaultArtChunkRequest>;
+export const defaultArtChunkSchema = z.object({ digest: defaultArtDigest, sha256: defaultArtDigest, offset: z.number().int().nonnegative(), nextOffset: z.number().int().positive().max(2 * 1024 * 1024), size: z.number().int().min(24).max(2 * 1024 * 1024), base64: z.string().min(4).max(DEFAULT_ART_CHUNK_BYTES / 3 * 4).regex(/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/), eof: z.boolean() }).strict();
+export type DefaultArtChunk = z.infer<typeof defaultArtChunkSchema>;

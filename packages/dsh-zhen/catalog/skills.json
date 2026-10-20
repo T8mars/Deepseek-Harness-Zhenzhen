@@ -1,0 +1,242 @@
+[
+  {
+    "manifest": {
+      "id": "zhen-canvas-handoff",
+      "version": "1.0.1",
+      "title": "画布创作交接",
+      "description": "将脚本、镜头和素材需求整理为 T8 画布可审阅的交接包，不代替画布授权执行。",
+      "category": "workflow",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "67db9c17367d482b0674a5b515c6df25cd914aee1c5d3026702e989ee2b55177"
+    },
+    "content": "---\nname: zhen-canvas-handoff\ndescription: \"将脚本、镜头和素材需求整理为 T8 画布可审阅的交接包，不代替画布授权执行。\"\n---\n\n# 画布创作交接\n\n读取用户提供的项目目标、镜头清单与素材信息，交付节点意图、输入输出关系、命名和验收标准。\n如果当前已连接画布工具，先读取其状态与 compat；不兼容时停止对画布写入。以实时工具清单为准，不假定某个节点或工具已支持。\n用 `canvas_workspaces` 确认项目和画布，再用 `canvas_inspect` 读取节点、素材、已有任务或验证执行方案。不要猜项目 ID、素材 ID 或任务 ID。\n用 `canvas_capability_tools` 读取高层能力的精确名称、版本和 directOperations。将用户的创作意图交给 `canvas_plan`，显式绑定 projectId/canvasId，仅使用清单允许的 plan、preview、inspect 或 verify。保留画布返回的最新 planId、摘要、目标版本、素材引用和仍需补充的信息；旧预览可能已失效，不能自行拼接内部节点或 Provider 请求。\n规划入口覆盖实时清单中的创作家族，但不会应用改动、运行生成或完成交付。费用未知时明确写未知，不将估算当作硬预算。素材导入、交付与浏览器预览需要画布配对已有的对应权限，权限不足时告知缺少的范围，不绕过。\n准备变更预览，记录目标项目与版本。付费动作遵循报价/预览、DSH 审批、画布窗口审批、一次提交、后续查询。\n一旦有 task_id，只查询；受理不明时保留 unknown，不创建重试、克隆或换工具提交来绕过。\n连接未就绪时交付可人工执行的交接文档，并明确没有写入画布。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-creative-review",
+      "version": "1.0.0",
+      "title": "创作验收清单",
+      "description": "按用户目标审阅脚本、分镜或成片，输出具体可执行的修改项。",
+      "category": "workflow",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "68d86968ce927783f11027799c05851161e8848bb0c4e96513a1599b218dfa34"
+    },
+    "content": "---\nname: zhen-creative-review\ndescription: \"按用户目标审阅脚本、分镜或成片，输出具体可执行的修改项。\"\n---\n\n# 创作验收清单\n\n先确定验收对象、版本和目标。用可见证据支撑意见；没有看过成片时只审阅已提供材料。\n优先检查信息是否成立、因果是否连贯、角色/产品是否一致、字幕音频是否可理解，再检查装饰与风格。\n每条修改写清位置、观察、对观众的影响和建议动作；区别阻碍交付的问题与偏好建议。\n最多先列五条最值得处理的项，说明哪些需要补证据。不要为了凑数制造问题。\n复查时对比实际变更，避免重复报告已修复的问题。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-edit-plan",
+      "version": "1.0.0",
+      "title": "剪辑节奏规划",
+      "description": "将已有镜头清单或素材记录整理为剪辑方案，处理节奏、声画关系和转场。",
+      "category": "workflow",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "ac1bc3546117a8daabc79a30b89105062efd45d0fbbd2a501a8747db29b0afdd"
+    },
+    "content": "---\nname: zhen-edit-plan\ndescription: \"将已有镜头清单或素材记录整理为剪辑方案，处理节奏、声画关系和转场。\"\n---\n\n# 剪辑节奏规划\n\n以现有素材的真实信息为基础。未观看的素材不得假称已评估，精确入出点必须来自可用的时码或实际查看。\n根据情绪或信息变化安排镜头长度，把关键动作保留完整，把无信息重复缩短。让声画关系承担转场，避免堆叠特效。\n交付段落时间线、镜头排序理由、音频衔接、字幕重点以及缺口补拍清单。\n用户给定的总时长是硬约束时，展示各段时长合计。仅有估算时明确标注。\n输出可执行的剪辑计划；实际写入工程需对应工具和用户授权范围。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-image-prompt",
+      "version": "1.0.0",
+      "title": "图像提示词工作台",
+      "description": "根据明确的创作目标编写或改写图像生成提示词，支持用户给定的构图与参考。",
+      "category": "visual",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "33ef014ae018bf9aa7cf41e566002e60bb800a41e8d83b9f6e81f1837884c2d6"
+    },
+    "content": "---\nname: zhen-image-prompt\ndescription: \"根据明确的创作目标编写或改写图像生成提示词，支持用户给定的构图与参考。\"\n---\n\n# 图像提示词工作台\n\n拆分不可变约束与可探索元素，先确定主体行为、空间关系、构图、光线和视觉材质，再补细节。\n参考图角色、产品和标志只按用户提供内容锁定；不要在提示词里添加互相矛盾的镜头和光线。\n给出可直接复制的主提示词，必要时附精简负面约束与参数建议。模型未知时用普通自然语言，不伪造模型专用参数。\n若要做多张，保持共同规则，逐张改变明确的变量以便比较。\n提示词本身不代表生成已执行。记录需检查的文字、手部、结构和参考一致性。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-knowledge-writing",
+      "version": "1.0.0",
+      "title": "带出处的创作",
+      "description": "用用户选定且允许引用的资料辅助写作，保留出处并处理资料冲突。",
+      "category": "writing",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "c5d2bcb9b251cfbd08cf19465e2d98f49d48e2ee08f45a3b367db26e594485e5"
+    },
+    "content": "---\nname: zhen-knowledge-writing\ndescription: \"用用户选定且允许引用的资料辅助写作，保留出处并处理资料冲突。\"\n---\n\n# 带出处的创作\n\n使用当前项目中明确授权的资料或用户直接提供的片段。只有本地索引授权时不能自行将整份资料发送给云模型。\n先建立主张与出处的对应关系，记录文件、段落或行号。资料没有支持的推断明确标为创作建议。\n同一事实出现冲突时展示来源差异与时间背景，不无声选一边。资料不足时指出缺口，勿生成貌似真实的引用。\n交付正文与可定位出处；引文只保留必要的短片段。虚构写作区分史实约束和虚构增补。\n引用前复核当前权限与版本；被撤回的集合不继续检索或恢复旧结果。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-product-ad",
+      "version": "1.0.0",
+      "title": "产品广告创意",
+      "description": "围绕产品证据和受众需求设计广告脚本、镜头与文案，适用于短视频或主视觉提案。",
+      "category": "writing",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "2e74326695d2f35e8d2c241f77c262e0bd2449196dc9524c14f40359eea034af"
+    },
+    "content": "---\nname: zhen-product-ad\ndescription: \"围绕产品证据和受众需求设计广告脚本、镜头与文案，适用于短视频或主视觉提案。\"\n---\n\n# 产品广告创意\n\n先建立“受众问题—产品能力—可见证据”的对应表。只使用用户提供或已核实的参数；缺失证据的卖点标待验证。\n创意用真实可演示的动作呈现优势，避免把装饰镜头当性能证明。用户要求情绪广告时也保留识别产品与品牌的位置。\n交付核心创意、镜头节拍、画面文字、行动引导、素材清单。控制每屏信息量，给关键产品留出可读时间。\n不要自行添加价格、折扣、排名、疗效、承诺或竞品结论。广告发布不是本技能的默认动作。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-production-plan",
+      "version": "1.0.0",
+      "title": "创作制作计划",
+      "description": "将作品目标拆为素材、依赖、阶段验收和可执行的制作安排。",
+      "category": "workflow",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "7390276a4482ef6978a38bab0b1c46883ce2de37569bcc477fe2038caf361723"
+    },
+    "content": "---\nname: zhen-production-plan\ndescription: \"将作品目标拆为素材、依赖、阶段验收和可执行的制作安排。\"\n---\n\n# 创作制作计划\n\n从最终交付倒推阶段：确认方向、制作素材、整合、验收。每项任务写明输出、依赖、责任人和验收条件。\n已有素材优先复用；不把需要授权、费用或外部等待的工作写成已就绪。区分本地处理、外部生成和人工决策。\n时间与费用缺乏依据时用范围并说明假设，不把估算写成硬上限。关键路径明确标出会阻塞后续的项。\n交付紧凑任务表、近期可以开始的工作和需要负责人决定的选项。未授权时不发布、不发送协作通知、不执行付费生成。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-reference-notes",
+      "version": "1.0.0",
+      "title": "参考片分析笔记",
+      "description": "把用户提供且已实际查看的影像参考整理成可复用的镜头、声音和节奏笔记。",
+      "category": "workflow",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "65bb097691bc2523f606f2dfc70f5be3a107e12e4a8756e3f3c354c3133881ec"
+    },
+    "content": "---\nname: zhen-reference-notes\ndescription: \"把用户提供且已实际查看的影像参考整理成可复用的镜头、声音和节奏笔记。\"\n---\n\n# 参考片分析笔记\n\n先记录能访问哪些参考与片段。只分析实际查看的内容，区分观察、推测与可借鉴的方法。\n逐段记录景别、主体动作、镜头运动、光色、声音进入点、剪辑连接及其叙事作用。精确时码来自实际素材。\n提炼可迁移的制作方法，例如用前景遮挡连接空间，而非只给风格形容词。\n交付观察表、三至五条方法、适用于用户项目的改写建议和无法验证的部分。\n不将参考内容原样搬运当成用户原创，不默认下载或发布第三方素材。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-scene-dialogue",
+      "version": "1.0.0",
+      "title": "人物与对白",
+      "description": "根据人物目标和关系改写场景对白，适用于短剧、短片和双人对话。",
+      "category": "writing",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "67b90a9bd41e0c69a2a4a97dffe1f5b1fcc781d7c895d4a3f345f398f9794061"
+    },
+    "content": "---\nname: zhen-scene-dialogue\ndescription: \"根据人物目标和关系改写场景对白，适用于短剧、短片和双人对话。\"\n---\n\n# 人物与对白\n\n明确场景中每个人希望对方做什么，以及为什么此刻不能直说。用说话策略、停顿与行动表现关系，不靠一长段解释背景。\n每个角色选择不同的句长、信息习惯和回避方式；差异服务于人物，不靠标签化口音。\n保留用户指定的情节点。改写时让至少一个说话策略因对方反应而改变，场景结尾应改变一项关系、信息或行动承诺。\n交付可拍摄场景，必要时附简短“修改了什么及其作用”。动作只写能看到或听到的内容。\n不把虚构对白当成真人原话；涉及引用时明确区分。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-script-outline",
+      "version": "1.0.0",
+      "title": "口播脚本结构",
+      "description": "将观点、资料或产品信息整理为口播与解说脚本，明确开头、论据与转场。",
+      "category": "writing",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "41d9a0a3a173583d5743f2e680ea37753f1addd13a022c77ee81143efe127aac"
+    },
+    "content": "---\nname: zhen-script-outline\ndescription: \"将观点、资料或产品信息整理为口播与解说脚本，明确开头、论据与转场。\"\n---\n\n# 口播脚本结构\n\n按观众已经知道什么、需要理解什么组织段落。开头用具体矛盾或问题建立观看理由，避免无证据的夸张承诺。\n每段只推进一个判断，给出支持它的事实、示例或可见动作；标清仍待核实的主张。用户提供的原文中有关键限定时保留。\n把口播与画面建议分栏，画面必须解释或证明这段话，不只重复字幕。用前一段留下的问题引出下一段。\n交付可朗读的连续正文、段落作用与预计时长。时长根据实际字数与用户语速估算，说明假设，不把估算当精确音频时码。\n用户已有稿件时先保留其语气和事实，再做结构修订。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-shot-list",
+      "version": "1.0.0",
+      "title": "分镜与镜头清单",
+      "description": "将已确定的脚本拆为可拍摄的分镜和镜头清单，标明动作、构图、声音与衔接。",
+      "category": "visual",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "1b2bd0bb0371701762ccdc6f085ae8324a4b0725387a6f0de9be76b44001248d"
+    },
+    "content": "---\nname: zhen-shot-list\ndescription: \"将已确定的脚本拆为可拍摄的分镜和镜头清单，标明动作、构图、声音与衔接。\"\n---\n\n# 分镜与镜头清单\n\n以叙事动作切镜，不按每句话机械分镜。先找每段最需要观众看到的变化，再决定景别与机位。\n每镜列出：镜号、预估时长、主体与动作、景别/角度、镜头移动、可见环境、声音、前后镜连接、素材需求。\n写清动作起点和终点；运动方向、视线、道具位置应连续。一个镜头只保留可在其时间里完成的动作。\n说明哪些镜头可用现有素材，哪些需要拍摄或生成。生成建议仅交付创作计划；实际工具是否存在和生成授权另行核实。\n最后检查总时长、重复画面和缺失的因果镜头。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-story-brief",
+      "version": "1.0.0",
+      "title": "故事创意简报",
+      "description": "把用户的故事想法整理成可继续写作的创意简报；适用于短片、短剧和品牌叙事。",
+      "category": "writing",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "ef872c7bb3b3103f1095e904176bc0cc1551df2c8278a046493aedb46409fac4"
+    },
+    "content": "---\nname: zhen-story-brief\ndescription: \"把用户的故事想法整理成可继续写作的创意简报；适用于短片、短剧和品牌叙事。\"\n---\n\n# 故事创意简报\n\n将用户已给的信息压缩成能做创作取舍的简报，不替用户扩大项目。\n先确定观众、发布场景、长度和作品要引发的感受；缺少信息时标注可修改的假设，只有影响方向的缺口才询问。\n给出一句话故事：一个具体人物，为了一个可见目标，在期限或代价下遇到什么阻力。把主题写成人物必须做出的选择，不写空泛口号。\n交付包含：核心冲突、人物的欲望与盲点、开始/转折/结果、最值得拍的画面、尚待确认的事实。区分用户提供的设定和本次新提案。\n如用户希望比较方案，最多提出三个冲突机制真正不同的方向，并说明制作代价和情感差异。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-subtitle-plan",
+      "version": "1.0.0",
+      "title": "字幕与动态文字",
+      "description": "为口播、MV 或解说设计清楚易读的字幕与动态文字方案。",
+      "category": "visual",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "b9a116347435e73c1abbf5bc6c9e6fed7e8e0100a5fe163cbcee462755742b56"
+    },
+    "content": "---\nname: zhen-subtitle-plan\ndescription: \"为口播、MV 或解说设计清楚易读的字幕与动态文字方案。\"\n---\n\n# 字幕与动态文字\n\n字幕准确性优先于装饰。保留人名、数字与关键限定；无法听清的内容标记待听写，不擅自补句。\n按语义和呼吸断句，避免把否定词与结论拆开。单屏长度结合画幅和字号判断，不机械压缩到不可读。\n区分逐字字幕、关键词强调与章节标题，说明各自出现时机、位置、层级和避让区域。\n没有音频或可靠时码时交付分句与相对节奏，不伪造精确 SRT 时间。\n动态文字提供静态或减弱动效版本，避免让内容只能依靠颜色或运动理解。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-video-prompt",
+      "version": "1.0.0",
+      "title": "视频动作提示词",
+      "description": "将镜头意图写成时间连续的视频生成提示词，明确动作起止、相机与场景约束。",
+      "category": "visual",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "cbbfe041161129b859a3e4ae7e1f091e2e374091bea3e99d754dbbf1b99a81b9"
+    },
+    "content": "---\nname: zhen-video-prompt\ndescription: \"将镜头意图写成时间连续的视频生成提示词，明确动作起止、相机与场景约束。\"\n---\n\n# 视频动作提示词\n\n先确认输入是文生视频还是已有图/视频条件；只在工具与模型确实支持时建议参考控制、首尾帧或音频功能。\n用时间顺序表达一个主要动作：初始状态、变化过程、结束状态。相机运动与主体运动分开写，保持方向和空间关系可理解。\n控制单镜事件密度；多阶段复杂变化拆镜并说明转场。时长未知时给可调整节奏，不冒充已核实模型时长限制。\n交付提示词、输入素材清单、保持不变的元素和逐帧验收关注点。\n请求真实生成时必须使用当前可用的正式生成路径；费用、批准和提交状态由执行系统管理，不能由本技能代为批准或重发。\n\n"
+  },
+  {
+    "manifest": {
+      "id": "zhen-visual-brief",
+      "version": "1.0.0",
+      "title": "视觉方向板",
+      "description": "把主题和用户给定参考转为统一的视觉制作简报，包括配色、光线、构图和材质。",
+      "category": "visual",
+      "host": "0.2.1-rc.2",
+      "license": "MIT",
+      "source": "bundled",
+      "dependencies": [],
+      "permissions": [],
+      "digest": "87ea0b4efb27fa95369f15da8b5c4b48dad6be09d84a0a1b863f7a6977599e30"
+    },
+    "content": "---\nname: zhen-visual-brief\ndescription: \"把主题和用户给定参考转为统一的视觉制作简报，包括配色、光线、构图和材质。\"\n---\n\n# 视觉方向板\n\n先描述参考中可观察的构图、色彩比例、光线、材质和画面节奏，不臆测品牌或作者意图。\n选择少量可执行的规则：主/辅色用途、焦点位置、主体尺度、光源方向、背景复杂度、文字留白。说明规则如何支持情绪和信息层级。\n交付一个主方向和必要的对照方向，附适用镜头、容易失控的元素及验收点。\n对用户指定角色只使用其已提供的素材信息；不补造被禁止的角色外形。素材许可未知时记录为待确认，不把网络可见当可分发。\n本技能交付文字简报；生成或编辑图片需用户任务实际要求与可用工具。\n\n"
+  }
+]

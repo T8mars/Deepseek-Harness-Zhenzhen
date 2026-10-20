@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>设置 · 模型与网关</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="--bg:{{c.bg}};--l1:{{c.l1}};--l2:{{c.l2}};--ov:{{c.ov}};--sb:{{c.sb}};--sba:{{c.sba}};--bub:{{c.bub}};--t1:{{c.t1}};--t2:{{c.t2}};--t3:{{c.t3}};--t4:{{c.t4}};--lk:{{c.lk}};--pri:{{c.pri}};--onpri:{{c.onpri}};--acc:{{c.acc}};--send:{{c.send}};--ok:{{c.ok}};--warn:{{c.warn}};--warnt:{{c.warnt}};--err:{{c.err}};--idle:{{c.idle}};--bd:{{c.bd}};--vio:{{c.vio}};--tf:{{c.tf}};--tt:{{c.tt}};--glow:{{c.glow}};--sh1:{{c.sh1}};--sh3:{{c.sh3}}; position: relative; display: flex; align-items: center; justify-content: center; min-height: 880px; box-sizing: border-box; padding: 40px 24px; background: var(--bg); color: var(--t1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+
+  <!-- 背景：被遮罩的应用轮廓 -->
+  <div style="position: absolute; inset: 0; display: flex; opacity: 0.55" aria-hidden="true">
+    <div style="flex: 0 0 264px; background: var(--sb)"></div>
+    <div style="flex: 1; background: var(--bg)"></div>
+  </div>
+  <div style="position: absolute; inset: 0; background: {{c.scrim}}" aria-hidden="true"></div>
+
+  <!-- 设置对话框 -->
+  <div style="position: relative; width: 800px; max-width: 100%; height: 800px; max-height: 100%; background: var(--l2); border-radius: 28px; box-shadow: var(--sh3); display: flex; overflow: hidden">
+    <!-- 导航 -->
+    <div style="flex: 0 0 188px; box-sizing: border-box; background: var(--sb); padding: 20px 12px; display: flex; flex-direction: column; gap: 2px">
+      <div style="padding: 0 10px 12px; font-weight: 600; font-size: 16px">设置</div>
+      <sc-for list="{{snav}}" as="n" hint-placeholder-count="7">
+        <div style="display: flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 12px; background: {{n.bg}}; color: {{n.fg}}; font-weight: {{n.fw}}; font-size: 14px">{{n.l}}</div>
+      </sc-for>
+    </div>
+
+    <!-- 内容 -->
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; height: 54px; padding: 0 24px; box-shadow: 0 0.5px 0 0 var(--bd)">
+        <span style="font-weight: 600; font-size: 16px">模型</span>
+        <span style="flex: 1"></span>
+        <button type="button" aria-label="关闭" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: transparent; color: var(--t2); cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"></path></svg></button>
+      </div>
+      <div style="flex: 1; overflow: hidden; padding: 18px 24px; display: flex; flex-direction: column; gap: 14px">
+
+        <!-- Seedance 卡 -->
+        <div style="border-radius: 20px; background: var(--bg); padding: 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 0 0 1px {{c.cardring}}">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="flex: 0 0 32px; height: 32px; border-radius: 11px; background: linear-gradient(135deg, var(--tf), var(--tt)); display: flex; align-items: center; justify-content: center; color: var(--pri)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 8c1.5-2.5 3-2.5 4 0s2.5 2.5 4 0 2.5-2.5 4 0"></path></svg></span>
+            <span style="font-weight: 600; font-size: 15px">Seedance 网关</span>
+            <span style="font-size: 12px; line-height: 18px; padding: 0 8px; border-radius: 9px; background: var(--bub); color: var(--pri)">默认</span>
+            <span style="flex: 1"></span>
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ok)"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok)"></span>已连接</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px 12px; align-items: center; font-size: 13px">
+            <span style="color: var(--t3)">API 地址</span>
+            <span style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 12px; color: var(--t2); height: 34px; display: flex; align-items: center; padding: 0 12px; border-radius: 10px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd)">https://api.seedance.nz/v1<span style="flex: 1"></span><span style="font-family: inherit; color: var(--t4); font-size: 11px">只读</span></span>
+
+            <span style="color: var(--t3)">密钥</span>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 12px; color: var(--t2); flex: 1; height: 34px; display: flex; align-items: center; padding: 0 12px; border-radius: 10px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd)">sk-••••••••a3f2</span>
+              <button type="button" style="height: 34px; padding: 0 14px; border: 0; border-radius: 17px; background: var(--l1); color: var(--t1); font: inherit; font-size: 12px; cursor: pointer; box-shadow: 0 0 0 0.5px var(--bd)">更换</button>
+            </div>
+            <span></span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">密钥只写不读：保存后仅显示末四位，不会回显完整内容。</span>
+
+            <span style="color: var(--t3)">余额</span>
+            <div style="display: flex; align-items: center; gap: 12px; font-variant-numeric: tabular-nums">
+              <span style="font-weight: 600; font-size: 16px">¥ 128.40</span>
+              <span style="color: var(--t3); font-size: 12px">已用 ¥ 36.10</span>
+              <span style="flex: 1"></span>
+              <button type="button" style="height: 30px; padding: 0 14px; border: 0; border-radius: 15px; background: var(--bub); color: var(--pri); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer">刷新</button>
+            </div>
+
+            <span style="color: var(--t3)">默认模型</span>
+            <div style="display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 12px; border-radius: 10px; background: var(--l1); box-shadow: 0 0 0 1px var(--acc)">
+              <span style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 12px; color: var(--t1)">deepseek/deepseek-v4.1-flash</span><span style="flex: 1"></span><span style="color: var(--t3); font-size: 11px">▾</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 6px; flex-wrap: wrap">
+            <sc-for list="{{caps}}" as="g" hint-placeholder-count="7"><span style="font-size: 11px; line-height: 16px; padding: 2px 9px; border-radius: 10px; background: var(--bub); color: var(--t2)">{{g}}</span></sc-for>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px">
+            <span style="font-weight: 600; font-size: 13px">模型清单</span><span style="font-size: 12px; color: var(--t3)">手动维护</span><span style="flex: 1"></span>
+            <button type="button" style="height: 28px; padding: 0 12px; border: 0; border-radius: 14px; background: transparent; color: var(--lk); font: inherit; font-size: 12px; cursor: pointer; box-shadow: 0 0 0 1px var(--bd)">＋ 添加模型</button>
+          </div>
+          <div style="border-radius: 14px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); overflow: hidden">
+            <div style="display: grid; grid-template-columns: minmax(0, 1.6fr) 90px 90px 80px; gap: 8px; padding: 8px 14px; font-size: 12px; line-height: 18px; color: var(--t4); box-shadow: 0 0.5px 0 0 var(--bd)"><span>模型 ID</span><span>上下文</span><span>最大输出</span><span>输入</span></div>
+            <sc-for list="{{models}}" as="m" hint-placeholder-count="2">
+              <div style="display: grid; grid-template-columns: minmax(0, 1.6fr) 90px 90px 80px; gap: 8px; align-items: center; min-height: 40px; padding: 4px 14px; font-size: 12px">
+                <span style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{m.id}}</span>
+                <span style="color: var(--t2); font-variant-numeric: tabular-nums">{{m.ctx}}</span>
+                <span style="color: var(--t2); font-variant-numeric: tabular-nums">{{m.out}}</span>
+                <span style="color: var(--t2)">{{m.inp}}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 6px; font-size: 12px; line-height: 18px; color: var(--t3)">
+            <div style="display: flex; gap: 8px; border-radius: 12px; padding: 8px 12px; background: var(--bub)"><span style="color: var(--lk)">ⓘ</span><span>该网关不提供模型列表接口，无法自动获取，请在上方手动添加模型。</span></div>
+            <div style="display: flex; gap: 8px; border-radius: 12px; padding: 8px 12px; background: var(--bub)"><span style="color: {{c.warnt}}">!</span><span>最大输出（max_tokens）包含推理内容：设得太小，可见回复可能被截断。</span></div>
+          </div>
+        </div>
+
+        <!-- 其他提供商 -->
+        <div style="display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 16px; border-radius: 16px; background: var(--bg); box-shadow: 0 0 0 0.5px var(--bd)">
+          <span style="color: var(--t3); font-size: 12px">▸</span><span style="font-weight: 500">其他模型提供商</span><span style="font-size: 12px; color: var(--t3)">自定义 OpenAI 兼容接口、其他厂商</span><span style="flex: 1"></span><span style="font-size: 12px; color: var(--t3)">0 个已配置</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font-size: 11px; line-height: 14px; color: var(--t3)">界面示意稿 · 密钥为遮罩示意，余额与模型参数为示例</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]},"$preview":{"width":1360,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = (this.props.theme ?? 'light') === 'dark';
+    const L = {bg:'#F4F9FA',l1:'#FFFFFF',l2:'#FFFFFF',ov:'#E1ECEF',sb:'#EAF3F5',sba:'#D6E8EC',bub:'#E1F2F4',t1:'#0B1F26',t2:'#34494F',t3:'#435C65',t4:'#566F78',lk:'#0A6AA1',pri:'#0F5B6B',onpri:'#FFFFFF',acc:'#0B7A8C',send:'#0B7285',ok:'#0F7D4D',warn:'#B87100',warnt:'#8A5300',err:'#C62D3A',idle:'#6E8790',bd:'rgba(8,70,88,0.14)',vio:'#5B4BC2',tf:'#BFEFF3',tt:'#DCEBFF',glow:'rgba(79,209,220,0.28)',sh1:'0 0 0 0.5px rgba(8,70,88,0.14), 0 6px 20px rgba(8,70,88,0.05)',sh3:'0 0 0 0.5px rgba(8,70,88,0.14), 0 24px 64px rgba(8,70,88,0.18)',scrim:'rgba(11,31,38,0.38)',cardring:'rgba(11,122,140,0.35)'};
+    const D = {bg:'#0A1418',l1:'#0F1C21',l2:'#14242A',ov:'#2D434B',sb:'#0C171B',sba:'#1F3A43',bub:'#17323A',t1:'#E8F4F6',t2:'#B7CCD2',t3:'#93AEB6',t4:'#869FA6',lk:'#6CC6F2',pri:'#8FE3EA',onpri:'#04222A',acc:'#4FD1DC',send:'#0C7A8A',ok:'#3DD68C',warn:'#F5B84A',warnt:'#F5B84A',err:'#FF7A85',idle:'#4D6770',bd:'rgba(214,240,245,0.14)',vio:'#B7ACFF',tf:'#0F4F5C',tt:'#14304F',glow:'rgba(79,209,220,0.20)',sh1:'0 0 0 0.5px rgba(214,240,245,0.16), 0 6px 20px rgba(0,0,0,0.26)',sh3:'0 0 0 0.5px rgba(214,240,245,0.16), 0 24px 64px rgba(0,0,0,0.6)',scrim:'rgba(2,8,10,0.6)',cardring:'rgba(79,209,220,0.35)'};
+    const c = dark ? D : L;
+    const names = ['通用', '模型', '技能', '知识库', '画布', '插件', '关于'];
+    const snav = names.map(l => l === '模型'
+      ? { l, bg: c.sba, fg: c.t1, fw: 600 }
+      : { l, bg: 'transparent', fg: c.t2, fw: 400 });
+    const caps = ['262,144 上下文', '图像输入', '工具调用', '推理', '流式输出', '缓存', '结构化输出'];
+    const models = [
+      { id: 'deepseek/deepseek-v4.1-flash', ctx: '262,144', out: '手动填写', inp: '文本 · 图像' }
+    ];
+    return { c, snav, caps, models };
+  }
+}
+</script>
+</body>
+</html>

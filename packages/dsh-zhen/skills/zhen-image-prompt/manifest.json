@@ -1,0 +1,13 @@
+{
+  "id": "zhen-image-prompt",
+  "version": "1.0.0",
+  "title": "图像提示词工作台",
+  "description": "根据明确的创作目标编写或改写图像生成提示词，支持用户给定的构图与参考。",
+  "category": "visual",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

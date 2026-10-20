@@ -1,0 +1,300 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-20",
+  "dsh": {
+    "tag": "dsh-v0.2.1-rc.2",
+    "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+    "version": "0.2.1-rc.2",
+    "registryIntegrity": "sha512-tvY+yhfKRifthbqPe/OK0AYxM5ZkvqfYq/jMYgJcEUxiRRL1Vwra3Ti5TB6AXgSWQdiPHYh/Vp6SJa9yHwMNuw==",
+    "discoveryTag": "next",
+    "runtimeVerified": true,
+    "runtimeVerificationScope": "Windows, Node 22.19.0, published Web profile + DSH-zhen plugin, public web branding, skill provider and slash discovery after refresh; no paid chat"
+  },
+  "cordis": {
+    "version": "4.0.5",
+    "reason": "Published DSH dependency ~4.0.5; independent from the Cordis next dist-tag."
+  },
+  "canvas": {
+    "commit": "e6702dc7770bcbe7d4895be22a06f4c7123a085b",
+    "version": "3.3.6",
+    "runtimeVerified": false
+  },
+  "seedance": {
+    "docs": "https://api.seedance.nz/docs/llms.txt",
+    "sha256": "CD7D81AB06320A5D653A64E7413CA3834523FC7881B7B2BBF5077D2D878245E5",
+    "liveChatVerified": false
+  },
+  "packageManager": {
+    "name": "pnpm",
+    "version": "10.34.7",
+    "scope": "profile package operations; npm lockfile owns workspace"
+  },
+  "extensions": {
+    "mcpSdk": "1.32.1",
+    "mcpVerification": "10 Canvas read/planning entries; C10/C16/C24 use actual published SDK/Host/ToolRuntime. A real local source CLI also mounted all 10 and returned APP_NOT_RUNNING without provider credential reads. A managed installed CLI was detected with different compatibility digests; no real paired application or business handler was verified.",
+    "canvasDiscovery": {
+      "schemaVersion": 1,
+      "maxCandidates": 8,
+      "automaticActivation": false,
+      "verification": "Six units and C24 cover inert installer/marker discovery, whole-tree fingerprints, canonical duplicates, metadata/path/link refusal, stale reviewed pins and previous-config preservation. Actual local installed/source inventories were read; new UI and real paired handshake remain unverified."
+    },
+    "canvasDevelopmentReplayFix": {
+      "status": "unreleased-workspace-only",
+      "providerCatalogDigest": "00dc6ba277f0937123ad7695c01a473a733df8b3d7890f4e7f9fe33e685edf5d",
+      "verification": "Six production-module transport tests pass; runtime catalog differs only in sourceDigest and official feature-sync passes. Canvas adjacent baseline failures remain visible. No paid DSH execution or production package is enabled by this source fix."
+    },
+    "canvasWindowPairing": {
+      "locatorSchema": 1,
+      "defaultScopes": [
+        "canvas:read",
+        "run:read",
+        "asset:read"
+      ],
+      "optionalScopes": [
+        "asset:transfer",
+        "browser:handoff",
+        "canvas:write",
+        "run:execute"
+      ],
+      "automaticApproval": false,
+      "verification": "Default pairing remains three read scopes; handoff, canvas:write and run:execute are independent explicit opt-ins requiring native window grant. Existing C25/C26 native store and published Host/Remote/MCP boundaries remain. New run permission defaults false; no Agent pairing or automatic approval. Real UI/window remain unverified."
+    },
+    "canvasNativeStoreTransactions": {
+      "protocol": "t8-zcanvas-secure-store-transaction-v1",
+      "dataSchema": "t8-zcanvas-secure-store-v1",
+      "status": "unreleased-workspace-only",
+      "storeSha256": "6cd53dc412c6e9c771cd7052cde37cb97bf943d966f3c0227037504677dc8b88",
+      "coordinatorSha256": "bc45bde610bca44ebe336a7d5c4ef305ea85b3c96fff856ea5dda5b3775303e5",
+      "verification": "13 native concurrency/fault and 4 actual CLI cases, Electron seven-file 42-test matrix and feature-sync pass. Three C26 published DSH/Host/MCP contracts verify late native commit rejection, Windows DPAPI and old v1 reader compatibility using synthetic TEMP data. Only updated participating writers; no real window or production release."
+    },
+    "canvasPlanning": {
+      "schemaVersion": 1,
+      "publicToolContracts": 39,
+      "directL0Operations": 73,
+      "publicSurfaceSha256": "00e7f853c8c68adcfc44fa988f84299a5c2543757b68616722eea2bcb486203a",
+      "publicPolicySha256": "cede026a92342d6502814a1c8baa28e21b77d69fc1903789e2d4bcb5ab0b03b1",
+      "verification": "Original immutable public policy helper with inert dispatch accepts 73 L0 and refuses 123 non-direct operations. Actual business handlers, user data, real Canvas and paid providers were not exercised."
+    },
+    "ragSchema": 2,
+    "ragVerification": "C11 published ToolRuntime + pre-provider revocation guard and authorized source diversity; 21 invented keyword cases pass. Schema 2 unchanged. Real-corpus relevance, new UI and paid chat unverified.",
+    "artManifestSchema": 1,
+    "artVerification": "Original community reference rendered locally; later explicit user authorization produced two built-in imagegen PNGs and a verified separate local ZIP. New generated-set Web rendering remains unverified after browser policy refusal.",
+    "skillStoreSchema": 3,
+    "skillAutoUpdatePolicy": {
+      "scope": "first-party-text-v1",
+      "defaultEnabled": false,
+      "activation": "next-host-start",
+      "verification": "C17 actual published SkillRegistry/Host/Remote uses synthetic fixed-source reads across restart. Manual/personal versions persist, only enabled installed source text is queued, and local fetch receipts prevent edited caches from authorizing updates. Not a publisher signature or live published-feed verification."
+    },
+    "seedanceProtocolVerification": "Published pi-ai loopback SSE/tool round trip/cancellation/errors/usage; max_tokens compatibility configured; no live paid request",
+    "skillFeedSchema": 1,
+    "skillFeedVerification": "Commit-pinned text candidates, SQLite fetched-catalog receipts, verified offline cache, optional trusted scheduling and immutable/rollback rejection checks. Legacy unmatched cache requires a fresh source read. Positive real publication and new browser controls remain unverified.",
+    "mcpProgramRecipes": {
+      "memory": "2026.8.31",
+      "filesystem": "2026.8.31",
+      "sourceCommit": "a40bc270fb5ece62673f8a1196f57116d885c5eb"
+    },
+    "mcpProgramGrantSchema": 1,
+    "mcpMarketStateSchema": 2,
+    "mcpProgramVerification": "Actual pinned packages installed hook-free and exercised via SDK stdio with synthetic graph/files; Node 22.19. C13/C18 cover actual DSH transport, project/resource grants, draining and restart. Real pinned memory re-download/restore preserved synthetic graph/data bytes; old grants stayed revoked. New UI, filesystem repair and real model use remain unverified.",
+    "upstreamCandidate": {
+      "schemaVersion": 1,
+      "observedGuides": 42,
+      "observedWebRows": 190,
+      "verification": "Exact current npm metadata for 23 direct DSH packages matches the lock. C15 inspects disposable public templates; synthetic candidate/publisher/review and personal-instruction preservation checks pass. Current next is unchanged. Remote workflow, real newer runtime, canary and promotion remain unverified."
+    },
+    "capabilityCatalog": {
+      "schemaVersion": 1,
+      "families": 17,
+      "records": 275,
+      "modelRecords": 211,
+      "actionRecordsIncludingAliases": 60,
+      "musicRegistrySha256": "4ef4c4df0034bef57c68a38b1c0b4dcf0cfc8ab10de01bf42fffaa62e8e8007c",
+      "midjourneyRegistrySha256": "6e422516d934a765eeac0797427d221affbb12c80527f765f4528dbbb0def248",
+      "verification": "Three real public source reads match. C14 verifies all 18 configured text model ids through published adapter loopback and metadata-only ToolRuntime discovery. No live paid request or advanced protocol execution."
+    },
+    "gatewayCheck": {
+      "stateSchema": 1,
+      "policy": "flash-32-v1",
+      "requestMaxTokens": 32,
+      "verification": "C19 published prepared-call, Host/Remote and pi-ai loopback; one dispatch, captured generation, bounded/redacted receipts and cancellation. Process-termination/storage-failure cases refuse replay. No live gateway or paid request; no new UI browser verification."
+    },
+    "githubResourceSkills": {
+      "stateSchema": 1,
+      "policy": "github-resources-v1",
+      "automaticActivation": false,
+      "replacementActivation": "next-host-start",
+      "publicSmokeCommit": "dbd4588f9e1033efb41dad4bef2f7947c8993d44",
+      "publicSmokeDigest": "45a4df832f312bde603fafe4c209ae3c2fdb3e069470d4ad58c6c7726ff8f9a9",
+      "verification": "C21 actual published Host/Remote/registry/native loader covers resources, manual invocation and personal precedence across restart. Nine units use independent genuine Git objects. A real public four-file package downloaded and loaded in temporary storage; original bytes retained and temporary data removed. No script/model/paid call. New UI, full workflows, signatures and arbitrary concurrent Hosts remain unverified."
+    },
+    "localSkillDirectories": {
+      "stateSchema": 1,
+      "policy": "local-directory-v1",
+      "maxSources": 16,
+      "maxSkillDirectoriesPerLibrary": 128,
+      "maxInstructionBytes": 131072,
+      "verification": "C20 actual published registry/Host/Remote/ToolRuntime and exact locked native skill loader preserve local resources, invocation flags, disabling, edit/new-child/repair invalidation and incomplete discovery after configuration races. Synthetic references only; no program/model/paid call. New UI and real workflows remain unverified."
+    },
+    "gatewayTasks": {
+      "stateSchema": 1,
+      "queryProtocols": 8,
+      "maxRecords": 100,
+      "defaultTracking": false,
+      "generationOwner": "canvas",
+      "verification": "C22 actual published Host/Remote and independent isolated HTTP validate eight fixed GETs, real restarted Host polling and credential-generation invalidation. Nine units cover redaction, terminal usage, incomplete reads, cooldown/Retry-After, persistence and races. No live task, submit, paid call or provider cancel; new UI and media/Canvas association remain unverified."
+    },
+    "gatewayMediaExports": {
+      "stateSchema": 1,
+      "maxFileBytes": 2147483648,
+      "maxRedirects": 3,
+      "ticketLifetimeSeconds": 300,
+      "maxReceipts": 500,
+      "verification": "C23 actual published Host/Remote with a real isolated HTTP media stream verifies URL-free codecs, exact exported bytes and credential cancellation/restart/file retention. Twelve units cover address/DNS/redirect gates, bounded formats, private paths, no overwrite, cancellation and storage failure. Real CDN/TLS, new UI, user media and Canvas asset import remain unverified."
+    },
+    "canvasReviewedWorkflow": {
+      "stateSchema": 1,
+      "surface": "explicit-host-ui-only",
+      "paidExecution": false,
+      "agentMutationTools": 0,
+      "nativeEndpoints": [
+        "creative-plans",
+        "creative-approvals",
+        "approvals/:id/complete"
+      ],
+      "verification": "C27 published Host/Remote/ToolRuntime with original native auth/client/store/approval HTTP fixtures. Synthetic plan/DB only; real native business handlers, window and UI unverified. No Canvas source or release changes in this batch. Full DSH check: 217 tests, build/types/private guard pass. Fifteen units and two C27 cases; local 104-file archive and official disposable CLI install pass.",
+      "storesCreativeGoalForReview": true,
+      "maxStateBytes": 262144
+    },
+    "canvasChatPlanInbox": {
+      "storage": "process-local",
+      "maxCandidates": 16,
+      "maxExecutionCaptures": 64,
+      "source": "accepted-tools/result-structuredContent",
+      "tool": "mcp__t8canvas__canvas_plan",
+      "agentMutationTools": 0,
+      "automaticApproval": false,
+      "verification": "C28 published final-result policy, actual MCP stdio/native store HTTP fixtures and bounded local units. Exact original plan adoption without a planning POST; real model/UI/window remain unverified.",
+      "fullDshCheck": {
+        "tests": 223,
+        "passed": 223,
+        "liveProviderCalls": 0
+      }
+    },
+    "canvasNativeWorkflowVerification": {
+      "command": "npm run verify:canvas-native -- --canvas-root <trusted-source-path>",
+      "canvasHead": "e6702dc7770bcbe7d4895be22a06f4c7123a085b",
+      "cliDigest": "fae0b706964edbebfc630853a66d32ec591dbb4dc05661f4bf22e86284cb1ec9",
+      "actualRoutesAndPatchDatabase": true,
+      "newSystemTempOnly": true,
+      "testedBasicKinds": [
+        "image",
+        "video",
+        "script",
+        "story"
+      ],
+      "actualMcpChatHandoff": true,
+      "actualGraphAction": "graph.node-add",
+      "windowApproval": "simulated-test-ipc",
+      "installedDesktopVerified": false,
+      "providerCalls": 0,
+      "runLedgerCounts": {
+        "runs": 0,
+        "node_runs": 0,
+        "run_attempts": 0,
+        "run_intents": 0
+      },
+      "platformVerified": "win32",
+      "verification": "Current unreleased working source, native exact compatibility handshake, immutable DB/Patch implementation, isolated DPAPI and actual published Host/MCP composition. Not real installed Desktop, human window or provider/paid validation.",
+      "backendCompiledModules": 75,
+      "backendCompiledSourceDigest": "daf22d9bd8c6a8b5c507413d2881215312ffd63866d82d1331c59db4e595fbb0"
+    },
+    "canvasRunApproval": {
+      "stateSchema": 1,
+      "surface": "explicit-host-ui-only",
+      "protocol": "t8-agent-run-control-v1",
+      "paidProviderVerified": false,
+      "automaticApproval": false,
+      "agentMutationTools": 0,
+      "pricing": "unknown-requires-explicit-acknowledgement",
+      "nativeAuthority": "existing-run_intents",
+      "recovery": "authenticated-scope-bound-GET-only",
+      "nativeStatus": "unreleased-working-source",
+      "nativeServiceTests": 20,
+      "dshUnits": 11,
+      "publishedContract": "C29",
+      "fullDshCheck": {
+        "tests": 235,
+        "passed": 235,
+        "liveProviderCalls": 0
+      },
+      "nativeSourceDigest": "c335d9f6fd5736592f82a63d0341c4fc36ab951ec8ce2de22b89f21cfce883e8",
+      "nativeIntentCount": 1,
+      "nativeProviderDispatchStarted": false
+    },
+    "canvasNativeTaskCenter": {
+      "surface": "host-ui-read-only",
+      "scope": "current-native-actor-project-canvas",
+      "nativeEndpoints": [
+        "GET run-intents",
+        "GET run-intents/:id"
+      ],
+      "localLedger": false,
+      "maxList": 100,
+      "maxNodeEvidence": 500,
+      "maxAssetEvidence": 5000,
+      "maxOutputReferences": 5000,
+      "nativeResponseByteLimit": 262144,
+      "dshUnits": 9,
+      "publishedContract": "C30",
+      "nativeWorkingSourceVerified": true,
+      "nativeCompletedRealArtifactsVerified": false,
+      "fullDshCheck": {
+        "tests": 245,
+        "passed": 245,
+        "liveProviderCalls": 0
+      },
+      "nativeVerificationDshEntry": "58b981d49bd6adb01acf1b99306424608853bb4814108e03449051a35d27b254"
+    },
+    "localDefaultCommunityArt": {
+      "source": "separate-confirmed-local-art-pack",
+      "launcherAutomaticSelection": true,
+      "publicBundleContainsRasters": false,
+      "ownsBrowserArtDatabase": false,
+      "preservesPersonalOverridesAndOffMode": true,
+      "chunkBytes": 46080,
+      "maxAssetBytes": 2097152,
+      "physicalCarrierVerified": false,
+      "browserRenderingVerified": false,
+      "publishedContract": "C31",
+      "tests": 9,
+      "fullDshCheck": {
+        "tests": 255,
+        "passed": 255,
+        "liveProviderCalls": 0
+      },
+      "verifiedLocalPackDigest": "8b3db49ce49f75bc071de13389c6ebf16d23d016e1288c4b8826511ffb9b00ae"
+    },
+    "canvasSavedMedia": {
+      "surface": "explicit-host-ui",
+      "referenceSchema": 1,
+      "assetTransferDefaults": false,
+      "agentMutationTools": 0,
+      "nativeCopyAuthority": "AssetUploadManager + original Blob store",
+      "nativePlacementAuthority": "CanvasPatch",
+      "recovery": "scoped GET only after ambiguous completion",
+      "publishedContract": "C32",
+      "nativeWorkingSourceVerified": true,
+      "actualWindowVerified": false,
+      "realGatewayExportVerified": false,
+      "installedCanvasControlCode": "AGENT_CONTROL_REQUEST_INVALID",
+      "installedCanvasRepair": "unreleased encrypted provider-catalog resource lookup",
+      "fullDshCheck": {
+        "tests": 266,
+        "passed": 266,
+        "liveProviderCalls": 0
+      },
+      "nativeVerificationDshEntry": "282f0e90f2d6e7ebdd961663db5860e34bd2d8af4624fa6e5425dc2bb7ec9b33"
+    }
+  }
+}

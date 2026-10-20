@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>设置 · 外观与角色美术</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="--bg:{{c.bg}};--l1:{{c.l1}};--l2:{{c.l2}};--ov:{{c.ov}};--sb:{{c.sb}};--sba:{{c.sba}};--bub:{{c.bub}};--t1:{{c.t1}};--t2:{{c.t2}};--t3:{{c.t3}};--t4:{{c.t4}};--lk:{{c.lk}};--pri:{{c.pri}};--onpri:{{c.onpri}};--acc:{{c.acc}};--send:{{c.send}};--ok:{{c.ok}};--warn:{{c.warn}};--warnt:{{c.warnt}};--err:{{c.err}};--idle:{{c.idle}};--bd:{{c.bd}};--vio:{{c.vio}};--tf:{{c.tf}};--tt:{{c.tt}};--glow:{{c.glow}};--sh1:{{c.sh1}};--sh3:{{c.sh3}}; position: relative; display: flex; align-items: center; justify-content: center; min-height: 880px; box-sizing: border-box; padding: 40px 24px; background: var(--bg); color: var(--t1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; font-size: 14px; line-height: 22px; overflow: hidden">
+
+  <div style="position: absolute; inset: 0; display: flex; opacity: 0.55" aria-hidden="true">
+    <div style="flex: 0 0 264px; background: var(--sb)"></div>
+    <div style="flex: 1; background: var(--bg)"></div>
+  </div>
+  <div style="position: absolute; inset: 0; background: {{c.scrim}}" aria-hidden="true"></div>
+
+  <div style="position: relative; width: 800px; max-width: 100%; height: 800px; max-height: 100%; background: var(--l2); border-radius: 28px; box-shadow: var(--sh3); display: flex; overflow: hidden">
+    <!-- 导航 -->
+    <div style="flex: 0 0 188px; box-sizing: border-box; background: var(--sb); padding: 20px 12px; display: flex; flex-direction: column; gap: 2px">
+      <div style="padding: 0 10px 12px; font-weight: 600; font-size: 16px">设置</div>
+      <sc-for list="{{snav}}" as="n" hint-placeholder-count="7">
+        <div style="display: flex; align-items: center; height: 40px; padding: 0 12px; border-radius: 12px; background: {{n.bg}}; color: {{n.fg}}; font-weight: {{n.fw}}; font-size: 14px">{{n.l}}</div>
+      </sc-for>
+    </div>
+
+    <!-- 内容 -->
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; height: 54px; padding: 0 24px; box-shadow: 0 0.5px 0 0 var(--bd)">
+        <span style="font-weight: 600; font-size: 16px">通用</span>
+        <span style="flex: 1"></span>
+        <button type="button" aria-label="关闭" style="width: 32px; height: 32px; border: 0; border-radius: 16px; background: transparent; color: var(--t2); cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8"></path></svg></button>
+      </div>
+      <div style="flex: 1; overflow: hidden; padding: 18px 24px; display: flex; flex-direction: column; gap: 18px">
+
+        <!-- 外观 -->
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 12px; line-height: 18px; color: var(--t4)">外观</div>
+          <div style="border-radius: 18px; background: var(--bg); padding: 4px 16px; box-shadow: 0 0 0 0.5px var(--bd)">
+            <div style="display: flex; align-items: center; min-height: 52px; gap: 12px; box-shadow: 0 0.5px 0 0 var(--bd)">
+              <div style="flex: 1"><div style="font-weight: 500">主题</div><div style="font-size: 12px; line-height: 18px; color: var(--t3)">浅滩为浅色，深潮为深色</div></div>
+              <div style="display: flex; padding: 3px; border-radius: 18px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd)">
+                <sc-for list="{{themes}}" as="t" hint-placeholder-count="3"><span style="height: 30px; padding: 0 14px; border-radius: 15px; display: inline-flex; align-items: center; font-size: 13px; background: {{t.bg}}; color: {{t.fg}}; font-weight: {{t.fw}}">{{t.l}}</span></sc-for>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; min-height: 52px; gap: 12px; box-shadow: 0 0.5px 0 0 var(--bd)">
+              <div style="flex: 1"><div style="font-weight: 500">强调色</div><div style="font-size: 12px; line-height: 18px; color: var(--t3)">更多配色即将提供，每套都会单独核对对比度</div></div>
+              <div style="display: flex; align-items: center; gap: 8px">
+                <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--acc); box-shadow: 0 0 0 2px var(--l1), 0 0 0 3.5px var(--acc)" role="img" aria-label="海青，当前选中"></span>
+                <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--vio); opacity: 0.35" role="img" aria-label="暮紫，暂未开放"></span>
+                <span style="width: 24px; height: 24px; border-radius: 12px; background: var(--warn); opacity: 0.35" role="img" aria-label="琥珀，暂未开放"></span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; min-height: 52px; gap: 12px">
+              <div style="flex: 1"><div style="font-weight: 500">动效</div><div style="font-size: 12px; line-height: 18px; color: var(--t3)">减弱时角色与潮汐带保持静止</div></div>
+              <div style="display: flex; padding: 3px; border-radius: 18px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd)">
+                <sc-for list="{{motion}}" as="t" hint-placeholder-count="2"><span style="height: 30px; padding: 0 14px; border-radius: 15px; display: inline-flex; align-items: center; font-size: 13px; background: {{t.bg}}; color: {{t.fg}}; font-weight: {{t.fw}}">{{t.l}}</span></sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 角色美术 -->
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 12px; line-height: 18px; color: var(--t4)">角色美术</div>
+          <div style="border-radius: 18px; background: var(--bg); padding: 4px 16px; box-shadow: 0 0 0 0.5px var(--bd)">
+            <div style="display: flex; align-items: center; min-height: 56px; gap: 12px; box-shadow: 0 0.5px 0 0 var(--bd)">
+              <div style="flex: 1"><div style="font-weight: 500">显示方式</div><div style="font-size: 12px; line-height: 18px; color: var(--t3)">自动：宽屏用舞台，窄屏用探头，再窄只留标记</div></div>
+              <div style="display: flex; padding: 3px; border-radius: 18px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd)">
+                <sc-for list="{{modes}}" as="t" hint-placeholder-count="5"><span style="height: 30px; padding: 0 10px; border-radius: 15px; display: inline-flex; align-items: center; font-size: 12px; background: {{t.bg}}; color: {{t.fg}}; font-weight: {{t.fw}}">{{t.l}}</span></sc-for>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; min-height: 52px; gap: 12px; box-shadow: 0 0.5px 0 0 var(--bd)">
+              <div style="flex: 1"><div style="font-weight: 500">季节皮肤</div><div style="font-size: 12px; line-height: 18px; color: var(--t3)">需要美术包提供对应素材</div></div>
+              <div style="width: 44px; height: 26px; border-radius: 13px; background: var(--sba); position: relative; box-shadow: 0 0 0 0.5px var(--bd) inset" role="img" aria-label="开关：关"><span style="position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 10px; background: var(--t3)"></span></div>
+            </div>
+            <div style="display: flex; align-items: center; min-height: 64px; gap: 12px; padding: 8px 0">
+              <div style="flex: 1">
+                <div style="font-weight: 500">美术包</div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 18px; color: var(--t3)"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--idle)"></span>未安装 · 当前使用抽象图形</div>
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 18px; color: var(--t3)"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--warn); box-sizing: border-box"></span>授权状态：待你确认后才会启用</div>
+              </div>
+              <button type="button" style="height: 34px; padding: 0 16px; border: 0; border-radius: 17px; background: var(--bub); color: var(--pri); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer">安装美术包…</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 关于 -->
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="font-size: 12px; line-height: 18px; color: var(--t4)">关于</div>
+          <div style="font-size: 12px; line-height: 19px; color: var(--t3); padding: 0 4px">DSH-zhen 是基于 DSH（MIT 许可）的非官方社区修改版，与上游官方无从属关系。角色美术的署名与授权信息见美术包说明。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; font-size: 11px; line-height: 14px; color: var(--t3)">界面示意稿 · 选项与状态为示例</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"dark","options":["light","dark"]},"$preview":{"width":1360,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = (this.props.theme ?? 'dark') === 'dark';
+    const L = {bg:'#F4F9FA',l1:'#FFFFFF',l2:'#FFFFFF',ov:'#E1ECEF',sb:'#EAF3F5',sba:'#D6E8EC',bub:'#E1F2F4',t1:'#0B1F26',t2:'#34494F',t3:'#435C65',t4:'#566F78',lk:'#0A6AA1',pri:'#0F5B6B',onpri:'#FFFFFF',acc:'#0B7A8C',send:'#0B7285',ok:'#0F7D4D',warn:'#B87100',warnt:'#8A5300',err:'#C62D3A',idle:'#6E8790',bd:'rgba(8,70,88,0.14)',vio:'#5B4BC2',tf:'#BFEFF3',tt:'#DCEBFF',glow:'rgba(79,209,220,0.28)',sh1:'0 0 0 0.5px rgba(8,70,88,0.14), 0 6px 20px rgba(8,70,88,0.05)',sh3:'0 0 0 0.5px rgba(8,70,88,0.14), 0 24px 64px rgba(8,70,88,0.18)',scrim:'rgba(11,31,38,0.38)'};
+    const D = {bg:'#0A1418',l1:'#0F1C21',l2:'#14242A',ov:'#2D434B',sb:'#0C171B',sba:'#1F3A43',bub:'#17323A',t1:'#E8F4F6',t2:'#B7CCD2',t3:'#93AEB6',t4:'#869FA6',lk:'#6CC6F2',pri:'#8FE3EA',onpri:'#04222A',acc:'#4FD1DC',send:'#0C7A8A',ok:'#3DD68C',warn:'#F5B84A',warnt:'#F5B84A',err:'#FF7A85',idle:'#4D6770',bd:'rgba(214,240,245,0.14)',vio:'#B7ACFF',tf:'#0F4F5C',tt:'#14304F',glow:'rgba(79,209,220,0.20)',sh1:'0 0 0 0.5px rgba(214,240,245,0.16), 0 6px 20px rgba(0,0,0,0.26)',sh3:'0 0 0 0.5px rgba(214,240,245,0.16), 0 24px 64px rgba(0,0,0,0.6)',scrim:'rgba(2,8,10,0.6)'};
+    const c = dark ? D : L;
+    const names = ['通用', '模型', '技能', '知识库', '画布', '插件', '关于'];
+    const snav = names.map(l => l === '通用'
+      ? { l, bg: c.sba, fg: c.t1, fw: 600 }
+      : { l, bg: 'transparent', fg: c.t2, fw: 400 });
+    const seg = (labels, active) => labels.map(l => l === active
+      ? { l, bg: c.send, fg: '#FFFFFF', fw: 500 }
+      : { l, bg: 'transparent', fg: c.t2, fw: 400 });
+    const themes = seg(['跟随系统', '浅滩', '深潮'], '深潮');
+    const motion = seg(['跟随系统', '减弱'], '跟随系统');
+    const modes = seg(['自动', '舞台', '探头', '仅标记', '关闭'], '自动');
+    return { c, snav, themes, motion, modes };
+  }
+}
+</script>
+</body>
+</html>

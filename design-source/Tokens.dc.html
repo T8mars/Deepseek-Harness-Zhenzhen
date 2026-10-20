@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>潮汐令牌</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="--bg:{{c.bg}};--l1:{{c.l1}};--bub:{{c.bub}};--sba:{{c.sba}};--t1:{{c.t1}};--t2:{{c.t2}};--t3:{{c.t3}};--t4:{{c.t4}};--lk:{{c.lk}};--pri:{{c.pri}};--acc:{{c.acc}};--send:{{c.send}};--bd:{{c.bd}};--tf:{{c.tf}};--tt:{{c.tt}};--sh1:{{c.sh1}}; box-sizing: border-box; width: 100%; height: 900px; overflow: hidden; padding: 28px 32px 20px; display: flex; flex-direction: column; gap: 16px; background: var(--bg); color: var(--t1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; font-size: 14px; line-height: 22px">
+
+  <div style="display: flex; align-items: flex-end; gap: 24px">
+    <div style="flex: 1">
+      <div style="font-size: 22px; line-height: 30px; font-weight: 600">潮汐令牌 <span style="font-size: 13px; font-weight: 400; color: var(--t3)">色板 · 字阶 · 圆角 · 层级 · 动效</span></div>
+      <div style="font-size: 13px; line-height: 20px; color: var(--t2)">一个强调色（海青）加一个副色（海葵紫）；暖色只留给状态。令牌沿用上游 <span style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 12px">--dsw-alias-*</span> 命名，只换取值。</div>
+    </div>
+    <div style="font-size: 12px; line-height: 18px; color: var(--t3)">正文对比度 ≥ 4.5:1，主文字目标 7:1</div>
+  </div>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 20px">
+
+    <!-- 色板 -->
+    <div style="flex: 0 0 600px; display: flex; flex-direction: column; gap: 14px; min-height: 0">
+      <sc-for list="{{panels}}" as="p" hint-placeholder-count="2">
+        <div style="flex: 1; min-height: 0; border-radius: 22px; padding: 14px 16px; background: {{p.bg}}; color: {{p.fg}}; box-shadow: 0 0 0 0.5px {{p.bd}}; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-weight: 600; font-size: 15px">{{p.name}}</span><span style="font-size: 12px; line-height: 18px; color: {{p.mute}}">{{p.sub}}</span></div>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 12px">
+            <sc-for list="{{p.sw}}" as="s" hint-placeholder-count="12">
+              <div style="display: flex; align-items: center; gap: 8px; min-width: 0">
+                <span style="flex: 0 0 30px; height: 30px; border-radius: 10px; background: {{s.hex}}; box-shadow: 0 0 0 0.5px {{p.bd}}"></span>
+                <div style="min-width: 0">
+                  <div style="font-size: 12px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{s.n}}</div>
+                  <div style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 10px; line-height: 14px; color: {{p.mute}}">{{s.hex}}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <div style="flex: 1; height: 22px; border-radius: 11px; background: linear-gradient(90deg, {{p.tf}}, {{p.tt}}); box-shadow: 0 0 0 0.5px {{p.bd}}"></div>
+            <span style="font-size: 11px; line-height: 14px; color: {{p.mute}}">潮汐渐变 {{p.tf}} → {{p.tt}}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- 字阶 -->
+    <div style="flex: 0 0 372px; background: var(--l1); border-radius: 22px; box-shadow: var(--sh1); padding: 14px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: hidden">
+      <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-weight: 600; font-size: 15px">字阶</span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">字号 / 行高 · px</span></div>
+      <sc-for list="{{types}}" as="t" hint-placeholder-count="8">
+        <div style="display: flex; align-items: baseline; gap: 12px; box-shadow: 0 0.5px 0 0 var(--bd); padding: 4px 0 6px">
+          <div style="flex: 0 0 74px; font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 11px; line-height: 16px; color: var(--t3)">{{t.k}}<br>{{t.s}}</div>
+          <div style="flex: 1; min-width: 0; font-size: {{t.fs}}; line-height: {{t.lh}}; font-weight: {{t.fw}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{t.demo}}</div>
+        </div>
+      </sc-for>
+      <div style="display: flex; align-items: baseline; gap: 12px; padding-top: 4px">
+        <div style="flex: 0 0 74px; font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 11px; line-height: 16px; color: var(--t3)">tabular</div>
+        <div style="font-size: 16px; line-height: 24px; font-weight: 500; font-variant-numeric: tabular-nums">¥ 128.40 → ¥ 127.60</div>
+      </div>
+      <div style="font-size: 11px; line-height: 16px; color: var(--t3)">默认靠系统字体，不随包分发任何中文字体；金额与计费一律使用等宽数字。</div>
+    </div>
+
+    <!-- 圆角 / 层级 / 动效 -->
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; min-height: 0">
+      <div style="background: var(--l1); border-radius: 22px; box-shadow: var(--sh1); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+        <div style="font-weight: 600; font-size: 15px">圆角</div>
+        <div style="display: flex; align-items: flex-end; gap: 10px">
+          <sc-for list="{{radii}}" as="r" hint-placeholder-count="6">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px">
+              <div style="width: 100%; max-width: 44px; height: 44px; background: var(--bub); box-shadow: 0 0 0 1px var(--acc) inset; border-radius: {{r.v}}"></div>
+              <div style="font-size: 11px; line-height: 14px; color: var(--t3); text-align: center; font-variant-numeric: tabular-nums">{{r.v}}</div>
+              <div style="font-size: 10px; line-height: 12px; color: var(--t4); text-align: center">{{r.u}}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background: var(--l1); border-radius: 22px; box-shadow: var(--sh1); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-weight: 600; font-size: 15px">层级</span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">阴影带青调，不用纯黑</span></div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 4px 2px 6px">
+          <sc-for list="{{elev}}" as="e" hint-placeholder-count="4">
+            <div style="height: 54px; border-radius: 16px; background: var(--bg); box-shadow: {{e.sh}}; display: flex; flex-direction: column; justify-content: center; padding: 0 12px">
+              <div style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 11px; line-height: 16px">{{e.n}}</div>
+              <div style="font-size: 11px; line-height: 14px; color: var(--t3)">{{e.u}}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background: var(--l1); border-radius: 22px; box-shadow: var(--sh1); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; overflow: hidden">
+        <div style="font-weight: 600; font-size: 15px">动效与间距</div>
+        <sc-for list="{{motion}}" as="m" hint-placeholder-count="4">
+          <div style="display: flex; justify-content: space-between; gap: 10px; font-size: 12px; line-height: 18px"><span style="color: var(--t2)">{{m.k}}</span><span style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 11px; color: var(--t3); text-align: right">{{m.v}}</span></div>
+        </sc-for>
+        <div style="display: flex; align-items: flex-end; gap: 4px; margin-top: 2px" role="img" aria-label="4 像素栅格间距示意">
+          <sc-for list="{{space}}" as="s" hint-placeholder-count="10"><div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px"><div style="width: 100%; height: {{s.h}}; border-radius: 2px; background: var(--acc); opacity: 0.75"></div><span style="font-size: 9px; line-height: 12px; color: var(--t3)">{{s.v}}</span></div></sc-for>
+        </div>
+        <div style="font-size: 11px; line-height: 16px; color: var(--t3)">状态不只靠颜色或动效传达，必须同时有文字标签与形状差异；减弱动效时三种装饰动效全部归零。</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]},"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = (this.props.theme ?? 'light') === 'dark';
+    const L = {bg:'#F4F9FA',l1:'#FFFFFF',bub:'#E1F2F4',sba:'#D6E8EC',t1:'#0B1F26',t2:'#34494F',t3:'#435C65',t4:'#566F78',lk:'#0A6AA1',pri:'#0F5B6B',acc:'#0B7A8C',send:'#0B7285',bd:'rgba(8,70,88,0.14)',tf:'#BFEFF3',tt:'#DCEBFF',sh1:'0 0 0 0.5px rgba(8,70,88,0.14), 0 6px 20px rgba(8,70,88,0.05)'};
+    const D = {bg:'#0A1418',l1:'#0F1C21',bub:'#17323A',sba:'#1F3A43',t1:'#E8F4F6',t2:'#B7CCD2',t3:'#93AEB6',t4:'#869FA6',lk:'#6CC6F2',pri:'#8FE3EA',acc:'#4FD1DC',send:'#0C7A8A',bd:'rgba(214,240,245,0.14)',tf:'#0F4F5C',tt:'#14304F',sh1:'0 0 0 0.5px rgba(214,240,245,0.16), 0 6px 20px rgba(0,0,0,0.26)'};
+    const c = dark ? D : L;
+    const names = ['页面底色 bg-base', '面板 layer-1', '侧栏底 sidebar', '用户气泡 bubble', '主文字 primary', '次文字 secondary', '链接 link', '主按钮 brand', '强调色 accent', '成功 success', '警告 warn', '错误 error'];
+    const lightHex = ['#F4F9FA', '#FFFFFF', '#EAF3F5', '#E1F2F4', '#0B1F26', '#34494F', '#0A6AA1', '#0F5B6B', '#0B7A8C', '#0F7D4D', '#B87100', '#C62D3A'];
+    const darkHex = ['#0A1418', '#0F1C21', '#0C171B', '#17323A', '#E8F4F6', '#B7CCD2', '#6CC6F2', '#8FE3EA', '#4FD1DC', '#3DD68C', '#F5B84A', '#FF7A85'];
+    const mk = hexes => names.map((n, i) => ({ n, hex: hexes[i] }));
+    const panels = [
+      { name: '浅滩 Shoal', sub: '亮色 · 默认', bg: '#F4F9FA', fg: '#0B1F26', mute: '#566F78', bd: 'rgba(8,70,88,0.16)', tf: '#BFEFF3', tt: '#DCEBFF', sw: mk(lightHex) },
+      { name: '深潮 Abyss', sub: '暗色 · 带轻微海青辉光', bg: '#0A1418', fg: '#E8F4F6', mute: '#869FA6', bd: 'rgba(214,240,245,0.16)', tf: '#0F4F5C', tt: '#14304F', sw: mk(darkHex) }
+    ];
+    const types = [
+      { k: 'xl-24', s: '24 / 32 · 600', fs: '24px', lh: '32px', fw: 600, demo: '创作从这里开始' },
+      { k: 'hero', s: '26 / 32 · 500', fs: '26px', lh: '32px', fw: 500, demo: '今天想创作点什么？' },
+      { k: 'l-20', s: '20 / 28 · 500', fs: '20px', lh: '28px', fw: 500, demo: '页面标题 Page title' },
+      { k: 'base-16', s: '16 / 24 · 400', fs: '16px', lh: '24px', fw: 400, demo: '大正文与小标题' },
+      { k: 's-14', s: '14 / 22 · 400', fs: '14px', lh: '22px', fw: 400, demo: '控件文字与聊天正文' },
+      { k: 'xs-13', s: '13 / 20 · 400', fs: '13px', lh: '20px', fw: 400, demo: '次要正文、表格内容' },
+      { k: 'xxs-12', s: '12 / 18 · 400', fs: '12px', lh: '18px', fw: 400, demo: '状态标签与卡片次要信息' },
+      { k: 'xxxs-11', s: '11 / 14 · 400', fs: '11px', lh: '14px', fw: 400, demo: '角标与计费小字' }
+    ];
+    const radii = [
+      { v: '4px', u: 'xs' }, { v: '8px', u: 'sm' }, { v: '12px', u: 'md' }, { v: '16px', u: 'lg 菜单' }, { v: '20px', u: 'xl 气泡' }, { v: '28px', u: 'panel 输入框' }
+    ];
+    const elev = dark ? [
+      { n: 'shadow-lv1', u: '轻', sh: '0 2px 4px rgba(0,0,0,0.30)' },
+      { n: 'shadow-lv2', u: '中', sh: '0 4px 12px rgba(0,0,0,0.20), 0 2px 8px rgba(0,0,0,0.26)' },
+      { n: 'shadow-lv3', u: '浮层', sh: '0 0 0 0.5px rgba(214,240,245,0.16), 0 12px 32px rgba(0,0,0,0.45)' },
+      { n: 'elevation-soft', u: '输入框 + 海青辉光', sh: '0 0 0 0.5px rgba(214,240,245,0.16), 0 6px 20px rgba(0,0,0,0.26), 0 0 28px rgba(79,209,220,0.10)' }
+    ] : [
+      { n: 'shadow-lv1', u: '轻', sh: '0 2px 4px rgba(8,70,88,0.06)' },
+      { n: 'shadow-lv2', u: '中', sh: '0 4px 12px rgba(8,70,88,0.03), 0 2px 8px rgba(8,70,88,0.05)' },
+      { n: 'shadow-lv3', u: '浮层', sh: '0 0 0 0.5px rgba(8,70,88,0.14), 0 12px 32px rgba(8,70,88,0.10)' },
+      { n: 'elevation-soft', u: '输入框 + 海青辉光', sh: '0 0 0 0.5px rgba(8,70,88,0.14), 0 6px 20px rgba(8,70,88,0.05), 0 0 28px rgba(79,209,220,0.12)' }
+    ];
+    const motion = [
+      { k: '缓动曲线', v: 'cubic-bezier(0.4, 0, 0.2, 1)' },
+      { k: '时长 快 / 默认 / 慢', v: '0.1s / 0.2s / 0.3s' },
+      { k: '水纹 · 漂移 · 气泡', v: '2400ms · 48s · 5200ms' },
+      { k: '减弱动效', v: 'prefers-reduced-motion → 0' }
+    ];
+    const space = [2, 4, 8, 12, 16, 20, 24, 32, 48, 64].map(v => ({ v, h: Math.max(4, Math.round(v * 0.6)) + 'px' }));
+    return { c, panels, types, radii, elev, motion, space };
+  }
+}
+</script>
+</body>
+</html>

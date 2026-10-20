@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>画布联动面板</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="--bg:{{c.bg}};--l1:{{c.l1}};--l2:{{c.l2}};--ov:{{c.ov}};--sb:{{c.sb}};--sba:{{c.sba}};--bub:{{c.bub}};--t1:{{c.t1}};--t2:{{c.t2}};--t3:{{c.t3}};--t4:{{c.t4}};--lk:{{c.lk}};--pri:{{c.pri}};--onpri:{{c.onpri}};--acc:{{c.acc}};--send:{{c.send}};--ok:{{c.ok}};--warn:{{c.warn}};--warnt:{{c.warnt}};--err:{{c.err}};--idle:{{c.idle}};--bd:{{c.bd}};--vio:{{c.vio}};--tf:{{c.tf}};--tt:{{c.tt}};--glow:{{c.glow}};--sh1:{{c.sh1}};--sh3:{{c.sh3}}; display: flex; flex-wrap: wrap; min-height: 880px; background: var(--bg); color: var(--t1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; font-size: 14px; line-height: 22px">
+
+  <!-- 侧栏 -->
+  <div style="flex: 0 0 264px; box-sizing: border-box; background: var(--sb); display: flex; flex-direction: column; gap: 14px; padding: 16px 12px; min-height: 880px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 8px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" role="img" aria-label="DSH-zhen 标志（占位图形）"><circle cx="12" cy="12" r="3" fill="var(--acc)"></circle><circle cx="12" cy="12" r="7.2" opacity="0.65"></circle><circle cx="12" cy="12" r="11" opacity="0.32"></circle></svg>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: 0.2px">DSH-zhen</span>
+    </div>
+    <button type="button" style="display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--l1); color: var(--t1); font: inherit; font-weight: 500; cursor: pointer; box-shadow: 0 0 0 0.5px var(--bd)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg>新会话
+    </button>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="4">
+        <button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: {{n.bg}}; color: {{n.fg}}; font: inherit; font-weight: {{n.fw}}; text-align: left; cursor: pointer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.d}}"></path></svg>
+          <span style="flex: 1">{{n.l}}</span>
+          <sc-if value="{{n.dot}}" hint-placeholder-val="{{false}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok)"></span></sc-if>
+        </button>
+      </sc-for>
+    </div>
+    <div style="padding: 8px 12px 0; font-size: 12px; line-height: 18px; color: var(--t4)">最近会话</div>
+    <div style="display: flex; flex-direction: column; gap: 2px; font-size: 13px">
+      <sc-for list="{{sessions}}" as="s" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: 12px; background: {{s.bg}}; color: {{s.fg}}"><span style="width: 8px; height: 8px; border-radius: 50%; box-sizing: border-box; background: {{s.dot}}; border: {{s.ring}}"></span>{{s.t}}</div>
+      </sc-for>
+    </div>
+    <div style="flex: 1"></div>
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px">
+      <div style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 12px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); font-size: 13px; font-variant-numeric: tabular-nums; flex: 1">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--acc)" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><rect x="2" y="4" width="12" height="8.5" rx="2"></rect><path d="M11 8.3h1.5"></path></svg>
+        <span style="color: var(--t2)">余额</span><span style="font-weight: 500">¥ 128.40</span>
+      </div>
+      <button type="button" aria-label="设置" style="width: 36px; height: 36px; border: 0; border-radius: 12px; background: transparent; color: var(--t2); cursor: pointer; display: flex; align-items: center; justify-content: center">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M3 5h6M11.5 5H13M3 11h1.5M7 11h6"></path><circle cx="10.2" cy="5" r="1.3"></circle><circle cx="5.7" cy="11" r="1.3"></circle></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 对话列（收窄） -->
+  <div style="flex: 999 1 400px; min-width: 0; display: flex; flex-direction: column; min-height: 880px">
+    <div style="display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 24px; box-shadow: 0 0.5px 0 0 var(--bd)">
+      <span style="font-weight: 500; font-size: 15px">分镜 · 第 3 集镜头拆分</span>
+      <span style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 12px; background: var(--bub); font-size: 12px; color: var(--t2)"><span style="width: 7px; height: 7px; border-radius: 50%; background: var(--warn)"></span>等待你确认</span>
+    </div>
+    <div style="flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 16px; align-items: center">
+      <div style="width: 100%; max-width: 640px; display: flex; flex-direction: column; gap: 16px">
+        <div style="align-self: flex-end; max-width: 78%; background: var(--bub); border-radius: 20px; padding: 10px 16px">把画布里选中的这个镜头，生成 5 秒的视频。</div>
+        <div style="color: var(--t2); line-height: 24px">我已读到画布节点 #12 的提示词和参考图，先估算费用，再请你确认。</div>
+        <div style="border-radius: 16px; background: var(--l1); box-shadow: var(--sh1); padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+          <span style="flex: 0 0 28px; height: 28px; border-radius: 9px; background: linear-gradient(135deg, var(--tf), var(--tt)); display: flex; align-items: center; justify-content: center; color: var(--pri)"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h11v8h-11zM7 6.4v3.2l3-1.6z"></path></svg></span>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 12px; color: var(--t2)">mcp__t8canvas__quote_generation</div>
+            <div style="font-size: 12px; line-height: 18px; color: var(--t3)">估价 ¥0.80 · 仅查询，未扣费</div>
+          </div>
+          <span style="font-size: 12px; color: var(--ok)">完成</span>
+        </div>
+        <div style="border-radius: 20px; background: var(--l1); box-shadow: 0 0 0 1.5px var(--warn), var(--sh1); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 8px"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--warn)"></span><span style="font-weight: 600">需要确认的付费任务</span></div>
+          <div style="font-size: 13px; line-height: 20px; color: var(--t2)">视频生成 · 5 秒 · 720p · 预计 <b style="color: var(--t1); font-variant-numeric: tabular-nums">¥0.80</b>，余额 ¥128.40 → ¥127.60。</div>
+          <div style="display: flex; gap: 10px; justify-content: flex-end">
+            <button type="button" style="height: 34px; padding: 0 16px; border: 0; border-radius: 17px; background: var(--bub); color: var(--t1); font: inherit; font-size: 13px; cursor: pointer">拒绝</button>
+            <button type="button" style="height: 34px; padding: 0 16px; border: 0; border-radius: 17px; background: var(--send); color: #FFFFFF; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer">允许一次</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; justify-content: center; padding: 8px 24px 4px">
+      <div style="width: 100%; max-width: 640px; background: var(--l2); border-radius: 28px; box-shadow: var(--sh1); padding: 12px 16px; display: flex; align-items: center; gap: 8px">
+        <span style="flex: 1; font-size: 14px; color: var(--t4)">继续对话，或输入 / 调用技能</span>
+        <button type="button" aria-label="发送" style="width: 34px; height: 34px; border: 0; border-radius: 17px; background: var(--send); color: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12.5v-9M4.5 7 8 3.5 11.5 7"></path></svg></button>
+      </div>
+    </div>
+    <div style="text-align: center; font-size: 11px; line-height: 14px; color: var(--t4); padding: 4px 0 12px">界面示意稿 · 项目名、金额与任务均为示例</div>
+  </div>
+
+  <!-- 右栏：画布联动 -->
+  <div style="flex: 0 0 392px; box-sizing: border-box; background: var(--l1); box-shadow: 0.5px 0 0 0 var(--bd) inset; display: flex; flex-direction: column; min-height: 880px">
+    <div style="display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 16px; box-shadow: 0 0.5px 0 0 var(--bd)">
+      <sc-for list="{{rtabs}}" as="t" hint-placeholder-count="3">
+        <span style="height: 32px; padding: 0 12px; border-radius: 16px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; background: {{t.bg}}; color: {{t.fg}}; font-weight: {{t.fw}}">{{t.l}}<sc-if value="{{t.dot}}" hint-placeholder-val="{{false}}"><span style="width: 7px; height: 7px; border-radius: 50%; background: var(--ok)"></span></sc-if></span>
+      </sc-for>
+    </div>
+    <div style="flex: 1; overflow: hidden; padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 4px">
+
+      <!-- 连接 -->
+      <div style="padding: 10px 4px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 0.5px 0 0 var(--bd)">
+        <div style="display: flex; align-items: center; gap: 8px"><span style="color: var(--t3); font-size: 12px">▾</span><span style="font-weight: 600">连接</span><span style="flex: 1"></span><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ok)"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok)"></span>已连接</span></div>
+        <div style="display: flex; align-items: center; gap: 10px; padding-left: 20px; font-size: 13px"><span style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; color: var(--t2)">t8canvas</span><span style="color: var(--t3); font-size: 12px">本机 · 29 个工具</span><span style="flex: 1"></span><button type="button" style="height: 28px; padding: 0 12px; border: 0; border-radius: 14px; background: var(--bub); color: var(--t1); font: inherit; font-size: 12px; cursor: pointer">重连</button></div>
+      </div>
+
+      <!-- 当前项目 -->
+      <div style="padding: 10px 4px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 0.5px 0 0 var(--bd)">
+        <div style="display: flex; align-items: center; gap: 8px"><span style="color: var(--t3); font-size: 12px">▾</span><span style="font-weight: 600">当前项目</span></div>
+        <div style="padding-left: 20px; font-size: 13px; line-height: 20px; color: var(--t2)">分镜-第3集 · 42 个节点 · 2 分钟前保存</div>
+      </div>
+
+      <!-- 选中节点 -->
+      <div style="padding: 10px 4px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 0.5px 0 0 var(--bd)">
+        <div style="display: flex; align-items: center; gap: 8px"><span style="color: var(--t3); font-size: 12px">▾</span><span style="font-weight: 600">选中节点</span></div>
+        <div style="margin-left: 20px; border-radius: 16px; background: var(--bg); padding: 10px; display: flex; gap: 12px">
+          <div style="flex: 0 0 72px; height: 72px; border-radius: 12px; background: linear-gradient(135deg, var(--tf), var(--tt)); box-shadow: 0 0 0 0.5px var(--bd) inset; display: flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 16 16" fill="none" stroke="var(--pri)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" opacity="0.75" aria-hidden="true"><path d="M2.5 3h11v10h-11zM2.5 10.5l3.2-3 2.8 2.6 2-1.8 3 2.7"></path></svg></div>
+          <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+            <div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 12px; line-height: 18px; padding: 0 8px; border-radius: 9px; background: var(--bub); color: var(--vio)">视频</span><span style="font-size: 12px; color: var(--t3)">#12</span></div>
+            <div style="font-size: 12px; line-height: 18px; color: var(--t2); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden">暮色海面，镜头缓慢推近，少女回头望向灯塔，风吹动衣角，暖色高光。</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px; padding-left: 20px">
+          <button type="button" style="height: 30px; padding: 0 14px; border: 0; border-radius: 15px; background: var(--bub); color: var(--pri); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer">在对话中引用</button>
+          <button type="button" style="height: 30px; padding: 0 14px; border: 0; border-radius: 15px; background: transparent; color: var(--t2); font: inherit; font-size: 12px; cursor: pointer; box-shadow: 0 0 0 1px var(--bd)">定位</button>
+        </div>
+      </div>
+
+      <!-- 付费任务 -->
+      <div style="padding: 10px 4px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 0.5px 0 0 var(--bd)">
+        <div style="display: flex; align-items: center; gap: 8px"><span style="color: var(--t3); font-size: 12px">▾</span><span style="font-weight: 600">付费任务</span><span style="font-size: 12px; line-height: 18px; padding: 0 8px; border-radius: 9px; background: var(--bub); color: var(--t2)">3</span><span style="flex: 1"></span><button type="button" style="height: 26px; padding: 0 12px; border: 0; border-radius: 13px; background: var(--bub); color: var(--t1); font: inherit; font-size: 12px; cursor: pointer">全部保存</button></div>
+        <sc-for list="{{jobs}}" as="j" hint-placeholder-count="3">
+          <div style="margin-left: 20px; border-radius: 14px; background: var(--bg); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px">
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px">
+              <span style="font-weight: 500">{{j.name}}</span>
+              <span style="flex: 1"></span>
+              <span style="font-variant-numeric: tabular-nums; color: var(--t2)">{{j.cost}}</span>
+            </div>
+            <sc-if value="{{j.prog}}" hint-placeholder-val="{{false}}"><div style="height: 4px; border-radius: 2px; background: var(--bub)"><div style="height: 4px; border-radius: 2px; background: var(--acc); width: {{j.pct}}"></div></div></sc-if>
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; line-height: 18px; color: {{j.sc}}"><span style="width: 8px; height: 8px; border-radius: 50%; box-sizing: border-box; background: {{j.dot}}; border: {{j.ring}}"></span>{{j.st}}<span style="flex: 1"></span><span style="color: var(--t3); font-variant-numeric: tabular-nums">{{j.note}}</span></div>
+          </div>
+        </sc-for>
+        <div style="margin-left: 20px; font-size: 12px; line-height: 18px; color: var(--t3)">生成结果的下载链接约 24 小时后失效，完成后请及时保存。失败的任务会自动退款。</div>
+      </div>
+
+      <!-- 最近动作 -->
+      <div style="padding: 10px 4px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; gap: 8px"><span style="color: var(--t3); font-size: 12px">▾</span><span style="font-weight: 600">最近动作</span></div>
+        <sc-for list="{{logs}}" as="l" hint-placeholder-count="4">
+          <div style="display: flex; gap: 10px; padding-left: 20px; font-size: 12px; line-height: 18px"><span style="color: var(--t4); font-variant-numeric: tabular-nums; flex: 0 0 40px">{{l.time}}</span><span style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; color: var(--t2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{l.t}}</span></div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"dark","options":["light","dark"]},"$preview":{"width":1360,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = (this.props.theme ?? 'dark') === 'dark';
+    const L = {bg:'#F4F9FA',l1:'#FFFFFF',l2:'#FFFFFF',ov:'#E1ECEF',sb:'#EAF3F5',sba:'#D6E8EC',bub:'#E1F2F4',t1:'#0B1F26',t2:'#34494F',t3:'#435C65',t4:'#566F78',lk:'#0A6AA1',pri:'#0F5B6B',onpri:'#FFFFFF',acc:'#0B7A8C',send:'#0B7285',ok:'#0F7D4D',warn:'#B87100',warnt:'#8A5300',err:'#C62D3A',idle:'#6E8790',bd:'rgba(8,70,88,0.14)',vio:'#5B4BC2',tf:'#BFEFF3',tt:'#DCEBFF',glow:'rgba(79,209,220,0.28)',sh1:'0 0 0 0.5px rgba(8,70,88,0.14), 0 6px 20px rgba(8,70,88,0.05)',sh3:'0 0 0 0.5px rgba(8,70,88,0.14), 0 12px 32px rgba(8,70,88,0.10)'};
+    const D = {bg:'#0A1418',l1:'#0F1C21',l2:'#14242A',ov:'#2D434B',sb:'#0C171B',sba:'#1F3A43',bub:'#17323A',t1:'#E8F4F6',t2:'#B7CCD2',t3:'#93AEB6',t4:'#869FA6',lk:'#6CC6F2',pri:'#8FE3EA',onpri:'#04222A',acc:'#4FD1DC',send:'#0C7A8A',ok:'#3DD68C',warn:'#F5B84A',warnt:'#F5B84A',err:'#FF7A85',idle:'#4D6770',bd:'rgba(214,240,245,0.14)',vio:'#B7ACFF',tf:'#0F4F5C',tt:'#14304F',glow:'rgba(79,209,220,0.20)',sh1:'0 0 0 0.5px rgba(214,240,245,0.16), 0 6px 20px rgba(0,0,0,0.26)',sh3:'0 0 0 0.5px rgba(214,240,245,0.16), 0 12px 32px rgba(0,0,0,0.45)'};
+    const c = dark ? D : L;
+    const nav = [
+      { l: '技能库', d: 'M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM10 10h3v3h-3z', dot: false, bg: 'transparent', fg: c.t2, fw: 400 },
+      { l: '知识库', d: 'M8 2.5 13.5 5.2 8 7.9 2.5 5.2ZM2.5 8 8 10.7 13.5 8M2.5 10.8 8 13.5 13.5 10.8', dot: false, bg: 'transparent', fg: c.t2, fw: 400 },
+      { l: '画布', d: 'M4.5 3h7A2.5 2.5 0 0 1 14 5.5v5A2.5 2.5 0 0 1 11.5 13h-7A2.5 2.5 0 0 1 2 10.5v-5A2.5 2.5 0 0 1 4.5 3ZM5.6 8.4h.01M10.4 6.2h.01M6.6 8c1.4.2 2-1 2.8-1.4', dot: true, bg: c.sba, fg: c.t1, fw: 600 },
+      { l: '插件市场', d: 'M6 2.5v2.2M10 2.5v2.2M4 4.7h8v3a4 4 0 0 1-8 0ZM8 11.7v1.8', dot: false, bg: 'transparent', fg: c.t2, fw: 400 }
+    ];
+    const sessions = [
+      { t: '分镜 · 第 3 集镜头拆分', bg: c.sba, fg: c.t1, dot: c.warn, ring: '0 none' },
+      { t: '角色设定 · 三视图提示词', bg: 'transparent', fg: c.t2, dot: c.idle, ring: '0 none' },
+      { t: '商品主视觉方向', bg: 'transparent', fg: c.t2, dot: c.idle, ring: '0 none' }
+    ];
+    const rtabs = [
+      { l: '文件', bg: 'transparent', fg: c.t2, fw: 400, dot: false },
+      { l: '画布', bg: c.bub, fg: c.t1, fw: 600, dot: true },
+      { l: '任务', bg: 'transparent', fg: c.t2, fw: 400, dot: false }
+    ];
+    const jobs = [
+      { name: '视频 · 暮色海面 5 秒', cost: '¥0.80', prog: true, pct: '64%', st: '生成中 64%', sc: c.t2, dot: 'transparent', ring: '1.5px solid ' + c.acc, note: '约 40 秒' },
+      { name: '图像 · 灯塔设定图', cost: '¥0.04', prog: false, pct: '0%', st: '已完成', sc: c.ok, dot: c.ok, ring: '0 none', note: '23 小时 42 分后失效' },
+      { name: '视频 · 回头镜头', cost: '¥0.80 已退款', prog: false, pct: '0%', st: '失败 · 已自动退款', sc: c.err, dot: c.err, ring: '0 none', note: '可重试' }
+    ];
+    const logs = [
+      { time: '14:32', t: 'node_get #12' },
+      { time: '14:32', t: 'quote_generation 估价 ¥0.80' },
+      { time: '14:31', t: 'node_add 分镜 03-05' },
+      { time: '14:29', t: 'project_get 分镜-第3集' }
+    ];
+    return { c, nav, sessions, rtabs, jobs, logs };
+  }
+}
+</script>
+</body>
+</html>

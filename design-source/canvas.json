@@ -1,0 +1,44 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-10-19T14:40:00Z" },
+  "title": "DSH-zhen 界面设计稿",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1360, "h": 880, "title": "01 新会话 Hero · 浅滩", "expand": "fill" },
+    "Chat.dc.html": { "x": 1440, "y": 0, "w": 1360, "h": 880, "title": "02 对话 · 深潮", "expand": "fill" },
+    "SlashMenu.dc.html": { "x": 0, "y": 1280, "w": 1360, "h": 880, "title": "03 输入框与 / 技能选择器", "expand": "fill" },
+    "SkillGallery.dc.html": { "x": 1440, "y": 1280, "w": 1360, "h": 880, "title": "04 技能库 Skill Gallery", "expand": "fill" },
+    "Knowledge.dc.html": { "x": 0, "y": 2560, "w": 1360, "h": 880, "title": "05 知识库 / RAG · 深潮", "expand": "fill" },
+    "CanvasLink.dc.html": { "x": 1440, "y": 2560, "w": 1360, "h": 880, "title": "06 画布联动面板 · 深潮", "expand": "fill" },
+    "Models.dc.html": { "x": 0, "y": 3840, "w": 1360, "h": 880, "title": "07 设置 · 模型与网关", "expand": "fill" },
+    "Onboarding.dc.html": { "x": 1440, "y": 3840, "w": 1360, "h": 880, "title": "08 首次引导", "expand": "fill" },
+    "Settings.dc.html": { "x": 0, "y": 5120, "w": 1360, "h": 880, "title": "09 设置 · 外观与角色美术 · 深潮", "expand": "fill" },
+    "Market.dc.html": { "x": 1440, "y": 5120, "w": 1360, "h": 880, "title": "10 插件市场 · zhen 频道", "expand": "fill" },
+    "ArtSlots.dc.html": { "x": 0, "y": 6400, "w": 1360, "h": 900, "title": "11 角色美术槽位与 6 个状态" },
+    "Tokens.dc.html": { "x": 1440, "y": 6400, "w": 1360, "h": 900, "title": "12 潮汐令牌：色板 / 字阶 / 圆角" }
+  },
+  "order": [
+    "Main.dc.html",
+    "Chat.dc.html",
+    "SlashMenu.dc.html",
+    "SkillGallery.dc.html",
+    "Knowledge.dc.html",
+    "CanvasLink.dc.html",
+    "Models.dc.html",
+    "Onboarding.dc.html",
+    "Settings.dc.html",
+    "Market.dc.html",
+    "ArtSlots.dc.html",
+    "Tokens.dc.html"
+  ],
+  "notes": {
+    "r0": { "x": 0, "y": -300, "text": "起点：新会话 Hero 与对话", "kind": "title1", "maxW": 2800 },
+    "r1": { "x": 0, "y": 980, "text": "创作入口：技能与 / 菜单", "kind": "title1", "maxW": 2800 },
+    "r2": { "x": 0, "y": 2260, "text": "知识与画布联动", "kind": "title1", "maxW": 2800 },
+    "r3": { "x": 0, "y": 3540, "text": "网关与首次引导", "kind": "title1", "maxW": 2800 },
+    "r4": { "x": 0, "y": 4820, "text": "设置与插件频道", "kind": "title1", "maxW": 2800 },
+    "r5": { "x": 0, "y": 6100, "text": "角色美术槽位与设计令牌", "kind": "title1", "maxW": 2800 }
+  },
+  "designSystems": []
+}

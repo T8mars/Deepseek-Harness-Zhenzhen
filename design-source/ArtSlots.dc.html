@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>角色美术槽位</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="--bg:{{c.bg}};--l1:{{c.l1}};--sba:{{c.sba}};--bub:{{c.bub}};--t1:{{c.t1}};--t2:{{c.t2}};--t3:{{c.t3}};--t4:{{c.t4}};--lk:{{c.lk}};--pri:{{c.pri}};--acc:{{c.acc}};--send:{{c.send}};--ok:{{c.ok}};--warn:{{c.warn}};--warnt:{{c.warnt}};--err:{{c.err}};--idle:{{c.idle}};--bd:{{c.bd}};--vio:{{c.vio}};--tf:{{c.tf}};--tt:{{c.tt}};--glow:{{c.glow}};--sh1:{{c.sh1}}; box-sizing: border-box; width: 100%; height: 900px; overflow: hidden; padding: 28px 32px 20px; display: flex; flex-direction: column; gap: 18px; background: var(--bg); color: var(--t1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; font-size: 14px; line-height: 22px">
+
+  <!-- 标题 -->
+  <div style="display: flex; align-items: flex-end; gap: 24px">
+    <div style="flex: 1">
+      <div style="font-size: 22px; line-height: 30px; font-weight: 600">角色美术槽位</div>
+      <div style="font-size: 13px; line-height: 20px; color: var(--t2); max-width: 780px">本稿只规定“容器”，不规定“内容”：角色形象由你提供，界面用虚线框占位；美术包缺失时，一律回退到抽象的潮汐图形。</div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 17px; background: var(--bub); font-size: 12px; color: {{c.warnt}}"><span style="width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--warn); box-sizing: border-box"></span>授权闸门：你确认美术授权后，才会启用美术包</div>
+  </div>
+
+  <div style="flex: 1; min-height: 0; display: flex; gap: 24px">
+    <!-- 左：12 个槽位 -->
+    <div style="flex: 0 0 800px; display: flex; flex-direction: column; gap: 10px; min-height: 0">
+      <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-weight: 600; font-size: 15px">12 个槽位</span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">虚线框为尺寸示意（按比例缩放），数字为显示尺寸 / 导出尺寸</span></div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 1fr; gap: 12px; flex: 1; min-height: 0">
+        <sc-for list="{{slots}}" as="s" hint-placeholder-count="12">
+          <div style="background: var(--l1); border-radius: 18px; box-shadow: var(--sh1); padding: 12px 12px 10px; display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow: hidden">
+            <div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 11px; line-height: 16px; padding: 0 7px; border-radius: 8px; background: var(--send); color: #FFFFFF; font-weight: 600">{{s.id}}</span><span style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 11px; color: var(--t2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{s.name}}</span></div>
+            <div style="height: 96px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: var(--bg)">
+              <div style="width: {{s.w}}; height: {{s.h}}; border-radius: {{s.r}}; border: 1.5px dashed var(--acc); background: var(--glow); box-sizing: border-box; display: flex; align-items: center; justify-content: center">
+                <sc-if value="{{s.two}}" hint-placeholder-val="{{false}}"><div style="width: 70%; height: 70%; border-radius: inherit; border: 1.5px dashed var(--acc); opacity: 0.6; transform: translate(4px, 4px)"></div></sc-if>
+              </div>
+            </div>
+            <div style="font-size: 12px; line-height: 17px; color: var(--t1); font-variant-numeric: tabular-nums">{{s.size}}</div>
+            <div style="font-size: 11px; line-height: 15px; color: var(--t3)">缺失：{{s.fb}}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- 右：6 状态 + 3 模式 -->
+    <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; min-height: 0">
+      <div style="background: var(--l1); border-radius: 20px; box-shadow: var(--sh1); padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-weight: 600; font-size: 15px">6 个 Agent 状态</span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">以下为无美术时的抽象降级</span></div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px">
+          <sc-for list="{{states}}" as="s" hint-placeholder-count="6">
+            <div style="border-radius: 14px; background: var(--bg); padding: 10px 6px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center">
+              <div style="position: relative; width: 52px; height: 52px">
+                <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+                  <circle cx="26" cy="26" r="11" fill="{{s.col}}" opacity="0.9"></circle>
+                  <circle cx="26" cy="26" r="17" stroke="{{s.col}}" stroke-width="1.6" stroke-dasharray="{{s.dash}}" opacity="{{s.op1}}"></circle>
+                  <circle cx="26" cy="26" r="23" stroke="{{s.col}}" stroke-width="1.2" opacity="{{s.op2}}"></circle>
+                  <path d="{{s.glyph}}" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </div>
+              <div style="font-size: 13px; line-height: 18px; font-weight: 500">{{s.l}}</div>
+              <div style="font-family: ui-monospace, 'JetBrains Mono', Consolas, monospace; font-size: 10px; line-height: 14px; color: var(--t3)">{{s.key}}</div>
+              <div style="font-size: 11px; line-height: 15px; color: var(--t3)">{{s.note}}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size: 11px; line-height: 16px; color: var(--t3)">环、徽标与颜色都由界面绘制，美术只需为每个状态提供一张可区分的变体，且 28px 下不靠颜色也能分辨。</div>
+      </div>
+
+      <div style="background: var(--l1); border-radius: 20px; box-shadow: var(--sh1); padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0">
+        <div style="display: flex; align-items: baseline; gap: 10px"><span style="font-weight: 600; font-size: 15px">立绘的三种显示方式</span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">阈值为提案，需用真实宽度验证</span></div>
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px">
+          <sc-for list="{{modes}}" as="m" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <div style="position: relative; height: 108px; border-radius: 12px; background: var(--bg); box-shadow: 0 0 0 0.5px var(--bd); overflow: hidden">
+                <div style="position: absolute; left: 14%; right: 14%; bottom: 10px; height: 20px; border-radius: 10px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd)"></div>
+                <div style="position: absolute; left: {{m.px}}; top: {{m.py}}; width: {{m.pw}}; height: {{m.ph}}; border-radius: 8px; border: 1.5px dashed var(--acc); background: var(--glow); box-sizing: border-box"></div>
+                <svg style="position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 22px" viewBox="0 0 100 22" preserveAspectRatio="none" aria-hidden="true"><path d="M0 12 C 20 4 40 18 60 10 S 85 4 100 10 V22 H0Z" fill="{{c.wave1}}"></path></svg>
+              </div>
+              <div style="font-size: 12px; line-height: 17px; font-weight: 500">{{m.l}}</div>
+              <div style="font-size: 11px; line-height: 15px; color: var(--t3)">{{m.d}}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size: 11px; line-height: 16px; color: var(--t3)">设置里可切换：自动 / 舞台 / 探头 / 仅标记 / 关闭。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部规则 -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px">
+    <sc-for list="{{rules}}" as="r" hint-placeholder-count="4">
+      <div style="border-radius: 14px; background: var(--bub); padding: 10px 12px">
+        <div style="font-weight: 600; font-size: 12px; line-height: 18px">{{r.t}}</div>
+        <div style="font-size: 11px; line-height: 16px; color: var(--t2)">{{r.d}}</div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]},"$preview":{"width":1360,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = (this.props.theme ?? 'light') === 'dark';
+    const L = {bg:'#F4F9FA',l1:'#FFFFFF',bub:'#E1F2F4',sba:'#D6E8EC',t1:'#0B1F26',t2:'#34494F',t3:'#435C65',t4:'#566F78',lk:'#0A6AA1',pri:'#0F5B6B',acc:'#0B7A8C',send:'#0B7285',ok:'#0F7D4D',warn:'#B87100',warnt:'#8A5300',err:'#C62D3A',idle:'#6E8790',bd:'rgba(8,70,88,0.14)',vio:'#5B4BC2',tf:'#BFEFF3',tt:'#DCEBFF',glow:'rgba(79,209,220,0.14)',sh1:'0 0 0 0.5px rgba(8,70,88,0.14), 0 6px 20px rgba(8,70,88,0.05)',wave1:'rgba(79,209,220,0.30)'};
+    const D = {bg:'#0A1418',l1:'#0F1C21',bub:'#17323A',sba:'#1F3A43',t1:'#E8F4F6',t2:'#B7CCD2',t3:'#93AEB6',t4:'#869FA6',lk:'#6CC6F2',pri:'#8FE3EA',acc:'#4FD1DC',send:'#0C7A8A',ok:'#3DD68C',warn:'#F5B84A',warnt:'#F5B84A',err:'#FF7A85',idle:'#4D6770',bd:'rgba(214,240,245,0.14)',vio:'#B7ACFF',tf:'#0F4F5C',tt:'#14304F',glow:'rgba(79,209,220,0.10)',sh1:'0 0 0 0.5px rgba(214,240,245,0.16), 0 6px 20px rgba(0,0,0,0.26)',wave1:'rgba(79,209,220,0.22)'};
+    const c = dark ? D : L;
+    const slots = [
+      { id: 'A01', name: 'hero-portrait', w: '70px', h: '93px', r: '12px', size: '288×384 · 导出 @2x 576×768', fb: '潮汐带 + 水纹 + 气泡' },
+      { id: 'A02', name: 'hero-mark', w: '48px', h: '48px', r: '50%', size: '34 · 导出 136×136', fb: '三环水纹' },
+      { id: 'A03', name: 'sidebar-mark', w: '36px', h: '36px', r: '50%', size: '24 · 导出 96×96', fb: '单环水纹' },
+      { id: 'A04', name: 'chat-avatar', w: '42px', h: '42px', r: '50%', size: '28 · 导出 112×112', fb: '不显示头像' },
+      { id: 'A05', name: 'state-* ×6', w: '60px', h: '60px', r: '18px', size: '28 / 40 / 96 · 导出 192×192', fb: 'Tide Orb + 状态环' },
+      { id: 'A06', name: 'loading-still / loop', w: '60px', h: '60px', r: '50%', size: '96 / 24 · 导出 192 / 48', fb: 'CSS 三环呼吸' },
+      { id: 'A07', name: 'empty-* ×6', w: '96px', h: '72px', r: '10px', size: '160×120 · 导出 320×240', fb: '等深线 + 线性图标' },
+      { id: 'A08', name: 'favicon', w: '34px', h: '34px', r: '8px', size: '32 · SVG + PNG 32/180/192/512', fb: '抽象水纹' },
+      { id: 'A09', name: 'app-icon', w: '62px', h: '62px', r: '16px', size: '1024 / 1104 · 托盘 16/24/32', fb: '抽象水纹' },
+      { id: 'A10', name: 'installer-*', w: '124px', h: '40px', r: '4px', size: '600×196 · @2x 1200×392', fb: '抽象潮汐带（须预合成底色）' },
+      { id: 'A11', name: 'channel-banner', w: '110px', h: '52px', r: '8px', size: '640×300 · 导出 1280×600', fb: '潮汐带' },
+      { id: 'A12', name: 'skin-*（可选）', w: '56px', h: '56px', r: '14px', two: true, size: '同被覆盖槽位 · 每套 ≤600KB', fb: '回退默认套' }
+    ];
+    const st = (key, l, col, dash, op1, op2, glyph, note) => ({ key, l, col, dash, op1, op2, glyph, note });
+    const states = [
+      st('idle', '待命', c.idle, '0', 0.0, 0.35, 'M0 0', '静态，不朗读'),
+      st('thinking', '思考中', c.acc, '4 4', 0.9, 0.5, 'M0 0', '水纹 + 扫光'),
+      st('tool', '正在调用', c.lk, '18 8', 0.95, 0.4, 'M0 0', '旋转弧'),
+      st('approval', '等待你确认', c.warn, '0', 0.9, 0.7, 'M26 21v6M26 31h.01', '缓慢脉冲 · 必须朗读'),
+      st('success', '已完成', c.ok, '0', 0.9, 0.35, 'M21 26.5l3.5 3.5 7-7.5', '落定后 3 秒回待命'),
+      st('error', '出错了', c.err, '0', 0.9, 0.35, 'M26 20.5v7M26 31.5h.01', '静态，不抖动')
+    ];
+    const modes = [
+      { l: '舞台 stage · ≥1280', d: '立绘完整显示在内容列右侧，不与输入框重叠。', px: '66%', py: '8px', pw: '26%', ph: '70px' },
+      { l: '探头 peek · 900–1279', d: '锚在输入框右上角，下部被遮住；底部 12% 不放关键内容。', px: '60%', py: '30px', pw: '28%', ph: '60px' },
+      { l: '仅标记 mark · <900', d: '只显示 34px 标记，不加载立绘。', px: '44%', py: '14px', pw: '12%', ph: '26px' }
+    ];
+    const rules = [
+      { t: '不烘焙', d: '图中不含背景、投影、光晕、文字与水印，光晕由界面绘制。' },
+      { t: '四种底色预览', d: '验收时在 #F4F9FA、#FFFFFF、#0A1418、#14242A 上逐一检查。' },
+      { t: '体积预算', d: '首屏必需资产 ≤150KB，全部随包资产 ≤1MB，超出则构建报错。' },
+      { t: '署名与授权', d: '美术包须带 LICENSE 与 CREDITS，你确认授权后才会启用。' }
+    ];
+    return { c, slots, states, modes, rules };
+  }
+}
+</script>
+</body>
+</html>

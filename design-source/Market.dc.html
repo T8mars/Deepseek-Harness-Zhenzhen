@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>插件市场 · zhen 频道</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="--bg:{{c.bg}};--l1:{{c.l1}};--l2:{{c.l2}};--ov:{{c.ov}};--sb:{{c.sb}};--sba:{{c.sba}};--bub:{{c.bub}};--t1:{{c.t1}};--t2:{{c.t2}};--t3:{{c.t3}};--t4:{{c.t4}};--lk:{{c.lk}};--pri:{{c.pri}};--onpri:{{c.onpri}};--acc:{{c.acc}};--send:{{c.send}};--ok:{{c.ok}};--warn:{{c.warn}};--warnt:{{c.warnt}};--err:{{c.err}};--idle:{{c.idle}};--bd:{{c.bd}};--vio:{{c.vio}};--tf:{{c.tf}};--tt:{{c.tt}};--glow:{{c.glow}};--sh1:{{c.sh1}};--sh3:{{c.sh3}}; display: flex; flex-wrap: wrap; min-height: 880px; background: var(--bg); color: var(--t1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', sans-serif; font-size: 14px; line-height: 22px">
+
+  <!-- 侧栏 -->
+  <div style="flex: 0 0 264px; box-sizing: border-box; background: var(--sb); display: flex; flex-direction: column; gap: 14px; padding: 16px 12px; min-height: 880px">
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 8px">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.5" role="img" aria-label="DSH-zhen 标志（占位图形）"><circle cx="12" cy="12" r="3" fill="var(--acc)"></circle><circle cx="12" cy="12" r="7.2" opacity="0.65"></circle><circle cx="12" cy="12" r="11" opacity="0.32"></circle></svg>
+      <span style="font-size: 15px; font-weight: 600; letter-spacing: 0.2px">DSH-zhen</span>
+    </div>
+    <button type="button" style="display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--l1); color: var(--t1); font: inherit; font-weight: 500; cursor: pointer; box-shadow: 0 0 0 0.5px var(--bd)">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg>新会话
+    </button>
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <sc-for list="{{nav}}" as="n" hint-placeholder-count="4">
+        <button type="button" style="display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border: 0; border-radius: 12px; background: {{n.bg}}; color: {{n.fg}}; font: inherit; font-weight: {{n.fw}}; text-align: left; cursor: pointer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{n.d}}"></path></svg>
+          <span style="flex: 1">{{n.l}}</span>
+          <sc-if value="{{n.dot}}" hint-placeholder-val="{{false}}"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok)"></span></sc-if>
+        </button>
+      </sc-for>
+    </div>
+    <div style="padding: 8px 12px 0; font-size: 12px; line-height: 18px; color: var(--t4)">最近会话</div>
+    <div style="display: flex; flex-direction: column; gap: 2px; font-size: 13px">
+      <sc-for list="{{sessions}}" as="s" hint-placeholder-count="3">
+        <div style="display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border-radius: 12px; color: var(--t2)"><span style="width: 8px; height: 8px; border-radius: 50%; background: {{s.dot}}"></span>{{s.t}}</div>
+      </sc-for>
+    </div>
+    <div style="flex: 1"></div>
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px">
+      <div style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 12px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); font-size: 13px; font-variant-numeric: tabular-nums; flex: 1">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--acc)" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><rect x="2" y="4" width="12" height="8.5" rx="2"></rect><path d="M11 8.3h1.5"></path></svg>
+        <span style="color: var(--t2)">余额</span><span style="font-weight: 500">¥ 128.40</span>
+      </div>
+      <button type="button" aria-label="设置" style="width: 36px; height: 36px; border: 0; border-radius: 12px; background: transparent; color: var(--t2); cursor: pointer; display: flex; align-items: center; justify-content: center">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M3 5h6M11.5 5H13M3 11h1.5M7 11h6"></path><circle cx="10.2" cy="5" r="1.3"></circle><circle cx="5.7" cy="11" r="1.3"></circle></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 主区 -->
+  <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; min-height: 880px">
+    <div style="display: flex; align-items: center; gap: 12px; height: 56px; padding: 0 28px; box-shadow: 0 0.5px 0 0 var(--bd)">
+      <span style="font-weight: 600; font-size: 17px; line-height: 24px">插件市场</span>
+      <div style="display: flex; padding: 3px; border-radius: 18px; background: var(--l1); box-shadow: 0 0 0 0.5px var(--bd); margin-left: 8px">
+        <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><span style="height: 30px; padding: 0 16px; border-radius: 15px; display: inline-flex; align-items: center; font-size: 13px; background: {{t.bg}}; color: {{t.fg}}; font-weight: {{t.fw}}">{{t.l}}</span></sc-for>
+      </div>
+      <span style="flex: 1"></span>
+      <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ok)"><span style="width: 8px; height: 8px; border-radius: 50%; background: var(--ok)"></span>索引已连接 · 更新于今天</span>
+    </div>
+
+    <div style="flex: 1; padding: 20px 28px; display: flex; flex-direction: column; gap: 18px; overflow: hidden">
+      <!-- 频道头图 A11 降级为潮汐带 -->
+      <div style="position: relative; height: 150px; border-radius: 24px; overflow: hidden; background: linear-gradient(135deg, var(--tf), var(--tt)); box-shadow: var(--sh1)">
+        <svg style="position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 100%" viewBox="0 0 1000 150" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 96 C 160 60 320 130 520 92 S 840 52 1000 96 V150 H0Z" fill="{{c.wave1}}"></path>
+          <path d="M0 120 C 180 90 340 146 540 116 S 860 86 1000 120 V150 H0Z" fill="{{c.wave2}}"></path>
+        </svg>
+        <div style="position: relative; padding: 22px 28px; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 22px; line-height: 30px; font-weight: 600; color: {{c.bannert}}">zhen 频道</div>
+          <div style="font-size: 13px; line-height: 20px; color: {{c.bannerd}}; max-width: 460px">创作技能、画布联动与知识库插件的精选合集。第三方插件会运行代码，安装前请核对来源与权限。</div>
+        </div>
+        <div style="position: absolute; right: 16px; top: 14px; font-size: 11px; line-height: 14px; padding: 3px 10px; border-radius: 10px; background: {{c.chipbg}}; color: {{c.chipfg}}">A11 频道头图 640×300 · 未提供时显示潮汐带</div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="font-weight: 600; font-size: 15px">精选</span><span style="font-size: 12px; line-height: 18px; color: var(--t3)">共 {{total}} 个插件</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; align-content: start">
+        <sc-for list="{{cards}}" as="k" hint-placeholder-count="6">
+          <div style="background: var(--l1); border-radius: 20px; box-shadow: var(--sh1); overflow: hidden; display: flex; flex-direction: column">
+            <!-- 预览 640×300 的缩略位 -->
+            <div style="position: relative; height: 96px; background: linear-gradient(135deg, var(--tf), var(--tt)); display: flex; align-items: center; justify-content: center; color: var(--pri)">
+              <svg width="30" height="30" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" opacity="0.8" aria-hidden="true"><path d="{{k.d}}"></path></svg>
+              <span style="position: absolute; right: 10px; bottom: 8px; font-size: 11px; line-height: 14px; padding: 2px 8px; border-radius: 9px; background: {{c.chipbg}}; color: {{c.chipfg}}">预览 640×300</span>
+            </div>
+            <div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; align-items: baseline; gap: 8px"><span style="font-weight: 600; font-size: 15px">{{k.name}}</span><span style="font-size: 12px; color: var(--t4); font-variant-numeric: tabular-nums">v{{k.ver}}</span></div>
+              <div style="font-size: 13px; line-height: 20px; color: var(--t2); min-height: 40px">{{k.desc}}</div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap">
+                <sc-for list="{{k.perms}}" as="p" hint-placeholder-count="2"><span style="font-size: 11px; line-height: 16px; padding: 2px 8px; border-radius: 9px; background: {{p.bg}}; color: {{p.fg}}">{{p.l}}</span></sc-for>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px">
+                <span style="font-size: 12px; color: var(--t3)">{{k.author}}</span>
+                <span style="flex: 1"></span>
+                <button type="button" style="height: 30px; padding: 0 16px; border: 0; border-radius: 15px; background: {{k.bbg}}; color: {{k.bfg}}; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer">{{k.btn}}</button>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: flex-start; border-radius: 16px; padding: 12px 16px; background: var(--bub); font-size: 12px; line-height: 19px; color: var(--t2)">
+        <span style="color: {{c.warnt}}; font-weight: 600">!</span>
+        <span>默认只信任 zhen 频道的索引。添加其他索引地址前请确认来源；安装后部分插件需要重启才会生效。</span>
+      </div>
+    </div>
+    <div style="text-align: center; font-size: 11px; line-height: 14px; color: var(--t4); padding: 0 0 12px">界面示意稿 · 插件名称、作者与权限均为示例</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","default":"light","options":["light","dark"]},"$preview":{"width":1360,"height":880}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dark = (this.props.theme ?? 'light') === 'dark';
+    const L = {bg:'#F4F9FA',l1:'#FFFFFF',l2:'#FFFFFF',ov:'#E1ECEF',sb:'#EAF3F5',sba:'#D6E8EC',bub:'#E1F2F4',t1:'#0B1F26',t2:'#34494F',t3:'#435C65',t4:'#566F78',lk:'#0A6AA1',pri:'#0F5B6B',onpri:'#FFFFFF',acc:'#0B7A8C',send:'#0B7285',ok:'#0F7D4D',warn:'#B87100',warnt:'#8A5300',err:'#C62D3A',idle:'#6E8790',bd:'rgba(8,70,88,0.14)',vio:'#5B4BC2',tf:'#BFEFF3',tt:'#DCEBFF',glow:'rgba(79,209,220,0.28)',sh1:'0 0 0 0.5px rgba(8,70,88,0.14), 0 6px 20px rgba(8,70,88,0.05)',sh3:'0 0 0 0.5px rgba(8,70,88,0.14), 0 12px 32px rgba(8,70,88,0.10)',wave1:'rgba(79,209,220,0.30)',wave2:'rgba(121,168,255,0.28)',bannert:'#0B1F26',bannerd:'#34494F',chipbg:'rgba(255,255,255,0.72)',chipfg:'#34494F'};
+    const D = {bg:'#0A1418',l1:'#0F1C21',l2:'#14242A',ov:'#2D434B',sb:'#0C171B',sba:'#1F3A43',bub:'#17323A',t1:'#E8F4F6',t2:'#B7CCD2',t3:'#93AEB6',t4:'#869FA6',lk:'#6CC6F2',pri:'#8FE3EA',onpri:'#04222A',acc:'#4FD1DC',send:'#0C7A8A',ok:'#3DD68C',warn:'#F5B84A',warnt:'#F5B84A',err:'#FF7A85',idle:'#4D6770',bd:'rgba(214,240,245,0.14)',vio:'#B7ACFF',tf:'#0F4F5C',tt:'#14304F',glow:'rgba(79,209,220,0.20)',sh1:'0 0 0 0.5px rgba(214,240,245,0.16), 0 6px 20px rgba(0,0,0,0.26)',sh3:'0 0 0 0.5px rgba(214,240,245,0.16), 0 12px 32px rgba(0,0,0,0.45)',wave1:'rgba(79,209,220,0.22)',wave2:'rgba(121,168,255,0.18)',bannert:'#E8F4F6',bannerd:'#B7CCD2',chipbg:'rgba(10,20,24,0.62)',chipfg:'#B7CCD2'};
+    const c = dark ? D : L;
+    const nav = [
+      { l: '技能库', d: 'M3 3h4v4H3zM9 3h4v4H9zM3 9h4v4H3zM10 10h3v3h-3z', dot: false, bg: 'transparent', fg: c.t2, fw: 400 },
+      { l: '知识库', d: 'M8 2.5 13.5 5.2 8 7.9 2.5 5.2ZM2.5 8 8 10.7 13.5 8M2.5 10.8 8 13.5 13.5 10.8', dot: false, bg: 'transparent', fg: c.t2, fw: 400 },
+      { l: '画布', d: 'M4.5 3h7A2.5 2.5 0 0 1 14 5.5v5A2.5 2.5 0 0 1 11.5 13h-7A2.5 2.5 0 0 1 2 10.5v-5A2.5 2.5 0 0 1 4.5 3ZM5.6 8.4h.01M10.4 6.2h.01M6.6 8c1.4.2 2-1 2.8-1.4', dot: true, bg: 'transparent', fg: c.t2, fw: 400 },
+      { l: '插件市场', d: 'M6 2.5v2.2M10 2.5v2.2M4 4.7h8v3a4 4 0 0 1-8 0ZM8 11.7v1.8', dot: false, bg: c.sba, fg: c.t1, fw: 600 }
+    ];
+    const sessions = [
+      { t: '分镜 · 第 3 集镜头拆分', dot: c.warn },
+      { t: '角色设定 · 三视图提示词', dot: c.idle },
+      { t: '商品主视觉方向', dot: c.idle }
+    ];
+    const tabs = [
+      { l: '已安装', bg: 'transparent', fg: c.t2, fw: 400 },
+      { l: '发现', bg: 'transparent', fg: c.t2, fw: 400 },
+      { l: 'zhen 频道', bg: c.send, fg: '#FFFFFF', fw: 500 }
+    ];
+    const pOk = l => ({ l, bg: c.bub, fg: c.t2 });
+    const pWarn = l => ({ l, bg: c.bub, fg: c.warnt });
+    const pNet = l => ({ l, bg: c.bub, fg: c.vio });
+    const ib = { bbg: c.send, bfg: '#FFFFFF' };
+    const ob = { bbg: c.bub, bfg: c.pri };
+    const cards = [
+      { name: '画布联动 MCP', ver: '0.1.0', desc: '连接 T8-penguin-canvas，读取项目与节点，付费生成前先估价再确认。', author: 'zhen 官方', perms: [pNet('访问本机画布'), pWarn('可发起付费任务')], btn: '安装', d: 'M4.5 3h7A2.5 2.5 0 0 1 14 5.5v5A2.5 2.5 0 0 1 11.5 13h-7A2.5 2.5 0 0 1 2 10.5v-5A2.5 2.5 0 0 1 4.5 3Z', ...ib },
+      { name: '创作技能包 · 分镜', ver: '0.3.2', desc: '分镜脚本、剧本拆解、镜头词典等一组创作技能。', author: 'zhen 官方', perms: [pOk('仅技能文件'), pOk('不访问网络')], btn: '已安装', d: 'M2.5 3.5h11v9h-11zM2.5 6.5h11M6 3.5v3M10 3.5v3', ...ob },
+      { name: '知识库检索', ver: '0.2.0', desc: '本地关键词检索，导入文档后可在对话中引用并显示来源。', author: 'zhen 官方', perms: [pOk('读取你导入的文档'), pOk('不上传内容')], btn: '更新到 0.2.1', d: 'M8 2.5 13.5 5.2 8 7.9 2.5 5.2ZM2.5 8 8 10.7 13.5 8', ...ib },
+      { name: '提示词片段库', ver: '0.1.4', desc: '保存常用提示词，支持占位符、标签与导入导出。', author: '社区 · 示例作者', perms: [pOk('本地存储'), pOk('不访问网络')], btn: '安装', d: 'M3 13l.8-3.2L11 2.6a1.4 1.4 0 0 1 2 2L5.8 11.8Z', ...ib },
+      { name: '每日灵感', ver: '0.1.0', desc: '按计划每天生成一组主题灵感，推送到会话。', author: '社区 · 示例作者', perms: [pNet('访问网络'), pWarn('定时运行')], btn: '安装', d: 'M8 2.5v2M8 11.5v2M2.5 8h2M11.5 8h2M4.2 4.2l1.4 1.4M10.4 10.4l1.4 1.4M11.8 4.2l-1.4 1.4M5.6 10.4l-1.4 1.4', ...ib },
+      { name: '用量与预算', ver: '0.1.0', desc: '为单个任务与每日花费设置上限，超出时先询问。', author: 'zhen 官方', perms: [pNet('读取网关余额'), pOk('不保存密钥')], btn: '需要重启', d: 'M2 4.5h12v8H2zM2 7h12M10 10h2', ...ob }
+    ];
+    return { c, nav, sessions, tabs, cards, total: cards.length };
+  }
+}
+</script>
+</body>
+</html>

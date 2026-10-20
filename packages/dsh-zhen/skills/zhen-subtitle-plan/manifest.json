@@ -1,0 +1,13 @@
+{
+  "id": "zhen-subtitle-plan",
+  "version": "1.0.0",
+  "title": "字幕与动态文字",
+  "description": "为口播、MV 或解说设计清楚易读的字幕与动态文字方案。",
+  "category": "visual",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "features": [
+    {
+      "id": "privacy-release-guard",
+      "status": "implemented",
+      "verification": "Ignore patterns, local hooks, history-tree and npm file-list checks tested. Remote CI not activated."
+    },
+    {
+      "id": "seedance-chat",
+      "status": "in-progress",
+      "liveVerified": false,
+      "verification": "18 reviewed text model routes are configured; the exact Flash default remains. C14 verifies published adapter discovery and exact-id loopback SSE for every route. Default-model tool round trip, credential revocation, usage, cancellation, timeout and errors passed. Live gateway, advanced modalities and structured 402 classification remain."
+    },
+    {
+      "id": "seedance-connection-check",
+      "status": "in-progress",
+      "liveVerified": false,
+      "verification": "Explicit fixed Flash check with preview/charge confirmation, max_tokens 32, captured prepared-call generation, durable single-submit receipt, cancellation and no automatic replay. Own SQLite schema 1 stores safe counts/status only. C19 actual published DSH/Host/Remote/pi-ai loopback and synthetic process-termination/storage-failure cases pass. Live gateway, new UI and provider-side billing/cancellation remain unverified."
+    },
+    {
+      "id": "gateway-task-tracking",
+      "status": "in-progress",
+      "liveVerified": false,
+      "verification": "Eight fixed Host-only existing-task GET protocols with exact result identity, bounded/redacted parsing, terminal usage only and no cost/quota substitution. Explicit tracking persists across restart; single-flight queries, cooldown/Retry-After/backoff, local-only removal and own-page credential generation cancellation pass. Own SQLite schema 1 retains at most 100 safe metadata records without signed URLs, prompts, lyrics or credentials. Nine units and three C22 actual published Host/Remote plus real isolated HTTP/timer contracts pass. No submit/cancel/delete/media fetch or Agent injection. New UI, real account/settlement, safe result transfer and Canvas association remain unverified."
+    },
+    {
+      "id": "gateway-media-exports",
+      "status": "in-progress",
+      "liveVerified": false,
+      "verification": "Explicit per-result/batch export to an existing local folder uses five-minute opaque capabilities, anonymous Host media GETs, all-answer public-DNS checks with pinned connections, revalidated redirects, bounded streaming/signature checks and non-overwriting copies with hash verification. Own receipt SQLite schema 1 retains local metadata only; signed sources stay in bounded Host memory and never reach Remote results or SQLite. Cancellation, credential invalidation, no-overwrite, receipt-failure file preservation and restart retention pass in twelve units and three actual published Host/Remote C23 contracts. No submit/paid/media regeneration. Real CDN/TLS/media, new UI, native folder picking, crash recovery and Canvas association remain unverified."
+    },
+    {
+      "id": "seedance-wallet-catalog",
+      "status": "in-progress",
+      "verification": "Host wallet and UI implemented; live account remains unverified. A typed inventory has 275 records across 17 categories (211 models, 60 action records including aliases, four operations). Public docs/music/MJ source reads match the reviewed hashes. Daily differences, offline catalog, bounded Agent metadata search, 18 text profiles and source/identity tests pass; new UI and media execution remain unverified."
+    },
+    {
+      "id": "creator-ui",
+      "status": "in-progress",
+      "verification": "Creator/market/knowledge/connections/updates rendered in pinned DSH Web; light/dark and 390px layouts observed, no horizontal overflow and visible keyboard focus. Full accessibility and all surfaces remain."
+    },
+    {
+      "id": "user-character-art",
+      "status": "in-progress",
+      "assetProvided": true,
+      "redistributionConfirmed": true,
+      "verification": "Confirmed independent local community art is now automatically selected by the development launcher and rechecked/frozen by Host. Two UI-only Remote readers deliver bounded pinned raster chunks; real client reassembly verifies identity, boundaries, SHA/CRC/type/dimensions before browser decoding. Browser imports and saved off/focus preferences win; defaults never write personal IndexedDB. Nine new units, existing four art policy cases and C31 real published Host/Registry/Access/Gateway strict in-process JSON invocation pass; full check255. Actual two 1254 PNGs, 79 chunks and matching hashes verified with zero Provider/network; browser decode/rendering and full visual/IndexedDB verification remain unverified. Public bundle still omits art raster files; see decision0029."
+    },
+    {
+      "id": "skill-market-updates",
+      "status": "in-progress",
+      "verification": "15 original skills with preview/install/disable/personal forks and retained releases. Optional default-off first-party-text-v1 trust schedules enabled installed text updates for the next Host start. Manual priority, per-skill pause, exact skip, rollback pinning, disabled/new/personal exclusion and transactional queue writes pass. Schema 3 preserves package bytes and verifies fetched-catalog receipts before cache use/automatic staging. C17 exercises actual DSH SkillRegistry/Host/Remote across restart without model credentials. New UI, positive live publication, broader sources, signatures and revocation remain unverified."
+    },
+    {
+      "id": "local-skill-directories",
+      "status": "in-progress",
+      "verification": "Explicit trusted local directory or one-level library connects original SKILL.md/resource paths without copying, relicensing, installing dependencies or executing programs. Own JSON schema 1 preserves roots/identity/consent separately from market schema 3. Polling invalidates future loads for edits/new children. C20 actual published Host/SkillRegistry/ToolRuntime/native skill loader validates resourceBase, invocation restrictions and zero key reads; eight units cover links, stale/replaced roots, async disable, duplicates, preservation and reopen. New UI and real personal workflows remain unverified. Public GitHub snapshots use a separate provider."
+    },
+    {
+      "id": "github-resource-skills",
+      "status": "in-progress",
+      "verification": "Public GitHub single-skill/library snapshots preserve complete relative resources and license bytes, verified Git tree/blob identities and SHA-256. Explicit github-resources-v1 review activates first use or stages replacements for next Host; daily checks download candidates only. Personal local sources win; disable/forget retain bytes and unselected snapshots can be removed. Own state schema 1; no Git checkout, hooks, dependencies or credentials. Nine independent Git-object units and three actual published DSH C21 contracts pass. A real four-file algorithmic-art public download and native loading passed in temporary storage with zero script/model/paid calls. New UI, full creative workflows, arbitrary concurrent Hosts, signatures/revocations, private repos and LFS remain unverified or unsupported."
+    },
+    {
+      "id": "mcp-market",
+      "status": "in-progress",
+      "verification": "Curated memory/filesystem packages support exact registry integrity, notices, hook-free install, full-tree pinning, project scopes, isolated env and reviewed candidate staging. Restart/re-download/hash-checked retained-program restore now drain calls and preserve data while requiring renewed trust after replacement. Market state schema 2 records archives; grants stay schema 1. C13/C18 use actual DSH composition with synthetic servers. Real pinned memory-server repair/restore retained a synthetic graph and original bytes on Node 22.19. New UI, filesystem repair, broader sources, signatures/revocations and automatic code activation remain unverified."
+    },
+    {
+      "id": "local-rag",
+      "status": "in-progress",
+      "verification": "Text import/search, exact workspace binding, separate agent consent and persistent pre-provider revocation guard implemented. Authorized matches now return distinct-document rounds before repeated chunks; 21 invented keyword cases pass, including source coverage, Chinese names, mixed scripts and citations. C11 uses published ToolRuntime for diversity/permission/revocation. Schema 2 and keyword intersection remain. Real-corpus relevance, new UI, live chat and optional PDF/OCR/vector remain unverified."
+    },
+    {
+      "id": "canvas-mcp",
+      "status": "in-progress",
+      "verification": "10 read/planning entries reuse installed CLI discovery/handshake/secureStore. Local and live catalogs must match; 39 capability surfaces preserve 73 L0 versioned plan/preview routes with their exact scopes, plus eight existing inspection tools. C16 covers published DSH stdio/ToolRuntime, Host/Remote catalog, result identity, drift, expiration, no retry and reviewed CLI cache replacement. The immutable original Canvas policy helper accepted 73 L0 and refused 123 non-direct operations with inert dispatch. Installed Canvas, real creative handlers, new UI, secure media handoff, writes and paid execution remain unverified."
+    },
+    {
+      "id": "canvas-local-discovery",
+      "status": "in-progress",
+      "verification": "Fixed installer roots and managed markers are read without importing CLI code or opening a connection. Complete supported runtime fingerprints, local-path/link/metadata gates, canonical deduplication and a closed Remote schema pass six units. C24 actual published Host/MCP composition refuses stale reviewed digests before config/mount changes and preserves previous config, with zero credential reads. Both real local CLIs report APP_NOT_RUNNING; their compatibility digests differ. New UI and real pairing remain unverified."
+    },
+    {
+      "id": "canvas-window-pairing",
+      "status": "in-progress",
+      "verification": "Default pairing remains three read scopes; handoff, canvas:write and run:execute are independent explicit opt-ins requiring native window grant. Existing C25/C26 native store and published Host/Remote/MCP boundaries remain. New run permission defaults false; no Agent pairing or automatic approval. Real UI/window remain unverified. Asset-transfer can now be requested independently; all optional permissions still default false."
+    },
+    {
+      "id": "canvas-native-store-transactions",
+      "status": "in-progress",
+      "verification": "Unreleased canonical Canvas native writer now coordinates complete read/modify/write, stale snapshots, pairing/session conditional commit and cleanup, one signing identity and crash recovery while retaining v1/DPAPI. Seven original regressions fail; updated 13 native concurrency/fault and 4 actual CLI cases pass, plus a 42-test Electron matrix. C26 three DSH contracts cover late protection-time replacement and actual child DPAPI/old-reader compatibility. Only participating updated writers are coordinated; legacy writers, network/other filesystems, real window and production release remain unverified."
+    },
+    {
+      "id": "canvas-reviewed-workflow-application",
+      "status": "in-progress",
+      "verification": "Explicit UI selects native workspace and previews image/video/script/Story plans, then human DSH confirmation requests authoritative Canvas window approval. Native secureStore retains poll secrets; own schema 1 keeps references, the reviewed creative goal and bounded preview/progress. Original goal is checked and shown; edits require a new preview. Pending/denied, restart, scope/session/config/plan binding, duplicate clicks, lost responses and result mismatch are covered by isolated HTTP plus immutable native auth/client/store/approval modules. C27 uses published Host/Remote/ToolRuntime; ten Agent read/plan tools unchanged and Provider credential resolutions zero. C27 plan construction/database mutation are synthetic. Separate native working-source verification now exercises actual routes/creative/Patch TEMP database and actual MCP chat adoption; IPC simulates window approval. Real installed application/window/new UI and paid execution remain unverified."
+    },
+    {
+      "id": "canvas-chat-plan-inbox",
+      "status": "in-progress",
+      "verification": "Published tools/execute correlation and final tools/result observation capture accepted structured native creative plans only. Sixteen process-local candidates, short list previews, exact native session/config/request/plan binding, manual adoption without replanning, concurrent adoption single-flight and removal are implemented. C28 uses published Host/Remote/ToolRuntime and real MCP stdio, native auth/store/approval fixtures, final policy block and configuration-race cases; five units cover boundaries, copies/caps, action plans and 12000 Chinese-character persistence. New UI and real model/window remain unverified. Independent native working-source TEMP SQLite verification covers basic image/video/script/Story plus actual MCP chat handoff and graph.node-add without Provider calls or run ledger entries."
+    },
+    {
+      "id": "canvas-paid-generation",
+      "status": "in-progress",
+      "verification": "UI-only native run plan/unknown-price preview, human DSH confirmation, authoritative native window approval and single completion are implemented. Lost creation/completion acknowledgements recover by scoped GET; unknown or accepted never resubmits. Native unreleased source binds one plan to one operation and retains original run_intents authority. Eleven units, C29 actual published Host/Remote/ToolRuntime/MCP stdio, 20 native service regressions and separate real Native TEMP SQLite verify pass. Exactly one native intent accepted; Provider dispatcher, real window/UI, paid/live results and production release remain unverified. See decision 0027."
+    },
+    {
+      "id": "github-update-candidates",
+      "status": "in-progress",
+      "verification": "Daily Host metadata monitoring and exact published-package candidate preparation implemented. Separate read-only validation and pure write-job publisher enforce a fixed file list; 42 guide identities and 190 public template rows with key/default-value digests require hash-bound review. C15, semantic precedence, publisher, Git collection and personal-skill compatibility tests passed. Real 23-package metadata matches the lock and next is unchanged. Running Host updates are refused before mutation. Workflow is local only; a real newer release, canary, promotion and signed activation remain."
+    },
+    {
+      "id": "signed-desktop-update",
+      "status": "blocked",
+      "reason": "Distribution architecture, signing identity and production release authorization are not yet available."
+    },
+    {
+      "id": "canvas-native-task-center",
+      "status": "in-progress",
+      "verification": "Task center reads the original native ledger by explicit project/canvas/current pairing; no local task/paid ledger. At most 100 native records, known-reference detail, manual refresh and bounded secret-free evidence summaries; completed status alone is never verified. Nine units and C30 actual published Host/Remote/ToolRuntime/MCP stdio pass; independent original Native TEMP SQLite returns one accepted intent and not-completed detail, no Provider dispatch. Full DSH check245 passes. Actual UI, native completed real artifacts, Provider/live settlement and longer-term multi-client workflows remain unverified. See decision0028."
+    },
+    {
+      "id": "canvas-saved-media-transfer",
+      "status": "in-progress",
+      "verification": "Owned saved-result references, ordinary-file/hash checks, independent asset-transfer pairing opt-in, separate human/native import and placement approvals, and GET-only recovery implemented. C32 uses actual published Gateway owner JSON and MCP stdio with synthetic copy/ledger fixtures; separate original Native TEMP SQLite/AssetUploadManager/Blob/Patch verifies one asset/placement and lost acknowledgements without Provider calls. Real saved download, new UI/window and installed application remain unverified. Actual installed 3.3.6 control status fails missing compatibility manifest; canonical source repair is tested but unreleased. See decision0030."
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "DSH-zhen",
+  "version": "0.1.0",
+  "stage": "development",
+  "repository": "https://github.com/T8mars/Deepseek-Harness-Zhenzhen",
+  "architecture": "published-upstream-bundle",
+  "upstreamSourceModified": false,
+  "defaultProvider": "seedance",
+  "defaultModel": "deepseek/deepseek-v4.1-flash",
+  "runtime": "node >=22.19.0",
+  "privateRootFiles": [
+    "roadmap.md",
+    "skill.md",
+    "AGENTS.md",
+    "anents.md"
+  ],
+  "releaseStatus": "not-released",
+  "remoteBackup": {
+    "repository": "https://github.com/T8mars/Deepseek-Harness-Zhenzhen",
+    "branch": "main",
+    "policy": "commit-and-push-validated-updates",
+    "firstCheckpointTag": "v0.1.0-dev.1"
+  }
+}

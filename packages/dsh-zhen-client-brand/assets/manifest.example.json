@@ -1,0 +1,19 @@
+{
+  "schema": "dsh-zhen-character-set",
+  "version": 1,
+  "id": "example-art",
+  "displayName": { "zh-CN": "EXAMPLE ONLY 用户美术包", "en": "EXAMPLE ONLY user artwork" },
+  "credit": { "artist": "", "source": "", "url": "" },
+  "license": {
+    "spdx": "",
+    "summary": "",
+    "redistribution": "unknown",
+    "commercialUse": "unknown",
+    "derivativeOfCommunityCharacter": true,
+    "confirmedByUser": false,
+    "confirmedAt": null
+  },
+  "focus": { "x": 0.5, "y": 0.5, "scale": 1 },
+  "slots": { "hero-portrait": { "src": "hero/example.png" } },
+  "variants": { "dark": {} }
+}

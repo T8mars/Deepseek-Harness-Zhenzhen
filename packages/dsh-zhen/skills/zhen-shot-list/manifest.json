@@ -1,0 +1,13 @@
+{
+  "id": "zhen-shot-list",
+  "version": "1.0.0",
+  "title": "分镜与镜头清单",
+  "description": "将已确定的脚本拆为可拍摄的分镜和镜头清单，标明动作、构图、声音与衔接。",
+  "category": "visual",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

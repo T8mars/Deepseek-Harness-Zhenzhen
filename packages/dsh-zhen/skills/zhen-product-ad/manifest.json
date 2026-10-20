@@ -1,0 +1,13 @@
+{
+  "id": "zhen-product-ad",
+  "version": "1.0.0",
+  "title": "产品广告创意",
+  "description": "围绕产品证据和受众需求设计广告脚本、镜头与文案，适用于短视频或主视觉提案。",
+  "category": "writing",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

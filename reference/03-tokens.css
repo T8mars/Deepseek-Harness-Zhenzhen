@@ -1,0 +1,373 @@
+/* ==========================================================================
+ * DSH-zhen · 03-tokens.css  —  “潮汐 / Tide” 主题覆盖层（设计规范附件）
+ * 配套文档：03-ui-design-spec.md（对比度数值由 scripts/contrast.py 计算并写入该文档）
+ *
+ * 本文件 = 对上游 packages/client/ui-theme/src/styles/ 中已存在变量的“覆盖”：
+ *   - A–G 段：全部变量名均已在上游样式表中确认存在（脚本逐名比对，0 个杜撰）。
+ *   - H 段：zhen 扩展变量，上游并不存在（--dsw-alias-zhen-* / --dsw-zhen-*），
+ *           需在 fork 的 ui-theme 新增，或由 ctx.theme.overrideTokens 以动态 token 注入。
+ *
+ * 两种接入方式（任选其一，详见文档 §2.5）：
+ *   ① 作为全局样式表，在 ui-theme 全部样式表之后加载（同特异性，靠后者胜）；
+ *   ② 按 {light, dark} 成对拆成 ctx.theme.overrideTokens('dsh-zhen', {...})（行内变量，
+ *      优先级最高，且随 light/dark 自动切换）。elevation 三件套属 `body, body *` 逐元素声明，
+ *      行内覆盖无效，必须走①（见 E 段）。
+ *
+ * 特异性注意：上游把变量声明在 `body` 与 `body[data-ds-dark-theme]`；因此本文件对每个变量
+ * 同时给出这两个选择器的值；macOS 的 `html[data-platform='darwin'] body` 菜单填充单独处理（C 段）。
+ * ========================================================================== */
+
+/* ---------- A. 静态色阶重映射（兜底：未被语义层显式覆盖的消费者仍随主题着色） ---------- */
+body,
+body[data-ds-dark-theme] {
+  --dsw-static-deepseek-50: #EAF7F8;
+  --dsw-static-deepseek-100: #D5EFF2;
+  --dsw-static-deepseek-200: #B5E4E8;
+  --dsw-static-deepseek-300: #86D3DA;
+  --dsw-static-deepseek-400: #4FD1DC;
+  --dsw-static-deepseek-450: #2FB3C2;
+  --dsw-static-deepseek-500: #0B7A8C;
+  --dsw-static-deepseek-600: #0A6070;
+  --dsw-static-deepseek-700-delete: #0A4F5C;
+  --dsw-static-deepseek-800: #123A42;
+  --dsw-static-deepseek-900: #0E2A30;
+  --dsw-static-neutral-bluish-00: #FFFFFF;
+  --dsw-static-neutral-bluish-50: #F7FBFC;
+  --dsw-static-neutral-bluish-60: #F4F9FA;
+  --dsw-static-neutral-bluish-75: #EEF5F7;
+  --dsw-static-neutral-bluish-100: #E7F0F3;
+  --dsw-static-neutral-bluish-150: #E1ECEF;
+  --dsw-static-neutral-bluish-200: #D5E3E7;
+  --dsw-static-neutral-bluish-300: #BFD1D6;
+  --dsw-static-neutral-bluish-400: #9DB3BA;
+  --dsw-static-neutral-bluish-500: #7F989F;
+  --dsw-static-neutral-bluish-600: #66808A;
+  --dsw-static-neutral-bluish-700: #4D6770;
+  --dsw-static-neutral-bluish-750: #3C535B;
+  --dsw-static-neutral-bluish-800: #2D434B;
+  --dsw-static-neutral-bluish-850: #223840;
+  --dsw-static-neutral-bluish-875: #1A2D34;
+  --dsw-static-neutral-bluish-900: #14252B;
+  --dsw-static-neutral-bluish-950: #0E1B20;
+  --dsw-static-neutral-bluish-1000: #08141A;
+}
+
+/* ---------- B1. 语义 alias — Light · 浅滩 Shoal ---------- */
+body {
+  --dsw-alias-bg-base: #F4F9FA;
+  --dsw-alias-bg-layer-1: #FFFFFF;
+  --dsw-alias-bg-layer-2: #FFFFFF;
+  --dsw-alias-bg-layer-3: #FFFFFF;
+  --dsw-alias-bg-module-platform: #EEF6F8;
+  --dsw-alias-bg-multi-select: #EEF6F8;
+  --dsw-alias-bg-overlay: #E1ECEF;
+  --dsw-alias-bg-document-preview: #E7F0F3;
+  --dsw-alias-bg-skeleton: rgba(8,70,88,0.05);
+  --dsw-alias-bg-mask-drop: rgba(244,249,250,0.72);
+  --dsw-alias-bg-document-selection: rgba(11,122,140,0.30);
+  --dsw-specific-sidebar-fill: #EAF3F5;
+  --dsw-specific-sidebar-nav-item-hover: #E1EDF0;
+  --dsw-specific-sidebar-nav-item-active: #D6E8EC;
+  --dsw-specific-sidebar-nav-item-active-accent: #C4E3E8;
+  --dsw-specific-input-major: #FFFFFF;
+  --dsw-specific-login-input: #F7FBFC;
+  --dsw-specific-selector: #EEF6F8;
+  --dsw-specific-tip: #EEF6F8;
+  --dsw-specific-bubble: #E1F2F4;
+  --dsw-specific-bubble-highlight: #C9E7EB;
+  --dsw-alias-label-primary: #0B1F26;
+  --dsw-alias-label-secondary: #34494F;
+  --dsw-alias-label-tertiary: #435C65;
+  --dsw-alias-label-caption: #566F78;
+  --dsw-alias-label-dimmed: #C4D6DB;
+  --dsw-alias-label-primary-bluish: #0A4A58;
+  --dsw-alias-label-primary-dimmed: #0E1B20;
+  --dsw-alias-label-primary-foreground: #FFFFFF;
+  --dsw-alias-label-primary-inverted: #FFFFFF;
+  --dsw-alias-label-document-preview: #4D6770;
+  --dsw-alias-menu-icon: #2D434B;
+  --dsw-alias-link: #0A6AA1;
+  --dsw-alias-brand-primary: #0F5B6B;
+  --dsw-alias-brand-primary-invert: #FFFFFF;
+  --dsw-alias-brand-text: #0B1F26;
+  --dsw-alias-brand-primary-new-colorprimary-new-color: #0B7A8C;
+  --dsw-alias-state-business-primary: #0B7A8C;
+  --dsw-alias-state-business-tertiary: #D5EFF2;
+  --dsw-alias-button-primary-fill: #0F5B6B;
+  --dsw-alias-button-primary-hover: #0A4654;
+  --dsw-alias-button-primary-dimmed: #E3EEF1;
+  --dsw-alias-button-contrast-fill: #3D555D;
+  --dsw-alias-button-info-fill: #0B7285;
+  --dsw-alias-button-info-hover: #095F70;
+  --dsw-alias-button-elevated-fill: #FFFFFF;
+  --dsw-alias-button-floating-fill: #FFFFFF;
+  --dsw-alias-button-floating-hover: #EEF5F7;
+  --dsw-alias-button-ghost-active-border: #7F989F;
+  --dsw-alias-button-ghost-active-fill: #E3EEF1;
+  --dsw-alias-button-ghost-active-hover: #D5E3E7;
+  --dsw-alias-interactive-bg-hover: rgba(8,70,88,0.06);
+  --dsw-alias-interactive-bg-active: rgba(8,70,88,0.10);
+  --dsw-alias-interactive-bg-hover-accent: rgba(8,70,88,0.14);
+  --dsw-alias-interactive-bg-hover-danger: rgba(198,45,58,0.06);
+  --dsw-alias-interactive-bg-hover-solid: #EEF5F7;
+  --dsw-alias-border-l1: rgba(8,70,88,0.06);
+  --dsw-alias-border-l2: rgba(8,70,88,0.12);
+  --dsw-alias-border-l3: rgba(8,70,88,0.16);
+  --dsw-alias-border-l4: rgba(8,70,88,0.22);
+  --dsw-alias-border-l2-darkmode-thin: rgba(8,70,88,0.10);
+  --dsw-alias-state-success-primary: #0F7D4D;
+  --dsw-alias-state-success-secondary: #3FBF86;
+  --dsw-alias-state-success-tertiary: #DDF6E9;
+  --dsw-alias-state-warn-primary: #B87100;
+  --dsw-alias-state-warn-secondary: #E8A317;
+  --dsw-alias-state-warn-tertiary: #FDF1D6;
+  --dsw-alias-state-warn-label: #8A5300;
+  --dsw-alias-state-error-primary: #C62D3A;
+  --dsw-alias-state-error-secondary: #E5666F;
+  --dsw-alias-state-idle-primary: #6E8790;
+  --dsw-alias-toast-bg: #1F3640;
+  --dsw-alias-toast-label: #FFFFFF;
+  --dsw-alias-tooltip-bg: #1B3039;
+  --dsw-alias-switch-thumb: #FFFFFF;
+  --dsw-alias-scrollbar-bg-l1: #CFE0E5;
+  --dsw-alias-scrollbar-bg-l2: #CFE0E5;
+  --dsw-alias-scrollbar-hover-l1: #B7CDD4;
+  --dsw-alias-scrollbar-hover-l2: #B7CDD4;
+  --dsw-alias-markdown-code-block: #F1F7F9;
+  --dsw-alias-markdown-code-block-banner: #EBF3F5;
+  --dsw-alias-markdown-code-segment-selected: #FFFFFF;
+  --dsw-alias-markdown-code-segment-unselected: #EEF5F7;
+  --dsw-alias-markdown-inline-code: #E8F1F4;
+  --dsw-alias-markdown-citation: #E3EEF1;
+  --dsw-alias-markdown-placeholder: #F1F7F9;
+  --dsw-alias-markdown-tag: #EEF5F7;
+  --dsw-alias-code-diff-added: rgba(19,145,92,0.09);
+  --dsw-alias-code-diff-deleted: rgba(198,45,58,0.08);
+  --dsw-menu-surface-fill: rgba(246,251,252,0.62);
+  --dsw-alias-menu-group-header-fill: rgba(246,251,252,0.94);
+  --dsw-specific-menu: var(--dsw-menu-surface-fill);
+}
+
+/* ---------- B2. 语义 alias — Dark · 深潮 Abyss ---------- */
+body[data-ds-dark-theme] {
+  --dsw-alias-bg-base: #0A1418;
+  --dsw-alias-bg-layer-1: #0F1C21;
+  --dsw-alias-bg-layer-2: #14242A;
+  --dsw-alias-bg-layer-3: #1A2E35;
+  --dsw-alias-bg-module-platform: #1A2E35;
+  --dsw-alias-bg-multi-select: #14242A;
+  --dsw-alias-bg-overlay: #2D434B;
+  --dsw-alias-bg-document-preview: #0A1418;
+  --dsw-alias-bg-skeleton: rgba(214,240,245,0.07);
+  --dsw-alias-bg-mask-drop: rgba(15,28,33,0.72);
+  --dsw-alias-bg-document-selection: rgba(79,209,220,0.32);
+  --dsw-specific-sidebar-fill: #0C171B;
+  --dsw-specific-sidebar-nav-item-hover: #15262C;
+  --dsw-specific-sidebar-nav-item-active: #1F3A43;
+  --dsw-specific-sidebar-nav-item-active-accent: #234650;
+  --dsw-specific-input-major: #14242A;
+  --dsw-specific-login-input: #0F1C21;
+  --dsw-specific-selector: #1A2E35;
+  --dsw-specific-tip: #1A2E35;
+  --dsw-specific-bubble: #17323A;
+  --dsw-specific-bubble-highlight: #234650;
+  --dsw-alias-label-primary: #E8F4F6;
+  --dsw-alias-label-secondary: #B7CCD2;
+  --dsw-alias-label-tertiary: #93AEB6;
+  --dsw-alias-label-caption: #869FA6;
+  --dsw-alias-label-dimmed: #2D434B;
+  --dsw-alias-label-primary-bluish: #E8F4F6;
+  --dsw-alias-label-primary-dimmed: #D5E3E7;
+  --dsw-alias-label-primary-foreground: #04222A;
+  --dsw-alias-label-primary-inverted: #2D434B;
+  --dsw-alias-label-document-preview: #BFD1D6;
+  --dsw-alias-menu-icon: #D5E3E7;
+  --dsw-alias-link: #6CC6F2;
+  --dsw-alias-brand-primary: #8FE3EA;
+  --dsw-alias-brand-primary-invert: #0F5B6B;
+  --dsw-alias-brand-text: #E8F4F6;
+  --dsw-alias-brand-primary-new-colorprimary-new-color: #4FD1DC;
+  --dsw-alias-state-business-primary: #4FD1DC;
+  --dsw-alias-state-business-tertiary: #123A42;
+  --dsw-alias-button-primary-fill: #8FE3EA;
+  --dsw-alias-button-primary-hover: #B3EFF3;
+  --dsw-alias-button-primary-dimmed: #234650;
+  --dsw-alias-button-contrast-fill: #E8F4F6;
+  --dsw-alias-button-info-fill: #0C7A8A;
+  --dsw-alias-button-info-hover: #0A6A79;
+  --dsw-alias-button-elevated-fill: #2C4750;
+  --dsw-alias-button-floating-fill: #14242A;
+  --dsw-alias-button-floating-hover: #1A2E35;
+  --dsw-alias-button-ghost-active-border: #66808A;
+  --dsw-alias-button-ghost-active-fill: #2C4750;
+  --dsw-alias-button-ghost-active-hover: #3A5760;
+  --dsw-alias-interactive-bg-hover: rgba(214,240,245,0.08);
+  --dsw-alias-interactive-bg-active: rgba(214,240,245,0.14);
+  --dsw-alias-interactive-bg-hover-accent: rgba(214,240,245,0.24);
+  --dsw-alias-interactive-bg-hover-danger: rgba(255,122,133,0.15);
+  --dsw-alias-interactive-bg-hover-solid: #1F3A43;
+  --dsw-alias-border-l1: rgba(214,240,245,0.06);
+  --dsw-alias-border-l2: rgba(214,240,245,0.12);
+  --dsw-alias-border-l3: rgba(214,240,245,0.16);
+  --dsw-alias-border-l4: rgba(214,240,245,0.22);
+  --dsw-alias-border-l2-darkmode-thin: rgba(214,240,245,0.06);
+  --dsw-alias-state-success-primary: #3DD68C;
+  --dsw-alias-state-success-secondary: #2FB877;
+  --dsw-alias-state-success-tertiary: #123A2A;
+  --dsw-alias-state-warn-primary: #F5B84A;
+  --dsw-alias-state-warn-secondary: #D9962B;
+  --dsw-alias-state-warn-tertiary: #3A2C10;
+  --dsw-alias-state-warn-label: #F5B84A;
+  --dsw-alias-state-error-primary: #FF7A85;
+  --dsw-alias-state-error-secondary: #FF7A85;
+  --dsw-alias-state-idle-primary: #4D6770;
+  --dsw-alias-toast-bg: #2D434B;
+  --dsw-alias-toast-label: #FFFFFF;
+  --dsw-alias-tooltip-bg: #2D434B;
+  --dsw-alias-switch-thumb: #9DB3BA;
+  --dsw-alias-scrollbar-bg-l1: #3C535B;
+  --dsw-alias-scrollbar-bg-l2: #4D6770;
+  --dsw-alias-scrollbar-hover-l1: #4D6770;
+  --dsw-alias-scrollbar-hover-l2: #66808A;
+  --dsw-alias-markdown-code-block: #0C171B;
+  --dsw-alias-markdown-code-block-banner: #14242A;
+  --dsw-alias-markdown-code-segment-selected: #223840;
+  --dsw-alias-markdown-code-segment-unselected: #0C171B;
+  --dsw-alias-markdown-inline-code: #223840;
+  --dsw-alias-markdown-citation: #223840;
+  --dsw-alias-markdown-placeholder: #14242A;
+  --dsw-alias-markdown-tag: #14242A;
+  --dsw-alias-code-diff-added: rgba(61,214,140,0.13);
+  --dsw-alias-code-diff-deleted: rgba(255,122,133,0.13);
+  --dsw-menu-surface-fill: rgba(45,67,75,0.50);
+  --dsw-alias-menu-group-header-fill: rgba(26,46,53,0.94);
+  --dsw-specific-menu: var(--dsw-menu-surface-fill);
+}
+
+/* ---------- C. macOS 桌面端菜单填充（上游以 html[data-platform] 提高特异性，需同级覆盖） ---------- */
+html[data-platform='darwin'] body {
+  --dsw-specific-menu: rgba(246,251,252,0.94);
+}
+html[data-platform='darwin'] body[data-ds-dark-theme] {
+  --dsw-specific-menu: rgba(30,48,55,0.94);
+}
+
+/* ---------- D. 代码高亮（shiki css-variables 主题；浅色在 :root，深色在 body 属性上） ---------- */
+:root {
+  --shiki-token-constant: #0A6AA1;
+  --shiki-token-string: #16784B;
+  --shiki-token-comment: #556D76;
+  --shiki-token-keyword: #B0307A;
+  --shiki-token-parameter: #A65A0A;
+  --shiki-token-function: #5B4BC2;
+  --shiki-token-string-expression: #116B42;
+  --shiki-token-punctuation: #3D555D;
+  --shiki-token-link: #0A6AA1;
+}
+body[data-ds-dark-theme] {
+  --shiki-token-constant: #6CC6F2;
+  --shiki-token-string: #7EE0A8;
+  --shiki-token-comment: #8FA9B0;
+  --shiki-token-keyword: #F3A6CF;
+  --shiki-token-parameter: #F2B26B;
+  --shiki-token-function: #B7ACFF;
+  --shiki-token-string-expression: #9BE8BC;
+  --shiki-token-punctuation: #B7CCD2;
+  --shiki-token-link: #6CC6F2;
+}
+
+/* ---------- E. 阴影 / Elevation ----------
+ * --dsw-shadow-lv1..3 声明在 body 上，行内覆盖有效。
+ * --dsw-elevation-panel/prominent/soft 由上游以 `body, body *` 逐元素重声明（为了让组件重绑
+ * --dsw-elevation-stroke-color 生效），因此只能用同样的选择器在其后覆盖；行内 token 覆盖无效。
+ * 描边仍走 var(--dsw-elevation-stroke)，保持“0.5px 发丝线 + border:0”的上游契约。 */
+body {
+  --dsw-shadow-lv1: 0 2px 4px 0 rgba(8, 70, 88, 0.06);
+  --dsw-shadow-lv1-blur: 0 4px 12px 0 rgba(8, 70, 88, 0.03);
+  --dsw-shadow-lv2: 0 4px 12px 0 rgba(8, 70, 88, 0.03), 0 2px 8px 0 rgba(8, 70, 88, 0.05);
+  --dsw-shadow-lv3: 0 0 1px 0 rgba(8, 70, 88, 0.22), 0 0 4px 0 rgba(8, 70, 88, 0.03), 0 12px 32px 0 rgba(8, 70, 88, 0.10);
+  --dsw-elevation-stroke-color: var(--dsw-alias-border-l4);
+  --dsw-linear-gradient-think: linear-gradient(180deg, #F4F9FA 20.19%, rgba(244, 249, 250, 0) 100%);
+  --dsw-linear-think-select: linear-gradient(180deg, #EEF6F8 20.19%, rgba(238, 246, 248, 0) 100%);
+}
+body[data-ds-dark-theme] {
+  --dsw-shadow-lv1: 0 2px 4px 0 rgba(0, 0, 0, 0.30);
+  --dsw-shadow-lv1-blur: 0 4px 12px 0 rgba(0, 0, 0, 0.16);
+  --dsw-shadow-lv2: 0 4px 12px 0 rgba(0, 0, 0, 0.20), 0 2px 8px 0 rgba(0, 0, 0, 0.26);
+  --dsw-shadow-lv3: 0 0 1px 0 rgba(214, 240, 245, 0.20), 0 0 4px 0 rgba(0, 0, 0, 0.20), 0 12px 32px 0 rgba(0, 0, 0, 0.45);
+  --dsw-linear-gradient-think: linear-gradient(180deg, #0A1418 20.19%, rgba(10, 20, 24, 0) 100%);
+  --dsw-linear-think-select: linear-gradient(180deg, #14242A 20.19%, rgba(20, 36, 42, 0) 100%);
+}
+body,
+body * {
+  --dsw-elevation-panel: var(--dsw-elevation-stroke), 0 3px 8px 0 rgba(8, 70, 88, 0.05), 0 0 16px 0 rgba(8, 70, 88, 0.04);
+  --dsw-elevation-prominent: var(--dsw-elevation-stroke), 0 4px 10px 0 rgba(8, 70, 88, 0.06), 0 0 22px 0 rgba(8, 70, 88, 0.07);
+  --dsw-elevation-soft: var(--dsw-elevation-stroke), 0 6px 20px 0 rgba(8, 70, 88, 0.05), 0 0 28px 0 rgba(79, 209, 220, 0.12);
+}
+body[data-ds-dark-theme],
+body[data-ds-dark-theme] * {
+  --dsw-elevation-panel: var(--dsw-elevation-stroke), 0 3px 8px 0 rgba(0, 0, 0, 0.28), 0 0 16px 0 rgba(0, 0, 0, 0.18);
+  --dsw-elevation-prominent: var(--dsw-elevation-stroke), 0 4px 10px 0 rgba(0, 0, 0, 0.34), 0 0 22px 0 rgba(0, 0, 0, 0.26);
+  --dsw-elevation-soft: var(--dsw-elevation-stroke), 0 6px 20px 0 rgba(0, 0, 0, 0.26), 0 0 28px 0 rgba(79, 209, 220, 0.10);
+}
+
+/* ---------- F. 字体 / 动效 / 圆角 ----------
+ * 字体：只改“内置默认栈”，用户在 Settings 里填写的字体仍排在最前（上游 base.css 的 body 层合成规则不变）。
+ * 默认栈沿用上游结构（系统 UI 字体负责拉丁，PingFang/YaHei 负责中文），尾部补 Noto/思源（均为 OFL，
+ * 仅在用户本机已安装时命中，不随包分发）。HarmonyOS Sans / MiSans 授权条款待核实，故不进默认栈。
+ * 圆角阶梯 4/8/12/16/20/28 与 superellipse(1.5) 保持上游不变（docs/ui-radius.md 为准），此处不覆盖。
+ * 动效沿用上游 --ds-* 曲线与时长；reduced-motion 由各组件自带，本文件仅对 zhen 装饰动效做归零。 */
+body {
+  --dsh-font-family-text-default: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, 'Noto Sans SC', 'Noto Sans CJK SC', 'Source Han Sans SC', sans-serif;
+  --dsh-font-family-code-default: 'SF Mono', 'JetBrains Mono', 'Fira Code', Consolas, 'Liberation Mono', Menlo, Courier, 'PingFang SC', 'Microsoft YaHei', 'Noto Sans Mono CJK SC';
+  --dsw-font-family-brand: 'Montserrat', var(--dsh-font-family-text-default);
+}
+
+/* ---------- G. 首次引导（Desktop onboarding）配色 ---------- */
+body {
+  --dsw-alias-onboarding-accent: rgb(11, 122, 140);
+  --dsw-gradient-onboarding-violet-stops: #3A2F8F 33.102%, #7A6BE0 50.954%, #CFC8FF 85.326%, #3A2F8F;
+  --dsw-gradient-onboarding-blue-stops: #0B5E8C 18.75%, #2C9AD1 51.78%, #8FDCF2 86.252%, #0B5E8C;
+  --dsw-gradient-onboarding-cyan-stops: #087C8C 21.154%, #2DC8D6 50.954%, #B6F3F4 85.326%, #087C8C;
+}
+
+/* ==========================================================================
+ * H. zhen 扩展变量（上游不存在！）—— 命名空间 --dsw-alias-zhen-* / --dsw-zhen-*
+ *    用途：hero/侧栏水纹与潮汐装饰、副色（海葵紫）、画布端口类型色、装饰动效时长。
+ *    落地：fork 的 ui-theme 新增一张 zhen.css；或经 ctx.theme.overrideTokens 作为动态 token 注入。
+ * ========================================================================== */
+body {
+  --dsw-alias-zhen-tide-from: #BFEFF3;
+  --dsw-alias-zhen-tide-to: #DCEBFF;
+  --dsw-alias-zhen-foam: rgba(255,255,255,0.72);
+  --dsw-alias-zhen-glow: rgba(79,209,220,0.28);
+  --dsw-alias-zhen-secondary: #5B4BC2;
+  --dsw-alias-zhen-secondary-tertiary: #ECE9FB;
+  --dsw-alias-zhen-port-text: #0A6AA1;
+  --dsw-alias-zhen-port-image: #8A5300;
+  --dsw-alias-zhen-port-video: #B0307A;
+  --dsw-alias-zhen-port-audio: #5B4BC2;
+  --dsw-zhen-duration-ripple: 2400ms;
+  --dsw-zhen-duration-drift: 48s;
+  --dsw-zhen-duration-bubble: 5200ms;
+}
+body[data-ds-dark-theme] {
+  --dsw-alias-zhen-tide-from: #0F4F5C;
+  --dsw-alias-zhen-tide-to: #14304F;
+  --dsw-alias-zhen-foam: rgba(214,240,245,0.10);
+  --dsw-alias-zhen-glow: rgba(79,209,220,0.20);
+  --dsw-alias-zhen-secondary: #B7ACFF;
+  --dsw-alias-zhen-secondary-tertiary: #2A2650;
+  --dsw-alias-zhen-port-text: #7DD3FC;
+  --dsw-alias-zhen-port-image: #FCD34D;
+  --dsw-alias-zhen-port-video: #FDA4AF;
+  --dsw-alias-zhen-port-audio: #C4B5FD;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    --dsw-zhen-duration-ripple: 0ms;
+    --dsw-zhen-duration-drift: 0s;
+    --dsw-zhen-duration-bubble: 0ms;
+  }
+}

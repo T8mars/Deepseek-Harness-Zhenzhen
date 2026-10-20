@@ -1,0 +1,13 @@
+{
+  "id": "zhen-script-outline",
+  "version": "1.0.0",
+  "title": "口播脚本结构",
+  "description": "将观点、资料或产品信息整理为口播与解说脚本，明确开头、论据与转场。",
+  "category": "writing",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+
