@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "approval": "proposed-not-owner-accepted",
+  "topK": 5,
+  "suggestedThreshold": 0.8,
+  "cases": [
+    {"id":"theme-keywords","kind":"keywords","query":"主控思想 价值 原因","expectedPathFragments":["sw-premise-theme/"],"evidenceAny":[["主控思想"],["价值"],["原因"]]},
+    {"id":"theme-question","kind":"question","query":"如何把故事的主控思想写成价值和原因？","expectedPathFragments":["sw-premise-theme/"],"evidenceAny":[["主控思想"],["价值"],["原因"]]},
+    {"id":"structure-keywords","kind":"keywords","query":"三幕 情节点","expectedPathFragments":["sw-story-structure/"],"evidenceAny":[["三幕"],["情节点"]]},
+    {"id":"structure-question","kind":"question","query":"怎么用三幕结构安排情节点？","expectedPathFragments":["sw-story-structure/"],"evidenceAny":[["三幕"],["情节点"]]},
+    {"id":"scene-keywords","kind":"keywords","query":"场景 价值 转折","expectedPathFragments":["sw-scene-craft/"],"evidenceAny":[["场景"],["价值"],["转折"]]},
+    {"id":"scene-question","kind":"question","query":"如何用价值转折判断一场戏是否必要？","expectedPathFragments":["sw-scene-craft/"],"evidenceAny":[["场景"],["价值"],["转折"]]},
+    {"id":"dialogue-keywords","kind":"keywords","query":"对白 潜文本 行动","expectedPathFragments":["sw-dialogue/"],"evidenceAny":[["对白"],["潜文本","潜台词"],["行动"]]},
+    {"id":"dialogue-question","kind":"question","query":"怎么让对白的潜文本推动人物行动？","expectedPathFragments":["sw-dialogue/"],"evidenceAny":[["对白"],["潜文本","潜台词"],["行动"]]},
+    {"id":"engine-keywords","kind":"keywords","query":"剧集 引擎","expectedPathFragments":["sw-series-engine-bible/"],"evidenceAny":[["剧集"],["引擎"]]},
+    {"id":"engine-question","kind":"question","query":"怎样设计能持续产生故事的剧集引擎？","expectedPathFragments":["sw-series-engine-bible/"],"evidenceAny":[["剧集"],["引擎"]]},
+    {"id":"episode-keywords","kind":"keywords","query":"幕间 悬念","expectedPathFragments":["sw-series-structure/"],"evidenceAny":[["幕","act"],["悬念","钩子","cliffhanger"]]},
+    {"id":"episode-question","kind":"question","query":"怎么在电视剧的幕间安排悬念钩子？","expectedPathFragments":["sw-series-structure/"],"evidenceAny":[["幕","act"],["悬念","钩子","cliffhanger"]]},
+    {"id":"character-keywords","kind":"keywords","query":"欲望 需要","expectedPathFragments":["sw-character-conflict/"],"evidenceAny":[["欲望"],["需要"]]},
+    {"id":"character-question","kind":"question","query":"怎样区分主人公的欲望和需要？","expectedPathFragments":["sw-character-conflict/"],"evidenceAny":[["欲望"],["需要"]]},
+    {"id":"comedy-keywords","kind":"keywords","query":"铺垫 包袱","expectedPathFragments":["sw-sitcom-comedy/"],"evidenceAny":[["setup","铺垫"],["punchline","包袱"]]},
+    {"id":"comedy-question","kind":"question","query":"如何用铺垫和包袱制造喜剧笑点？","expectedPathFragments":["sw-sitcom-comedy/"],"evidenceAny":[["setup","铺垫"],["punchline","包袱"]]},
+    {"id":"format-keywords","kind":"keywords","query":"场景标题 动作段落","expectedPathFragments":["sw-format-adaptation/"],"evidenceAny":[["场景标题"],["动作"]]},
+    {"id":"format-question","kind":"question","query":"剧本里的场景标题和动作段落应该怎么写？","expectedPathFragments":["sw-format-adaptation/"],"evidenceAny":[["场景标题"],["动作"]]},
+    {"id":"chekhov-keywords","kind":"keywords","query":"契诃夫 停顿","expectedPathFragments":["chekhov-dramaturgy/"],"evidenceAny":[["停顿"],["答非所问"]]},
+    {"id":"chekhov-question","kind":"question","query":"契诃夫怎样用停顿和答非所问组织对白？","expectedPathFragments":["chekhov-dramaturgy/"],"evidenceAny":[["停顿"],["答非所问"]]}
+  ]
+}

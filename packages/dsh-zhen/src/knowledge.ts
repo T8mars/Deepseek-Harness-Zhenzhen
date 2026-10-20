@@ -35,6 +35,27 @@ function queryTerms(text: string): string[] {
   return [...new Set(terms)].slice(0, 80).map(term => 't' + Buffer.from(term).toString('hex'));
 }
 
+const questionWords = new Set(['如何','怎么','怎样','什么','为什么','请问','能否','是否','有没有','能不能','应该','可以','能够','才能','请','问','帮','帮助','一下','一些','吗','呢','吧','啊','的','地','得','了','着','是','有','要','会','和','与','或','及','以及','我','你','他','她','它','我们','这个','那个','这些','那些','这','那','一','一个','个','场','篇','段','种','类','些','里','中','上','下','用','在','把','让','给','从','对','到','为']);
+const questionSegmenter = typeof Intl.Segmenter === 'function' && Intl.Segmenter.supportedLocalesOf(['zh-Hans']).length ? new Intl.Segmenter('zh-Hans', { granularity: 'word' }) : undefined;
+/** Only recognized Chinese questions get a lexical fallback; keyword AND stays exact. */
+function questionGroups(query: string): { groups: string[][]; adjacent: string[] } {
+  const empty = { groups: [], adjacent: [] };
+  if (!questionSegmenter || !/\p{Script=Han}/u.test(query) || !/(?:如何|怎么|怎样|什么|为什么|请问|能否|是否|应该|[？?])/u.test(query)) return empty;
+  const groups: string[][] = [], seen = new Set<string>(), adjacent = new Set<string>();
+  let previous = '';
+  for (const part of questionSegmenter.segment(query.normalize('NFKC').toLowerCase())) {
+    if (!part.isWordLike || questionWords.has(part.segment)) { previous = ''; continue; }
+    if (previous) {
+      const boundary = [...previous].at(-1)! + [...part.segment][0]!;
+      if (/^[\p{Script=Han}]{2}$/u.test(boundary)) for (const term of queryTerms(boundary)) adjacent.add(term);
+    }
+    previous = part.segment;
+    const terms = queryTerms(part.segment), key = terms.join(' ');
+    if (terms.length && !seen.has(key)) { groups.push(terms); seen.add(key); }
+  }
+  return groups.length <= 24 && groups.flat().length <= 80 ? { groups, adjacent: [...adjacent] } : empty;
+}
+
 function inside(root: string, path: string): boolean {
   const rel = relative(root, path);
   return rel === '' || (!isAbsolute(rel) && rel !== '..' && !rel.startsWith('..\\') && !rel.startsWith('../'));
@@ -216,7 +237,58 @@ export class KnowledgeStore {
     ) SELECT ch.id,c.id AS collection_id,c.name,ch.line,ch.text,c.epoch,d.path
       FROM diversified result JOIN chunks ch ON ch.id=result.id JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
       ORDER BY result.document_position,result.score,d.path,ch.line,ch.id LIMIT 12`).all(terms.join(' AND '), project, provider, provider);
+    if (!rows.length) {
+      const plan = questionGroups(query);
+      if (plan.groups.length) return this.questionSearch(project, plan, provider);
+    }
     return rows.map(row => ({ id: String(row.id), collectionId: String(row.collection_id), collectionName: String(row.name), path: String(row.path), line: Number(row.line), text: String(row.text), epoch: Number(row.epoch) }));
+  }
+  private questionSearch(project: string, { groups, adjacent }: { groups: string[][]; adjacent: string[] }, provider: string): KnowledgeHit[] {
+    // Hex-encoded terms alone form the FTS grammar. Filter authority before the
+    // bounded, source-diverse candidate window; only then load indexed terms.
+    const match = groups.map(group => '(' + group.join(' AND ') + ')').join(' OR ');
+    const rows = this.db.prepare(`WITH matched AS MATERIALIZED (
+      SELECT ch.id,ch.document_id,ch.line,d.path,c.epoch,f.rowid AS search_rowid,bm25(search_index) AS score
+      FROM search_index f JOIN chunks ch ON ch.id=f.chunk_id JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
+      WHERE search_index MATCH ? AND c.project=? AND c.enabled=1 AND (?='' OR (c.cloud_provider=? AND c.agent_enabled=1))
+    ), diversified AS (
+      SELECT *,row_number() OVER (PARTITION BY document_id ORDER BY score,line,id) AS document_position FROM matched
+    ), selected AS MATERIALIZED (
+      SELECT * FROM diversified ORDER BY document_position,score,path,line,id LIMIT 512
+    ) SELECT selected.*,f.terms FROM selected JOIN search_index f ON f.rowid=selected.search_rowid`).all(match, project, provider, provider);
+    if (!rows.length) return [];
+    const candidates = rows.map(row => {
+      const terms = new Set(String(row.terms).split(' '));
+      return { id: String(row.id), document: String(row.document_id), path: String(row.path), line: Number(row.line), epoch: Number(row.epoch), score: Number(row.score), matches: groups.map(group => group.every(term => terms.has(term))), adjacent: adjacent.map(term => terms.has(term)), coverage: 0, relevance: 0, position: 0 };
+    });
+    const documents = new Set(candidates.map(item => item.document)).size;
+    const weights = groups.map((_group, i) => Math.log((documents + 1) / (new Set(candidates.filter(item => item.matches[i]).map(item => item.document)).size + 1)) + 1);
+    const total = weights.reduce((sum, value) => sum + value, 0);
+    const phraseWeights = adjacent.map((_term, i) => { const frequency = new Set(candidates.filter(item => item.adjacent[i]).map(item => item.document)).size; return frequency ? Math.log((documents + 1) / (frequency + 1)) + 1 : 0; });
+    const phraseTotal = phraseWeights.reduce((sum, value) => sum + value, 0);
+    const ranked = candidates.filter(item => {
+      item.coverage = item.matches.reduce((sum, found, i) => sum + (found ? weights[i]! : 0), 0) / total;
+      const phraseCoverage = phraseTotal ? item.adjacent.reduce((sum, found, i) => sum + (found ? phraseWeights[i]! : 0), 0) / phraseTotal : item.coverage;
+      item.relevance = .7 * item.coverage + .3 * phraseCoverage;
+      return item.matches.filter(Boolean).length >= Math.min(2, groups.length) && item.coverage >= 0.55;
+    });
+    const compare = (a: typeof candidates[number], b: typeof candidates[number]): number => b.relevance - a.relevance || a.score - b.score || (a.path < b.path ? -1 : a.path > b.path ? 1 : 0) || a.line - b.line || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+    ranked.sort(compare);
+    const positions = new Map<string, number>();
+    for (const item of ranked) { item.position = positions.get(item.document) ?? 0; positions.set(item.document, item.position + 1); }
+    ranked.sort((a, b) => a.position - b.position || compare(a, b));
+    const chosen = ranked.slice(0, 12);
+    if (!chosen.length) return [];
+    // Recheck current authority/epochs when fetching the final results; another
+    // connection can revoke or rebuild a collection between these SQL statements.
+    const current = this.db.prepare(`SELECT ch.id,c.id AS collection_id,c.name,ch.line,ch.text,c.epoch,d.path
+      FROM chunks ch JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
+      WHERE c.project=? AND c.enabled=1 AND (?='' OR (c.cloud_provider=? AND c.agent_enabled=1)) AND ch.id IN (${chosen.map(() => '?').join(',')})`).all(project, provider, provider, ...chosen.map(item => item.id));
+    const found = new Map(current.map(row => [String(row.id), row]));
+    return chosen.flatMap(item => {
+      const row = found.get(item.id);
+      return row && Number(row.epoch) === item.epoch ? [{ id: String(row.id), collectionId: String(row.collection_id), collectionName: String(row.name), path: String(row.path), line: Number(row.line), text: String(row.text), epoch: Number(row.epoch) }] : [];
+    });
   }
   /** Read a bounded window of the authorized local index, without a cloud grant. */
   source(project: string, hitId: string, epoch: number): KnowledgeSource {

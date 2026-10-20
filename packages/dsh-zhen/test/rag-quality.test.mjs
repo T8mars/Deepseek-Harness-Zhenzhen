@@ -25,7 +25,8 @@ test('synthetic keyword corpus returns relevant distinct sources, short names an
       assert.ok(hit.line > 1, 'location must also be correct beyond the first chunk');
     }
     assert.deepEqual(store.search('EXAMPLE_OTHER_PROJECT', '琵琶'), []);
-    assert.deepEqual(store.search('EXAMPLE_QUALITY_PROJECT', '洛川的乐器是什么'), [], 'keyword retrieval is not semantic question answering');
+    assert.equal(store.search('EXAMPLE_QUALITY_PROJECT', '洛川的乐器是什么')[0].path, 'people/luochuan.md', 'question fallback matches the indexed name and instrument terms');
+    assert.deepEqual(store.search('EXAMPLE_QUALITY_PROJECT', '洛川的故乡叫什么'), [], 'question fallback must not invent an answer to absent subject matter');
   } finally {
     store.close();
     const physical = await realpath(root);

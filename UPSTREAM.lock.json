@@ -77,7 +77,7 @@
       "verification": "Original immutable public policy helper with inert dispatch accepts 73 L0 and refuses 123 non-direct operations. Actual business handlers, user data, real Canvas and paid providers were not exercised."
     },
     "ragSchema": 2,
-    "ragVerification": "C11 published ToolRuntime + pre-provider revocation guard and authorized source diversity; 21 invented keyword cases pass. Schema 2 unchanged. Real-corpus relevance, new UI and paid chat unverified.",
+    "ragVerification": "C11/C35 source diversity, pre-provider revocation and source-context contracts remain. C38 published ToolRuntime question retrieval passes. Schema2 and keyword AND unchanged. Actual installed documentation provisional evaluation:1007 indexed, keyword8/10, Chinese questions7/10; below suggested80%, owner acceptance false. New UI, paid RAG chat and user-project corpus unverified.",
     "artManifestSchema": 1,
     "artVerification": "Original community reference rendered locally; later explicit user authorization produced two built-in imagegen PNGs and a verified separate local ZIP. New generated-set Web rendering remains unverified after browser policy refusal.",
     "skillStoreSchema": 3,
@@ -454,6 +454,53 @@
       "installedPatchSha256": "f98e39721517543ad301f058a93d51a967b54179458724484c33ff09db14e84c",
       "installedEntrySha256": "77ddfff9c1047fd627d96e005a13165149ac9eabca464d2ffdd3f1d896d516ac",
       "configurationOnlyReplacementVerified": true
+    },
+    "ragChineseQuestions": {
+      "implementation": "recognized Chinese questions only after exact keyword AND yields zero; Intl.Segmenter word groups plus existing lexical index; no vectors/model",
+      "schema": 2,
+      "maxCandidates": 512,
+      "maxResults": 12,
+      "minWeightedWordCoverage": 0.55,
+      "rankingWeights": {
+        "words": 0.7,
+        "adjacentBigrams": 0.3
+      },
+      "criteria": {
+        "file": "benchmarks/creative-rag-questions.v1.json",
+        "sha256": "77686af0484b146cbdbe8ff9687d3599c2c67486883397064a87b89a4b89254e",
+        "approval": "proposed-not-owner-accepted",
+        "topK": 5,
+        "suggestedThreshold": 0.8,
+        "ownerAcceptance": false
+      },
+      "corpus": {
+        "kind": "genuine installed creator and tool Markdown documentation, not user creative projects",
+        "uniqueDocuments": 1008,
+        "indexed": 1007,
+        "skipped": 1,
+        "failed": 0,
+        "bytes": 10390272,
+        "sourceWrites": 0,
+        "snapshotRemoved": true
+      },
+      "measurement": {
+        "keywordCases": 10,
+        "keywordPassedBefore": 8,
+        "keywordPassedAfter": 8,
+        "questionCases": 10,
+        "questionPassedBefore": 0,
+        "questionPassedAfter": 7,
+        "indexMs": 2978,
+        "sqliteBytes": 62795776,
+        "warmMixedQueries": 20,
+        "queryP95Ms": 122.532,
+        "crossProjectHits": 0,
+        "revokedHits": 0,
+        "modelCalls": 0,
+        "credentialReads": 0,
+        "nativeWrites": 0
+      },
+      "verification": "Four synthetic question units and C38 actual published ToolRuntime; full check299 and public-CLI same-version replacement smoke pass. Question score70% is below suggested80%; not M3 acceptance, general relevance, browser or live-model proof. See decision0038."
     }
   }
 }
