@@ -1227,6 +1227,23 @@
       "localPassed": 399,
       "packageFiles": 150,
       "byteIdenticalToInstalled0057Archive": true
+    },
+    "reproduciblePackaging": {
+      "schemaVersion": 1,
+      "rawTextPolicy": "explicit-first-party-text-crlf-to-lf",
+      "workingTreeRewritten": false,
+      "temporaryStage": true,
+      "actualGitCheckoutVerified": true,
+      "actualLegacyNpmPackVerified": true,
+      "newCheckoutArchiveFiles": 150,
+      "newCheckoutArchiveMatchesWorkspace": true,
+      "verification": "0060 C61 real Git before/after and autocrlf true/false, C62 stage byte/source/BOM/binary/guard checks, C63 actual npm on the complete built bundle reproduces different legacy CRLF bytes then verifies actual pack command restores the canonical full archive without source writes. A separate independent-dependency candidate Git build also matches all150 files/whole archive. Full check/final CI are separate; no upstream or Native change.",
+      "localTests": 402,
+      "localPassed": 402,
+      "packageFiles": 150,
+      "localPackageSha256": "10c79b2ca72a4c4deb8bdf9dd5d5f21bc4a8670e1cd235c98ff1839b1b5ebd9d",
+      "legacyPackInputsPreserved": true,
+      "applicationSourcesOrConfigChanged": false
     }
   }
 }

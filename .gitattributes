@@ -6,3 +6,13 @@ integrations/canvas/*.patch -text whitespace=-blank-at-eol
 # Windows checkouts as well as in Git. Do not normalize the fixture validator.
 contracts/fixtures/canvas-approval/approvals.cjs -text
 contracts/fixtures/canvas-approval/LICENSE -text
+# Raw first-party npm payloads must match across Git checkout policies. Keep
+# these rules specific to known text formats; future binary assets are untouched.
+packages/dsh-zhen/LICENSE text eol=lf
+packages/dsh-zhen/NOTICE.md text eol=lf
+packages/dsh-zhen/THIRD_PARTY_NOTICES.md text eol=lf
+packages/dsh-zhen/package.json text eol=lf
+packages/dsh-zhen/cordis.patch.yml text eol=lf
+packages/dsh-zhen/catalog/*.json text eol=lf
+packages/dsh-zhen/skills/*/SKILL.md text eol=lf
+packages/dsh-zhen/skills/*/manifest.json text eol=lf

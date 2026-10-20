@@ -116,3 +116,6 @@ C59（0058）：实际已发布AgentRegistry/AgentLoop、SessionStore、SessionP
 
 
 C60（0059）：公开createUserMessage的image attachment引用经实际AgentLoop、默认模型服务、LocalAttachments和pi-ai到回环HTTP，保持原生投影字节、完整模型ID和输出上限，正常completed。C37仍验证全部十五条图片路由/顺序及文本占位。独立一次真实默认Flash请求另证明简单随机色块识别；回环夹具不提供视觉质量证据。不修改上游消息/会话/附件格式或生产配置。
+
+
+C61/C62/C63（0060）：真实Git检出的已知打包文本使用精确LF规则，未来二进制/目录外策略不变，C46快照保护保持。现有CRLF工作目录不能假定由新属性自动改写；实际npm预览→独立规范副本→原npm打包保留全部清单/声明/私有守卫。真实完整构建包的原始CRLF归档先不同，调用实际pack.mjs后须回到完整规范SHA且源字节保持。此为自有构建策略，未改上游或Native协议；当前锁定工具链外的重现性另验。

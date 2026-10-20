@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { checkRepository, checkPackList } from './check-private.mjs';
 import { checkDeclarations } from './declaration-output.mjs';
+import { createPackageStage } from './package-stage.mjs';
 
 const root = process.cwd();
 const manifest = JSON.parse(readFileSync(resolve(root, 'packages/dsh-zhen/package.json'), 'utf8'));
@@ -19,8 +20,14 @@ function validate(files) {
 }
 const preview = JSON.parse(execFileSync(process.execPath, [npm, 'pack', './packages/dsh-zhen', '--ignore-scripts', '--json', '--dry-run'], { encoding: 'utf8' }))[0];
 validate(preview.files);
-const output = execFileSync(process.execPath, [npm, 'pack', './packages/dsh-zhen', '--ignore-scripts', '--json', '--pack-destination', '.runtime/packages'], { encoding: 'utf8' });
-const packed = JSON.parse(output)[0];
+const stage = createPackageStage(resolve(root, 'packages/dsh-zhen'), preview.files);
+let packed;
+try {
+  const output = execFileSync(process.execPath, [npm, 'pack', stage.root, '--ignore-scripts', '--json', '--pack-destination', resolve(root, '.runtime/packages')], { encoding: 'utf8' });
+  packed = JSON.parse(output)[0];
+} finally {
+  stage.cleanup();
+}
 validate(packed.files);
 if (JSON.stringify(packed.files.map(x => x.path).sort()) !== JSON.stringify(preview.files.map(x => x.path).sort())) throw new Error('Package contents changed after preview.');
 const bytes = readFileSync(resolve(root, '.runtime/packages', packed.filename));

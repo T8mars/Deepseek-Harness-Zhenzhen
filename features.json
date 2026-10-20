@@ -166,7 +166,7 @@
     {
       "id": "client-build-reproducibility",
       "status": "implemented",
-      "verification": "Actual automatic source checkout and existing workspace differed only in embedded CSS newlines. CSS-only loader normalization now yields the exact same125-file archive SHA. C42 real esbuild LF/CRLF/CR and unchanged non-CSS tests, full check333, public-CLI client-only same-version replacement and main installed client hash5357835b checks pass. Host entry/patch unchanged; stylesheet source/layout and user art/config remain unchanged. Browser rendering remains unverified. See decision0042."
+      "verification": "Actual automatic source checkout and existing workspace differed only in embedded CSS newlines. CSS-only loader normalization now yields the exact same125-file archive SHA. C42 real esbuild LF/CRLF/CR and unchanged non-CSS tests, full check333, public-CLI client-only same-version replacement and main installed client hash5357835b checks pass. Host entry/patch unchanged; stylesheet source/layout and user art/config remain unchanged. Browser rendering remains unverified. See decision0042. Decision0060 extends beyond CSS: all150 previous CI payloads compared;35 raw texts differ only in line endings. Exact Git rules and independent canonical pack staging cover fresh and existing CRLF checkouts without source writes. C61/C62/C63 plus C46 targeted pass, including actual npm full-bundle archive equality and unchanged inputs; independent candidate Git build yields same150-file archive. Full402/402 and final150-file archive match the currently installed archive; current actual CI is checked separately. Locked toolchain scope only."
     },
     {
       "id": "canvas-explicit-model-workflows",
