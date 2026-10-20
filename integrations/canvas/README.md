@@ -1,5 +1,8 @@
 # Canvas 工作源码补丁备份
 
+当前画布修改由用户的画布Agent接手，DSH Agent不再修改原生工作树；
+请先读[交接文档](../../docs/handoffs/canvas-agent.md)。画布发版暂缓。
+
 `native-dsh-integration-v1.patch` 保存配对存储协调、运行单次操作与GET恢复、
 素材交接、安装版兼容路径和实例发现修复，共38个源码/测试/清单/文档文件。
 基线为 T8-penguin-canvas `e6702dc7770bcbe7d4895be22a06f4c7123a085b`。

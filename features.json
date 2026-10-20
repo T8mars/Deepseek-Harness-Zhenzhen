@@ -135,7 +135,10 @@
     {
       "id": "canvas-integration-source-backup",
       "status": "implemented",
-      "verification": "Complete 38-file Native source/test/generated/documentation text patch, exact base and per-file SHA-256. C34 verifies integrity and reviewed public paths; independent verifier actually restores original Git blobs and applies/checks all 38 files in fresh system TEMP without modifying Native. Combined real Native routes/SQLite/MCP verification passes with simulated window approval and no Provider calls. Production package and human installed-window acceptance remain unverified. See decision0032."
+      "verification": "Complete 38-file Native source/test/generated/documentation text patch, exact base and per-file SHA-256. C34 verifies integrity and reviewed public paths; independent verifier actually restores original Git blobs and applies/checks all 38 files in fresh system TEMP without modifying Native. Combined real Native routes/SQLite/MCP verification passes with simulated window approval and no Provider calls. Production package and human installed-window acceptance remain unverified. See decision0032.",
+      "handoff": "docs/handoffs/canvas-agent.md",
+      "nativeChangeOwner": "canvas-agent-only",
+      "releaseState": "deferred-by-user"
     }
   ]
 }

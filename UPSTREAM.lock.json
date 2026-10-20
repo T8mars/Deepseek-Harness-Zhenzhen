@@ -338,7 +338,11 @@
         "userDatabaseRead": false
       },
       "installedDesktopUpdated": false,
-      "trustedCliAutomaticallyReplaced": false
+      "trustedCliAutomaticallyReplaced": false,
+      "nativeChangeOwner": "canvas-agent-only",
+      "furtherNativeEditsFromDsh": false,
+      "releaseState": "deferred-by-user",
+      "handoff": "docs/handoffs/canvas-agent.md"
     }
   }
 }
