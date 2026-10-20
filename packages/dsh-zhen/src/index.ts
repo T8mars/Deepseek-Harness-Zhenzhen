@@ -38,6 +38,7 @@ import { CanvasInbox } from './canvas-inbox.ts';
 import type { CanvasPlanCapture } from './canvas-inbox.ts';
 import type { CanvasCandidateView } from './canvas-inbox-schema.ts';
 import type { CanvasWorkflowInput, CanvasWorkflowView, CanvasWorkspaces, CanvasModels, CanvasModelsQuery } from './canvas-workflow-schema.ts';
+import type { CanvasAssets, CanvasAssetsQuery } from './canvas-reference-schema.ts';
 import type { CanvasPairingView } from './canvas-pairing-schema.ts';
 import { canvasToolCatalogSchema } from './canvas-contract.ts';
 import type { CanvasToolCatalog } from './canvas-contract.ts';
@@ -74,6 +75,7 @@ export type { CanvasConnection } from './canvas.ts';
 export type { CanvasDiscovery, CanvasInstallCandidate } from './canvas-discovery-schema.ts';
 export type { CanvasPairingView } from './canvas-pairing-schema.ts';
 export type { CanvasWorkflowInput, CanvasWorkflowView, CanvasWorkspaces, CanvasModels, CanvasModelsQuery, CanvasModelKind, CanvasModelChoices } from './canvas-workflow-schema.ts';
+export type { CanvasAsset, CanvasAssets, CanvasAssetsQuery, CanvasReferenceKey } from './canvas-reference-schema.ts';
 export type { CanvasCandidateView } from './canvas-inbox-schema.ts';
 export type { CanvasRunSelection, CanvasRunView, CanvasRunNodes } from './canvas-run-schema.ts';
 export type { CanvasTaskScope, CanvasTaskReference, CanvasTaskSummary, CanvasTaskList, CanvasTaskDetail } from './canvas-task-schema.ts';
@@ -412,6 +414,8 @@ export default class ZhenService extends TypertRemoteService {
   canvasWorkspaces(): Promise<CanvasWorkspaces> { return this.workflowOperation(() => this.workflows().workspaces()); }
   @Remote
   canvasWorkflowModels(input:CanvasModelsQuery):Promise<CanvasModels>{return this.workflowOperation(()=>this.workflows().models(input));}
+  @Remote
+  canvasWorkflowAssets(input:CanvasAssetsQuery):Promise<CanvasAssets>{return this.workflowOperation(()=>this.workflows().assets(input));}
   @Remote
   canvasWorkflowPreview(input: CanvasWorkflowInput): Promise<CanvasWorkflowView> { return this.workflowOperation(() => this.workflows().preview(input)); }
   @Remote

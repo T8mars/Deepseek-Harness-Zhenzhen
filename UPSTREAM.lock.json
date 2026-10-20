@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-20",
+  "checkedAt": "2026-10-20T16:35:57.147Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -977,7 +977,92 @@
       "realWindow": false,
       "providerNetworkAttempts": 0,
       "paidCalls": 0,
-      "savedCliPinAutomaticallyChanged": false
+      "savedCliPinAutomaticallyChanged": false,
+      "publicCi": {
+        "run": 39452176551,
+        "commit": "e7da67f225d6d69ec3db9ecd0c95859ed90693e3",
+        "conclusion": "success",
+        "tests": 355,
+        "packageFiles": 131
+      }
+    },
+    "canvasReferenceWorkflows": {
+      "decision": "0050",
+      "contracts": [
+        "C50",
+        "C49",
+        "C27"
+      ],
+      "remoteMethod": "canvasWorkflowAssets",
+      "nativeSourceCommit": "b813be15df9e3e6ce2d1316250c4602513c08d48",
+      "nativeVersion": "3.3.7",
+      "nativeCompiledModules": 75,
+      "nativeCompiledSourceDigest": "7a847a2534e0753258e56213c01701254fdb55b0c85101a17848db72bb46b8d0",
+      "receiptSchema": "t8-model-decision-receipt-v1",
+      "receiptSourceSha256": "3a69208147d997c435f03c5f1d6c8bf363919e7c0a877d2c54cc3e53358fe30d",
+      "metadataOnly": true,
+      "maximumUniqueReferences": 16,
+      "duplicateSlotsSupported": false,
+      "exactOrderRequired": true,
+      "referenceRevalidation": [
+        "before-plan",
+        "after-plan",
+        "before-approval",
+        "before-complete"
+      ],
+      "requiredDecisionReady": true,
+      "nativeUnknownSizePreserved": true,
+      "originalNativeTempCases": [
+        {
+          "kind": "image",
+          "referenceCount": 2,
+          "provider": "seedance-nz",
+          "model": "seedream-v5-pro-i2i",
+          "orderedIdsMatched": true,
+          "revisionMatched": true,
+          "nativeNodeType": "image",
+          "nativeBindingsCarryHashes": false,
+          "nativeMediaReferences": 2,
+          "revision": 17
+        },
+        {
+          "kind": "edit-image",
+          "referenceCount": 2,
+          "provider": "seedance-nz",
+          "model": "seedream-v5-pro-i2i",
+          "orderedIdsMatched": true,
+          "revisionMatched": true,
+          "nativeNodeType": "image",
+          "nativeBindingsCarryHashes": false,
+          "nativeMediaReferences": 2,
+          "revision": 22
+        },
+        {
+          "kind": "edit-video",
+          "referenceCount": 2,
+          "provider": "seedance-nz",
+          "model": "fast",
+          "orderedIdsMatched": true,
+          "revisionMatched": true,
+          "nativeNodeType": "seedance",
+          "nativeBindingsCarryHashes": true,
+          "nativeMediaReferences": 2,
+          "revision": 27
+        }
+      ],
+      "simulatedWindow": true,
+      "realWindow": false,
+      "userDatabaseRead": false,
+      "providerNetworkAttempts": 0,
+      "paidCalls": 0,
+      "nativeRepositoryWrites": 0,
+      "nativeAtomicAssetCommitCheckVerified": false,
+      "nativeImageBindingsCarryHashes": false,
+      "fullCheck": {
+        "tests": 362,
+        "passed": 362
+      },
+      "newTargetedTests": 7
     }
   }
 }

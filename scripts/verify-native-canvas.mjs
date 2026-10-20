@@ -19,9 +19,9 @@ import { CanvasPairing } from '../packages/dsh-zhen/lib/canvas-pairing.js';
 import { CanvasWorkflow } from '../packages/dsh-zhen/lib/canvas-workflow.js';
 import { CanvasRuns } from '../packages/dsh-zhen/lib/canvas-run.js';
 import { inspectCanvasCli } from '../packages/dsh-zhen/lib/canvas.js';
-const originalArgs = process.argv.slice(2), includeRun = originalArgs.includes('--include-run-intent'), includeAssets = originalArgs.includes('--include-asset-transfer'),includeModels=originalArgs.includes('--include-model-choices');
-if(includeModels&&(includeRun||includeAssets))throw Error('Model-choice verification is separate from run/asset verification.');
-const args = originalArgs.filter(value => !['--include-run-intent', '--include-asset-transfer','--include-model-choices'].includes(value)), evidenceName = includeModels?'model-choices':includeAssets ? 'asset-transfer' : includeRun ? 'run-intent' : 'workflow';
+const originalArgs = process.argv.slice(2), includeRun = originalArgs.includes('--include-run-intent'), includeAssets = originalArgs.includes('--include-asset-transfer'),includeModels=originalArgs.includes('--include-model-choices'),includeReferences=originalArgs.includes('--include-reference-assets');
+if((includeModels||includeReferences)&&[includeRun,includeAssets,includeModels,includeReferences].filter(Boolean).length!==1)throw Error('Model-choice verification is separate from run/asset verification.');
+const args = originalArgs.filter(value => !['--include-run-intent', '--include-asset-transfer','--include-model-choices','--include-reference-assets'].includes(value)), evidenceName = includeReferences?'reference-assets':includeModels?'model-choices':includeAssets ? 'asset-transfer' : includeRun ? 'run-intent' : 'workflow';
 if (args.length !== 2 || args[0] !== '--canvas-root' || !isAbsolute(args[1])) throw Error('Usage: npm run verify:canvas-native -- --canvas-root <absolute trusted Canvas source repository>');
 const root = realpathSync.native(args[1]);
 const dshEntrySha256 = createHash('sha256').update(readFileSync(new URL('../packages/dsh-zhen/lib/index.js', import.meta.url))).digest('hex');
@@ -41,12 +41,12 @@ const previousAuth = process.env.ZCANVAS_AUTH_STORE, previousRegistry = process.
 process.env.DSH_HOME = join(temporary, 'EXAMPLE_HOST_HOME');
 process.env.ZCANVAS_AUTH_STORE = authFile; process.env.ZCANVAS_INSTANCE_DIR = registry;
 const electron = process.platform === 'win32' ? 'electron.exe' : process.platform === 'darwin' ? 'Electron.app/Contents/MacOS/Electron' : 'electron';
-const child = spawn(join(root, 'node_modules/electron/dist', electron), ['--max-old-space-size=768', fileURLToPath(new URL('./native-canvas-workflow-worker.cjs', import.meta.url)), root, temporary,...(includeModels?['--include-model-choices']:[])], { cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
+const child = spawn(join(root, 'node_modules/electron/dist', electron), ['--max-old-space-size=768', fileURLToPath(new URL('./native-canvas-workflow-worker.cjs', import.meta.url)), root, temporary,...(includeModels?['--include-model-choices']:[]),...(includeReferences?['--include-reference-assets']:[])], { cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'] });
 let priorityLowered = false; try { setPriority(child.pid, constants.priority.PRIORITY_BELOW_NORMAL); priorityLowered = true; } catch {}
 let output = '', request = 0; const waiting = new Map();
 for (const stream of [child.stdout, child.stderr]) stream.on('data', bytes => { output = (output + String(bytes)).slice(-128 * 1024); });
 const ready = new Promise((resolveReady, reject) => { child.on('message', message => { if (message.ready) resolveReady(message); const pending = waiting.get(message.requestId); if (pending) { waiting.delete(message.requestId); message.error ? pending.reject(Error(message.error)) : pending.resolve(message.result); } }); child.once('error', reject); child.once('exit', code => { reject(Error(`Native child exited ${code}`)); for (const pending of waiting.values()) pending.reject(Error('Native child exited')); }); });
-function control(action) { const requestId = ++request; return new Promise((resolveControl, reject) => { waiting.set(requestId, { resolve: resolveControl, reject }); child.send({ requestId, action }); }); }
+function control(action,payload={}) { const requestId = ++request; return new Promise((resolveControl, reject) => { waiting.set(requestId, { resolve: resolveControl, reject }); child.send({ requestId, action,...payload }); }); }
 const timeout = setTimeout(() => { child.kill(); }, 120000);
 let pairing, workflow, context; let providerCredentialReads = 0;
 try {
@@ -130,9 +130,24 @@ const pending = await pairing.begin(false, true, includeRun, includeAssets); ass
       modelChoices.push({kind,provider:selected.provider,model,readinessExecutable:true,requiresRuntimeCheck:selected.requiresRuntimeCheck,planModelMatched:true,actualNewNativeNodesPreserveModel:true,newMediaNodes:mediaNodes.length,requestedCandidates:candidateCount,options,revision:applied.revision});
     }
   }
+  const referenceWorkflows=[];
+  if(includeReferences){
+    const seeded=await control('seed-references',{assets:[0,1].map(index=>({id:'EXAMPLE_REFERENCE_'+index,base64:examplePng(index+1,1).toString('base64')}))});
+    const canvas=instance.canvases.find(item=>item.kind==='image'),page=await service.canvasWorkflowAssets({projectId:canvas.projectId,canvasId:canvas.id,kind:'image'});assert.equal(page.items.length,2);assert.ok(page.items.every(item=>item.selectable));assert.equal(JSON.stringify(page).includes(temporary),false);
+    const selected=seeded.slice().reverse().map(key=>({assetId:key.id,contentHash:key.contentHash,contentRevision:key.contentRevision}));
+    for(const kind of ['image','edit-image','edit-video']){
+      const beforeIds=new Set((await control('reference-facts')).find(item=>item.id===canvas.id).nodes.map(node=>node.id));
+      const modelKind=kind==='edit-video'?'video':'image',model=kind==='edit-video'?'fast':'seedream-v5-pro-i2i',models=await service.canvasWorkflowModels({projectId:canvas.projectId,canvasId:canvas.id,kind:modelKind,query:model});assert.ok(models.items.some(item=>item.provider==='seedance-nz'&&item.model===model&&item.executable));
+      const plan=await service.canvasWorkflowPreview({projectId:canvas.projectId,canvasId:canvas.id,kind,prompt:'EXAMPLE ONLY preserve reference identity and change lighting',references:selected,candidates:1,profile:'economy',modelChoices:{llm:{provider:'zhenzhen',model:'gemini-3.5-flash'},[modelKind]:{provider:'seedance-nz',model}}});assert.equal(plan.ready,true);assert.deepEqual(plan.references.map(item=>item.id),selected.map(item=>item.assetId));
+      await service.canvasWorkflowApprove(plan.id,true);assert.equal((await service.canvasWorkflowComplete(plan.id)).phase,'pending');await control('approve');const applied=await service.canvasWorkflowComplete(plan.id);assert.equal(applied.phase,'applied');
+      const facts=(await control('reference-facts')).find(item=>item.id===canvas.id),nodes=facts.nodes.filter(node=>!beforeIds.has(node.id)&&node.referenceAssetIds.length);assert.equal(nodes.length,1);const node=nodes[0];assert.deepEqual(node.referenceAssetIds,selected.map(item=>item.assetId));assert.deepEqual(node.bindings.map(item=>[item.assetId,item.contentRevision]),selected.map(item=>[item.assetId,item.contentRevision]));assert.equal(node.imageReferenceCount,2);
+      if(kind==='edit-video')assert.deepEqual(node.bindings.map(item=>item.contentHash),selected.map(item=>item.contentHash));
+      referenceWorkflows.push({kind,referenceCount:2,provider:'seedance-nz',model,orderedIdsMatched:true,revisionMatched:true,nativeNodeType:node.type,nativeBindingsCarryHashes:node.bindings.every(item=>/^[a-f0-9]{64}$/.test(item.contentHash)),nativeMediaReferences:node.imageReferenceCount,revision:applied.revision});
+    }
+  }
   const stats = await control('stats'); assert.equal(stats.externalAttempts, 0); assert.equal(providerCredentialReads, 0); assert.ok(stats.sqliteOpens >= 1); assert.ok(stats.canvases.every(canvas => canvas.nodes > 0)); for (const [table, count] of Object.entries(stats.ledger)) assert.equal(count, includeRun && table === 'run_intents' ? 1 : 0); assert.ok(stats.compiledModules > 0); assert.match(stats.compiledSourceDigest, /^[a-f0-9]{64}$/);
   assert.equal(createHash('sha256').update(readFileSync(new URL('../packages/dsh-zhen/lib/index.js', import.meta.url))).digest('hex'), dshEntrySha256, 'DSH bundle changed during native verification');
-  const report = { canvasHead, gates, priorityLowered, dshEntrySha256, chat, graph, run, mediaTransfer,modelChoices, at: new Date().toISOString(), realNativeRoutes: true, realNativeCreative: true, realNativePatchDatabase: true, databaseFreshSystemTemp: true, simulatedWindowApproval: true, actualDesktopWindow: false, cliDigest: config.digest, results, stats, paidCalls: 0, userDatabaseRead: false };
+  const report = { canvasHead, gates, priorityLowered, dshEntrySha256, chat, graph, run, mediaTransfer,modelChoices,referenceWorkflows, at: new Date().toISOString(), realNativeRoutes: true, realNativeCreative: true, realNativePatchDatabase: true, databaseFreshSystemTemp: true, simulatedWindowApproval: true, actualDesktopWindow: false, cliDigest: config.digest, results, stats, paidCalls: 0, userDatabaseRead: false };
   writeFileSync(`.runtime/evidence/native-canvas-${evidenceName}.json`, JSON.stringify(report, null, 2) + '\n'); console.log(JSON.stringify(report));
 } finally {
   clearTimeout(timeout); await context?.fiber.dispose(); pairing?.close(); workflow?.close();

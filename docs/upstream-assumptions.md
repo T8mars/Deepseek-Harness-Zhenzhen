@@ -100,3 +100,5 @@ and explicit output facts are checked after planning, with CLI/session checks af
 each awaited call. Original native production routes and fresh TEMP Patch nodes
 are separately verified by `verify:canvas-native --include-model-choices`; this is
 not real window, installed-user or Provider proof. See0049.
+
+C50 adds owner-only asset metadata via the published Host/Gateway/Remote and Native auth/client/store/approval fixture. Fixed receipt-v1 attachment vectors originate independently from Native source3.3.7. DSH refuses order/hash/revision drift and non-ready required decisions. Original Native fresh-TEMP image/edit-image/edit-video Patch binding is verified separately with a simulated window and no Provider traffic. Native image hash binding, duplicate slots and atomic asset revalidation remain open; see0050 and the reference-assets handoff.

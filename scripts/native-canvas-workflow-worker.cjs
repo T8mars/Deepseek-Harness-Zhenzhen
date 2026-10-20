@@ -7,7 +7,7 @@ const http = require('node:http');
 const https = require('node:https');
 const Module = require('node:module');
 const [root, temporary] = process.argv.slice(2);
-const includeModelChoices=process.argv.includes('--include-model-choices');
+const includeModelChoices=process.argv.includes('--include-model-choices'),includeReferences=process.argv.includes('--include-reference-assets');
 assert.ok(root && temporary && fs.realpathSync.native(temporary) === temporary);
 const below = value => { const rel = path.relative(temporary, path.resolve(String(value))); return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel)); };
 let sqliteOpens = 0, externalAttempts = 0, dropRunApproval = false, dropRunComplete = false, dropAssetApproval = false, dropAssetComplete = false;
@@ -55,6 +55,8 @@ app.use((req, res, next) => {
   if (req.method === 'GET' && req.path.includes('/by-operation/')) runHttp.operationGets++;
   const json = res.json;
   res.json = function(body) {
+    if(includeReferences&&body?.code==='APPROVAL_STALE')console.log(JSON.stringify({referenceApprovalStale:typeof body.message==='string'&&body.message.includes('目录')?'catalog':typeof body.message==='string'&&body.message.includes('凭据')?'readiness':'binding'}));
+    if(includeReferences&&body?.data?.modelDecisionReceipt)console.log(JSON.stringify({referencePlan:{kind:body.data.kind,requiredModels:(body.data.modelDecisionReceipt.decisions??[]).filter(item=>item.required).map(item=>({kind:item.kind,id:item.selected?.id??''}))}}));
     if (body?.data?.action === 'run.start' && req.path.endsWith('/run-start-approvals')) runApprovalIds.add(body.data.approvalRequestId);
     if (/^asset\.(?:import|place)$/.test(body?.data?.action || '') && /\/asset-(?:import|place)-approvals$/.test(req.path)) assetApprovalIds.add(body.data.approvalRequestId);
     if (/^asset\.(?:import|place)$/.test(body?.data?.action || '') && (dropAssetApproval && /\/asset-(?:import|place)-approvals$/.test(req.path) || dropAssetComplete && req.path.endsWith('/complete'))) { if (req.path.endsWith('/complete')) dropAssetComplete = false; else dropAssetApproval = false; res.destroy(); return res; }
@@ -76,7 +78,7 @@ async function stop() { clearInterval(heartbeat); await new Promise(done => serv
 server.listen(0, '127.0.0.1', () => {
   const port = server.address().port, origin = `http://127.0.0.1:${port}`;
   app.get('/api/status', (_req, res) => res.json({ ok: true, service: 't8-penguin-canvas-backend', instanceId: id, port, version }));
-  app.use('/api/agent-control/v1', createAgentControlRouter({ auth, approvals, database, config: { PORT: port, APP_VERSION: version, BACKEND_INSTANCE_ID: id, SETTINGS_FILE: path.join(temporary, 'EXAMPLE_SETTINGS.json'), DATA_DIR: path.join(temporary, 'EXAMPLE_DATA'), INPUT_DIR: path.join(temporary, 'EXAMPLE_INPUT'), OUTPUT_DIR: path.join(temporary, 'EXAMPLE_OUTPUT'), ASSET_BLOB_DIR: path.join(temporary, 'EXAMPLE_BLOBS'), COLLAB_UPLOAD_TEMP_DIR: path.join(temporary, 'EXAMPLE_UPLOADS') }, settingsProvider: () => [], credentialSettingsProvider: () => ({ zhenzhenSd2ApiKey: 'EXAMPLE_NOT_A_REAL_PROVIDER_KEY_000000000000000000' }), runtimeStatusProvider: () => ({}) }));
+  app.use('/api/agent-control/v1', createAgentControlRouter({ auth, approvals, database, config: { PORT: port, APP_VERSION: version, BACKEND_INSTANCE_ID: id, SETTINGS_FILE: path.join(temporary, 'EXAMPLE_SETTINGS.json'), DATA_DIR: path.join(temporary, 'EXAMPLE_DATA'), INPUT_DIR: path.join(temporary, 'EXAMPLE_INPUT'), OUTPUT_DIR: path.join(temporary, 'EXAMPLE_OUTPUT'), ASSET_BLOB_DIR: path.join(temporary, 'EXAMPLE_BLOBS'), COLLAB_UPLOAD_TEMP_DIR: path.join(temporary, 'EXAMPLE_UPLOADS') }, settingsProvider: () => [], credentialSettingsProvider: () => ({ zhenzhenSd2ApiKey: 'EXAMPLE_NOT_A_REAL_PROVIDER_KEY_000000000000000000',...(includeReferences?{llmApiKey:'EXAMPLE_NOT_A_REAL_VISION_KEY_000000000000000000'}:{}) }), runtimeStatusProvider: () => ({}) }));
   fs.mkdirSync(process.env.ZCANVAS_INSTANCE_DIR, { recursive: true });
   const exact = ['skillVersion','cliVersion','controlProtocol','canvasPatchProtocol','nodeSchemaDigest','providerCatalogDigest','creativeCapabilityManifestDigest','creativeCapabilityGraphDigest','manifestDigest'];
   const publish = () => fs.writeFileSync(path.join(process.env.ZCANVAS_INSTANCE_DIR, `${id}.json`), JSON.stringify({ ...Object.fromEntries(exact.map(key => [key, manifest[key]])), schema: 't8-agent-control-instance-v1', instanceId: id, pid: process.pid, origin, appVersion: version, heartbeatAt: new Date().toISOString(), staleAfterMs: 20000 }));
@@ -93,6 +95,11 @@ process.on('message', async message => {
     else if (message.action === 'drop-asset-create') { dropAssetApproval = true; result = { armed: true }; }
     else if (message.action === 'drop-asset-complete') { dropAssetComplete = true; result = { armed: true }; }
     else if (message.action === 'stats') result = stats();
+    else if(message.action==='seed-references'&&includeReferences){
+      assert.ok(Array.isArray(message.assets)&&message.assets.length===2);result=[];
+      for(const [index,input] of message.assets.entries()){assert.equal(input.id,'EXAMPLE_REFERENCE_'+index);const bytes=Buffer.from(input.base64,'base64');assert.ok(bytes.length>0&&bytes.length<4096);const target=path.join(temporary,input.id+'.png');fs.writeFileSync(target,bytes,{flag:'wx'});const asset=database.upsertAsset({id:input.id,projectId:DEFAULT_PROJECT_ID,filename:input.id+'.png',kind:'image',managedPath:target,storageMode:'managed',availability:'available',mimeType:'image/png',sizeBytes:bytes.length,contentHash:crypto.createHash('sha256').update(bytes).digest('hex'),metadata:{width:index+1,height:1,size:bytes.length}});result.push({id:asset.id,contentHash:asset.contentHash,contentRevision:asset.contentRevision});}
+    }
+    else if(message.action==='reference-facts'&&includeReferences)result=canvases.map(canvas=>({id:canvas.id,nodes:database.getCanvas(canvas.id).nodes.slice(0,100).map(node=>({id:node.id,type:node.type,referenceAssetIds:node.data?.referenceAssetIds??[],bindings:(node.data?.referenceBindings??[]).map(binding=>({assetId:binding.assetId??'',kind:binding.kind??'',contentRevision:binding.contentRevision??0,contentHash:binding.contentHash??''})),imageReferenceCount:(node.data?.referenceImages??node.data?.localRefImages??[]).length}))}));
     else if(message.action==='model-facts'&&includeModelChoices)result=canvases.map(canvas=>({id:canvas.id,kind:canvas.kind,nodes:database.getCanvas(canvas.id).nodes.slice(0,100).map(node=>({id:node.id,type:node.type,model:node.data?.model??'',providerSource:node.data?.providerSource??'',apiModel:node.data?.apiModel??'',providerModel:node.data?.providerModel??'',seedanceNzModel:node.data?.seedanceNzModel??''}))}));
     else if (message.action === 'stop') { process.send({ requestId: message.requestId, result: stats() }); await stop(); return; }
     else throw Error('EXAMPLE_ACTION_REFUSED');

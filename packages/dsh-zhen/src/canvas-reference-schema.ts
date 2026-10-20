@@ -1,0 +1,12 @@
+import {z} from 'zod';
+import {canvasEntity} from './canvas-contract.ts';
+export const canvasReferenceKind=z.enum(['image','video','audio']);
+export const canvasReferenceKey=z.object({assetId:canvasEntity.max(160),contentRevision:z.number().int().positive().max(Number.MAX_SAFE_INTEGER),contentHash:z.string().regex(/^[a-f0-9]{64}$/)}).strict();
+export type CanvasReferenceKey=z.infer<typeof canvasReferenceKey>;
+export const canvasReferenceKeys=z.array(canvasReferenceKey).max(16).refine(items=>new Set(items.map(item=>item.assetId)).size===items.length,'当前原生规划接口不支持重复素材插槽，请使用不同素材；不会静默去重。');
+export const canvasAssetSchema=z.object({id:canvasEntity.max(160),projectId:canvasEntity,name:z.string().min(1).max(240),kind:canvasReferenceKind,contentRevision:z.number().int().positive().max(Number.MAX_SAFE_INTEGER),contentHash:z.string().regex(/^[a-f0-9]{64}$/).nullable(),mimeType:z.string().max(120),size:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),width:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),height:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),duration:z.number().finite().min(0).max(86400),selectable:z.boolean()}).strict();
+export type CanvasAsset=z.infer<typeof canvasAssetSchema>;
+export const canvasAssetsQuery=z.object({projectId:canvasEntity,canvasId:canvasEntity,kind:canvasReferenceKind,query:z.string().trim().max(200).optional(),offset:z.number().int().min(0).max(1000000).optional()}).strict();
+export type CanvasAssetsQuery=z.infer<typeof canvasAssetsQuery>;
+export const canvasAssetsSchema=z.object({projectId:canvasEntity,canvasId:canvasEntity,canvasRevision:z.number().int().positive(),catalogRevision:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),kind:canvasReferenceKind,query:z.string().max(200),offset:z.number().int().min(0).max(1000000),limit:z.literal(25),total:z.number().int().min(0).max(1000000),nextOffset:z.number().int().min(0).max(1000000).nullable(),items:z.array(canvasAssetSchema).max(25)}).strict();
+export type CanvasAssets=z.infer<typeof canvasAssetsSchema>;
