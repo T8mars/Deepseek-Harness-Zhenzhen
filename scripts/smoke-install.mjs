@@ -53,7 +53,8 @@ async function bundleIdentity() {
 async function listening(port) { return new Promise(done => { const socket = connect({ host: '127.0.0.1', port }); socket.setTimeout(250); socket.once('connect', () => { socket.destroy(); done(true); }); socket.once('error', () => done(false)); socket.once('timeout', () => { socket.destroy(); done(false); }); }); }
 try {
   console.log('Creating a disposable profile through the public DSH CLI…');
-  await run(['--profile', 'example', '--from-default-profile', 'web', '--dump-config']);
+  const baselineText = await run(['--profile', 'example', '--from-default-profile', 'web', '--dump-config']);
+  const baseline = parseDocument(baselineText, { customTags: [{ tag: 'tag:yaml.org,2002:js', resolve: value => value }] }).toJS();
   let priorIdentity;
   if (previousArchive) {
     console.log('Installing the previous local artifact to verify same-version replacement…');
@@ -116,7 +117,17 @@ try {
   if (!ready) throw new Error('Disposable Host did not open its loopback socket.');
   await delay(500);
   if (hostClosed) throw new Error('Disposable Host exited after startup.');
+  // M0 A3: stop the owned disposable Host before changing its profile. Verify
+  // removal against the freshly composed public template, never user settings.
+  await new Promise(done => { host.once('close', done); host.kill(); });
+  if (!hostClosed) throw new Error('Disposable Host did not stop before removal.');
+  console.log('Removing the bundle from the stopped disposable profile…');
+  await run(['plugin', '--profile', 'example', 'remove', 'dsh-zhen', '--config.ignore-scripts=true']);
+  const restored = parseDocument(await run(['--profile', 'example', '--dump-config']), { customTags: [{ tag: 'tag:yaml.org,2002:js', resolve: value => value }] }).toJS();
+  if (!isDeepStrictEqual(restored, baseline)) throw new Error('Uninstall did not restore the complete public baseline configuration.');
+  if (!readFileSync(pdfFile).equals(pdfBytes) || !readFileSync(docxFile).equals(docxBytes)) throw new Error('EXAMPLE source bytes changed during uninstall.');
   const evidence = { at: new Date().toISOString(), artifact: artifact.file, sha256: artifact.sha256, node: process.versions.node, installedViaPublicCli: true, installedEntrySha256: expectedEntry, installedPatchSha256: expectedPatch, installedClientSha256: expectedClient, installedSkillCatalogSha256: expectedSkills, replacementFrom: previousArchive ? args[1] : null, previousEntrySha256: priorIdentity?.entry ?? null, previousPatchSha256: priorIdentity?.patch ?? null, previousClientSha256: priorIdentity?.client ?? null, previousSkillCatalogSha256: priorIdentity?.skills ?? null, installedDocxWorkerVerified:true,installedDocxWorkerSha256:docxProof.workerSha256,installedDocxTextMatched:true,installedDocxKnowledgeIndexVerified:false,docxSourceBytesPreserved:true,installedPdfWorkerVerified:true,installedPdfPage:pdfProof.page,installedPdfKnowledgeIndexVerified:false,pdfSourceBytesPreserved:true, completeProviderProfileMatches: true, nativeAttachmentsEnabled: true, imageModelRoutes: models.filter(model => model.input.includes('image')).length, modelRoutes: models.length, flashDefault: true, designatedCollectorsDisabled: true, hostLoopbackSocket: true, browserInspected: false, paidCalls: 0 };
+  Object.assign(evidence, { uninstalledViaPublicCli: true, stoppedBeforeUninstall: true, completeBaselineRestored: true, uninstallSourceBytesPreserved: true, rollbackScope: 'fresh TEMP profile only; no user sessions, credentials or database rollback' });
   mkdirSync(resolve(workspace, '.runtime/evidence'), { recursive: true });
   writeFileSync(resolve(workspace, '.runtime/evidence/installed-bundle-smoke.json'), JSON.stringify(evidence, null, 2) + '\n');
   console.log(JSON.stringify(evidence));

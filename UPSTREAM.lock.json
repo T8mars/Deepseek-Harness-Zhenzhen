@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-20T17:57:47.922Z",
+  "checkedAt": "2026-10-20T18:16:39.833Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1124,6 +1124,16 @@
       "status": "implemented; local375/375 verified",
       "report": "Owner-only current-epoch memory report, max50 issues/32 collections, no document bodies, absolute roots, raw errors, persistence or Agent tool",
       "verification": "Five local tests and C52 actual published Host/Gateway/ToolRuntime plus report SSR pass; full375/375 and clean declaration checks pass. Pairing guidance text additionally clarifies the existing Electron approval bridge. Package/install and real browser acceptance are separate. Query/ranking/schema and adopted8/10 historical baseline unchanged."
+    },
+    "verifiedLocalActivation": {
+      "decision": "0053",
+      "artifactSha256": "5b830c57990915f02508765bc11729958da0dcbedbcfeb3df170aa9a44c8384e",
+      "scope": "Exact dev24 bundle installed through the public CLI in the real local profile; entry/client/patch/skills/workers match. Flash/privacy and own metadata preserved; browser opened by native launcher, not inspected. No native repository writes, model or paid calls. Own index schema2 remains lazy; new UI and real native approvals unverified."
+    },
+    "bundleUninstallRollback": {
+      "decision": "0053",
+      "verified": true,
+      "scope": "Public CLI in fresh TEMP only: stop owned Host, remove dsh-zhen with scripts disabled, deep-compare complete composed configuration against its original shipped Web template; EXAMPLE PDF/DOCX unchanged. No real profile uninstall or user database/session downgrade."
     }
   }
 }
