@@ -21,6 +21,7 @@
     "pack:art": "node scripts/pack-art.mjs",
     "smoke:install": "node scripts/smoke-install.mjs",
     "verify:canvas-native": "node scripts/verify-native-canvas.mjs",
+    "verify:canvas-backup": "node scripts/verify-canvas-backup.mjs",
     "verify:local-art": "node scripts/verify-local-art.mjs"
   },
   "dependencies": {

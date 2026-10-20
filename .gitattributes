@@ -1,0 +1,3 @@
+# Preserve patch bytes and SHA-256, including the required space on empty
+# unified-diff context lines. Source whitespace checks remain unchanged.
+integrations/canvas/*.patch -text whitespace=-blank-at-eol

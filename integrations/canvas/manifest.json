@@ -1,15 +1,203 @@
 {
+  "schemaVersion": 2,
+  "sourceRepository": "https://github.com/T8mars/T8-penguin-canvas",
   "baseCommit": "e6702dc7770bcbe7d4895be22a06f4c7123a085b",
+  "sourceVersion": "3.3.6",
   "status": "unreleased-source-backup",
   "automaticApplication": false,
+  "patch": "native-dsh-integration-v1.patch",
+  "sha256": "97ac620aac1aa2ed470063cfa2605d1f9888984baa6bf59f7166a5ebaf23c1aa",
+  "hashEncoding": "Git source blobs; working text normalized to LF",
   "files": [
-    "backend/src/routes/agentControl.js",
-    "backend/src/services/agentControlAssets.js",
-    "backend/src/services/agentControlCompatibility.js",
-    "backend/src/services/projectDatabase.js",
-    "tests/agentControlAssets.test.cjs",
-    "tests/agentControlAssetPlace.test.cjs",
-    "tests/agentControlCompatibility.test.cjs"
-  ],
-  "sha256": "fb4bb42cb5912b06bab7a5cfe4bdca3c60d1020ab8fedaebb673d0b555de2121"
+    {
+      "path": ".agents/skills/zhenzhen-canvas/references/generated-capability-coverage.md",
+      "baseSha256": "df8860cc76dca8e0b9fabfda0b3dcd602e4e5daea6cb1fee80ba711530624fd3",
+      "sha256": "e9558bb354ad31a070149f24fdd30c898db1c281af505ed0d8830a343cd67b31"
+    },
+    {
+      "path": ".agents/skills/zhenzhen-canvas/references/generated-capability-surfaces.json",
+      "baseSha256": "00e7f853c8c68adcfc44fa988f84299a5c2543757b68616722eea2bcb486203a",
+      "sha256": "8c77186f36db827b4704679b252f23618eaf4d866f4c16545d14b66022e82fe6"
+    },
+    {
+      "path": "backend/src/providers/seedanceNz.js",
+      "baseSha256": "46afb14ccc6a1768b00cd48687fb496431d9284755fdd6c06249581fba6ddd3f",
+      "sha256": "6d94b5fb936be9689876ab74b990217def4bc6179832659a13b818259cca6514"
+    },
+    {
+      "path": "backend/src/routes/agentControl.js",
+      "baseSha256": "cb866aa62d14f5154ca50e1511ae03ff805721644d11035311b3f4a673e8eb45",
+      "sha256": "4ca253d1a759bdbe54e0fccd60bfdb4a8607e6d7e07f2945a7aba428f01d6f00"
+    },
+    {
+      "path": "backend/src/services/agentControlApprovals.js",
+      "baseSha256": "9caebe22e30b46e5cc1047330d47e7ee3465bc2f1aa2a57c6597b36d2133be0e",
+      "sha256": "fe50e2c2145496e409c72b87eeaea415b1fb9f018aee859d5eade76271e9e021"
+    },
+    {
+      "path": "backend/src/services/agentControlAssets.js",
+      "baseSha256": "e4b63794512a85bd0b05aa8e65e4c2d551892b25fe14237bfb49e98d0a66c01a",
+      "sha256": "8121f4a6c2cb31cb2a88fc4e230101062cc1c2b7bb83c275572dd7895054d453"
+    },
+    {
+      "path": "backend/src/services/agentControlCompatibility.js",
+      "baseSha256": "a3663e9aa9bea47726f4cc16a6f6a7e3e2dae51a1b3047a4ca1e999c31ff2656",
+      "sha256": "11d99f563fc88868314d0ce0f5d614b9a97c621c08a3fad546285f78da3a3f01"
+    },
+    {
+      "path": "backend/src/services/agentControlRuns.js",
+      "baseSha256": "bb20f52d604a659ff73aeff82785ec2517b867faa249af03a3e7d6cda0edc725",
+      "sha256": "a4019cb1ea7090340d122d12c95325b510bdd50825fe22094430a6f582b77bf6"
+    },
+    {
+      "path": "backend/src/services/projectDatabase.js",
+      "baseSha256": "8c913eb4a76239598f945b45c337e964447b0f7b2df4cc614c5728c614d61de4",
+      "sha256": "77444ec6ef82a01044360dac77b41316ed915315c5ac6e7d8703d1137ef487f0"
+    },
+    {
+      "path": "backend/src/shared/creativeCapabilityGraph.json",
+      "baseSha256": "6bf0b22360560e7dbb339f7c5a7515ae811e775e2b4413d01aed1a081e3a3377",
+      "sha256": "b502b235ebcc29e4778a46fd1e0dcbc5a52f0da0fda20112301505e8d96dafff"
+    },
+    {
+      "path": "backend/src/shared/creativeCapabilitySurfaces.json",
+      "baseSha256": "00e7f853c8c68adcfc44fa988f84299a5c2543757b68616722eea2bcb486203a",
+      "sha256": "8c77186f36db827b4704679b252f23618eaf4d866f4c16545d14b66022e82fe6"
+    },
+    {
+      "path": "backend/src/shared/creativeModelCatalog.json",
+      "baseSha256": "32d18f96b4c0fa127342a30a83e3c408ad9143538fa29e5b566c091ba9382d49",
+      "sha256": "00dc6ba277f0937123ad7695c01a473a733df8b3d7890f4e7f9fe33e685edf5d"
+    },
+    {
+      "path": "docs/project-context-current.md",
+      "baseSha256": "60c82be2f7df3eb261676b4dae1e1fd18707b772dba841f064bcaf575df736a6",
+      "sha256": "edbfec9759d6f46d1e52f604c869fb0e729792cf9f7804d3cd8508dc9a71d37c"
+    },
+    {
+      "path": "docs/seedance-write-replay-boundary.md",
+      "baseSha256": null,
+      "sha256": "e1f38f2a1bbc7adcc99b8608b84807e8509f73897bb263a0f7b3caf6c79e7173"
+    },
+    {
+      "path": "docs/zcanvas-instance-discovery.md",
+      "baseSha256": null,
+      "sha256": "fe8e2637687d1c074128e5e7f99baa583ff0820a8513748de0581f60f3f4ee9a"
+    },
+    {
+      "path": "docs/zcanvas-run-approval-recovery.md",
+      "baseSha256": null,
+      "sha256": "a93ff7c95114927081f1077a468e1cbd4048d42c05735452427de2f262f46578"
+    },
+    {
+      "path": "docs/zcanvas-saved-media-transfer.md",
+      "baseSha256": null,
+      "sha256": "af255d085340aaaa97b01bedfe78062bb4d7c2dd4ed8f4fce04263ae482c6116"
+    },
+    {
+      "path": "docs/zcanvas-secure-store-transactions.md",
+      "baseSha256": null,
+      "sha256": "9b678691e3a5ce31ee26b7335b41f90563fa82818170ad181404b738624ac494"
+    },
+    {
+      "path": "features.json",
+      "baseSha256": "e17ba94fa59f530cdfcb42fbfbcc780d6ae4996bba0132be41461eaef3aac209",
+      "sha256": "5a96fa05807b2827a3347be9a4e7b07cda100862b64f857b472519a0e019e62c"
+    },
+    {
+      "path": "src/generated/creator-agent-capability-surfaces.json",
+      "baseSha256": "00e7f853c8c68adcfc44fa988f84299a5c2543757b68616722eea2bcb486203a",
+      "sha256": "8c77186f36db827b4704679b252f23618eaf4d866f4c16545d14b66022e82fe6"
+    },
+    {
+      "path": "tests/agentControlApprovalRecovery.test.cjs",
+      "baseSha256": null,
+      "sha256": "8872543b9a673a0f8744c7c9f5e1279aaf5fd2410b7fc48bd5e64d0e904c8633"
+    },
+    {
+      "path": "tests/agentControlAssetPlace.test.cjs",
+      "baseSha256": "de211b0feaf555473da09bc6f348968b70049e16192861302a67a10e92610851",
+      "sha256": "f4fea546fbde7519e7733f2b19c69d7be21677c2747ffb7355098f8bfc3a728f"
+    },
+    {
+      "path": "tests/agentControlAssets.test.cjs",
+      "baseSha256": "4f871c396ff796bf0eb2528a73bb07fdee09a761c5016eb3a42b0e2692551198",
+      "sha256": "05bfc99fc194820f0b5e91cd9a10c6290965182d84582bbcc48a9f6a34d09236"
+    },
+    {
+      "path": "tests/agentControlCompatibility.test.cjs",
+      "baseSha256": null,
+      "sha256": "afebb6f5e10772ad5fe6c730568f3114a743bdafc1a04bb4539bf50c0afc7051"
+    },
+    {
+      "path": "tests/agentControlRunRecovery.test.cjs",
+      "baseSha256": null,
+      "sha256": "4cbda66a49f7101ff91d264efd0b505f7888933da3a449ddeadfbd3be0c03522"
+    },
+    {
+      "path": "tests/seedanceNzProvider.test.ts",
+      "baseSha256": "9d108e47faf09e8060607586554d6ac3a2273947e3894c54fb11b3200e810793",
+      "sha256": "7fbd1db686795380016c2be358363c82083a56ba75cfaa13f1346838852ca947"
+    },
+    {
+      "path": "tests/seedanceNzReplayBoundary.test.cjs",
+      "baseSha256": null,
+      "sha256": "7b6fe8d71a633409f08ffb59369edaf114de104707b7f8c7165f4768d4ac7168"
+    },
+    {
+      "path": "tests/zcanvasAuthTransactions.test.cjs",
+      "baseSha256": null,
+      "sha256": "6d67e95570204907a41e4458be75b33610919ad2fe39c8f635bbc6bc4fada9d6"
+    },
+    {
+      "path": "tests/zcanvasDiscoveryWindow.test.cjs",
+      "baseSha256": null,
+      "sha256": "721069dd6ea119c3b12cacc37ee69d2080588d46acf7d21d0d8d25c6f2f43c02"
+    },
+    {
+      "path": "tests/zcanvasSecureStoreConcurrency.test.cjs",
+      "baseSha256": null,
+      "sha256": "432413dbee0602b867ebb14eccd31726ca9c2005a9335d97fe8c53864d270434"
+    },
+    {
+      "path": "tools/zcanvas-cli/generated/creative-capability-graph.json",
+      "baseSha256": "6bf0b22360560e7dbb339f7c5a7515ae811e775e2b4413d01aed1a081e3a3377",
+      "sha256": "b502b235ebcc29e4778a46fd1e0dcbc5a52f0da0fda20112301505e8d96dafff"
+    },
+    {
+      "path": "tools/zcanvas-cli/generated/creative-capability-surfaces.json",
+      "baseSha256": "00e7f853c8c68adcfc44fa988f84299a5c2543757b68616722eea2bcb486203a",
+      "sha256": "8c77186f36db827b4704679b252f23618eaf4d866f4c16545d14b66022e82fe6"
+    },
+    {
+      "path": "tools/zcanvas-cli/generated/creative-runtime-catalog.json",
+      "baseSha256": "32d18f96b4c0fa127342a30a83e3c408ad9143538fa29e5b566c091ba9382d49",
+      "sha256": "00dc6ba277f0937123ad7695c01a473a733df8b3d7890f4e7f9fe33e685edf5d"
+    },
+    {
+      "path": "tools/zcanvas-cli/manifest.json",
+      "baseSha256": "867e287090dc50345cd131d53de0e5a374b6f8c2a686333b67a27af1f949d7e6",
+      "sha256": "c9bac8c501bdec056ccd65cd81c3868b1ef925637a7ee568964c101cf78710a6"
+    },
+    {
+      "path": "tools/zcanvas-cli/src/cli.cjs",
+      "baseSha256": "0a9913c939b9ceb1151b64007a2ecc89c5f019f937cd08ab5028879ede859e61",
+      "sha256": "a5bd74dc04c3a89c3c29dbdbe04f4fef90b37ca496afb1960c5e74b47be902d9"
+    },
+    {
+      "path": "tools/zcanvas-cli/src/discovery.cjs",
+      "baseSha256": "8b68ebb5759943b51b48bcfec89b164eb6a60ae47b5c3c621e5c250005b85ca6",
+      "sha256": "4c4f71e18c8ea3151c74caa55a25b0a1dd0c034036eea921c51db282f3171d79"
+    },
+    {
+      "path": "tools/zcanvas-cli/src/secureStore.cjs",
+      "baseSha256": "c1563582aec17169cd81da8d64e17cf8dc9a69517bddaeaf2ad872ff46e418fc",
+      "sha256": "770da4ce23be2e3d6d014fe94b50ddd41eec020a2eb8a4e7b4fdab5ddbdf04f1"
+    },
+    {
+      "path": "tools/zcanvas-cli/src/secureStoreTransactions.cjs",
+      "baseSha256": null,
+      "sha256": "bc45bde610bca44ebe336a7d5c4ef305ea85b3c96fff856ea5dda5b3775303e5"
+    }
+  ]
 }

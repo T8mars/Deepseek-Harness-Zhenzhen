@@ -80,7 +80,7 @@
     {
       "id": "canvas-local-discovery",
       "status": "in-progress",
-      "verification": "Fixed installer roots and managed markers are read without importing CLI code or opening a connection. Complete supported runtime fingerprints, local-path/link/metadata gates, canonical deduplication and a closed Remote schema pass six units. C24 actual published Host/MCP composition refuses stale reviewed digests before config/mount changes and preserves previous config, with zero credential reads. Both real local CLIs report APP_NOT_RUNNING; their compatibility digests differ. New UI and real pairing remain unverified."
+      "verification": "Fixed installer roots and managed markers are read without importing CLI code or opening a connection. Complete supported runtime fingerprints, local-path/link/metadata gates, canonical deduplication and a closed Remote schema pass six units. C24 actual published Host/MCP composition refuses stale reviewed digests before config/mount changes and preserves previous config, with zero credential reads. Both real local CLIs report APP_NOT_RUNNING; their compatibility digests differ. New UI and real pairing remain unverified. Actual installed 3.3.6 control status fails missing provider compatibility manifest. Unreleased Native source fixes that path and the stale-file discovery window; five discovery regressions and a 77-test related matrix pass. Existing trusted CLI pin is preserved; a changed source tree needs review/reconnection. See decision0032."
     },
     {
       "id": "canvas-window-pairing",
@@ -131,6 +131,11 @@
       "id": "optional-first-party-github-access",
       "status": "in-progress",
       "verification": "Optional fixed-repository read access uses ctx.credentials, native reference-updated invalidation and before/after checks. Private contents are pinned to the resolved commit via api.github.com; anonymous behavior remains. Seven units and C33 actual published LocalCredentialProvider/Registry/RemoteAccess/Gateway cover persisted secrets, reopen, native external revocation, strict results, non-owner refusal and model-secret isolation. C33 HTTP is synthetic. Separate real private gh CLI read matched all 15 packages and current REST raw media type. Real application Bearer transport/new UI remain unverified. Repository remains private per owner. See decision0031."
+    },
+    {
+      "id": "canvas-integration-source-backup",
+      "status": "implemented",
+      "verification": "Complete 38-file Native source/test/generated/documentation text patch, exact base and per-file SHA-256. C34 verifies integrity and reviewed public paths; independent verifier actually restores original Git blobs and applies/checks all 38 files in fresh system TEMP without modifying Native. Combined real Native routes/SQLite/MCP verification passes with simulated window approval and no Provider calls. Production package and human installed-window acceptance remain unverified. See decision0032."
     }
   ]
 }

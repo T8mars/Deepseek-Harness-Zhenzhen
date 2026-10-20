@@ -1,0 +1,2022 @@
+diff --git a/.agents/skills/zhenzhen-canvas/references/generated-capability-coverage.md b/.agents/skills/zhenzhen-canvas/references/generated-capability-coverage.md
+index 68d472ebc8d3e5fe807ddeec913022a35cc05bce..a07272e7bd47107a8bad070f1e34b0428cb5a158 100644
+--- a/.agents/skills/zhenzhen-canvas/references/generated-capability-coverage.md
++++ b/.agents/skills/zhenzhen-canvas/references/generated-capability-coverage.md
+@@ -3,7 +3,7 @@
+ > Machine-generated from the real Canvas Node Schema, creative capability manifest,
+ > runtime model/action catalog, and handler bindings. Do not edit by hand.
+ 
+-- Aggregate SHA-256: `8d6d20b92d31646a5b3f17fc11f958352f8e1ee17ea69d8975ef293be4cf19e4`
++- Aggregate SHA-256: `359ced64c902ed4550e52487375d8a7f886f906f1b172b96be737aa72591043b`
+ - Capabilities / handlers: **39 / 39**
+ - Canvas nodes: **84**
+ - Referenced / unreferenced nodes: **75 / 9**
+@@ -18,7 +18,7 @@
+ - Dynamic runtime inventory (LLM / image / video / audio / actions): **34 / 69 / 136 / 19 / 61**
+ - Operation risk contracts: **196** (L0 115, L1 53, L2 28, L3 0)
+ - Unknown node references: **0**
+-- Coverage receipt: `t8-creative-capability-coverage-receipt-v1` / `fd06995d227e73070066395c1536ff05aa4fe5e1347e906703541341f22b4e05`
++- Coverage receipt: `t8-creative-capability-coverage-receipt-v1` / `40279fefb26d45103f57f5ec389e8ba74021fc1bf8511bb8e1cadc753014a35c`
+ 
+ “Understand” means the node exists in the authoritative schema. Other columns are true only
+ when at least one registered high-level capability explicitly advertises that operation.
+diff --git a/.agents/skills/zhenzhen-canvas/references/generated-capability-surfaces.json b/.agents/skills/zhenzhen-canvas/references/generated-capability-surfaces.json
+index bf42f014abf83d4c9c22010ce01e862df375fd2f..c073695d0ee90a99eda4f3e04e80f9c99e1ab45b 100644
+--- a/.agents/skills/zhenzhen-canvas/references/generated-capability-surfaces.json
++++ b/.agents/skills/zhenzhen-canvas/references/generated-capability-surfaces.json
+@@ -6,7 +6,7 @@
+     "capabilityGraph": "tools/zcanvas-cli/generated/creative-capability-graph.json"
+   },
+   "sourceDigest": "569f2c8be144e05120ca629b2826383a06c4d6565ab3896c2dc61807bb9f7c27",
+-  "capabilityGraphDigest": "8d6d20b92d31646a5b3f17fc11f958352f8e1ee17ea69d8975ef293be4cf19e4",
++  "capabilityGraphDigest": "359ced64c902ed4550e52487375d8a7f886f906f1b172b96be737aa72591043b",
+   "counts": {
+     "capabilities": 39,
+     "agentTools": 39,
+diff --git a/backend/src/providers/seedanceNz.js b/backend/src/providers/seedanceNz.js
+index 2a65c712aa91eb4fb1587f2e6f089adb84d26f74..49f8bdb3d6291e96bd5f9644e5b8044b880af7dd 100644
+--- a/backend/src/providers/seedanceNz.js
++++ b/backend/src/providers/seedanceNz.js
+@@ -971,7 +971,6 @@ function seedanceNetworkCause(error) {
+ function seedanceRetryIsKnownPreRequestFailure(error) {
+   const cause = seedanceNetworkCause(error);
+   const code = String(cause?.code || error?.code || '').trim().toUpperCase();
+-  const message = String(cause?.message || error?.message || '');
+   return [
+     'CERT_HAS_EXPIRED',
+     'DEPTH_ZERO_SELF_SIGNED_CERT',
+@@ -979,7 +978,7 @@ function seedanceRetryIsKnownPreRequestFailure(error) {
+     'UNABLE_TO_GET_ISSUER_CERT',
+     'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+     'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+-  ].includes(code) || /certificate|self signed|unable to verify|issuer cert/i.test(message);
++  ].includes(code);
+ }
+ 
+ async function secureFetch(url, init = {}) {
+@@ -996,11 +995,13 @@ async function secureFetch(url, init = {}) {
+   } catch (error) {
+     if (init?.signal?.aborted) throw error;
+     const safeRead = ['GET', 'HEAD'].includes(method);
+-    const stableSubmission = Boolean(headerValue(request.headers, 'idempotency-key'));
+     // TLS trust can fail before an HTTP request exists on older Electron CA
+     // bundles. That case is safe to retry with the provider-pinned CA even
+     // when a legacy caller has no submission key.
+-    if (!safeRead && !stableSubmission && !seedanceRetryIsKnownPreRequestFailure(error)) {
++    // A carried identity is correlation, not proof that this gateway deduplicates
++    // a replay. After an ambiguous paid write, retain/query the original task;
++    // only exact TLS verification failures known to precede HTTP may recover.
++    if (!safeRead && !seedanceRetryIsKnownPreRequestFailure(error)) {
+       throw error;
+     }
+     try {
+diff --git a/backend/src/routes/agentControl.js b/backend/src/routes/agentControl.js
+index 363fe371992d1f11a26422017846f0bd630110bf..f3414bf266dd89bca0779bcc7c4104d1c29a763f 100644
+--- a/backend/src/routes/agentControl.js
++++ b/backend/src/routes/agentControl.js
+@@ -555,12 +555,28 @@ function createAgentControlRouter(options = {}) {
+         targetHandle: input.targetHandle,
+       });
+       const patch = scopeAgentPatch(snapshot.patch, scope);
+-      const patchPreview = database().previewCanvasPatch(scope.canvasId, patch, {
+-        actorId: scope.actorId,
+-        sessionId: scope.sessionId,
+-        projectId: scope.projectId,
+-        authority: agentPatchAuthority(),
+-      });
++      // The read-only capability must recover the same immutable placement as
++      // the approval route, rather than simulate adding its existing node again.
++      const recovery = resolveAppliedAssetPlacement(database(), scope.canvasId, { ...snapshot, patch });
++      const patchPreview = recovery.status === 'applied'
++        ? {
++            patchId: recovery.patch.id,
++            baseRevision: recovery.application.baseRevision,
++            currentRevision: recovery.application.baseRevision,
++            previewDigest: recovery.application.previewDigest,
++            summary: recovery.application.summary,
++            diagnosticsResolved: recovery.application.diagnosticsResolved || [],
++            affectedNodeIds: recovery.application.affectedNodeIds || [],
++            affectedEdgeIds: recovery.application.affectedEdgeIds || [],
++            changes: recovery.application.changes || [],
++            warnings: [],
++          }
++        : database().previewCanvasPatch(scope.canvasId, patch, {
++            actorId: scope.actorId,
++            sessionId: scope.sessionId,
++            projectId: scope.projectId,
++            authority: agentPatchAuthority(),
++          });
+       return {
+         preview: {
+           ...patchPreview,
+@@ -659,6 +675,8 @@ function createAgentControlRouter(options = {}) {
+         instanceId: runtimeConfig.BACKEND_INSTANCE_ID,
+         ...compatibility,
+         pairingRequired: true,
++        runControl: { schema: 't8-agent-run-control-v1', singleUsePlan: true, operationLookup: true, approvalLookup: true },
++        assetControl: { schema: 't8-agent-asset-control-v1', approvalLookup: true, hashLookup: true, patchLookup: true, maxImportBytes: Math.max(1, Math.min(2 * 1024 * 1024 * 1024, Number(runtimeConfig.COLLAB_MAX_UPLOAD_BYTES) || 512 * 1024 * 1024)) },
+       },
+     }));
+   });
+@@ -906,6 +924,13 @@ function createAgentControlRouter(options = {}) {
+     }
+   });
+ 
++  router.get('/run-start-approvals/by-operation/:operationId', (req, res, next) => {
++    try {
++      const session = auth.authenticate(bearerToken(req), ['run:execute']);
++      return res.json(response({ data: approvals.inspectOperation({ action: 'run.start', operationId: req.params.operationId, sessionId: session.sessionId, projectId: String(req.query?.projectId || ''), canvasId: String(req.query?.canvasId || '') }) }));
++    } catch (error) { return next(error); }
++  });
++
+   router.post('/run-retry-approvals', (req, res, next) => {
+     try {
+       const session = auth.authenticate(bearerToken(req), ['run:execute']);
+@@ -970,6 +995,15 @@ function createAgentControlRouter(options = {}) {
+     }
+   });
+ 
++  router.get('/run-intents/by-operation/:operationId', (req, res, next) => {
++    try {
++      const session = auth.authenticate(bearerToken(req), ['run:read']);
++      return res.json(response({ data: runs().inspectOperation(req.params.operationId, {
++        projectId: String(req.query?.projectId || ''), canvasId: String(req.query?.canvasId || ''), actorId: session.actorId, sessionId: session.sessionId,
++      }) }));
++    } catch (error) { return next(error); }
++  });
++
+   router.get('/run-intents/:intentId', (req, res, next) => {
+     try {
+       const session = auth.authenticate(bearerToken(req), ['run:read']);
+@@ -1312,13 +1346,14 @@ function createAgentControlRouter(options = {}) {
+         throw new CanvasAgentToolError('agent_scope_not_found', '素材查询目标不存在或不属于当前项目', 404);
+       }
+       return res.json(response({
+-        data: assets().search({
++        data: { projectId, canvasId, canvasRevision: Number(document.revision), ...assets().search({
+           projectId,
+           kind: req.query?.kind,
++          contentHash: req.query?.contentHash,
+           query: req.query?.query,
+           limit: req.query?.limit,
+           offset: req.query?.offset,
+-        }),
++        }) },
+       }));
+     } catch (error) {
+       return next(error);
+@@ -1557,6 +1592,13 @@ function createAgentControlRouter(options = {}) {
+     }
+   });
+ 
++  for (const [path, action, scopes] of [
++    ['/asset-import-approvals/by-operation/:operationId', 'asset.import', ['asset:transfer']],
++    ['/asset-place-approvals/by-operation/:operationId', 'asset.place', ['asset:read', 'canvas:write']],
++  ]) router.get(path, (req, res, next) => {
++    try { const session = auth.authenticate(bearerToken(req), scopes); return res.json(response({ data: approvals.inspectOperation({ action, operationId: req.params.operationId, sessionId: session.sessionId, projectId: String(req.query?.projectId || ''), canvasId: String(req.query?.canvasId || '') }) })); } catch (error) { return next(error); }
++  });
++
+   router.post('/asset-import-approvals', async (req, res, next) => {
+     try {
+       const session = auth.authenticate(bearerToken(req), ['asset:transfer']);
+@@ -1672,6 +1714,18 @@ function createAgentControlRouter(options = {}) {
+     }
+   });
+ 
++  router.get('/patches/:patchId', (req, res, next) => {
++    try {
++      const session = auth.authenticate(bearerToken(req), ['canvas:read']), projectId = String(req.query?.projectId || ''), canvasId = String(req.query?.canvasId || ''), document = database().getCanvas(canvasId);
++      if (!document || document.projectId !== projectId) throw new CanvasAgentToolError('agent_scope_not_found', 'Patch 查询目标不存在或不属于当前项目', 404);
++      // Public receipt fields only: reading a canvas already exposes its graph.
++      // Exact duplicate asset placements may legitimately predate this actor.
++      const application = database().getCanvasPatchApplication(canvasId, req.params.patchId, { actorId: session.actorId, projectId, includeAllActors: true });
++      if (!application) throw new CanvasAgentToolError('PATCH_APPLICATION_NOT_FOUND', '没有这次 Patch 的应用记录', 404);
++      return res.json(response({ data: { projectId, canvasId, patchId: application.patchId, status: application.status, baseRevision: application.baseRevision, appliedRevision: application.appliedRevision, affectedNodeIds: application.affectedNodeIds || [] } }));
++    } catch (error) { return next(error); }
++  });
++
+   router.get('/patches', (req, res, next) => {
+     try {
+       const session = auth.authenticate(bearerToken(req), ['canvas:read']);
+diff --git a/backend/src/services/agentControlApprovals.js b/backend/src/services/agentControlApprovals.js
+index ef1d3358845ad8699fdc05e77b3308fa230e708f..434e7b532e142e83999b9d157fb63225c4175549 100644
+--- a/backend/src/services/agentControlApprovals.js
++++ b/backend/src/services/agentControlApprovals.js
+@@ -399,6 +399,15 @@ function createAgentControlApprovalService(options = {}) {
+       .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+   }
+ 
++  function inspectOperation(input = {}) {
++    cleanup();
++    const record = [...approvals.values()].find((item) => item.action === String(input.action || '') && item.operationId === String(input.operationId || '') && item.sessionId === String(input.sessionId || ''));
++    if (!record || record.projectId !== String(input.projectId || '') || record.canvasId !== String(input.canvasId || '') || record.supersededAt) throw new AgentControlApprovalError('APPROVAL_NOT_FOUND', '待确认操作不存在或不属于当前会话', 404);
++    // Same authenticated native session only. Its polling secret already has
++    // the same disclosure boundary as create(); this never approves/completes.
++    return creationResponse(record, true);
++  }
++
+   function approve(id) {
+     cleanup();
+     const record = approvals.get(String(id || ''));
+@@ -504,6 +513,7 @@ function createAgentControlApprovalService(options = {}) {
+     finishCompletion,
+     invalidateBinding,
+     listPending,
++    inspectOperation,
+     publishMutation,
+     subscribeMutations,
+   };
+diff --git a/backend/src/services/agentControlAssets.js b/backend/src/services/agentControlAssets.js
+index 7a78a0ee5a0455b578fffb28317156d01753b58d..55da701df0fa4add6e23eb0e762c1375d82380ff 100644
+--- a/backend/src/services/agentControlAssets.js
++++ b/backend/src/services/agentControlAssets.js
+@@ -216,6 +216,12 @@ function inspectDownloadTarget(target) {
+   };
+ }
+ 
++// AssetUploadManager persists native imported byte counts in metadata.size.
++// Keep older top-level representations compatible without losing that count.
++function assetByteSize(asset) {
++  return Math.max(0, Number(asset?.sizeBytes ?? asset?.size ?? asset?.metadata?.size) || 0);
++}
++
+ function publicDownloadPreview(asset, target, scope = {}) {
+   return {
+     summary: `导出 ${target.basename}`,
+@@ -227,7 +233,7 @@ function publicDownloadPreview(asset, target, scope = {}) {
+       name: target.basename,
+       kind: String(asset.kind || ''),
+       mimeType: String(asset.mimeType || ''),
+-      size: Math.max(0, Number(asset.sizeBytes || asset.size) || 0),
++      size: assetByteSize(asset),
+       sha256: String(asset.contentHash || '').toLowerCase(),
+     },
+     assetId: String(asset.id || ''),
+@@ -260,7 +266,7 @@ function boundedPosition(value, fallback) {
+ }
+ 
+ async function readVerifiedTextAsset(asset, maxBytes = 2 * 1024 * 1024) {
+-  const size = Math.max(0, Number(asset?.sizeBytes || asset?.size) || 0);
++  const size = assetByteSize(asset);
+   if (size > maxBytes) {
+     throw new AgentControlAssetError(
+       'ASSET_PLACE_TEXT_TOO_LARGE',
+@@ -387,8 +393,8 @@ function assetPlacementPatch(asset, document, input = {}, textContent = '') {
+         [fieldPrefix + 'Urls']: [mediaUrl],
+         fileName: filename,
+         fileNames: [filename],
+-        fileSize: Math.max(0, Number(asset.sizeBytes || asset.size) || 0),
+-        fileSizes: [Math.max(0, Number(asset.sizeBytes || asset.size) || 0)],
++        fileSize: assetByteSize(asset),
++        fileSizes: [assetByteSize(asset)],
+         mime: String(asset.mimeType || ''),
+         mimes: [String(asset.mimeType || '')],
+         sourceAssetId: String(asset.id),
+@@ -428,7 +434,7 @@ function assetPlacementPatch(asset, document, input = {}, textContent = '') {
+       contentHash,
+       contentRevision,
+       mimeType: String(asset.mimeType || ''),
+-      size: Math.max(0, Number(asset.sizeBytes || asset.size) || 0),
++      size: assetByteSize(asset),
+     },
+     placement: {
+       nodeId,
+@@ -526,9 +532,9 @@ function resolveAppliedAssetPlacement(database, canvasId, snapshot) {
+ function createAgentControlAssetService(options = {}) {
+   const runtimeConfig = options.config || {};
+   const database = options.database;
+-  const uploadManager = options.uploadManager || (
+-    database ? new AssetUploadManager(runtimeConfig, database, options.uploadOptions || {}) : null
+-  );
++  // Read-only inspection must not create CAS/upload folders or sweep sessions.
++  // Initialize the existing native importer only after approved-file revalidation.
++  let uploadManager = options.uploadManager || null;
+ 
+   async function inspectImport(filename) {
+     return inspectImportFile(filename, {
+@@ -537,11 +543,12 @@ function createAgentControlAssetService(options = {}) {
+   }
+ 
+   async function importFile(expected, context = {}) {
+-    if (!uploadManager) {
++    if (!uploadManager && !database) {
+       throw new AgentControlAssetError('ASSET_IMPORT_UNAVAILABLE', '当前画布没有可用的素材导入服务', 503);
+     }
+     const actual = await inspectImport(expected.absolute);
+     assertSameSnapshot(expected, actual);
++    if (!uploadManager) uploadManager = new AssetUploadManager(runtimeConfig, database, options.uploadOptions || {});
+     const result = await uploadManager.ingestFile(actual.absolute, {
+       filename: actual.basename,
+       sha256: actual.sha256,
+@@ -564,10 +571,12 @@ function createAgentControlAssetService(options = {}) {
+ 
+   function search(input = {}) {
+     if (!database) throw new AgentControlAssetError('ASSET_READ_UNAVAILABLE', '素材中心不可用', 503);
++    if (input.contentHash != null && !/^[a-f0-9]{64}$/.test(String(input.contentHash))) throw new AgentControlAssetError('ASSET_HASH_INVALID', '素材内容摘要格式无效');
+     const limit = Math.min(100, Math.max(1, Math.trunc(Number(input.limit) || 25)));
+     const offset = Math.max(0, Math.trunc(Number(input.offset) || 0));
+     const filters = {
+       projectId: input.projectId,
++      ...(input.contentHash == null ? {} : { contentHash: String(input.contentHash) }),
+       kind: input.kind,
+       query: input.query,
+       limit,
+diff --git a/backend/src/services/agentControlCompatibility.js b/backend/src/services/agentControlCompatibility.js
+index 2c0cfd73c0e26143793c4f22ff598c19ba6ebb3a..05e7ad8317dbaea6ee8987218d1b0c3161711536 100644
+--- a/backend/src/services/agentControlCompatibility.js
++++ b/backend/src/services/agentControlCompatibility.js
+@@ -36,6 +36,7 @@ function compatibilityPaths(options = {}) {
+   const providerCatalogPath = existingFile([
+     options.providerCatalogPath,
+     resourcesPath ? path.join(resourcesPath, 'backend', 'shared', 'creativeModelCatalog.json') : '',
++    resourcesPath ? path.join(resourcesPath, 'backend-enc', 'shared', 'creativeModelCatalog.json') : '',
+     path.join(SOURCE_ROOT, 'backend', 'src', 'shared', 'creativeModelCatalog.json'),
+   ]);
+   const capabilityManifestPath = existingFile([
+diff --git a/backend/src/services/agentControlRuns.js b/backend/src/services/agentControlRuns.js
+index 6f7e5a1964762ee82254b9679083e776faad776b..b3e787c0c8bb4746d48121330cb0e981423d2293 100644
+--- a/backend/src/services/agentControlRuns.js
++++ b/backend/src/services/agentControlRuns.js
+@@ -361,6 +361,7 @@ function publicIntent(intent) {
+     projectId: String(intent.projectId || ''),
+     canvasId: String(intent.canvasId || ''),
+     canvasRevision: Number(intent.canvasRevision) || 0,
++    operationId: String(intent.idempotencyKey || ''),
+     nodeIds: normalizeNodeIds(intent.nodeIds),
+     requestedBy: String(intent.requestedBy || ''),
+     provider: intent.provider || null,
+@@ -644,6 +645,7 @@ function createAgentControlRunService(options = {}) {
+ 
+   function startPreview(planId, scope = {}) {
+     const plan = requirePlan(planId, scope);
++    if (plan.submissionOperationId) throw new AgentControlRunError('RUN_PLAN_ALREADY_SUBMITTED', '这份运行计划已提交；请查询原运行意图，不要再次申请启动', 409);
+     const document = documentFor(plan.projectId, plan.canvasId);
+     if (Number(document.revision) !== plan.canvasRevision) {
+       throw new AgentControlRunError('RUN_CANVAS_STALE', '画布 revision 已变化，未提交运行；请重新生成计划', 409, {
+@@ -687,6 +689,13 @@ function createAgentControlRunService(options = {}) {
+   }
+ 
+   function complete(plan, context = {}) {
++    if (!plan || !Number.isFinite(Number(plan.expiresAt)) || Number(plan.expiresAt) <= now()) throw new AgentControlRunError('RUN_PLAN_EXPIRED', '运行计划已过期，未提交运行', 409);
++    const actorId = String(context.actorId || plan.actorId || '');
++    const sessionId = String(context.sessionId || plan.sessionId || '');
++    if (actorId !== String(plan.actorId || '') || sessionId !== String(plan.sessionId || '')) throw new AgentControlRunError('RUN_PLAN_SCOPE_MISMATCH', '运行计划不属于当前 Agent 会话', 403);
++    const owned = requirePlan(plan.id, { projectId: plan.projectId, canvasId: plan.canvasId, actorId, sessionId });
++    if (owned.planDigest !== plan.planDigest) throw new AgentControlRunError('RUN_PLAN_SCOPE_MISMATCH', '运行计划引用已变化', 409);
++    plan = owned;
+     const document = documentFor(plan.projectId, plan.canvasId);
+     if (Number(document.revision) !== plan.canvasRevision) {
+       throw new AgentControlRunError('RUN_CANVAS_STALE', '批准后画布已变化，未提交运行；请重新生成计划', 409);
+@@ -697,13 +706,17 @@ function createAgentControlRunService(options = {}) {
+     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,159}$/.test(operationId)) {
+       throw new AgentControlRunError('RUN_OPERATION_ID_INVALID', '运行 operationId 无效');
+     }
++    if (plan.submissionOperationId && plan.submissionOperationId !== operationId) throw new AgentControlRunError('RUN_PLAN_ALREADY_SUBMITTED', '这份运行计划已使用另一个操作引用，未再次提交', 409);
++    // This is the existing in-memory plan's single-use binding. The durable
++    // run_intents ledger remains the only reservation/execution authority.
++    plan.submissionOperationId = operationId;
+     const intent = database.createRunIntent({
+       projectId: plan.projectId,
+       canvasId: plan.canvasId,
+       canvasRevision: plan.canvasRevision,
+       nodeIds: plan.requestedNodeIds,
+       idempotencyKey: operationId,
+-      requestedBy: String(context.actorId || plan.actorId),
++      requestedBy: actorId,
+       provider: plan.provider,
+       model: plan.model,
+       estimatedCost: null,
+@@ -711,9 +724,18 @@ function createAgentControlRunService(options = {}) {
+       executionAuthority: plan.authority,
+       confirmationRequired: false,
+     });
++    if (!intent || intent.projectId !== plan.projectId || intent.canvasId !== plan.canvasId || intent.requestedBy !== actorId || Number(intent.canvasRevision) !== plan.canvasRevision || digest(normalizeNodeIds(intent.nodeIds)) !== digest(normalizeNodeIds(plan.requestedNodeIds)) || intent.idempotencyKey !== operationId) throw new AgentControlRunError('RUN_OPERATION_CONFLICT', '运行操作引用已属于其他范围，未返回该运行信息', 409);
++    try { assertRunIntentAuthorityMatches(plan.authority, intent.executionAuthority); } catch (_) { throw new AgentControlRunError('RUN_OPERATION_CONFLICT', '运行操作引用的授权范围不一致', 409); }
+     return publicIntent(intent);
+   }
+ 
++  function inspectOperation(operationId, scope = {}) {
++    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{7,159}$/.test(String(operationId || ''))) throw new AgentControlRunError('RUN_OPERATION_ID_INVALID', '运行操作引用无效');
++    const intent = database.getRunIntentByKey(String(scope.projectId || ''), String(operationId));
++    if (!intent || String(intent.canvasId || '') !== String(scope.canvasId || '') || String(intent.requestedBy || '') !== String(scope.actorId || '')) throw new AgentControlRunError('RUN_INTENT_NOT_FOUND', '运行请求不存在或不属于当前 Agent', 404);
++    return inspect(intent.id, scope);
++  }
++
+   function list(scope = {}, filters = {}) {
+     const intents = database.listRunIntents({
+       projectId: scope.projectId,
+@@ -782,6 +804,7 @@ function createAgentControlRunService(options = {}) {
+     complete,
+     createPlan,
+     inspect,
++    inspectOperation,
+     list,
+     requirePlan,
+     retryPlan,
+diff --git a/backend/src/services/projectDatabase.js b/backend/src/services/projectDatabase.js
+index 513ac7088ad8a9b3ef87582ab076845da07e574c..11de7b46c5013cf96788e8e1880a93463cdcba1a 100644
+--- a/backend/src/services/projectDatabase.js
++++ b/backend/src/services/projectDatabase.js
+@@ -27616,6 +27616,7 @@ class ProjectDatabase {
+     const query = String(filters.query || '').trim().toLowerCase();
+     const clauses = ['a.project_id = ?'];
+     const values = [projectId];
++    if (filters.contentHash != null) { clauses.push('a.content_hash = ?'); values.push(String(filters.contentHash)); }
+     if (Array.isArray(filters.assetIds)) {
+       const assetIds = [...new Set(filters.assetIds
+         .map((value) => String(value || '').trim())
+diff --git a/backend/src/shared/creativeCapabilityGraph.json b/backend/src/shared/creativeCapabilityGraph.json
+index e6f6f02c0360a024fbd4f38e75dd22e610c8000e..c8070994c16a04e76ca8221ce515253fb0945d75 100644
+--- a/backend/src/shared/creativeCapabilityGraph.json
++++ b/backend/src/shared/creativeCapabilityGraph.json
+@@ -27,14 +27,14 @@
+     "i18nNodeCatalog": "3ddab69ed9eba871d4a0633ff67c755d5fac41a9767171d3b0a2f0def96ec2af",
+     "i18nRendererResources": "5c2d165d243f6f2091b29a0d84590dd6ab8a0079dd10661811087c65756a1b60",
+     "i18nElectronCatalog": "161032248ec3e52c887674b197bd207ffe74ce41bd615fe5a315ef1a1d19ba6c",
+-    "runtimeCatalogSources": "823a244216287379c8246884145f7506044b45433c06d4cc20541db52dd97f38",
+-    "runtimeCatalogArtifact": "32d18f96b4c0fa127342a30a83e3c408ad9143538fa29e5b566c091ba9382d49",
++    "runtimeCatalogSources": "b167dc235c4255ef208d8a34c7d5689bddc920cf45b57b92f2e0eaf8ad25f3fa",
++    "runtimeCatalogArtifact": "00dc6ba277f0937123ad7695c01a473a733df8b3d7890f4e7f9fe33e685edf5d",
+     "handlerBindings": "3cd8cde3c05d1642d72ce8cbfae2874d1bdf986592ae431ef7d66b043da257b5",
+     "capabilityGraphCompiler": "a3716d239b91e1c4775f5996b3865ba3ab8fd652263138feef0a56de40851c24",
+     "coverageReceiptCompiler": "68c02167cb5317107edd346223a5e5999168e447bacbb977ff8e9678e6753fe7",
+     "canonicalTextDigestCompiler": "b0afcf28a257fbbd8f391edc117348f8f2ede1b4a039ae91bce25a8d563ac0cf"
+   },
+-  "aggregateDigest": "8d6d20b92d31646a5b3f17fc11f958352f8e1ee17ea69d8975ef293be4cf19e4",
++  "aggregateDigest": "359ced64c902ed4550e52487375d8a7f886f906f1b172b96be737aa72591043b",
+   "principles": {
+     "oneSentenceStart": true,
+     "directCanvasMutation": false,
+@@ -7451,7 +7451,7 @@
+   ],
+   "runtime": {
+     "schema": "t8-creative-runtime-catalog-v1",
+-    "sourceDigest": "823a244216287379c8246884145f7506044b45433c06d4cc20541db52dd97f38",
++    "sourceDigest": "b167dc235c4255ef208d8a34c7d5689bddc920cf45b57b92f2e0eaf8ad25f3fa",
+     "platforms": [
+       {
+         "id": "zhenzhen",
+@@ -14454,7 +14454,7 @@
+     "sourceDigests": {
+       "capabilityManifest": "569f2c8be144e05120ca629b2826383a06c4d6565ab3896c2dc61807bb9f7c27",
+       "nodeSchema": "46eb5e5bd55a7616fe0dda868b20a7c648e059e6fe1c75b43979d83f6072e71c",
+-      "runtimeCatalog": "823a244216287379c8246884145f7506044b45433c06d4cc20541db52dd97f38",
++      "runtimeCatalog": "b167dc235c4255ef208d8a34c7d5689bddc920cf45b57b92f2e0eaf8ad25f3fa",
+       "handlerBindings": "3cd8cde3c05d1642d72ce8cbfae2874d1bdf986592ae431ef7d66b043da257b5",
+       "receiptCompiler": "68c02167cb5317107edd346223a5e5999168e447bacbb977ff8e9678e6753fe7"
+     },
+@@ -14483,6 +14483,6 @@
+       "missingCompatibilityEdges": []
+     },
+     "complete": true,
+-    "digest": "fd06995d227e73070066395c1536ff05aa4fe5e1347e906703541341f22b4e05"
++    "digest": "40279fefb26d45103f57f5ec389e8ba74021fc1bf8511bb8e1cadc753014a35c"
+   }
+ }
+diff --git a/backend/src/shared/creativeCapabilitySurfaces.json b/backend/src/shared/creativeCapabilitySurfaces.json
+index bf42f014abf83d4c9c22010ce01e862df375fd2f..c073695d0ee90a99eda4f3e04e80f9c99e1ab45b 100644
+--- a/backend/src/shared/creativeCapabilitySurfaces.json
++++ b/backend/src/shared/creativeCapabilitySurfaces.json
+@@ -6,7 +6,7 @@
+     "capabilityGraph": "tools/zcanvas-cli/generated/creative-capability-graph.json"
+   },
+   "sourceDigest": "569f2c8be144e05120ca629b2826383a06c4d6565ab3896c2dc61807bb9f7c27",
+-  "capabilityGraphDigest": "8d6d20b92d31646a5b3f17fc11f958352f8e1ee17ea69d8975ef293be4cf19e4",
++  "capabilityGraphDigest": "359ced64c902ed4550e52487375d8a7f886f906f1b172b96be737aa72591043b",
+   "counts": {
+     "capabilities": 39,
+     "agentTools": 39,
+diff --git a/backend/src/shared/creativeModelCatalog.json b/backend/src/shared/creativeModelCatalog.json
+index 2a755e44fdd2079a946faec86d3401bce6f58713..beb7f4678476f089935a1bc339d0c7a1bd4875e8 100644
+--- a/backend/src/shared/creativeModelCatalog.json
++++ b/backend/src/shared/creativeModelCatalog.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "t8-creative-runtime-catalog-v1",
+-  "sourceDigest": "823a244216287379c8246884145f7506044b45433c06d4cc20541db52dd97f38",
++  "sourceDigest": "b167dc235c4255ef208d8a34c7d5689bddc920cf45b57b92f2e0eaf8ad25f3fa",
+   "generatedFrom": [
+     "src/providers/models.ts",
+     "src/config/seedance.ts",
+diff --git a/docs/project-context-current.md b/docs/project-context-current.md
+index fe05dd4ab274076a55ab41a7e51f37878bd4d519..c9510f132085bc8d210534c052df38b630a0d492 100644
+--- a/docs/project-context-current.md
++++ b/docs/project-context-current.md
+@@ -1,6 +1,6 @@
+ # 当前项目上下文
+ 
+-更新：2026-10-19。仅维护当前事实；长期规则见根 `SKILL.md` 和 `AGENTS.md`。本页预算 80 行 / 8 KiB，旧检查点迁入专题，不追加长日报。
++更新：2026-10-20。仅维护当前事实；长期规则见根 `SKILL.md` 和 `AGENTS.md`。本页预算 80 行 / 8 KiB，旧检查点迁入专题，不追加长日报。
+ 
+ - 默认目录 `E:\PenguinPravite\T8-penguin-canvas`；branch `codex/release-v3.0.8-volcengine-assets-ux`，common dir `.git`。开工以git/worktree门为准；正式源码/Tag固定后记录在发布专题，不移动。
+ - package `3.3.6` 已双平台发布为Latest；六资产/两个更新清单完整回下载通过，源码与Tag冻结，见[发布专题](release-v3.3.6.md)。
+@@ -12,14 +12,15 @@
+ 
+ | 事项 | 当前事实与下一步 |
+ | --- | --- |
++| DSH接入（未发布） | [素材/安装版握手](zcanvas-saved-media-transfer.md)、[实例发现](zcanvas-instance-discovery.md)及存储/运行恢复：77项与原生临时库组合验证通过。安装版尚未更新；真实窗口/Provider未验。 |
+ | 画布保存冲突 | 已随v3.3.6双平台发布：有界合并与冲突确认，两次20主题复查；215回归、隔离画布25项通过。旧确认/加载不回退、目录不复活、医生移动协议修正。CAS不放宽，现场/安装版后补，见[专题](canvas-save-conflict-20261019.md)。 |
+ | Strata本地LLM | 已随v3.3.5双平台发布：两轮20轮审查修8项，315回归及最新隔离画布16项通过。前轮真实识图通过，本轮冷启动上游503未通过；用户要求服务先不动。范围/未验收见[专题](strata-llm.md)。 |
+ | ArtCraft体验增强 | 已随v3.3.4双平台发布：灵感板/编辑版本/独立世界节点/Story草稿；完整App实链、28主题组合、142项及正式构建通过。排除/搁置项见[专题](artcraft-canvas-ux.md)。 |
+-| 节点清晰度 / 平价香蕉低价 / 豆包 | 已随v3.3.4双平台发布：节点滤镜始终关闭，香蕉2/Seed Audio共四模型、音色串联、九工作流。实网8/8完整解码；14主题672组Chromium样式/控件检查通过，合同/恢复/Creator回归通过。安装版/用户GPU未验收，见[专题](nb-lowprice-doubao.md)。 |
++| 节点清晰度 / 平价香蕉低价 / 豆包 | v3.3.4已发布；实网8/8解码、14主题672组样式/控件及相关回归通过。安装版/用户GPU未验，模型与工作流见[专题](nb-lowprice-doubao.md)。 |
+ | Mai / Topaz | 分别随v3.3.3/v3.3.2双平台发布；实网完整解码与限定回归通过，完整UI/安装版未验收，见[Mai](mai-image.md)、[Topaz](topaz-video-upscale.md)。 |
+ | 平价香蕉2.1 / Flux / Vidu Q4 | 已随v3.3.1双平台发布；六模型、Flux新Tab，旧默认不变。八条实网成功并完整解码，R2V转MP3；159/159回归、独立后端49/49通过。八份无凭据工作流见[专题](nb21-flux-viduq4.md)；安装升级及端到端UI未验收。 |
+ | 自动更新退出 | 已随v3.3.0双平台发布；74项限定用例及正式包probe通过。先保存/关闭后台，安装器不强杀；Git对象恢复及现场升级边界见[专题](auto-update-exit-fix-20261008.md)。 |
+-| 启动诊断/修复 | 日志随v3.2.8发布；同次校验复用、候选备份独立线程、活动旧名补回随v3.2.9双平台发布。修复51项、发布前55/55及打包22/22通过，组重叠不相加；合成库重开1316→547ms，不替代用户现场，见[修复](startup-history-fix-20261008.md)及[日志](startup-diagnostics.md)。 |
++| 启动诊断/修复 | v3.2.8/3.2.9已发布；同次校验、候选线程、旧名补回通过限定回归，现场未验。细项见[修复](startup-history-fix-20261008.md)及[诊断](startup-diagnostics.md)。 |
+ | 工坊香蕉2.1 | 已随v3.2.6双平台发布，仅新增模型，旧默认/参数不变；真实文生图与图生图通过。见[专题](nano-banana21-workshop.md)。 |
+ | RH 媒体误判 | 已随v3.2.6双平台发布：媒体保留上传；专项18/18、相邻40/40通过。两个应用真实元数据确认误判，一个真实素材上传/任务/结果完整解码成功；安装版未复验。见[专题](rh-media-field-validation-20261007.md)。 |
+ | 画布归档/新建默认来源 | 已随v3.2.5双平台发布：schema33正式迁移、大管理窗口、归档只读/恢复和权威写入门；全局来源只初始化空白通用image/edit/video，不改旧节点。最终功能27/27、持久化25/25、历史保真80/80、生产处理器9/9，组重叠不相加；浏览器点击工具无响应，端到端UI未验收。见[功能专题](canvas-archive-media-defaults.md)。 |
+diff --git a/features.json b/features.json
+index 519ffc501e02c5668b59267a61cbdbed46a36f94..12c5976b5d82c2789f9db4b00455ab7327a74b9d 100644
+--- a/features.json
++++ b/features.json
+@@ -1,6 +1,23 @@
+ {
++  "zcanvasInstanceDiscovery20261020": {"status": "development-verified-unreleased", "details": "docs/zcanvas-instance-discovery.md"},
++  "dshSavedMedia20261020": {"status": "development-verified-unreleased", "details": "docs/zcanvas-saved-media-transfer.md"},
+   "$schema": "本文件为 T8-penguin-canvas 节点清单防丢失锁,任何节点删减都需要在 roadmap.md 中说明并更新本文件。",
+   "version": "3.3.6",
++  "zcanvasRunApprovalRecovery20261020": {
++    "status": "development-verified-unreleased",
++    "summary": "原生运行计划单次操作绑定、同作用域GET恢复；20项限定回归与全新TEMP实际路由/账本通过，未运行Provider，真实窗口/生产版待验。",
++    "details": "docs/zcanvas-run-approval-recovery.md"
++  },
++  "zcanvasSecureStoreTransactions20261020": {
++    "status": "development-verified-unreleased",
++    "summary": "凭据v1格式不变；新版写入协调、条件提交/清理和旧快照拒绝。13并发/故障、4实际CLI、Electron42项与同步门通过；只保证参与协调的写入器。",
++    "details": "docs/zcanvas-secure-store-transactions.md"
++  },
++  "seedanceNzWriteReplayBoundary20261020": {
++    "status": "development-verified-unreleased-with-adjacent-baseline-failure",
++    "summary": "幂等键不再授权模糊失败后重放付费写入；保留明确TLS码恢复与查询。六项回归通过；相邻128项127过/1项原HEAD同样失败。",
++    "details": "docs/seedance-write-replay-boundary.md"
++  },
+   "electronReleaseV336": {
+     "status": "released-dual-platform-verified",
+     "version": "3.3.6",
+diff --git a/src/generated/creator-agent-capability-surfaces.json b/src/generated/creator-agent-capability-surfaces.json
+index bf42f014abf83d4c9c22010ce01e862df375fd2f..c073695d0ee90a99eda4f3e04e80f9c99e1ab45b 100644
+--- a/src/generated/creator-agent-capability-surfaces.json
++++ b/src/generated/creator-agent-capability-surfaces.json
+@@ -6,7 +6,7 @@
+     "capabilityGraph": "tools/zcanvas-cli/generated/creative-capability-graph.json"
+   },
+   "sourceDigest": "569f2c8be144e05120ca629b2826383a06c4d6565ab3896c2dc61807bb9f7c27",
+-  "capabilityGraphDigest": "8d6d20b92d31646a5b3f17fc11f958352f8e1ee17ea69d8975ef293be4cf19e4",
++  "capabilityGraphDigest": "359ced64c902ed4550e52487375d8a7f886f906f1b172b96be737aa72591043b",
+   "counts": {
+     "capabilities": 39,
+     "agentTools": 39,
+diff --git a/tests/agentControlAssetPlace.test.cjs b/tests/agentControlAssetPlace.test.cjs
+index aaac752a4b98f69778a8a2ed6f919f1fc6409215..bffb4176c498678d26d586728297bf598e4b9a20 100644
+--- a/tests/agentControlAssetPlace.test.cjs
++++ b/tests/agentControlAssetPlace.test.cjs
+@@ -11,10 +11,19 @@ const express = require('express');
+ 
+ const { createAgentControlAuthService } = require('../backend/src/services/agentControlAuth.js');
+ const { createAgentControlApprovalService } = require('../backend/src/services/agentControlApprovals.js');
+-const { createAgentControlAssetService, resolveAppliedAssetPlacement } = require('../backend/src/services/agentControlAssets.js');
++const { createAgentControlAssetService, resolveAppliedAssetPlacement, assetPlacementPatch, publicDownloadPreview } = require('../backend/src/services/agentControlAssets.js');
+ const { canvasPatchRequestDigest, previewCanvasPatch } = require('../backend/src/services/canvasPatch.js');
+ const agentControlRoute = require('../backend/src/routes/agentControl.js');
+ 
++test('native upload metadata size survives placement and export previews', () => {
++  const asset = { id: 'EXAMPLE_ASSET', kind: 'image', filename: 'EXAMPLE.png', mimeType: 'image/png', contentHash: 'a'.repeat(64), metadata: { size: 67 } };
++  const placement = assetPlacementPatch(asset, { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS', revision: 1, nodes: [] });
++  assert.equal(placement.asset.size, 67);
++  assert.equal(placement.patch.operations[0].payload.node.data.fileSize, 67);
++  assert.deepEqual(placement.patch.operations[0].payload.node.data.fileSizes, [67]);
++  assert.equal(publicDownloadPreview(asset, { basename: 'EXAMPLE.png' }).file.size, 67);
++});
++
+ function request(server, options = {}, body = null) {
+   const address = server.address();
+   return new Promise((resolve, reject) => {
+diff --git a/tests/agentControlAssets.test.cjs b/tests/agentControlAssets.test.cjs
+index f10d346afeebbf2b1e01a99f579073fe320bc0e9..74816ff277960f83f91b03347536429180a0efb0 100644
+--- a/tests/agentControlAssets.test.cjs
++++ b/tests/agentControlAssets.test.cjs
+@@ -71,6 +71,43 @@ function issueSession(auth, scopes) {
+   });
+ }
+ 
++test('asset content-hash search validates its filter and forwards the same exact scope to list/count', () => {
++  const seen = [], hash = '9'.repeat(64), service = createAgentControlAssetService({ uploadManager: {}, database: {
++    listAssets(filters) { seen.push(filters); return []; }, countAssets(filters) { seen.push(filters); return 0; }, getAssetCatalogRevision() { return 1; },
++  } });
++  assert.throws(() => service.search({ projectId: 'EXAMPLE_PROJECT', contentHash: 'EXAMPLE_INVALID' }), error => error.code === 'ASSET_HASH_INVALID'); assert.equal(seen.length, 0);
++  assert.equal(service.search({ projectId: 'EXAMPLE_PROJECT', contentHash: hash }).total, 0); assert.equal(seen.length, 2); assert.ok(seen.every(filters => filters.projectId === 'EXAMPLE_PROJECT' && filters.contentHash === hash));
++});
++
++test('read-only asset search/import preview do not initialize the copying manager or create storage folders', async t => {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'EXAMPLE_asset_read_')); t.after(() => fs.rmSync(root, { recursive: true, force: true })); const image = path.join(root, 'EXAMPLE.png'); fs.writeFileSync(image, pngBytes());
++  const database = { listAssets: () => [], countAssets: () => 0, getAssetCatalogRevision: () => 1 };
++  const service = createAgentControlAssetService({ database, config: { ASSET_BLOB_DIR: path.join(root, 'EXAMPLE_BLOBS'), DATA_DIR: path.join(root, 'EXAMPLE_DATA') } });
++  assert.equal(service.search({ projectId: 'EXAMPLE_PROJECT' }).total, 0); assert.equal((await service.inspectImport(image)).size, pngBytes().length);
++  assert.equal(fs.existsSync(path.join(root, 'EXAMPLE_BLOBS')), false); assert.equal(fs.existsSync(path.join(root, 'EXAMPLE_DATA')), false);
++});
++
++test('asset approval recovery and minimal patch receipt routes preserve native scopes without approving or exposing private ledger fields', async t => {
++  const auth = createAgentControlAuthService(), approvals = createAgentControlApprovalService(), hash = '9'.repeat(64), database = {
++    getCanvas(id) { return id === 'EXAMPLE_CANVAS' ? { projectId: 'EXAMPLE_PROJECT', canvasId: id, revision: 1 } : null; },
++    getCanvasPatchApplication(canvasId, patchId, options) { assert.equal(canvasId, 'EXAMPLE_CANVAS'); assert.equal(options.projectId, 'EXAMPLE_PROJECT'); assert.equal(options.includeAllActors, true); return patchId === 'EXAMPLE_PATCH' ? { patchId, status: 'applied', baseRevision: 1, appliedRevision: 2, affectedNodeIds: ['EXAMPLE_NODE'], requestDigest: 'EXAMPLE_PRIVATE_DIGEST', changes: ['EXAMPLE_PRIVATE_CHANGE'], actorId: 'EXAMPLE_PRIVATE_ACTOR' } : null; },
++  };
++  const app = express(); app.use(express.json()); app.use('/api/agent-control/v1', agentControlRoute.createAgentControlRouter({ auth, approvals, database, config: { PORT: 19030, APP_VERSION: '3.3.6', BACKEND_INSTANCE_ID: 'a'.repeat(43), COLLAB_MAX_UPLOAD_BYTES: 1024 * 1024 } }));
++  const server = http.createServer(app); await new Promise(done => server.listen(0, '127.0.0.1', done)); t.after(() => new Promise(done => server.close(done)));
++  const session = issueSession(auth, ['canvas:read', 'canvas:write', 'asset:read', 'asset:transfer']), headers = { Authorization: `Bearer ${session.accessToken}` };
++  for (const action of ['import', 'place']) {
++    const operationId = `EXAMPLE_ASSET_${action}`, record = approvals.create({ action: `asset.${action}`, sessionId: session.sessionId, projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS', operationId, preview: { file: { sha256: hash } } });
++    const path = `/api/agent-control/v1/asset-${action}-approvals/by-operation/${operationId}?projectId=EXAMPLE_PROJECT&canvasId=EXAMPLE_CANVAS`, read = await request(server, { path, headers }); assert.equal(read.status, 200); assert.equal(read.body.data.approvalRequestId, record.approvalRequestId); assert.equal(read.body.data.status, 'pending');
++    assert.equal(crypto.createHash('sha256').update(read.body.data.pollSecret).digest('hex'), crypto.createHash('sha256').update(record.pollSecret).digest('hex'));
++    assert.equal((await request(server, { path: path.replace('projectId=EXAMPLE_PROJECT', 'projectId=EXAMPLE_OTHER'), headers })).status, 404);
++    const other = issueSession(auth, ['canvas:read', 'canvas:write', 'asset:read', 'asset:transfer']); assert.equal((await request(server, { path, headers: { Authorization: `Bearer ${other.accessToken}` } })).status, 404);
++  }
++  assert.equal(approvals.listPending().length, 2); const status = await request(server, { path: '/api/agent-control/v1/status' }); assert.equal(status.body.data.assetControl.maxImportBytes, 1024 * 1024);
++  const patch = await request(server, { path: '/api/agent-control/v1/patches/EXAMPLE_PATCH?projectId=EXAMPLE_PROJECT&canvasId=EXAMPLE_CANVAS', headers }); assert.equal(patch.status, 200); assert.equal(patch.body.data.appliedRevision, 2); assert.equal(JSON.stringify(patch.body).includes('EXAMPLE_PRIVATE'), false);
++  assert.equal((await request(server, { path: '/api/agent-control/v1/patches/EXAMPLE_PATCH?projectId=EXAMPLE_OTHER&canvasId=EXAMPLE_CANVAS', headers })).status, 404);
++  const readOnly = issueSession(auth, ['asset:read']); assert.equal((await request(server, { path: '/api/agent-control/v1/asset-import-approvals/by-operation/EXAMPLE_ASSET_import?projectId=EXAMPLE_PROJECT&canvasId=EXAMPLE_CANVAS', headers: { Authorization: `Bearer ${readOnly.accessToken}` } })).status, 403);
++});
++
+ test('asset import inspection rejects fake mime and symlinks without writing', async (t) => {
+   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'zcanvas-asset-inspect-'));
+   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+diff --git a/tests/seedanceNzProvider.test.ts b/tests/seedanceNzProvider.test.ts
+index fcd1cc32bcc8b5013690e923043212b0e97c04cb..84f13d06f2e1e8916379d066853f8a5851e55b10 100644
+--- a/tests/seedanceNzProvider.test.ts
++++ b/tests/seedanceNzProvider.test.ts
+@@ -21,7 +21,6 @@ test('seedance.nz keeps TLS verification enabled with the pinned official root',
+       < source.indexOf('dispatcher: seedanceDispatcher'),
+     'the active system network must run before the provider-specific TLS recovery connection',
+   );
+-  assert.match(source, /stableSubmission\s*=\s*Boolean\(headerValue\(request\.headers,\s*'idempotency-key'\)\)/);
+ });
+ 
+ function jsonResponse(data: unknown, status = 200) {
+diff --git a/tools/zcanvas-cli/generated/creative-capability-graph.json b/tools/zcanvas-cli/generated/creative-capability-graph.json
+index e6f6f02c0360a024fbd4f38e75dd22e610c8000e..c8070994c16a04e76ca8221ce515253fb0945d75 100644
+--- a/tools/zcanvas-cli/generated/creative-capability-graph.json
++++ b/tools/zcanvas-cli/generated/creative-capability-graph.json
+@@ -27,14 +27,14 @@
+     "i18nNodeCatalog": "3ddab69ed9eba871d4a0633ff67c755d5fac41a9767171d3b0a2f0def96ec2af",
+     "i18nRendererResources": "5c2d165d243f6f2091b29a0d84590dd6ab8a0079dd10661811087c65756a1b60",
+     "i18nElectronCatalog": "161032248ec3e52c887674b197bd207ffe74ce41bd615fe5a315ef1a1d19ba6c",
+-    "runtimeCatalogSources": "823a244216287379c8246884145f7506044b45433c06d4cc20541db52dd97f38",
+-    "runtimeCatalogArtifact": "32d18f96b4c0fa127342a30a83e3c408ad9143538fa29e5b566c091ba9382d49",
++    "runtimeCatalogSources": "b167dc235c4255ef208d8a34c7d5689bddc920cf45b57b92f2e0eaf8ad25f3fa",
++    "runtimeCatalogArtifact": "00dc6ba277f0937123ad7695c01a473a733df8b3d7890f4e7f9fe33e685edf5d",
+     "handlerBindings": "3cd8cde3c05d1642d72ce8cbfae2874d1bdf986592ae431ef7d66b043da257b5",
+     "capabilityGraphCompiler": "a3716d239b91e1c4775f5996b3865ba3ab8fd652263138feef0a56de40851c24",
+     "coverageReceiptCompiler": "68c02167cb5317107edd346223a5e5999168e447bacbb977ff8e9678e6753fe7",
+     "canonicalTextDigestCompiler": "b0afcf28a257fbbd8f391edc117348f8f2ede1b4a039ae91bce25a8d563ac0cf"
+   },
+-  "aggregateDigest": "8d6d20b92d31646a5b3f17fc11f958352f8e1ee17ea69d8975ef293be4cf19e4",
++  "aggregateDigest": "359ced64c902ed4550e52487375d8a7f886f906f1b172b96be737aa72591043b",
+   "principles": {
+     "oneSentenceStart": true,
+     "directCanvasMutation": false,
+@@ -7451,7 +7451,7 @@
+   ],
+   "runtime": {
+     "schema": "t8-creative-runtime-catalog-v1",
+-    "sourceDigest": "823a244216287379c8246884145f7506044b45433c06d4cc20541db52dd97f38",
++    "sourceDigest": "b167dc235c4255ef208d8a34c7d5689bddc920cf45b57b92f2e0eaf8ad25f3fa",
+     "platforms": [
+       {
+         "id": "zhenzhen",
+@@ -14454,7 +14454,7 @@
+     "sourceDigests": {
+       "capabilityManifest": "569f2c8be144e05120ca629b2826383a06c4d6565ab3896c2dc61807bb9f7c27",
+       "nodeSchema": "46eb5e5bd55a7616fe0dda868b20a7c648e059e6fe1c75b43979d83f6072e71c",
+-      "runtimeCatalog": "823a244216287379c8246884145f7506044b45433c06d4cc20541db52dd97f38",
++      "runtimeCatalog": "b167dc235c4255ef208d8a34c7d5689bddc920cf45b57b92f2e0eaf8ad25f3fa",
+       "handlerBindings": "3cd8cde3c05d1642d72ce8cbfae2874d1bdf986592ae431ef7d66b043da257b5",
+       "receiptCompiler": "68c02167cb5317107edd346223a5e5999168e447bacbb977ff8e9678e6753fe7"
+     },
+@@ -14483,6 +14483,6 @@
+       "missingCompatibilityEdges": []
+     },
+     "complete": true,
+-    "digest": "fd06995d227e73070066395c1536ff05aa4fe5e1347e906703541341f22b4e05"
++    "digest": "40279fefb26d45103f57f5ec389e8ba74021fc1bf8511bb8e1cadc753014a35c"
+   }
+ }
+diff --git a/tools/zcanvas-cli/generated/creative-capability-surfaces.json b/tools/zcanvas-cli/generated/creative-capability-surfaces.json
+index bf42f014abf83d4c9c22010ce01e862df375fd2f..c073695d0ee90a99eda4f3e04e80f9c99e1ab45b 100644
+--- a/tools/zcanvas-cli/generated/creative-capability-surfaces.json
++++ b/tools/zcanvas-cli/generated/creative-capability-surfaces.json
+@@ -6,7 +6,7 @@
+     "capabilityGraph": "tools/zcanvas-cli/generated/creative-capability-graph.json"
+   },
+   "sourceDigest": "569f2c8be144e05120ca629b2826383a06c4d6565ab3896c2dc61807bb9f7c27",
+-  "capabilityGraphDigest": "8d6d20b92d31646a5b3f17fc11f958352f8e1ee17ea69d8975ef293be4cf19e4",
++  "capabilityGraphDigest": "359ced64c902ed4550e52487375d8a7f886f906f1b172b96be737aa72591043b",
+   "counts": {
+     "capabilities": 39,
+     "agentTools": 39,
+diff --git a/tools/zcanvas-cli/generated/creative-runtime-catalog.json b/tools/zcanvas-cli/generated/creative-runtime-catalog.json
+index 2a755e44fdd2079a946faec86d3401bce6f58713..beb7f4678476f089935a1bc339d0c7a1bd4875e8 100644
+--- a/tools/zcanvas-cli/generated/creative-runtime-catalog.json
++++ b/tools/zcanvas-cli/generated/creative-runtime-catalog.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "t8-creative-runtime-catalog-v1",
+-  "sourceDigest": "823a244216287379c8246884145f7506044b45433c06d4cc20541db52dd97f38",
++  "sourceDigest": "b167dc235c4255ef208d8a34c7d5689bddc920cf45b57b92f2e0eaf8ad25f3fa",
+   "generatedFrom": [
+     "src/providers/models.ts",
+     "src/config/seedance.ts",
+diff --git a/tools/zcanvas-cli/manifest.json b/tools/zcanvas-cli/manifest.json
+index c7a72817799b728a60eb3d2c6bb65b17a1af36e0..86d62117d65c8b9afcb1a0c9eca31f91589a2400 100644
+--- a/tools/zcanvas-cli/manifest.json
++++ b/tools/zcanvas-cli/manifest.json
+@@ -7,7 +7,7 @@
+   "responseSchema": "t8-agent-control-response-v1",
+   "canvasPatchProtocol": "t8-canvas-patch-v1",
+   "nodeSchemaDigest": "46eb5e5bd55a7616fe0dda868b20a7c648e059e6fe1c75b43979d83f6072e71c",
+-  "providerCatalogDigest": "32d18f96b4c0fa127342a30a83e3c408ad9143538fa29e5b566c091ba9382d49",
++  "providerCatalogDigest": "00dc6ba277f0937123ad7695c01a473a733df8b3d7890f4e7f9fe33e685edf5d",
+   "minimumDesktopVersion": "2.6.4",
+   "commandCatalog": "commandCatalog.json",
+   "creativeCapabilityManifest": "creativeCapabilityManifest.json",
+diff --git a/tools/zcanvas-cli/src/cli.cjs b/tools/zcanvas-cli/src/cli.cjs
+index 07e344dca8225481c4c23ec72723de8df6e9e0ee..7ffb2163290da3d89a2be419f70378b41cfa2286 100644
+--- a/tools/zcanvas-cli/src/cli.cjs
++++ b/tools/zcanvas-cli/src/cli.cjs
+@@ -609,6 +609,7 @@ async function handleAuth(subcommand, parsed, human) {
+   const instance = await selectInstance(String(parsed.flags.get('instance') || ''));
+ 
+   if (action === 'pair') {
++    if (configuredInstances().pending.some(item => item.instanceId === instance.instanceId)) throw new AgentClientError('PAIRING_ALREADY_PENDING', '此实例已有待确认配对，请先在画布处理已有请求');
+     const payload = await requestAgentControl(instance, '/api/agent-control/v1/pairings', {
+       method: 'POST',
+       body: {
+@@ -649,7 +650,7 @@ async function handleAuth(subcommand, parsed, human) {
+       throw new AgentClientError('PAIRING_NOT_STARTED', '没有找到此画布实例的待确认配对，请先运行 zcanvas auth pair');
+     }
+     if (Date.parse(String(pending.expiresAt || '')) <= Date.now()) {
+-      deletePending(instance.instanceId);
++      deletePending(instance.instanceId, { expectedPairingId: pending.pairingId, expectedOrigin: instance.origin });
+       throw new AgentClientError('PAIRING_EXPIRED', 'Agent 配对验证码已过期，请重新发起配对并核对新的验证码');
+     }
+     const payload = await requestAgentControl(
+@@ -674,11 +675,11 @@ async function handleAuth(subcommand, parsed, human) {
+       return EXIT_CODES.CONFIRMATION_REQUIRED;
+     }
+     if (result.status === 'denied') {
+-      deletePending(instance.instanceId);
++      deletePending(instance.instanceId, { expectedPairingId: pending.pairingId, expectedOrigin: instance.origin });
+       throw new AgentClientError('PAIRING_DENIED', '画布用户已拒绝此 Agent 连接');
+     }
+     if (result.status !== 'approved' || !result.accessToken) {
+-      deletePending(instance.instanceId);
++      deletePending(instance.instanceId, { expectedPairingId: pending.pairingId, expectedOrigin: instance.origin });
+       throw new AgentClientError('PAIRING_TOKEN_ALREADY_ISSUED', '配对凭据已领取或失效，请重新发起配对');
+     }
+     storeSession(instance, result);
+@@ -719,7 +720,7 @@ async function handleAuth(subcommand, parsed, human) {
+       ]);
+       return EXIT_CODES.OK;
+     } catch (error) {
+-      if (['AUTH_EXPIRED', 'PAIRING_REQUIRED'].includes(error?.code)) deleteSession(instance.instanceId);
++      if (['AUTH_EXPIRED', 'PAIRING_REQUIRED'].includes(error?.code)) deleteSession(instance.instanceId, { expectedSessionId: session.sessionId, expectedOrigin: instance.origin });
+       throw error;
+     }
+   }
+@@ -737,7 +738,7 @@ async function handleAuth(subcommand, parsed, human) {
+       method: 'DELETE',
+       accessToken: session.accessToken,
+     });
+-    deleteSession(instance.instanceId);
++    deleteSession(instance.instanceId, { expectedSessionId: session.sessionId, expectedOrigin: instance.origin });
+     emit(envelope({
+       message: 'Agent 连接已撤销，本机安全凭据已删除',
+       data: { instanceId: instance.instanceId, ...payload.data },
+@@ -767,7 +768,7 @@ async function authenticatedRequest(instance, session, pathname, options = {}) {
+       accessToken: session.accessToken,
+     });
+   } catch (error) {
+-    if (['AUTH_EXPIRED', 'PAIRING_REQUIRED'].includes(error?.code)) deleteSession(instance.instanceId);
++    if (['AUTH_EXPIRED', 'PAIRING_REQUIRED'].includes(error?.code)) deleteSession(instance.instanceId, { expectedSessionId: session.sessionId, expectedOrigin: instance.origin });
+     throw error;
+   }
+ }
+@@ -1075,10 +1076,10 @@ async function handlePatch(subcommand, parsed, human) {
+       return EXIT_CODES.CONFIRMATION_REQUIRED;
+     }
+     if (result.status === 'denied') {
+-      deleteApproval(instance.instanceId);
++      deleteApproval(instance.instanceId, approval.approvalRequestId);
+       throw new AgentClientError('PATCH_APPROVAL_DENIED', '画布用户已拒绝此操作');
+     }
+-    deleteApproval(instance.instanceId);
++    deleteApproval(instance.instanceId, approval.approvalRequestId);
+     emit(envelope({
+       message: result.action === 'patch.revert' ? 'Patch 已创建新的撤销 revision' : 'Patch 已应用',
+       data: result,
+diff --git a/tools/zcanvas-cli/src/discovery.cjs b/tools/zcanvas-cli/src/discovery.cjs
+index 27e5eced50dfe646f92c640683d4cfb6a3d36676..a763f005ad97227558930a3c99fb4466031983d3 100644
+--- a/tools/zcanvas-cli/src/discovery.cjs
++++ b/tools/zcanvas-cli/src/discovery.cjs
+@@ -7,6 +7,8 @@ const path = require('node:path');
+ const INSTANCE_SCHEMA = 't8-agent-control-instance-v1';
+ const INSTANCE_FILE_LIMIT = 32 * 1024;
+ const INSTANCE_LIST_LIMIT = 256;
++const INSTANCE_ENTRY_LIMIT = 32768;
++const INSTANCE_READ_LIMIT = INSTANCE_FILE_LIMIT * INSTANCE_LIST_LIMIT;
+ 
+ function registryDirectories(env = process.env, homeDir = os.homedir()) {
+   const directories = [];
+@@ -70,26 +72,49 @@ function readInstanceDescriptors(options = {}) {
+   const now = Number(options.now) || Date.now();
+   const descriptors = [];
+   const seen = new Set();
++  let readBytes = 0;
+   for (const directory of registryDirectories(options.env, options.homeDir)) {
+     let entries;
+     try {
+-      entries = fs.readdirSync(directory, { withFileTypes: true })
+-        .filter((entry) => entry.isFile() && /^[A-Za-z0-9_-]{43,128}\.json$/.test(entry.name))
+-        .slice(0, INSTANCE_LIST_LIMIT);
++      entries = fs.readdirSync(directory, { withFileTypes: true });
++      if (entries.length > INSTANCE_ENTRY_LIMIT) {
++        const error = new Error('Agent instance registry exceeds the bounded scan limit');
++        error.code = 'INSTANCE_REGISTRY_LIMIT';
++        throw error;
++      }
++      // Stale files do not consume the live-descriptor window. Prefer recent
++      // atomic heartbeats, but validate the JSON heartbeat as the authority.
++      entries = entries.filter((entry) => entry.isFile() && /^[A-Za-z0-9_-]{43,128}\.json$/.test(entry.name))
++        .flatMap((entry) => {
++          try {
++            const stat = fs.lstatSync(path.join(directory, entry.name));
++            return stat.isFile() && !stat.isSymbolicLink() && stat.size <= INSTANCE_FILE_LIMIT ? [{ name: entry.name, stat }] : [];
++          } catch (_) { return []; }
++        })
++        .sort((left, right) => right.stat.mtimeMs - left.stat.mtimeMs || left.name.localeCompare(right.name));
+     } catch (error) {
+       if (error?.code === 'ENOENT') continue;
+       throw error;
+     }
+     for (const entry of entries) {
++      if (descriptors.length >= INSTANCE_LIST_LIMIT) break;
++      if (readBytes + entry.stat.size + 1 > INSTANCE_READ_LIMIT) continue;
+       const filePath = path.join(directory, entry.name);
++      let fd;
+       try {
+-        const stat = fs.lstatSync(filePath);
+-        if (!stat.isFile() || stat.isSymbolicLink() || stat.size > INSTANCE_FILE_LIMIT) continue;
+-        const descriptor = validateDescriptor(JSON.parse(fs.readFileSync(filePath, 'utf8')), now);
++        fd = fs.openSync(filePath, 'r');
++        const opened = fs.fstatSync(fd);
++        if (!opened.isFile() || opened.size !== entry.stat.size || opened.dev !== entry.stat.dev || opened.ino !== entry.stat.ino) continue;
++        readBytes += opened.size + 1;
++        const bytes = Buffer.alloc(opened.size + 1); let size = 0;
++        while (size < bytes.length) { const read = fs.readSync(fd, bytes, size, bytes.length - size, size); if (!read) break; size += read; }
++        const after = fs.fstatSync(fd);
++        if (size !== opened.size || after.size !== opened.size || after.mtimeMs !== opened.mtimeMs) continue;
++        const descriptor = validateDescriptor(JSON.parse(bytes.subarray(0, size).toString('utf8')), now);
+         if (!descriptor || seen.has(descriptor.instanceId)) continue;
+         seen.add(descriptor.instanceId);
+         descriptors.push(descriptor);
+-      } catch (_) {}
++      } catch (_) {} finally { if (fd !== undefined) fs.closeSync(fd); }
+     }
+   }
+   return descriptors.sort((left, right) => left.instanceId.localeCompare(right.instanceId));
+@@ -133,6 +158,8 @@ async function discoverInstances(options = {}) {
+ module.exports = {
+   INSTANCE_FILE_LIMIT,
+   INSTANCE_LIST_LIMIT,
++  INSTANCE_ENTRY_LIMIT,
++  INSTANCE_READ_LIMIT,
+   INSTANCE_SCHEMA,
+   discoverInstances,
+   probeInstance,
+diff --git a/tools/zcanvas-cli/src/secureStore.cjs b/tools/zcanvas-cli/src/secureStore.cjs
+index c36cb474f143dc1af4222e1ce70d224037e597b5..6d2ff40c209972b6360ec0cbef8a6a3f2d38079f 100644
+--- a/tools/zcanvas-cli/src/secureStore.cjs
++++ b/tools/zcanvas-cli/src/secureStore.cjs
+@@ -5,10 +5,18 @@ const crypto = require('node:crypto');
+ const fs = require('node:fs');
+ const os = require('node:os');
+ const path = require('node:path');
++const { withStoreLock } = require('./secureStoreTransactions.cjs');
+ 
+ const STORE_SCHEMA = 't8-zcanvas-secure-store-v1';
+ const STORE_LIMIT = 256 * 1024;
+ const DPAPI_ENTROPY = 't8-zcanvas-agent-control-v1';
++const TRANSACTION_PROTOCOL = 't8-zcanvas-secure-store-transaction-v1';
++const snapshots = new WeakMap();
++
++function remember(store, filePath, bytes) {
++  snapshots.set(store, { path: path.resolve(filePath), hash: bytes == null ? null : crypto.createHash('sha256').update(bytes).digest('hex') });
++  return store;
++}
+ 
+ class SecureStoreError extends Error {
+   constructor(code, message) {
+@@ -121,7 +129,9 @@ function readStore(options = {}) {
+     if (!stat.isFile() || stat.isSymbolicLink() || stat.size > STORE_LIMIT) {
+       throw new SecureStoreError('CREDENTIAL_STORE_INVALID', 'Agent 凭据存储无效');
+     }
+-    const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
++    const bytes = fs.readFileSync(filePath);
++    if (bytes.length > STORE_LIMIT) throw new SecureStoreError('CREDENTIAL_STORE_INVALID', 'Agent 凭据存储无效');
++    const parsed = JSON.parse(bytes.toString('utf8'));
+     if (parsed?.schema !== STORE_SCHEMA
+       || !parsed.sessions || typeof parsed.sessions !== 'object'
+       || !parsed.pending || typeof parsed.pending !== 'object'
+@@ -133,35 +143,65 @@ function readStore(options = {}) {
+     if (!parsed.contexts) parsed.contexts = {};
+     if (!parsed.approvals) parsed.approvals = {};
+     if (!parsed.recipeSigning) parsed.recipeSigning = null;
+-    return parsed;
++    return remember(parsed, filePath, bytes);
+   } catch (error) {
+-    if (error?.code === 'ENOENT') return emptyStore();
++    if (error?.code === 'ENOENT') return remember(emptyStore(), filePath, null);
+     if (error instanceof SecureStoreError) throw error;
+     throw new SecureStoreError('CREDENTIAL_STORE_INVALID', '无法读取 Agent 凭据存储');
+   }
+ }
+ 
+-function writeStore(store, options = {}) {
+-  const filePath = storePath(options);
++function writeStoreAtomic(store, options, lease) {
++  const filePath = lease.filename;
+   const directory = path.dirname(filePath);
+   fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+-  const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
++  const tempPath = `${filePath}.${lease.pid}.${lease.nonce}.tmp`;
+   const serialized = `${JSON.stringify(store)}\n`;
+   if (Buffer.byteLength(serialized, 'utf8') > STORE_LIMIT) {
+     throw new SecureStoreError('CREDENTIAL_STORE_FULL', 'Agent 凭据存储超过安全限制');
+   }
+   try {
+-    fs.writeFileSync(tempPath, serialized, { encoding: 'utf8', mode: 0o600, flag: 'wx' });
++    const descriptor = fs.openSync(tempPath, 'wx', 0o600);
++    try { fs.writeFileSync(descriptor, serialized, 'utf8'); fs.fsyncSync(descriptor); }
++    finally { fs.closeSync(descriptor); }
+     fs.renameSync(tempPath, filePath);
+     try { fs.chmodSync(filePath, 0o600); } catch (_) {}
++    remember(store, storePath(options), serialized);
+   } finally {
+     try { fs.rmSync(tempPath, { force: true }); } catch (_) {}
+   }
+ }
+ 
++function locked(options, work) {
++  try { return withStoreLock(storePath(options), work); }
++  catch (error) {
++    if (error instanceof SecureStoreError) throw error;
++    const code = /^(?:CREDENTIAL_STORE_[A-Z_]+|PAIRING_PROGRESS_CHANGED|PAIRING_ALREADY_PENDING)$/.test(String(error.code || '')) ? error.code : 'CREDENTIAL_STORE_WRITE_FAILED';
++    throw new SecureStoreError(code, code === 'CREDENTIAL_STORE_BUSY' ? '另一进程正在更新 Agent 配对，请稍后再试；未覆盖已有凭据' : 'Agent 凭据更新未完成，已有记录未被无条件覆盖');
++  }
++}
++function updateStore(options, update) {
++  return locked(options, lease => {
++    const store = readStore(options), result = update(store);
++    if (result.changed !== false) writeStoreAtomic(store, options, lease);
++    return result.value;
++  });
++}
++function writeStore(store, options = {}) {
++  return locked(options, lease => {
++    const current = readStore(options), previous = snapshots.get(store), actual = snapshots.get(current);
++    if ((!previous && actual.hash !== null) || (previous && (previous.path !== actual.path || previous.hash !== actual.hash))) throw new SecureStoreError('CREDENTIAL_STORE_CHANGED', '凭据快照已变化，请重新读取后再更新');
++    if (!store || store.schema !== STORE_SCHEMA || !store.sessions || !store.pending) throw new SecureStoreError('CREDENTIAL_STORE_INVALID', 'Agent 凭据存储格式不兼容');
++    writeStoreAtomic(store, options, lease);
++  });
++}
++
++function assertExpected(record, idField, expected, origin) {
++  if (expected !== undefined && (!record || record[idField] !== expected || (origin !== undefined && record.origin !== origin))) throw new SecureStoreError('PAIRING_PROGRESS_CHANGED', '配对或会话已由另一进程更新，未覆盖新的记录');
++}
++
+ function storePending(instance, pairing, options = {}) {
+-  const store = readStore(options);
+-  store.pending[instance.instanceId] = {
++  const record = {
+     instanceId: instance.instanceId,
+     origin: instance.origin,
+     pairingId: pairing.pairingId,
+@@ -170,8 +210,16 @@ function storePending(instance, pairing, options = {}) {
+     pollSecretProtected: protectValue(pairing.pollSecret, options),
+     protection: (options.platform || process.platform) === 'win32' ? 'windows-dpapi-current-user' : 'restricted-file',
+   };
+-  writeStore(store, options);
+-  return { ...store.pending[instance.instanceId], pollSecretProtected: undefined };
++  return updateStore(options, store => {
++    const previous = store.pending[instance.instanceId];
++    if (previous?.pairingId === pairing.pairingId) {
++      if (previous.origin !== instance.origin || previous.userCode !== pairing.userCode || previous.expiresAt !== pairing.expiresAt) throw new SecureStoreError('PAIRING_PROGRESS_CHANGED', '同一配对请求的身份信息已变化，未覆盖原记录');
++      return { value: { ...previous, pollSecretProtected: undefined }, changed: false };
++    }
++    if (previous && !(Date.parse(previous.expiresAt) <= Date.now())) throw new SecureStoreError('PAIRING_ALREADY_PENDING', '此实例已有待确认配对，请先在画布处理已有请求');
++    store.pending[instance.instanceId] = record;
++    return { value: { ...record, pollSecretProtected: undefined } };
++  });
+ }
+ 
+ function loadPending(instanceId, options = {}) {
+@@ -186,16 +234,16 @@ function loadPending(instanceId, options = {}) {
+ }
+ 
+ function deletePending(instanceId, options = {}) {
+-  const store = readStore(options);
+-  const existed = Boolean(store.pending[String(instanceId || '')]);
+-  delete store.pending[String(instanceId || '')];
+-  writeStore(store, options);
+-  return existed;
++  return updateStore(options, store => {
++    const key = String(instanceId || '');
++    assertExpected(store.pending[key], 'pairingId', options.expectedPairingId, options.expectedOrigin);
++    const existed = Boolean(store.pending[key]); delete store.pending[key];
++    return { value: existed };
++  });
+ }
+ 
+ function storeSession(instance, session, options = {}) {
+-  const store = readStore(options);
+-  store.sessions[instance.instanceId] = {
++  const record = {
+     instanceId: instance.instanceId,
+     origin: instance.origin,
+     sessionId: session.sessionId,
+@@ -203,9 +251,13 @@ function storeSession(instance, session, options = {}) {
+     accessTokenProtected: protectValue(session.accessToken, options),
+     protection: (options.platform || process.platform) === 'win32' ? 'windows-dpapi-current-user' : 'restricted-file',
+   };
+-  delete store.pending[instance.instanceId];
+-  writeStore(store, options);
+-  return { ...store.sessions[instance.instanceId], accessTokenProtected: undefined };
++  return updateStore(options, store => {
++    const pending = store.pending[instance.instanceId];
++    if (session.pairingId !== undefined) assertExpected(pending, 'pairingId', session.pairingId, instance.origin);
++    else if (pending && !(Date.parse(pending.expiresAt) <= Date.now())) throw new SecureStoreError('PAIRING_PROGRESS_CHANGED', '当前待配对请求需要匹配的身份，未覆盖它');
++    store.sessions[instance.instanceId] = record; delete store.pending[instance.instanceId];
++    return { value: { ...record, accessTokenProtected: undefined } };
++  });
+ }
+ 
+ function loadSession(instanceId, options = {}) {
+@@ -220,11 +272,12 @@ function loadSession(instanceId, options = {}) {
+ }
+ 
+ function deleteSession(instanceId, options = {}) {
+-  const store = readStore(options);
+-  const existed = Boolean(store.sessions[String(instanceId || '')]);
+-  delete store.sessions[String(instanceId || '')];
+-  writeStore(store, options);
+-  return existed;
++  return updateStore(options, store => {
++    const key = String(instanceId || '');
++    assertExpected(store.sessions[key], 'sessionId', options.expectedSessionId, options.expectedOrigin);
++    const existed = Boolean(store.sessions[key]); delete store.sessions[key];
++    return { value: existed };
++  });
+ }
+ 
+ function configuredInstances(options = {}) {
+@@ -264,7 +317,7 @@ function getRecipeSigningSecret(options = {}) {
+   }
+   const secret = crypto.randomBytes(32).toString('base64url');
+   const keyId = crypto.createHash('sha256').update(secret).digest('hex').slice(0, 20);
+-  store.recipeSigning = {
++  const candidate = {
+     keyId,
+     secretProtected: protectValue(secret, options),
+     protection: (options.platform || process.platform) === 'win32'
+@@ -272,12 +325,15 @@ function getRecipeSigningSecret(options = {}) {
+       : 'restricted-file',
+     createdAt: new Date().toISOString(),
+   };
+-  writeStore(store, options);
+-  return { keyId, secret };
++  const selected = updateStore(options, current => {
++    if (current.recipeSigning?.secretProtected) return { value: { record: current.recipeSigning, created: false }, changed: false };
++    current.recipeSigning = candidate;
++    return { value: { record: candidate, created: true } };
++  });
++  return selected.created ? { keyId, secret } : { keyId: String(selected.record.keyId || ''), secret: unprotectValue(selected.record.secretProtected, options) };
+ }
+ 
+ function setWorkspaceContext(instanceId, context, options = {}) {
+-  const store = readStore(options);
+   const key = String(instanceId || '').trim();
+   const projectId = String(context?.projectId || '').trim();
+   const canvasId = String(context?.canvasId || '').trim();
+@@ -286,14 +342,13 @@ function setWorkspaceContext(instanceId, context, options = {}) {
+     || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(canvasId)) {
+     throw new SecureStoreError('WORKSPACE_CONTEXT_INVALID', '工作区项目或画布 ID 无效');
+   }
+-  store.contexts[key] = {
++  const record = {
+     instanceId: key,
+     projectId,
+     canvasId,
+     selectedAt: new Date().toISOString(),
+   };
+-  writeStore(store, options);
+-  return store.contexts[key];
++  return updateStore(options, store => { store.contexts[key] = record; return { value: record }; });
+ }
+ 
+ function getWorkspaceContext(instanceId, options = {}) {
+@@ -303,13 +358,12 @@ function getWorkspaceContext(instanceId, options = {}) {
+ }
+ 
+ function storeApproval(instance, approval, options = {}) {
+-  const store = readStore(options);
+   const approvalRequestId = String(approval.approvalRequestId || '');
+   if (!approvalRequestId) {
+     throw new SecureStoreError('APPROVAL_INVALID', '待确认操作缺少 approvalRequestId');
+   }
+   const key = `${instance.instanceId}:${approvalRequestId}`;
+-  store.approvals[key] = {
++  const record = {
+     instanceId: instance.instanceId,
+     origin: instance.origin,
+     approvalRequestId,
+@@ -323,8 +377,7 @@ function storeApproval(instance, approval, options = {}) {
+     pollSecretProtected: protectValue(approval.pollSecret, options),
+     protection: (options.platform || process.platform) === 'win32' ? 'windows-dpapi-current-user' : 'restricted-file',
+   };
+-  writeStore(store, options);
+-  return { ...store.approvals[key], pollSecretProtected: undefined };
++  return updateStore(options, store => { store.approvals[key] = record; return { value: { ...record, pollSecretProtected: undefined } }; });
+ }
+ 
+ function approvalRecordsForInstance(store, instanceId) {
+@@ -361,19 +414,19 @@ function deleteApproval(instanceId, approvalRequestIdOrOptions = {}, maybeOption
+   const options = typeof approvalRequestIdOrOptions === 'string'
+     ? maybeOptions
+     : approvalRequestIdOrOptions;
+-  const store = readStore(options);
+-  let existed = false;
+-  for (const [key, record] of Object.entries(store.approvals || {})) {
+-    if (String(record?.instanceId || '') !== String(instanceId || '')) continue;
+-    if (approvalRequestId && record.approvalRequestId !== approvalRequestId) continue;
+-    existed = true;
+-    delete store.approvals[key];
+-  }
+-  writeStore(store, options);
+-  return existed;
++  return updateStore(options, store => {
++    let existed = false;
++    for (const [key, record] of Object.entries(store.approvals || {})) {
++      if (String(record?.instanceId || '') !== String(instanceId || '')) continue;
++      if (approvalRequestId && record.approvalRequestId !== approvalRequestId) continue;
++      existed = true; delete store.approvals[key];
++    }
++    return { value: existed };
++  });
+ }
+ 
+ module.exports = {
++  TRANSACTION_PROTOCOL,
+   DPAPI_ENTROPY,
+   STORE_LIMIT,
+   STORE_SCHEMA,
+diff --git a/docs/seedance-write-replay-boundary.md b/docs/seedance-write-replay-boundary.md
+new file mode 100644
+--- /dev/null
++++ b/docs/seedance-write-replay-boundary.md
+@@ -0,0 +1,49 @@
++# Seedance 付费写入的重放边界
++
++2026-10-20 工作区修复，尚未提交、打包或发布；当前正式版本仍为 3.3.6。
++
++`seedanceNz.secureFetch` 原来会在请求携带 Idempotency-Key 时，对不确定的
++网络失败发起备用连接。幂等键可以关联一次提交，却不足以证明远端一定去重。
++另一个判定会把含 certificate 等字样的错误文本当成请求前失败，这同样不足
++以排除已受理。
++
++现在，非 GET/HEAD 请求在连接重置、超时、响应头中断等受理不明的错误后，
++直接返回现有安全错误，不发备用写入。原幂等键仍随唯一请求携带。只保留
++明确 TLS 验证错误码所证明的请求前恢复；默认系统网络优先、证书校验、
++取消以及 GET/HEAD 查询恢复保持。已返回任务编号后继续查询原任务，查询
++或结果下载失败不触发替代生成。
++
++新增 `tests/seedanceNzReplayBoundary.test.cjs` 编译实际生产模块，只替换传输
++与配置依赖。原代码六项中两项失败，修复后六项通过，覆盖有/无稳定提交键、
++五类不确定网络错误、仅含证书字样的错误、明确 TLS 失败、两级只读恢复、
++取消、HTTP 错误及已接受响应无法读取。未使用真实 API、凭据或用户数据库。
++
++Electron 专项及相邻五文件共 128 项：127 通过，一项媒体下载用例失败。
++失败项为 `B3 completed image tasks retry transient downloads and expose actionable safe failure reasons`，
++期望 HTTP 502，实际为 HTTP 202 / `image_download_network_failed`。将仅此
++Provider 模块从未修改的 HEAD 注入隔离测试后，同一用例仍以相同结果失败，
++因此不归因于本修复，也不把完整矩阵记为通过。该媒体故障路径仍需单独排查。
++
++Provider 源码属于运行目录摘要的输入，因此本修复同时通过正式生成器同步
++兼容清单与派生能力产物。先比较旧、新运行目录：除 sourceDigest 外深比较
++完全一致，34 LLM / 69 image / 136 video / 19 audio / 61 actions 保持；再将
++providerCatalogDigest 从 `32d18f96b4c0fa127342a30a83e3c408ad9143538fa29e5b566c091ba9382d49`
++更新为 `00dc6ba277f0937123ad7695c01a473a733df8b3d7890f4e7f9fe33e685edf5d`，
++运行官方 feature-sync 生成器及 --check。39 项能力、319 条运行目录、84/84
++节点覆盖保持，无版本升级或手写派生清单。
++
++另一次 Electron 限定矩阵（重放边界、能力清单、CLI）41 项中39过、2失败。
++失败是旧 CLI 测试没有计入 localization 命令，以及要求创作技能少于500行。
++相关 CLI 源码、commandCatalog、技能正文和测试相对 HEAD 均未改动；HEAD
++本身已有 localization，技能正文681行。这里只证明旧断言与当前基线不符，
++没有额外运行整个未修改 HEAD，也未通过删除断言或增加上限来隐藏失败。
++
++DSH 现在能读取真实源码 CLI 并经已发布 ToolRuntime 挂载10个检查/规划工具；
++本机安装的另一份 Agent CLI 与当前源码的节点/模型摘要不同，不能自动替换。
++本次两个 CLI 均报告 APP_NOT_RUNNING，尚无实际应用握手或配对证据。源码
++CLI 的新摘要变化已记录，仍不能据此开放付费执行。
++
++所有测试数据在系统临时目录，进程结束后清理。没有读取 retained/historical
++项目库；没有改动版本、现有节点/参数、生成结果、正式安装包、两份受保护
++运行时文件或自动更新资产。真实 Provider、用户 TUN、安装版及完整 DSH
++双门审批闭环仍未验收；不能据此开放 DSH 的付费工具。
+diff --git a/docs/zcanvas-instance-discovery.md b/docs/zcanvas-instance-discovery.md
+new file mode 100644
+--- /dev/null
++++ b/docs/zcanvas-instance-discovery.md
+@@ -0,0 +1,20 @@
++# zcanvas 运行实例发现（未发布）
++
++2026-10-20。旧发现器在检查心跳前截取前256个文件；本机发现目录有976条
++旧记录时，新实例可能被文件排序挡住，即使它已经启动也无法被CLI发现。
++
++现在先检查普通文件属性，按文件更新时间优先读取，再以JSON心跳、原实例
++格式与兼容字段为准。过期、损坏和重复记录不占用256个有效描述符的位置。
++不删除旧记录，不绕过兼容握手，也不改变配对或原生凭据格式。
++
++扫描最多32768个目录项，实际内容读取总额8MiB；每个文件最多32KiB。
++打开后复核文件身份，定长读取并复核大小/修改时间，变化中的文件跳过。
++超过目录项上限明确失败，网络探测仍最多256个候选。
++
++| 已验证 | 待验证 | 未验证 |
++| --- | --- | --- |
++| 旧逻辑先复现失败；5项专项覆盖296个过期记录、有效候选上限、文件增长、总读取限额及目录项限额 | 实际安装版升级后，在现有发现目录中找到真实运行实例 | 未改已安装文件，未删除用户发现记录 |
++| 16个相关文件77项通过；DSH独立组合验证使用当前CLI及原生临时SQLite，素材一次导入/放置、GET恢复及单一RunIntent成立 | 真人画布窗口确认、真实作品与Provider | 窗口由测试IPC模拟，Provider调用0，未读取历史库 |
++
++安装版3.3.6另有provider兼容清单路径遗漏，见
++[素材与安装版握手](zcanvas-saved-media-transfer.md)。两项修复尚未生产构建或发布。
+diff --git a/docs/zcanvas-run-approval-recovery.md b/docs/zcanvas-run-approval-recovery.md
+new file mode 100644
+--- /dev/null
++++ b/docs/zcanvas-run-approval-recovery.md
+@@ -0,0 +1,33 @@
++# Agent 运行计划单次提交与只读恢复
++
++2026-10-20，工作源码限定验证，未提交或生产发布。正式版仍为3.3.6。
++
++原运行计划可使用不同operationId创建多个意图；调用者及账本键冲突校验也
++不完整。现在同一原生内存计划绑定一个operationId，提交前复核原计划、
++会话、actor、有效期、revision和运行权限；原数据库仍以idempotencyKey去重。
++返回的意图必须符合原项目、画布、节点、actor及executionAuthority，冲突不泄露。
++没有新增Agent私有付费台账，也没有改变数据库schema或Provider提交入口。
++
++status新增runControl能力标记。以下GET只查现有记录，不批准、不创建意图：
++
++- `/run-start-approvals/by-operation/:operationId?projectId=...&canvasId=...`
++  要求run:execute及原session，复用原审批服务；恢复pollSecret的披露边界与
++  原创建响应一致。过期、其他会话、项目/画布或已替代记录不可取。
++- `/run-intents/by-operation/:operationId?projectId=...&canvasId=...`
++  要求run:read及原actor，沿用原数据库getRunIntentByKey与inspect权限检查，
++  不依赖内存计划仍在。意图公开引用新增operationId。
++
++DSH只保存方案和查询引用，pollSecret仍只入原secureStore。人工核对范围、
++模型及费用未知 → 原生窗口批准 → 单次完成 → 只查询。原生报价没有金额，
++不能把null展示为免费；unknown/已接收后绝不重发。没有改变原生窗口权威。
++
++| 已验证 | 待验证 | 未验证 |
++| --- | --- | --- |
++| `node --test tests/agentControlApprovalRecovery.test.cjs tests/agentControlApprovals.test.cjs tests/agentControlRunRecovery.test.cjs tests/agentControlRuns.test.cjs`，20/20 | 原生实际窗口/安装版及真实用户工作流 | 不代表整个Canvas测试全绿；此前相邻基线失败保留 |
++| DSH `npm run verify:canvas-native -- --canvas-root E:\PenguinPravite\T8-penguin-canvas --include-run-intent`，原生路由/审批/ProjectDatabase、全新系统TEMP；丢审批/提交回执均GET恢复 | 真实Provider受理、调度、结果落盘和费用结算 | IPC批准仅测试模拟，未运行生成；没读用户历史数据库 |
++| 账本run_intents=1，runs/node_runs/run_attempts=0，出站0；1次审批创建、2次完成（未批准等待一次、批准提交一次）、3次恢复GET | 多设备、其他文件系统、旧版兼容发布 | 没有版本升级、生产构建、打包或公开发布 |
++
++工作源码编译闭包75模块摘要c335d9f6fd5736592f82a63d0341c4fc36ab951ec8ce2de22b89f21cfce883e8。
++证据保留在DSH本地`.runtime/evidence/native-canvas-run-intent.json`；TEMP已清理。
++首次验证仅因测试计数器误计结构审批而失败，修正按run.start审批ID计数后通过，
++旧失败日志保留；未用测试修正掩盖业务失败。Source CLI摘要仍fae0…ec9，安装版未动。
+diff --git a/docs/zcanvas-saved-media-transfer.md b/docs/zcanvas-saved-media-transfer.md
+new file mode 100644
+--- /dev/null
++++ b/docs/zcanvas-saved-media-transfer.md
+@@ -0,0 +1,23 @@
++# DSH 已保存素材交接（未发布）
++
++2026-10-20。DSH-zhen 在既有保存记录上核对文件与摘要，分别请求原生
++asset.import 与 asset.place 审批；Native 导入器、Blob store 和 CanvasPatch
++保持权威。没有新增私有付费账本或生成入口。
++
++新增只读能力标记、精确内容摘要过滤、按当前 session/目标查询原操作审批和
++最小 Patch 回执。只读预览延迟初始化导入器，避免提前创建复制存储。
++metadata.size 正确保留到放置/导出预览；L0 重复放置沿用现有 Patch 恢复逻辑。
++
++DSH 的独立验证使用本工作源码和原生 Electron/SQLite，只创建系统 TEMP
++数据库：一个真实导入素材和一次放置、丢审批/完成回执恢复、重复复用均通过。
++窗口确认由测试 IPC 模拟，保存记录元数据由测试提供；没有真实网关下载、
++用户库读取或 Provider 调度。DSH C32 的数据库/复制为合成夹具，证据不混用。
++DSH 证据：`.runtime/evidence/native-canvas-asset-transfer.json`（在 DSH 工作目录）。
++
++实际安装版 3.3.6 后台运行，但控制 status 返回兼容清单不可用。只读检查确认
++provider 清单位于 resources/backend-enc/shared，而原查找遗漏此位置；已补
++这一候选并保持普通资源目录优先。专项先复现失败后通过。12 项素材/恢复/
++兼容专项与 feature-sync 通过；其他既有失败维持原记录，不能视作全项目绿测。
++
++本批没有修改安装版、版本、生产构建或发布。真实窗口和完整业务交接仍待验收。
++DSH 仓库另保存本批有限源代码 patch，供恢复与人工审阅，不会自动覆盖本仓库。
+diff --git a/docs/zcanvas-secure-store-transactions.md b/docs/zcanvas-secure-store-transactions.md
+new file mode 100644
+--- /dev/null
++++ b/docs/zcanvas-secure-store-transactions.md
+@@ -0,0 +1,36 @@
++# zcanvas 凭据文件的并发更新
++
++2026-10-20 工作区修复，尚未提交、升级版本、生产构建或发布。当前正式版仍为3.3.6。
++
++旧 secureStore 在读取完整 JSON 后才保护凭据，再写回先前快照。另一进程在
++这段时间写入的工作区、审批或会话可能丢失；首次并发创建配方签名密钥也
++可能分叉。旧快照直接 writeStore、过期请求的清理还可能覆盖新配对。
++
++现在凭据保护在临界区外完成，实际读改写进入本机文件协调器后重新读取。
++存储 JSON 仍是 t8-zcanvas-secure-store-v1，字段、DPAPI entropy 与保护方式
++保持；协调信息只在旁边的 .lock / .lock-state，未加入凭据内容。公开
++readStore/writeStore 通过返回对象的内存摘要拒绝过期快照；不能用任意克隆
++对象无条件覆盖现有文件。首次创建空存储以及同一对象刷新后的继续更新可用。
++
++协调器用硬链接原子发布完整进程/随机标识回执，等待最多2秒（单调时钟）。
++活进程从不按文件年龄抢占。已终止进程由唯一恢复标记协调回收，写入方在
++进入前同时检查恢复标记和自己的回执身份；已知遗留临时文件按精确回执
++清理。候选文件 fsync 后 rename；失败不覆盖旧检查点。损坏或链接侧目录
++拒绝写入，文件系统不支持硬链接时不降级成无锁写入。
++
++同实例的不同未过期配对不互相替换；同一请求的元数据保持不变。保存领取的
++会话时，pairingId/origin 在事务内再次核对；条件删除也核对原请求/会话。
++CLI 的重复配对在发送窗口请求前拒绝；失效会话清理携带身份，Patch 审批
++只删除准确的 approvalRequestId。配方签名密钥在事务中只初始化一次。
++
++| 已验证 | 待验证 | 未验证 |
++|---|---|---|
++| 原生产模块新增的前7条并发回归全部失败；修复后13条并发/故障与原3条存储测试通过。实际子进程覆盖交错写入、统一签名身份、旧快照、领取期间替换、条件清理、活进程忙等待、杀进程及多个恢复者；另测侧目录链接、损坏回执、fsync失败和v1布局 | 网络盘、非硬链接文件系统、PID被其他长寿命进程复用时的人工处理与真实用户并发场景 | 不把进程级故障测试当断电/物理磁盘/安装版证据 |
++| 4条实际CLI命令经真实注册表发现和隔离HTTP，验证重复配对、拒绝清理、auth status与workspace失败清理不会删除新的进度；只使用TEMP模拟凭据，Windows走原生DPAPI | 真实画布窗口、生产安装包与跨平台现场 | 没有真实API、Provider费用或用户历史数据库 |
++| Electron/Node20限定7文件42项全过（含安装器、资源清单、配方、能力清单）；feature-sync门通过，39动作/319目录/84节点保持；DSH三条C26含最新模块、原生DPAPI、旧版读取与真实MCP子进程 | 旧矩阵中与本修复无关的媒体用例及CLI localization/技能行数旧断言继续单独保留 | 没有将完整画布测试宣称全绿 |
++
++保证仅适用于使用新版协调器的写入方。旧版无锁写入器、直接改文件或恶意
++同用户文件操作不在保证内。读者可以继续读取v1文件，不能由此承诺旧写入器
++已参与协调。实际验证为当前Windows NTFS和本机运行时；没有发布新协议或
++改变画布版本。初期CLI夹具误将完整能力目录放入32KiB实例描述符而被拒绝，
++已改为原协议的必要摘要字段并保留失败日志。
+diff --git a/tests/agentControlApprovalRecovery.test.cjs b/tests/agentControlApprovalRecovery.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/tests/agentControlApprovalRecovery.test.cjs
+@@ -0,0 +1,15 @@
++'use strict';
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const { createAgentControlApprovalService } = require('../backend/src/services/agentControlApprovals.js');
++test('approval operation lookup is read-only and restricted to original action/session/project/canvas', () => {
++  const service = createAgentControlApprovalService();
++  const input = { action: 'run.start', operationId: 'EXAMPLE_RUN_OPERATION', sessionId: 'EXAMPLE_SESSION', actorId: 'agent:EXAMPLE_SESSION', projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS', preview: { run: { planId: 'EXAMPLE_PLAN' } } };
++  const created = service.create(input), read = service.inspectOperation(input); assert.equal(read.approvalRequestId, created.approvalRequestId); assert.equal(read.pollSecret, created.pollSecret); assert.equal(read.status, 'pending'); assert.equal(service.listPending().length, 1);
++  for (const changed of [{ action: 'patch.apply' }, { operationId: 'EXAMPLE_OTHER' }, { sessionId: 'EXAMPLE_OTHER' }, { projectId: 'EXAMPLE_OTHER' }, { canvasId: 'EXAMPLE_OTHER' }]) assert.throws(() => service.inspectOperation({ ...input, ...changed }), error => error.code === 'APPROVAL_NOT_FOUND');
++  service.approve(created.approvalRequestId); assert.equal(service.inspectOperation(input).status, 'approved'); assert.equal(service.beginCompletion({ approvalRequestId: created.approvalRequestId, pollSecret: created.pollSecret, sessionId: input.sessionId }).status, 'approved');
++});
++test('expired native approval lookup cannot resurrect or approve the operation', () => {
++  let clock = Date.now(); const service = createAgentControlApprovalService({ now: () => clock }); const input = { action: 'run.start', operationId: 'EXAMPLE_RUN_EXPIRES', sessionId: 'EXAMPLE_SESSION', projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS', preview: {} };
++  service.create(input); clock += 11 * 60_000; assert.throws(() => service.inspectOperation(input), error => error.code === 'APPROVAL_NOT_FOUND'); assert.equal(service.listPending().length, 0);
++});
+diff --git a/tests/agentControlCompatibility.test.cjs b/tests/agentControlCompatibility.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/tests/agentControlCompatibility.test.cjs
+@@ -0,0 +1,19 @@
++'use strict';
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const os = require('node:os');
++const path = require('node:path');
++const { compatibilityPaths, compatibilitySnapshot } = require('../backend/src/services/agentControlCompatibility');
++
++test('compatibility uses the encrypted packaged provider catalog while preserving ordinary-resource precedence', t => {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'EXAMPLE_compat_resources_'));
++  t.after(() => { const rel = path.relative(os.tmpdir(), root); assert.ok(rel && !rel.startsWith('..') && !path.isAbsolute(rel)); fs.rmSync(root, { recursive: true, force: true }); });
++  const encrypted = path.join(root, 'backend-enc', 'shared', 'creativeModelCatalog.json'), ordinary = path.join(root, 'backend', 'shared', 'creativeModelCatalog.json');
++  const original = compatibilityPaths().providerCatalogPath, bytes = fs.readFileSync(original);
++  fs.mkdirSync(path.dirname(encrypted), { recursive: true }); fs.writeFileSync(encrypted, bytes);
++  assert.equal(compatibilityPaths({ resourcesPath: root }).providerCatalogPath, encrypted);
++  assert.deepEqual(compatibilitySnapshot({ resourcesPath: root }), compatibilitySnapshot());
++  fs.mkdirSync(path.dirname(ordinary), { recursive: true }); fs.writeFileSync(ordinary, bytes);
++  assert.equal(compatibilityPaths({ resourcesPath: root }).providerCatalogPath, ordinary);
++});
+diff --git a/tests/agentControlRunRecovery.test.cjs b/tests/agentControlRunRecovery.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/tests/agentControlRunRecovery.test.cjs
+@@ -0,0 +1,42 @@
++'use strict';
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const { createAgentControlRunService } = require('../backend/src/services/agentControlRuns.js');
++const scope = { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS', actorId: 'EXAMPLE_ACTOR', sessionId: 'EXAMPLE_SESSION' };
++function fixture() {
++  const clock = { value: Date.now() }, intents = new Map(); let writes = 0;
++  const document = { schema: 't8-canvas-document', schemaVersion: 2, projectId: scope.projectId, canvasId: scope.canvasId, revision: 7, nodes: [{ id: 'EXAMPLE_IMAGE', type: 'image', position: { x: 0, y: 0 }, data: { model: 'gpt-image-2', selectedModel: 'gpt-image-2' } }], edges: [], viewport: { x: 0, y: 0, zoom: 1 } };
++  const database = { getCanvas: id => id === scope.canvasId ? structuredClone(document) : null,
++    createRunIntent(input) { const key = `${input.projectId}:${input.idempotencyKey}`; if (intents.has(key)) return structuredClone(intents.get(key)); const intent = { ...structuredClone(input), id: `EXAMPLE_INTENT_${++writes}`, status: 'accepted', queueRevision: 1, dispatchAttempts: 0, createdAt: clock.value, updatedAt: clock.value }; intents.set(key, intent); return structuredClone(intent); },
++    getRunIntentByKey(projectId, key) { return structuredClone(intents.get(`${projectId}:${key}`) || null); },
++    getRunIntent(id) { return structuredClone([...intents.values()].find(intent => intent.id === id) || null); },
++  };
++  return { clock, database, intents, get writes() { return writes; }, service: createAgentControlRunService({ database, now: () => clock.value }) };
++}
++function prepare(f) { const plan = f.service.createPlan({ nodeIds: ['EXAMPLE_IMAGE'] }, scope); return { public: plan, internal: f.service.startPreview(plan.planId, scope).plan }; }
++test('one native run plan cannot reserve two operation keys while an exact replay stays idempotent', () => {
++  const f = fixture(), plan = prepare(f);
++  const first = f.service.complete(plan.internal, { operationId: 'EXAMPLE_RUN_OPERATION_A', actorId: scope.actorId, sessionId: scope.sessionId });
++  assert.equal(f.service.complete(plan.internal, { operationId: 'EXAMPLE_RUN_OPERATION_A', actorId: scope.actorId }).id, first.id);
++  assert.throws(() => f.service.complete(plan.internal, { operationId: 'EXAMPLE_RUN_OPERATION_B', actorId: scope.actorId }), error => error.code === 'RUN_PLAN_ALREADY_SUBMITTED');
++  assert.throws(() => f.service.startPreview(plan.public.planId, scope), error => error.code === 'RUN_PLAN_ALREADY_SUBMITTED'); assert.equal(f.writes, 1);
++});
++test('native operation lookup recovers a durable intent without its in-memory plan and enforces owner/project/canvas', () => {
++  const f = fixture(), plan = prepare(f), operationId = 'EXAMPLE_DURABLE_OPERATION';
++  const first = f.service.complete(plan.internal, { operationId, actorId: scope.actorId });
++  const restarted = createAgentControlRunService({ database: f.database });
++  assert.equal(restarted.inspectOperation(operationId, scope).id, first.id); assert.equal(restarted.inspectOperation(operationId, scope).operationId, operationId);
++  for (const changed of [{ actorId: 'EXAMPLE_OTHER_ACTOR' }, { projectId: 'EXAMPLE_OTHER_PROJECT' }, { canvasId: 'EXAMPLE_OTHER_CANVAS' }]) assert.throws(() => restarted.inspectOperation(operationId, { ...scope, ...changed }), error => error.code === 'RUN_INTENT_NOT_FOUND');
++  assert.equal(f.writes, 1);
++});
++test('expired plans and changed caller identity cannot create an intent', () => {
++  const f = fixture(), plan = prepare(f);
++  assert.throws(() => f.service.complete(plan.internal, { operationId: 'EXAMPLE_OPERATION', actorId: 'EXAMPLE_OTHER_ACTOR' }), error => error.code === 'RUN_PLAN_SCOPE_MISMATCH');
++  f.clock.value += 31 * 60_000;
++  assert.throws(() => f.service.complete(plan.internal, { operationId: 'EXAMPLE_OPERATION', actorId: scope.actorId }), error => error.code === 'RUN_PLAN_EXPIRED'); assert.equal(f.writes, 0);
++});
++test('a ledger key belonging to another scope is neither disclosed nor treated as this plan result', () => {
++  const f = fixture(), plan = prepare(f), operationId = 'EXAMPLE_CONFLICTING_OPERATION';
++  f.intents.set(`${scope.projectId}:${operationId}`, { id: 'EXAMPLE_OTHER_INTENT', projectId: scope.projectId, canvasId: 'EXAMPLE_OTHER_CANVAS', requestedBy: 'EXAMPLE_OTHER_ACTOR', nodeIds: ['EXAMPLE_OTHER_NODE'], idempotencyKey: operationId });
++  assert.throws(() => f.service.complete(plan.internal, { operationId, actorId: scope.actorId }), error => error.code === 'RUN_OPERATION_CONFLICT'); assert.equal(f.writes, 0);
++});
+diff --git a/tests/seedanceNzReplayBoundary.test.cjs b/tests/seedanceNzReplayBoundary.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/tests/seedanceNzReplayBoundary.test.cjs
+@@ -0,0 +1,109 @@
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const Module = require('node:module');
++const fs = require('node:fs');
++const os = require('node:os');
++const path = require('node:path');
++const { providerSubmissionContextMiddleware } = require('../backend/src/services/providerSubmissionContext');
++
++const temporary = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 't8-seedance-replay-')));
++test.after(() => {
++  const relative = path.relative(fs.realpathSync.native(os.tmpdir()), temporary);
++  assert.ok(relative && !path.isAbsolute(relative) && !relative.startsWith('..'));
++  fs.rmSync(temporary, { recursive: true, force: true });
++});
++
++// Compile the unchanged production module and substitute only transport/config
++// dependencies. No real authority file, user database or Provider is opened.
++function loadProvider(recoveryFetch) {
++  const filename = require.resolve('../backend/src/providers/seedanceNz.js');
++  const configPath = require.resolve('../backend/src/config');
++  const previous = require.cache[configPath];
++  require.cache[configPath] = { id: configPath, filename: configPath, loaded: true, exports: {
++    PORT: 18766, BASE_DIR: temporary, INPUT_DIR: temporary, OUTPUT_DIR: temporary,
++    DATA_DIR: temporary, ZHENZHEN_SD2_BASE_URL: 'https://api.seedance.nz',
++  } };
++  try {
++    const localRequire = Module.createRequire(filename), loaded = new Module(filename, module);
++    loaded.filename = filename; loaded.paths = Module._nodeModulePaths(path.dirname(filename));
++    loaded.require = name => name === 'undici' ? { ...localRequire(name), fetch: recoveryFetch } : localRequire(name);
++    loaded._compile(fs.readFileSync(filename, 'utf8'), filename);
++    return loaded.exports;
++  } finally { if (previous) require.cache[configPath] = previous; else delete require.cache[configPath]; }
++}
++function submission(key, work) {
++  return new Promise((resolve, reject) => providerSubmissionContextMiddleware({ get: () => key }, {}, () => Promise.resolve().then(work).then(resolve, reject)));
++}
++function networkFailure(code, message = 'EXAMPLE connection lost after request write') {
++  return Object.assign(new TypeError('fetch failed'), { cause: Object.assign(new Error(message), code ? { code } : {}) });
++}
++const request = { prompt: 'EXAMPLE ONLY blue ceramic teapot', resolution: '1k' };
++const accepted = () => Response.json({ task_id: 'task_EXAMPLE_ACCEPTED' });
++
++test('seedance default transport never replays an ambiguous paid POST, including requests carrying a stable submission key', async () => {
++  const original = global.fetch;
++  try {
++    for (const code of ['ECONNRESET', 'UND_ERR_SOCKET', 'UND_ERR_HEADERS_TIMEOUT', 'ETIMEDOUT', 'ENETUNREACH']) for (const key of ['', 'EXAMPLE_SUBMISSION_0001']) {
++      let primary = 0, recovery = 0, seenKey;
++      const provider = loadProvider(async () => { recovery++; return accepted(); });
++      global.fetch = async (_url, init) => { primary++; assert.equal(init.method, 'POST'); assert.equal(init.dispatcher, undefined); seenKey = new Headers(init.headers).get('Idempotency-Key'); throw networkFailure(code); };
++      await assert.rejects(submission(key, () => provider.submitImageTask(request, 'EXAMPLE_TEST_ONLY_KEY')), error => error.code === 'SEEDANCE_UPSTREAM_UNAVAILABLE');
++      assert.equal(primary, 1, `${code}: one primary request`); assert.equal(recovery, 0, `${code}: no alternate paid request`); assert.equal(seenKey, key || null);
++    }
++  } finally { global.fetch = original; }
++});
++
++test('certificate-looking error text alone does not prove that a paid POST failed before submission', async () => {
++  const original = global.fetch; let recovery = 0;
++  const provider = loadProvider(async () => { recovery++; return accepted(); });
++  try {
++    for (const code of [undefined, 'ECONNRESET']) {
++      global.fetch = async () => { throw networkFailure(code, 'EXAMPLE certificate reset after request write'); };
++      await assert.rejects(provider.submitImageTask(request, 'EXAMPLE_TEST_ONLY_KEY'), error => error.code === 'SEEDANCE_UPSTREAM_UNAVAILABLE');
++    }
++    assert.equal(recovery, 0);
++  } finally { global.fetch = original; }
++});
++
++test('an exact pre-request certificate verification failure retains one verified TLS recovery attempt', async () => {
++  const original = global.fetch; let primary = 0, recovery = 0;
++  const provider = loadProvider(async (_url, init) => { recovery++; assert.ok(init.dispatcher); assert.equal(init.method, 'POST'); return accepted(); });
++  try {
++    global.fetch = async () => { primary++; throw networkFailure('UNABLE_TO_VERIFY_LEAF_SIGNATURE'); };
++    assert.equal((await provider.submitImageTask(request, 'EXAMPLE_TEST_ONLY_KEY')).taskId, 'task_EXAMPLE_ACCEPTED');
++    assert.equal(primary, 1); assert.equal(recovery, 1);
++  } finally { global.fetch = original; }
++});
++
++test('read-only task recovery still uses fresh connections and the final read-only DNS fallback', async () => {
++  const original = global.fetch; let primary = 0, recovery = 0; const dispatchers = [];
++  const provider = loadProvider(async (_url, init) => { recovery++; dispatchers.push(init.dispatcher); assert.equal(init.method || 'GET', 'GET'); assert.equal(new Headers(init.headers).get('Idempotency-Key'), null); if (recovery === 1) throw networkFailure('ECONNRESET'); return Response.json({ id: 'task_EXAMPLE_ORIGINAL', status: 'completed', metadata: { url: 'https://media.example.com/EXAMPLE.mp4' } }); });
++  try {
++    global.fetch = async () => { primary++; throw networkFailure('ECONNRESET'); };
++    const result = await submission('EXAMPLE_SUBMISSION_READ', () => provider.queryTask('task_EXAMPLE_ORIGINAL', 'EXAMPLE_TEST_ONLY_KEY'));
++    assert.equal(result.status, 'succeeded'); assert.equal(primary, 1); assert.equal(recovery, 2); assert.notEqual(dispatchers[0], dispatchers[1]);
++  } finally { global.fetch = original; }
++});
++
++test('an aborted paid submission does not enter a fallback connection', async () => {
++  const original = global.fetch, controller = new AbortController(); let recovery = 0;
++  const provider = loadProvider(async () => { recovery++; return accepted(); });
++  try {
++    global.fetch = async () => { controller.abort(); throw networkFailure('ECONNRESET'); };
++    await assert.rejects(submission('EXAMPLE_SUBMISSION_ABORT', () => provider.submitImageTask(request, 'EXAMPLE_TEST_ONLY_KEY', { signal: controller.signal })), error => error.code === 'SEEDANCE_REQUEST_ABORTED');
++    assert.equal(recovery, 0);
++  } finally { global.fetch = original; }
++});
++
++test('HTTP errors and an unreadable accepted response never cause a replacement paid request', async () => {
++  const original = global.fetch; let recovery = 0;
++  const provider = loadProvider(async () => { recovery++; return accepted(); });
++  try {
++    for (const mode of ['server-error', 'invalid-json', 'interrupted-response']) {
++      let primary = 0;
++      global.fetch = async () => { primary++; return mode === 'server-error' ? Response.json({ error: { message: 'EXAMPLE_PROVIDER_FAILURE' } }, { status: 503 }) : mode === 'invalid-json' ? new Response('EXAMPLE_BAD_JSON') : new Response(new ReadableStream({ start(stream) { stream.error(new Error('EXAMPLE_AFTER_ACCEPTANCE')); } })); };
++      await assert.rejects(submission('EXAMPLE_SUBMISSION_RESPONSE', () => provider.submitImageTask(request, 'EXAMPLE_TEST_ONLY_KEY')));
++      assert.equal(primary, 1); assert.equal(recovery, 0);
++    }
++  } finally { global.fetch = original; }
++});
+diff --git a/tests/zcanvasAuthTransactions.test.cjs b/tests/zcanvasAuthTransactions.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/tests/zcanvasAuthTransactions.test.cjs
+@@ -0,0 +1,76 @@
++'use strict';
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const path = require('node:path');
++const os = require('node:os');
++const { createServer } = require('node:http');
++const { spawn } = require('node:child_process');
++const native = require('../tools/zcanvas-cli/src/secureStore.cjs');
++const { readManifest } = require('../tools/zcanvas-cli/src/manifest.cjs');
++const { createAgentControlAuthService } = require('../backend/src/services/agentControlAuth.js');
++const cli = path.resolve(__dirname, '../tools/zcanvas-cli/bin/zcanvas.cjs');
++
++async function fixture(t) {
++  const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'zcanvas-auth-transaction-'))), registry = path.join(root, 'instances'); fs.mkdirSync(registry);
++  const options = { env: { ZCANVAS_AUTH_STORE: path.join(root, 'credentials.json'), ZCANVAS_ALLOW_FILE_CREDENTIALS: '1' } };
++  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => /^(?:path|systemroot|windir|comspec|temp|tmp|home|userprofile|localappdata|electron_run_as_node)$/i.test(key)));
++  Object.assign(env, options.env, { ZCANVAS_INSTANCE_DIR: registry });
++  const auth = createAgentControlAuthService(), state = { created: [], posts: 0, onPoll: undefined, onRead: undefined };
++  const instance = { instanceId: 'E'.repeat(43), origin: '' };
++  const server = createServer(async (req, res) => {
++    try {
++      let raw = ''; for await (const chunk of req) { raw += chunk; assert.ok(raw.length < 8192); }
++      if (req.url === '/api/status') { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ ok: true, service: 't8-penguin-canvas-backend', instanceId: instance.instanceId, port: server.address().port, version: '3.3.6' })); return; }
++      let data; const body = raw ? JSON.parse(raw) : {};
++      if (req.method === 'POST' && req.url === '/api/agent-control/v1/pairings') { state.posts++; data = auth.createPairing(body); state.created.push(data); }
++      else if (req.method === 'POST' && /^\/api\/agent-control\/v1\/pairings\/[0-9a-f-]+\/poll$/.test(req.url)) { data = auth.pollPairing({ pairingId: req.url.split('/')[5], pollSecret: body.pollSecret }); state.onPoll?.(); }
++      else if (req.method === 'GET' && ['/api/agent-control/v1/session', '/api/agent-control/v1/workspaces'].includes(req.url)) {
++        state.onRead?.(); data = auth.authenticate(String(req.headers.authorization || '').replace(/^Bearer /, ''), []);
++      } else throw Object.assign(Error('EXAMPLE_ROUTE_REFUSED'), { code: 'EXAMPLE_ROUTE_REFUSED', status: 400 });
++      res.setHeader('content-type', 'application/json'); res.end(JSON.stringify({ schema: 't8-agent-control-http-v1', ok: true, data }));
++    } catch (error) { res.writeHead(error.status || 400, { 'content-type': 'application/json' }); res.end(JSON.stringify({ schema: 't8-agent-control-http-v1', ok: false, code: error.code || 'EXAMPLE_FAILED', message: 'EXAMPLE safe error' })); }
++  });
++  await new Promise(done => server.listen(0, '127.0.0.1', done)); instance.origin = `http://127.0.0.1:${server.address().port}`;
++  const manifest = readManifest();
++  const fields = ['skillVersion', 'cliVersion', 'controlProtocol', 'canvasPatchProtocol', 'nodeSchemaDigest', 'providerCatalogDigest', 'creativeCapabilityManifestDigest', 'creativeCapabilityGraphDigest', 'manifestDigest'];
++  const descriptor = { ...Object.fromEntries(fields.map(field => [field, manifest[field]])), ...instance, schema: 't8-agent-control-instance-v1', appVersion: '3.3.6', heartbeatAt: new Date().toISOString(), staleAfterMs: 120000, pid: process.pid };
++  fs.writeFileSync(path.join(registry, instance.instanceId + '.json'), JSON.stringify(descriptor));
++  t.after(async () => { await new Promise(done => server.close(done)); const rel = path.relative(fs.realpathSync.native(os.tmpdir()), root); assert.ok(rel && !path.isAbsolute(rel) && !rel.startsWith('..')); fs.rmSync(root, { recursive: true, force: true }); });
++  async function command(...args) {
++    const child = spawn(process.execPath, ['--max-old-space-size=256', cli, ...args], { env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
++    let output = ''; child.stdout.on('data', chunk => { output += chunk; }); child.stderr.resume();
++    const code = await new Promise((resolve, reject) => { child.once('error', reject); child.once('close', resolve); });
++    return { code, json: JSON.parse(output) };
++  }
++  function approve(record = state.created.at(-1)) { return auth.approvePairing({ pairingId: record.pairingId, userCode: record.userCode, approvedBy: 'EXAMPLE_WINDOW_OWNER' }); }
++  function replacePending() {
++    const snapshot = native.readStore(options); snapshot.pending[instance.instanceId].expiresAt = new Date(Date.now() - 1).toISOString(); native.writeStore(snapshot, options);
++    const pairing = auth.createPairing({ clientName: 'EXAMPLE_OTHER_AGENT' }); native.storePending(instance, pairing, options); return pairing;
++  }
++  function replaceSession() {
++    const previous = native.loadSession(instance.instanceId, options); auth.revoke(previous.accessToken);
++    const pairing = auth.createPairing({ clientName: 'EXAMPLE_OTHER_AGENT' }); native.storePending(instance, pairing, options); approve(pairing);
++    const claimed = auth.pollPairing({ pairingId: pairing.pairingId, pollSecret: pairing.pollSecret }); native.storeSession(instance, claimed, options); return claimed;
++  }
++  return { root, options, instance, auth, state, command, approve, replacePending, replaceSession };
++}
++
++test('production CLI refuses a duplicate pairing before creating another window request', async t => {
++  const f = await fixture(t); assert.equal((await f.command('auth', 'pair')).json.code, 'PAIRING_CONFIRMATION_REQUIRED');
++  assert.equal((await f.command('auth', 'pair')).json.code, 'PAIRING_ALREADY_PENDING'); assert.equal(f.state.posts, 1);
++});
++test('production CLI denial cleanup preserves another client pending request', async t => {
++  const f = await fixture(t); await f.command('auth', 'pair'); f.auth.denyPairing(f.state.created[0].pairingId);
++  let replacement; f.state.onPoll = () => { f.state.onPoll = undefined; replacement = f.replacePending(); };
++  assert.equal((await f.command('auth', 'complete')).json.code, 'PAIRING_PROGRESS_CHANGED');
++  assert.equal(native.loadPending(f.instance.instanceId, f.options).pairingId, replacement.pairingId);
++});
++for (const [label, args] of [['auth status', ['auth', 'status']], ['workspace request', ['workspace', 'list']]]) {
++  test(`production CLI ${label} cleanup preserves a newly saved session`, async t => {
++    const f = await fixture(t); await f.command('auth', 'pair'); f.approve(); const completed = await f.command('auth', 'complete'); assert.equal(completed.json.ok, true);
++    let replacement; f.state.onRead = () => { f.state.onRead = undefined; replacement = f.replaceSession(); };
++    assert.equal((await f.command(...args)).json.code, 'PAIRING_PROGRESS_CHANGED');
++    const saved = native.loadSession(f.instance.instanceId, f.options); assert.equal(saved.sessionId, replacement.sessionId); assert.ok(f.auth.authenticate(saved.accessToken, []).sessionId);
++  });
++}
+diff --git a/tests/zcanvasDiscoveryWindow.test.cjs b/tests/zcanvasDiscoveryWindow.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/tests/zcanvasDiscoveryWindow.test.cjs
+@@ -0,0 +1,46 @@
++'use strict';
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const os = require('node:os');
++const path = require('node:path');
++const discovery = require('../tools/zcanvas-cli/src/discovery.cjs');
++const { compatibilitySnapshot } = require('../backend/src/services/agentControlCompatibility');
++const compatibility = compatibilitySnapshot();
++function fixture(t) {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'EXAMPLE_discovery_window_'));
++  t.after(() => { const rel = path.relative(os.tmpdir(), root); assert.ok(rel && !rel.startsWith('..') && !path.isAbsolute(rel)); fs.rmSync(root, { recursive: true, force: true }); });
++  const now = Date.now(), options = { env: { ZCANVAS_INSTANCE_DIR: root }, now };
++  function put(id, heartbeatAt = now, extra = {}) { const file = path.join(root, id + '.json'); fs.writeFileSync(file, JSON.stringify({ ...compatibility, schema: discovery.INSTANCE_SCHEMA, instanceId: id, origin: 'http://127.0.0.1:19030', appVersion: '3.3.6', heartbeatAt: new Date(heartbeatAt).toISOString(), staleAfterMs: 20000, ...extra })); return file; }
++  return { root, now, options, put };
++}
++test('expired files before the old 256-file window cannot hide a fresh running instance', t => {
++  const f = fixture(t);
++  for (let i = 0; i < discovery.INSTANCE_LIST_LIMIT + 40; i++) f.put('A' + String(i).padStart(42, '0'), f.now - 3600000);
++  const id = 'z'.repeat(43); f.put(id);
++  assert.deepEqual(discovery.readInstanceDescriptors(f.options).map(item => item.instanceId), [id]);
++});
++test('the fresh descriptor/probe window stays bounded without deleting old registry files', async t => {
++  const f = fixture(t);
++  for (let i = 0; i < discovery.INSTANCE_LIST_LIMIT + 5; i++) { const file = f.put('B' + String(i).padStart(42, '0')); fs.utimesSync(file, new Date(f.now + i), new Date(f.now + i)); }
++  const filesBefore = fs.readdirSync(f.root).length; let probes = 0;
++  const live = discovery.readInstanceDescriptors(f.options); assert.equal(live.length, discovery.INSTANCE_LIST_LIMIT); assert.ok(live.some(item => item.instanceId === 'B' + String(discovery.INSTANCE_LIST_LIMIT + 4).padStart(42, '0')));
++  assert.deepEqual(await discovery.discoverInstances({ ...f.options, fetch: async () => { probes++; return new Response('', { status: 503 }); } }), []); assert.equal(probes, discovery.INSTANCE_LIST_LIMIT); assert.equal(fs.readdirSync(f.root).length, filesBefore);
++});
++test('a file growing between stat and open cannot bypass the file-size/read budget', t => {
++  const f = fixture(t), file = f.put('C'.repeat(43)), open = fs.openSync, read = fs.readSync; let bytes = 0;
++  fs.openSync = function(target, ...args) { if (target === file) fs.writeFileSync(file, 'x'.repeat(discovery.INSTANCE_FILE_LIMIT + 1)); return open.call(this, target, ...args); };
++  fs.readSync = function(...args) { const count = read.apply(this, args); bytes += count; return count; };
++  try { assert.deepEqual(discovery.readInstanceDescriptors(f.options), []); assert.equal(bytes, 0); } finally { fs.openSync = open; fs.readSync = read; }
++});
++test('stale but large descriptor populations cannot cause unbounded JSON reads', t => {
++  const f = fixture(t); for (let i = 0; i < 280; i++) f.put('D' + String(i).padStart(42, '0'), f.now - 3600000, { ignored: 'x'.repeat(discovery.INSTANCE_FILE_LIMIT - 2000) });
++  const read = fs.readSync; let bytes = 0;
++  fs.readSync = function(...args) { const count = read.apply(this, args); bytes += count; return count; };
++  try { assert.deepEqual(discovery.readInstanceDescriptors(f.options), []); assert.ok(bytes > 0 && bytes <= discovery.INSTANCE_READ_LIMIT); } finally { fs.readSync = read; }
++});
++test('overlarge registries fail explicitly before reading file contents', t => {
++  const f = fixture(t), readdir = fs.readdirSync;
++  fs.readdirSync = function(target, ...args) { return target === f.root ? Array(discovery.INSTANCE_ENTRY_LIMIT + 1).fill({ isFile: () => true, name: 'E'.repeat(43) + '.json' }) : readdir.call(this, target, ...args); };
++  try { assert.throws(() => discovery.readInstanceDescriptors(f.options), error => error.code === 'INSTANCE_REGISTRY_LIMIT'); } finally { fs.readdirSync = readdir; }
++});
+diff --git a/tests/zcanvasSecureStoreConcurrency.test.cjs b/tests/zcanvasSecureStoreConcurrency.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/tests/zcanvasSecureStoreConcurrency.test.cjs
+@@ -0,0 +1,156 @@
++'use strict';
++const test = require('node:test');
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const os = require('node:os');
++const path = require('node:path');
++const { spawn } = require('node:child_process');
++const store = require('../tools/zcanvas-cli/src/secureStore.cjs');
++const modulePath = require.resolve('../tools/zcanvas-cli/src/secureStore.cjs');
++const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
++const worker = String.raw`
++const fs=require('node:fs'),path=require('node:path');
++const [modulePath,root,mode,id,pairingId]=process.argv.slice(1), store=require(modulePath), file=path.join(root,'credentials.json');
++const wait=new Int32Array(new SharedArrayBuffer(4));
++function barrier(label){fs.writeFileSync(path.join(root,label+'-'+id),'ready');const end=Date.now()+8000;while(!fs.existsSync(path.join(root,'release'))){if(Date.now()>end)throw Error('EXAMPLE_BARRIER_TIMEOUT');Atomics.wait(wait,0,0,10);}}
++const options={env:{ZCANVAS_AUTH_STORE:file},platform:'test',protect(value){if(mode==='session-hold'||mode==='recipe')barrier('ready');return Buffer.from(String(value)).toString('base64');},unprotect(value){return Buffer.from(value,'base64').toString();}};
++if(mode==='crash'){const rename=fs.renameSync;fs.renameSync=(from,to)=>{if(to===file)barrier('ready');return rename(from,to);};}
++try{
++ if(mode==='recipe'){const result=store.getRecipeSigningSecret(options);console.log(JSON.stringify({keyId:result.keyId}));}
++ else{const instance={instanceId:id,origin:'http://127.0.0.1:18766'};store.storeSession(instance,{sessionId:'EXAMPLE_SESSION_'+id,accessToken:'EXAMPLE_ONLY_SESSION_TOKEN',expiresAt:new Date(Date.now()+3600000).toISOString(),...(pairingId?{pairingId}:{})},options);console.log(JSON.stringify({saved:true}));}
++}catch(error){console.log(JSON.stringify({code:error.code||'EXAMPLE_FAILED'}));process.exitCode=2;}
++`;
++async function setup(t) {
++  const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'zcanvas-store-transaction-'))), file = path.join(root, 'credentials.json'), children = [];
++  const options = { env: { ZCANVAS_AUTH_STORE: file }, platform: 'test', protect: value => Buffer.from(String(value)).toString('base64'), unprotect: value => Buffer.from(value, 'base64').toString() };
++  t.after(async () => {
++    for (const child of children) { if (child.process.exitCode == null && child.process.signalCode == null) child.process.kill(); await child.done; }
++    const rel = path.relative(fs.realpathSync.native(os.tmpdir()), root); assert.ok(rel && !path.isAbsolute(rel) && !rel.startsWith('..'));
++    fs.rmSync(root, { recursive: true, force: true });
++  });
++  function start(mode, id, pairingId = '') {
++    const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => /^(?:path|systemroot|windir|temp|tmp|home|userprofile|localappdata|electron_run_as_node)$/i.test(name)));
++    const processHandle = spawn(process.execPath, ['--max-old-space-size=128', '-e', worker, modulePath, root, mode, id, pairingId], { env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
++    let text = '', diagnostic = ''; processHandle.stdout.on('data', chunk => { text += chunk; }); processHandle.stderr.on('data', chunk => { diagnostic += chunk; });
++    const done = new Promise((resolve, reject) => { processHandle.once('error', reject); processHandle.once('close', code => resolve({ code, value: text.trim() ? JSON.parse(text.trim()) : null, diagnostic })); });
++    const child = { process: processHandle, done }; children.push(child); return child;
++  }
++  async function ready(id) { const end = Date.now() + 7000; while (!fs.existsSync(path.join(root, 'ready-' + id))) { if (Date.now() > end) throw Error('EXAMPLE_WORKER_NOT_READY'); await pause(15); } }
++  const release = () => fs.writeFileSync(path.join(root, 'release'), 'continue');
++  const instance = id => ({ instanceId: id, origin: 'http://127.0.0.1:18766' });
++  const pairing = (id, expiresAt = Date.now() + 60000) => ({ pairingId: id, userCode: 'ABCD2345', pollSecret: 'EXAMPLE_ONLY_POLL_SECRET', expiresAt: new Date(expiresAt).toISOString() });
++  return { root, file, options, start, ready, release, instance, pairing };
++}
++
++test('native secureStore preserves another process context while session protection is paused', async t => {
++  const f = await setup(t), a = f.start('session-hold', 'EXAMPLE_A'); await f.ready('EXAMPLE_A');
++  store.setWorkspaceContext('EXAMPLE_B', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options);
++  f.release(); assert.equal((await a.done).code, 0);
++  const data = store.readStore(f.options); assert.ok(data.sessions.EXAMPLE_A); assert.ok(data.contexts.EXAMPLE_B);
++});
++test('concurrent native recipe signing initialization returns one shared key identity', async t => {
++  const f = await setup(t), children = ['EXAMPLE_A', 'EXAMPLE_B', 'EXAMPLE_C'].map(id => f.start('recipe', id));
++  await Promise.all(['EXAMPLE_A', 'EXAMPLE_B', 'EXAMPLE_C'].map(id => f.ready(id))); f.release();
++  const results = await Promise.all(children.map(child => child.done)); assert.ok(results.every(result => result.code === 0), JSON.stringify(results.map(result => ({ code: result.code, error: result.value?.code }))));
++  assert.equal(new Set(results.map(result => result.value.keyId)).size, 1);
++  assert.equal(store.getRecipeSigningSecret(f.options).keyId, results[0].value.keyId);
++});
++test('public native snapshot writes refuse a stale read without dropping current records', async t => {
++  const f = await setup(t), stale = store.readStore(f.options);
++  store.setWorkspaceContext('EXAMPLE_B', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options);
++  assert.throws(() => store.writeStore(stale, f.options), error => error.code === 'CREDENTIAL_STORE_CHANGED');
++  assert.ok(store.readStore(f.options).contexts.EXAMPLE_B);
++});
++test('native pending writes refuse another unexpired request for the same instance', async t => {
++  const f = await setup(t), instance = f.instance('EXAMPLE_A');
++  store.storePending(instance, f.pairing('EXAMPLE_PAIR_A'), f.options);
++  assert.throws(() => store.storePending(instance, f.pairing('EXAMPLE_PAIR_B'), f.options), error => error.code === 'PAIRING_ALREADY_PENDING');
++  assert.equal(store.loadPending(instance.instanceId, f.options).pairingId, 'EXAMPLE_PAIR_A');
++});
++test('native session commit checks its pairing again after slow protection', async t => {
++  const f = await setup(t), instance = f.instance('EXAMPLE_A'), expires = Date.now() + 100;
++  store.storePending(instance, f.pairing('EXAMPLE_PAIR_A', expires), f.options);
++  const a = f.start('session-hold', instance.instanceId, 'EXAMPLE_PAIR_A'); await f.ready(instance.instanceId);
++  while (Date.now() <= expires) await pause(10);
++  store.storePending(instance, f.pairing('EXAMPLE_PAIR_B'), f.options); f.release();
++  const result = await a.done; assert.equal(result.value.code, 'PAIRING_PROGRESS_CHANGED');
++  assert.equal(store.loadPending(instance.instanceId, f.options).pairingId, 'EXAMPLE_PAIR_B'); assert.equal(store.loadSession(instance.instanceId, f.options), null);
++});
++test('conditional native deletion cannot remove a newer pairing or session', async t => {
++  const f = await setup(t), instance = f.instance('EXAMPLE_A');
++  store.storePending(instance, f.pairing('EXAMPLE_NEW_PAIR'), f.options);
++  assert.throws(() => store.deletePending(instance.instanceId, { ...f.options, expectedPairingId: 'EXAMPLE_OLD_PAIR' }), error => error.code === 'PAIRING_PROGRESS_CHANGED');
++  store.storeSession(f.instance('EXAMPLE_B'), { sessionId: 'EXAMPLE_NEW_SESSION', accessToken: 'EXAMPLE_ONLY_TOKEN', expiresAt: new Date(Date.now() + 60000).toISOString() }, f.options);
++  assert.throws(() => store.deleteSession('EXAMPLE_B', { ...f.options, expectedSessionId: 'EXAMPLE_OLD_SESSION' }), error => error.code === 'PAIRING_PROGRESS_CHANGED');
++  assert.equal(store.loadPending(instance.instanceId, f.options).pairingId, 'EXAMPLE_NEW_PAIR'); assert.equal(store.loadSession('EXAMPLE_B', f.options).sessionId, 'EXAMPLE_NEW_SESSION');
++});
++test('a live native writer causes bounded busy failure and a killed writer recovers without replacing the checkpoint', async t => {
++  const f = await setup(t); store.setWorkspaceContext('EXAMPLE_BASE', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options);
++  const a = f.start('crash', 'EXAMPLE_CRASH'); await f.ready('EXAMPLE_CRASH');
++  assert.throws(() => store.setWorkspaceContext('EXAMPLE_BLOCKED', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options), error => error.code === 'CREDENTIAL_STORE_BUSY');
++  a.process.kill(); await a.done;
++  store.setWorkspaceContext('EXAMPLE_AFTER', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options);
++  const data = store.readStore(f.options); assert.ok(data.contexts.EXAMPLE_BASE); assert.ok(data.contexts.EXAMPLE_AFTER); assert.equal(data.contexts.EXAMPLE_BLOCKED, undefined); assert.equal(data.sessions.EXAMPLE_CRASH, undefined);
++  assert.equal(fs.readdirSync(f.root).filter(name => name.endsWith('.tmp') || name.endsWith('.lock')).length, 0);
++});
++
++test('multiple native processes reclaim a dead writer and preserve every new session', async t => {
++  const f = await setup(t), dead = f.start('crash', 'EXAMPLE_DEAD'); await f.ready('EXAMPLE_DEAD'); dead.process.kill(); await dead.done;
++  const ids = ['EXAMPLE_A', 'EXAMPLE_B', 'EXAMPLE_C', 'EXAMPLE_D'];
++  const outcomes = await Promise.all(ids.map(id => f.start('session', id).done));
++  assert.ok(outcomes.every(result => result.code === 0), JSON.stringify(outcomes.map(result => ({ code: result.code, error: result.value?.code }))));
++  const data = store.readStore(f.options); assert.ok(ids.every(id => Boolean(data.sessions[id]))); assert.equal(data.sessions.EXAMPLE_DEAD, undefined);
++  assert.equal(fs.readdirSync(f.file + '.lock-state').length, 0); assert.equal(fs.existsSync(f.file + '.lock'), false);
++});
++
++test('native snapshot writes preserve version-1 layout and permit a refreshed same-object update', async t => {
++  const f = await setup(t), initial = store.readStore(f.options);
++  initial.contexts.EXAMPLE_A = { instanceId: 'EXAMPLE_A', projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS', selectedAt: new Date().toISOString() };
++  store.writeStore(initial, f.options); initial.contexts.EXAMPLE_B = { ...initial.contexts.EXAMPLE_A, instanceId: 'EXAMPLE_B' }; store.writeStore(initial, f.options);
++  const data = JSON.parse(fs.readFileSync(f.file, 'utf8'));
++  assert.deepEqual(Object.keys(data).sort(), ['approvals', 'contexts', 'pending', 'recipeSigning', 'schema', 'sessions']);
++  assert.equal(data.schema, 't8-zcanvas-secure-store-v1'); assert.ok(data.contexts.EXAMPLE_A && data.contexts.EXAMPLE_B);
++  assert.equal('revision' in data, false); assert.equal('lock' in data, false);
++});
++
++test('corrupt lock metadata fails closed and protection failure leaves the existing checkpoint untouched', async t => {
++  const f = await setup(t); store.setWorkspaceContext('EXAMPLE_BASE', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options);
++  const before = fs.readFileSync(f.file);
++  fs.writeFileSync(f.file + '.lock', 'EXAMPLE_UNRECOGNIZED_LOCK');
++  assert.throws(() => store.setWorkspaceContext('EXAMPLE_BLOCKED', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options), error => error.code === 'CREDENTIAL_STORE_LOCK_INVALID');
++  assert.deepEqual(fs.readFileSync(f.file), before); fs.unlinkSync(f.file + '.lock');
++  assert.throws(() => store.storeSession(f.instance('EXAMPLE_A'), { sessionId: 'EXAMPLE_SESSION', accessToken: 'EXAMPLE_ONLY_TOKEN', expiresAt: new Date(Date.now() + 60000).toISOString() }, { ...f.options, protect() { throw Error('EXAMPLE_PROTECTION_FAILED'); } }), /EXAMPLE_PROTECTION_FAILED/);
++  assert.deepEqual(fs.readFileSync(f.file), before); assert.equal(fs.existsSync(f.file + '.lock'), false);
++});
++
++test('native approvals and a selected workspace survive a concurrent session update', async t => {
++  const f = await setup(t), a = f.start('session-hold', 'EXAMPLE_A'); await f.ready('EXAMPLE_A');
++  store.storeApproval(f.instance('EXAMPLE_A'), { approvalRequestId: 'EXAMPLE_APPROVAL_A', action: 'creative.apply', pollSecret: 'EXAMPLE_ONLY_POLL', expiresAt: new Date(Date.now() + 60000).toISOString() }, f.options);
++  store.storeApproval(f.instance('EXAMPLE_A'), { approvalRequestId: 'EXAMPLE_APPROVAL_B', action: 'creative.apply', pollSecret: 'EXAMPLE_ONLY_POLL', expiresAt: new Date(Date.now() + 60000).toISOString() }, f.options);
++  store.setWorkspaceContext('EXAMPLE_A', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options);
++  f.release(); assert.equal((await a.done).code, 0);
++  assert.ok(store.loadApproval('EXAMPLE_A', 'EXAMPLE_APPROVAL_A', f.options)); assert.ok(store.loadApproval('EXAMPLE_A', 'EXAMPLE_APPROVAL_B', f.options)); assert.ok(store.getWorkspaceContext('EXAMPLE_A', f.options));
++  store.deleteApproval('EXAMPLE_A', 'EXAMPLE_APPROVAL_A', f.options);
++  assert.equal(store.loadApproval('EXAMPLE_A', 'EXAMPLE_APPROVAL_A', f.options), null); assert.ok(store.loadApproval('EXAMPLE_A', 'EXAMPLE_APPROVAL_B', f.options));
++});
++
++test('same pending identity is immutable and a sidecar directory link is refused', async t => {
++  const f = await setup(t), instance = f.instance('EXAMPLE_A'), pending = f.pairing('EXAMPLE_PAIR_A');
++  store.storePending(instance, pending, f.options); const before = fs.readFileSync(f.file);
++  store.storePending(instance, pending, f.options); assert.deepEqual(fs.readFileSync(f.file), before);
++  assert.throws(() => store.storePending({ ...instance, origin: 'http://127.0.0.1:18767' }, pending, f.options), error => error.code === 'PAIRING_PROGRESS_CHANGED');
++  const state = f.file + '.lock-state', external = path.join(f.root, 'EXAMPLE_OTHER_DIRECTORY');
++  fs.rmdirSync(state); fs.mkdirSync(external); fs.symlinkSync(external, state, process.platform === 'win32' ? 'junction' : 'dir');
++  assert.throws(() => store.setWorkspaceContext('EXAMPLE_BLOCKED', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options), error => error.code === 'CREDENTIAL_STORE_LOCK_INVALID');
++  assert.equal(fs.readdirSync(external).length, 0); assert.deepEqual(fs.readFileSync(f.file), before);
++});
++
++test('failed fsync leaves the native checkpoint unchanged and removes its own lease and temporary file', async t => {
++  const f = await setup(t); store.setWorkspaceContext('EXAMPLE_BASE', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options);
++  const before = fs.readFileSync(f.file), original = fs.fsyncSync;
++  try { fs.fsyncSync = () => { throw Object.assign(Error('EXAMPLE_DISK_FAILURE'), { code: 'EIO' }); };
++    assert.throws(() => store.setWorkspaceContext('EXAMPLE_BLOCKED', { projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS' }, f.options), error => error.code === 'CREDENTIAL_STORE_LOCK_UNAVAILABLE');
++  } finally { fs.fsyncSync = original; }
++  assert.deepEqual(fs.readFileSync(f.file), before); assert.equal(fs.existsSync(f.file + '.lock'), false);
++  assert.equal(fs.readdirSync(f.file + '.lock-state').length, 0); assert.equal(fs.readdirSync(f.root).filter(name => name.endsWith('.tmp')).length, 0);
++});
+diff --git a/tools/zcanvas-cli/src/secureStoreTransactions.cjs b/tools/zcanvas-cli/src/secureStoreTransactions.cjs
+new file mode 100644
+--- /dev/null
++++ b/tools/zcanvas-cli/src/secureStoreTransactions.cjs
+@@ -0,0 +1,151 @@
++'use strict';
++
++const fs = require('node:fs');
++const path = require('node:path');
++const crypto = require('node:crypto');
++
++const LOCK_TIMEOUT_MS = 2000;
++const sleepCell = new Int32Array(new SharedArrayBuffer(4));
++const identifier = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
++const receiptName = new RegExp(`^(owner|recover)-([1-9][0-9]{0,9})-(${identifier})$`);
++const noncePattern = new RegExp(`^${identifier}$`);
++
++function lockError(code) {
++  const error = new Error(code === 'CREDENTIAL_STORE_BUSY'
++    ? '另一进程正在更新 Agent 配对，请稍后再试；未覆盖已有凭据'
++    : 'Agent 凭据写入协调不可用；未绕过保护写入');
++  error.code = code; return error;
++}
++function alive(pid) {
++  try { process.kill(pid, 0); return true; }
++  catch (error) { return error.code !== 'ESRCH'; }
++}
++function unlinkOwned(filename) {
++  try { fs.unlinkSync(filename); }
++  catch (error) { if (error.code !== 'ENOENT') throw error; }
++}
++function readOwner(filename) {
++  let descriptor;
++  try {
++    const info = fs.lstatSync(filename);
++    if (!info.isFile() || info.isSymbolicLink() || info.size > 1024) throw lockError('CREDENTIAL_STORE_LOCK_INVALID');
++    descriptor = fs.openSync(filename, 'r');
++    const opened = fs.fstatSync(descriptor);
++    if (opened.dev !== info.dev || opened.ino !== info.ino) return null;
++    if (opened.size > 1024) throw lockError('CREDENTIAL_STORE_LOCK_INVALID');
++    const bytes = fs.readFileSync(descriptor);
++    if (bytes.length > 1024) throw lockError('CREDENTIAL_STORE_LOCK_INVALID');
++    const data = JSON.parse(bytes.toString('utf8'));
++    if (data?.schema !== 't8-zcanvas-store-lock-v1' || !Number.isSafeInteger(data.pid) || data.pid < 1 || data.pid > 2147483647 || !noncePattern.test(String(data.nonce || ''))) throw lockError('CREDENTIAL_STORE_LOCK_INVALID');
++    return data;
++  } catch (error) {
++    if (error.code === 'ENOENT') return null;
++    if (String(error.code || '').startsWith('CREDENTIAL_STORE_')) throw error;
++    throw lockError('CREDENTIAL_STORE_LOCK_INVALID');
++  } finally { if (descriptor !== undefined) fs.closeSync(descriptor); }
++}
++function regularReceipt(filename, maximum) {
++  const info = fs.lstatSync(filename);
++  if (!info.isFile() || info.isSymbolicLink() || info.size > maximum) throw lockError('CREDENTIAL_STORE_LOCK_INVALID');
++}
++
++/** Cooperative synchronous transactions. Only participating native writers are
++ * serialized; this is not an OS sandbox against arbitrary direct file writes.
++ * Recovery claims prevent a contender entering while a dead lock is reclaimed.
++ * Unique claim names can be removed after a dead PID without an unlink/recreate
++ * race. Live PIDs are never reclaimed based on age. */
++function withStoreLock(filename, work) {
++  const directory = path.dirname(filename);
++  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
++  const parent = fs.realpathSync.native(directory);
++  let canonical = path.join(parent, path.basename(filename));
++  try {
++    const info = fs.lstatSync(canonical);
++    if (info.isSymbolicLink() || !info.isFile()) throw lockError('CREDENTIAL_STORE_INVALID');
++    canonical = fs.realpathSync.native(canonical);
++  } catch (error) { if (error.code !== 'ENOENT') throw error; }
++  const stateDirectory = canonical + '.lock-state';
++  fs.mkdirSync(stateDirectory, { recursive: true, mode: 0o700 });
++  if (!fs.lstatSync(stateDirectory).isDirectory() || fs.lstatSync(stateDirectory).isSymbolicLink()) throw lockError('CREDENTIAL_STORE_LOCK_INVALID');
++  const lock = canonical + '.lock';
++  const owner = { schema: 't8-zcanvas-store-lock-v1', pid: process.pid, nonce: crypto.randomUUID() };
++  const ownFile = path.join(stateDirectory, `owner-${owner.pid}-${owner.nonce}`);
++  fs.writeFileSync(ownFile, JSON.stringify(owner), { mode: 0o600, flag: 'wx' });
++  const matches = value => value?.pid === owner.pid && value?.nonce === owner.nonce;
++  const temporary = value => `${canonical}.${value.pid}.${value.nonce}.tmp`;
++  let acquired = false;
++
++  function recoveryActive() {
++    const names = fs.readdirSync(stateDirectory);
++    if (names.length > 1024) throw lockError('CREDENTIAL_STORE_LOCK_INVALID');
++    let active = false;
++    for (const name of names) {
++      const match = receiptName.exec(name);
++      if (!match || name === path.basename(ownFile)) continue;
++      const full = path.join(stateDirectory, name);
++      try { regularReceipt(full, match[1] === 'recover' ? 0 : 1024); }
++      catch (error) { if (error.code === 'ENOENT') continue; throw error; }
++      const pid = Number(match[2]);
++      if (!Number.isSafeInteger(pid) || pid > 2147483647) throw lockError('CREDENTIAL_STORE_LOCK_INVALID');
++      if (alive(pid)) { if (match[1] === 'recover') active = true; continue; }
++      // These names are never reused by the native protocol. Neither the
++      // checkpoint nor an unrelated file is removed during orphan cleanup.
++      if (match[1] === 'owner') {
++        const orphan = temporary({ pid, nonce: match[3] });
++        try { regularReceipt(orphan, 256 * 1024); unlinkOwned(orphan); }
++        catch (error) { if (error.code !== 'ENOENT') throw error; }
++      }
++      unlinkOwned(full);
++    }
++    return active;
++  }
++  function releasePrimary() {
++    const current = readOwner(lock);
++    if (matches(current)) unlinkOwned(lock);
++    else if (acquired) throw lockError('CREDENTIAL_STORE_LOCK_CHANGED');
++  }
++  function recoverDeadPrimary() {
++    const claim = path.join(stateDirectory, `recover-${process.pid}-${crypto.randomUUID()}`);
++    fs.closeSync(fs.openSync(claim, 'wx', 0o600));
++    try {
++      // Re-read under our unique claim. A writer that appeared before the
++      // claim is alive; one that appeared after must fail its entry check.
++      const current = readOwner(lock);
++      if (current && !alive(current.pid)) {
++        unlinkOwned(lock);
++        const orphan = temporary(current);
++        try { regularReceipt(orphan, 256 * 1024); unlinkOwned(orphan); }
++        catch (error) { if (error.code !== 'ENOENT') throw error; }
++      }
++    } finally { unlinkOwned(claim); }
++  }
++  const deadline = process.hrtime.bigint() + BigInt(LOCK_TIMEOUT_MS) * 1000000n;
++  try {
++    while (process.hrtime.bigint() < deadline) {
++      if (!recoveryActive()) {
++        try {
++          // A hard link publishes a fully initialized owner receipt with an
++          // exclusive create, avoiding an empty primary lock after a crash.
++          fs.linkSync(ownFile, lock);
++          if (!recoveryActive() && matches(readOwner(lock))) { acquired = true; break; }
++          releasePrimary();
++        } catch (error) {
++          if (error.code !== 'EEXIST') throw error;
++          const current = readOwner(lock);
++          if (current && !alive(current.pid)) recoverDeadPrimary();
++        }
++      }
++      Atomics.wait(sleepCell, 0, 0, 10);
++    }
++    if (!acquired) throw lockError('CREDENTIAL_STORE_BUSY');
++    return work({ filename: canonical, pid: owner.pid, nonce: owner.nonce });
++  } catch (error) {
++    if (String(error.code || '').startsWith('CREDENTIAL_STORE_') || error.code === 'PAIRING_PROGRESS_CHANGED' || error.code === 'PAIRING_ALREADY_PENDING') throw error;
++    throw lockError('CREDENTIAL_STORE_LOCK_UNAVAILABLE');
++  } finally {
++    try { if (acquired) releasePrimary(); }
++    finally { unlinkOwned(ownFile); }
++  }
++}
++
++module.exports = { LOCK_TIMEOUT_MS, withStoreLock };

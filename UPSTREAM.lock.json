@@ -313,6 +313,32 @@
         "passed": 274,
         "liveProviderCalls": 0
       }
+    },
+    "canvasIntegrationDelivery": {
+      "baseCommit": "e6702dc7770bcbe7d4895be22a06f4c7123a085b",
+      "status": "unreleased-source-backup",
+      "patch": "native-dsh-integration-v1.patch",
+      "patchSha256": "97ac620aac1aa2ed470063cfa2605d1f9888984baa6bf59f7166a5ebaf23c1aa",
+      "files": 38,
+      "restoreVerifiedInFreshTemp": true,
+      "nativeRelatedTests": {
+        "files": 16,
+        "passed": 77,
+        "failed": 0
+      },
+      "cliDigest": "8a474a98bf33797018df9fe7fa9126ca55891100e64c87f91885bfc65b81b110",
+      "nativeCompiledModules": 75,
+      "nativeCompiledSourceDigest": "fd4ac0a19db0f2b4c991a43b31fc5f194dbf0c016da7b0a4bef12c65e2cbfa3d",
+      "dshEntrySha256": "385cb5b6db4623a95c612db43c36afb5db4ae9af441c8aebf27dc56c75988035",
+      "combinedVerification": {
+        "originalRunIntents": 1,
+        "assets": 1,
+        "actualWindow": false,
+        "providerCalls": 0,
+        "userDatabaseRead": false
+      },
+      "installedDesktopUpdated": false,
+      "trustedCliAutomaticallyReplaced": false
     }
   }
 }
