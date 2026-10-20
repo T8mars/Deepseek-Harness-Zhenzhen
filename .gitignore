@@ -5,6 +5,9 @@
 /[Aa][Gg][Ee][Nn][Tt][Ss].[Mm][Dd]
 /[Aa][Nn][Ee][Nn][Tt][Ss].[Mm][Dd]
 
+# Local RAG materials and future personal creative projects.
+/创作资料/
+
 node_modules/
 dist/
 lib/

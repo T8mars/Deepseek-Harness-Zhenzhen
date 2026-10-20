@@ -71,7 +71,7 @@
     {
       "id": "local-rag",
       "status": "in-progress",
-      "verification": "Text import/search, exact workspace binding, independent Seedance/Agent consent, persistent pre-provider revocation, source cards and indexed-source pagination remain. Schema2 and keyword AND unchanged. Recognized Chinese questions with no exact result now use bounded lexical word-group matching, not semantic generation. C38 actual published ToolRuntime and four question units pass; full check299. Fixed pre-change proposed criteria on1007 indexed genuine installed creator/tool Markdown documents (one empty skipped): keyword8/10 unchanged, Chinese questions0/10 to7/10 at top5 with source+excerpt evidence. Question70% is below suggested80%; owner acceptance false, not user-project/M3 completion. Warm20-query p95 122.532ms is not a SLA. No model/credential/Native calls in this evaluation; source snapshot and temporary indexes removed. Browser, live model, user-corpus acceptance and PDF/OCR/vector remain unverified or unimplemented. See decisions0034/0038."
+      "verification": "Text import/search, exact workspace binding, independent Seedance/Agent consent, persistent pre-provider revocation, source cards and indexed-source pagination remain. Schema2 and keyword AND unchanged. Recognized Chinese questions with no exact result now use bounded lexical word-group matching, not semantic generation. C38 actual published ToolRuntime and four question units pass; full check299. Fixed pre-change proposed criteria on1007 indexed genuine installed creator/tool Markdown documents (one empty skipped): keyword8/10 unchanged, Chinese questions0/10 to7/10 at top5 with source+excerpt evidence. Question70% is below suggested80%; owner acceptance false, not user-project/M3 completion. Warm20-query p95 122.532ms is not a SLA. No model/credential/Native calls in this evaluation; source snapshot and temporary indexes removed. Browser, live model, user-corpus acceptance and PDF/OCR/vector remain unverified or unimplemented. See decisions0034/0038. User requested a local folder: created ignored/publication-guarded 创作资料 with1008 hash-verified installed-reference copies, project categories and10 proposed questions; no application import or cloud/Agent consent. Not user-project acceptance."
     },
     {
       "id": "canvas-mcp",
@@ -156,6 +156,11 @@
       "status": "in-progress",
       "liveVerified": false,
       "verification": "Fifteen routes with explicit declarations in hash-matched official docs now advertise text/image through the complete owned provider patch. Actual LocalAttachments + LlmRuntime/pi-ai C37 stores synthetic PNGs and checks 30 ordered request images against native projected bytes across15 loopback routes. Three text routes retain native placeholders; missing store/forged refs refuse image transmission. C1 native backend and full check294 pass. Public-CLI replacement proves changed patch with unchanged JS entry and the full installed profile. Browser uploads, live vision quality and image billing remain unverified; no paid image request or Native Canvas modification. See decision0037."
+    },
+    {
+      "id": "source-checkout-updates",
+      "status": "in-progress",
+      "verification": "C39 actual published DSH WebServer blocks source fetch/preparation while occupied. Genuine Git-object tests cover dirty/staged/untracked/hidden-index protection, source/candidate changes, divergence, historical private paths, links, ignored art conflicts, hooks, daily policy, cancellation and fresh-process restart. Full check322. Actual private GitHub dev8-to-dev9 source fast-forward and fresh historical --check bootstrap passed in a temporary clone. Current owned source-aware entry started locally with automatic updates off. Real wrapper self-update, interactive Windows review, OS-kill recovery and signed installer/update remain unverified."
     }
   ]
 }

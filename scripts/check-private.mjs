@@ -11,6 +11,9 @@ export function forbiddenRootPath(path) {
 export function checkPaths(paths, label = 'files') {
   const denied = paths.filter(forbiddenRootPath);
   if (denied.length) throw new Error(`${label} contains local-only files: ${denied.join(', ')}`);
+  if (paths.some(path => /^(?:创作资料)(?:\/|$)/.test(path.replaceAll('\\', '/').replace(/^\.\//, '').normalize('NFKC')))) {
+    throw new Error(`${label} contains the local-only creative material directory.`);
+  }
 }
 function git(root, args) {
   return execFileSync('git', ['-C', root, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });

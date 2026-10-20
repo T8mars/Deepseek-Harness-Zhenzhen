@@ -21,6 +21,10 @@ Windows下载或克隆源码后，可直接双击根目录 `start-dsh-zhen.cmd`�
 命令行可直接运行 `npm start`，或用 `npm start -- --no-open` 禁止打开浏览器。
 仅检查准备与配置、不启动服务可用 `npm start -- --check`。
 
+Git克隆的源码版可双击 `update-dsh-zhen.cmd` 检查并确认更新，也可选择
+下次启动自动跟进本项目main；本地修改与研究资料受保护。默认不自动执行
+新代码，操作及限制见[源码更新说明](docs/source-updates.md)。
+
 ```powershell
 npm start
 ```

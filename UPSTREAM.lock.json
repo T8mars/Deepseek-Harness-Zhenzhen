@@ -501,6 +501,56 @@
         "nativeWrites": 0
       },
       "verification": "Four synthetic question units and C38 actual published ToolRuntime; full check299 and public-CLI same-version replacement smoke pass. Question score70% is below suggested80%; not M3 acceptance, general relevance, browser or live-model proof. See decision0038."
+    },
+    "sourceCheckoutUpdates": {
+      "schema": 1,
+      "repository": "https://github.com/T8mars/Deepseek-Harness-Zhenzhen",
+      "channel": "main-development",
+      "defaultAutomatic": false,
+      "automaticIntervalMs": 86400000,
+      "manualEntry": "update-dsh-zhen.cmd",
+      "manualCandidateBinding": "full Git commit; refetch before fast-forward",
+      "protectedLocalDataRoot": "创作资料",
+      "temporaryCandidateRefs": true,
+      "remoteTrackingRefsModified": false,
+      "fastForwardOnly": true,
+      "autostash": false,
+      "hooksDuringFetchAndMerge": false,
+      "overwriteIgnoredFiles": false,
+      "maxHistoryCommits": 1000,
+      "upstreamModified": false,
+      "canvasModified": false,
+      "applicationCredentialReads": 0,
+      "actualGithubVerification": {
+        "before": "2a1a8b95bd274db3de716a942d38331b0f938b80",
+        "candidate": "fe25e0f32b3e74512d74645c795e5b4874a0b915",
+        "realPrivateTransport": true,
+        "previewDidNotMoveHead": true,
+        "fastForwardApplied": true,
+        "privateFakeResearchPreserved": 4,
+        "fakeDataPreserved": true,
+        "temporaryRefsRemoved": true,
+        "freshHistoricalBootstrapPassed": true,
+        "automaticWrapperSelfUpdateVerified": false,
+        "temporaryCloneRemoved": true,
+        "modelCalls": 0,
+        "paidCalls": 0
+      },
+      "verification": "C39 actual published DSH WebServer blocks source fetch/preparation while occupied. Genuine Git-object tests cover dirty/staged/untracked/hidden-index protection, source/candidate changes, divergence, historical private paths, links, ignored art conflicts, hooks, daily policy, cancellation and fresh-process restart. Full check322. Actual private GitHub dev8-to-dev9 source fast-forward and fresh historical --check bootstrap passed in a temporary clone. Current owned source-aware entry started locally with automatic updates off. Real wrapper self-update, interactive Windows review, OS-kill recovery and signed installer/update remain unverified."
+    },
+    "localCreativeMaterials": {
+      "root": "创作资料",
+      "referenceLibrary": "创作资料/技能与工具参考",
+      "localOnly": true,
+      "gitIgnored": true,
+      "indexHistoryAndPackageGuarded": true,
+      "referenceDocuments": 1008,
+      "referenceBytes": 10390272,
+      "shaVerifiedCopies": 1008,
+      "sourceWrites": 0,
+      "automaticallyImported": false,
+      "cloudConsentGranted": false,
+      "ownerProjectAcceptance": false
     }
   }
 }

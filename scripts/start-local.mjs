@@ -78,4 +78,7 @@ export async function startLocal({root=workspace,flags=process.argv.slice(2),por
     return await launch(lease,flags.filter(flag=>flag!=='--repair'));
   } finally {detach();process.chdir(previousDirectory);await lease.release();}
 }
-if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)await startLocal().catch(error=>{console.error(redactLauncherLine(error.message));process.exitCode=1;});
+if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
+  try{checkNodeVersion();const {sourceAwareStart}=await import('./source-start.mjs');await sourceAwareStart({root:workspace,flags:process.argv.slice(2),start:startLocal});}
+  catch(error){console.error(redactLauncherLine(error.message));process.exitCode=1;}
+}
