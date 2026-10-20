@@ -22,7 +22,8 @@
   "seedance": {
     "docs": "https://api.seedance.nz/docs/llms.txt",
     "sha256": "CD7D81AB06320A5D653A64E7413CA3834523FC7881B7B2BBF5077D2D878245E5",
-    "liveChatVerified": false
+    "liveChatVerified": true,
+    "liveChatVerificationScope": "One explicitly authorized fixed default Flash text stream, max_tokens32, normal completion; not tools, vision, all-model coverage, browser or precise billing."
   },
   "packageManager": {
     "name": "pnpm",
@@ -86,7 +87,7 @@
       "activation": "next-host-start",
       "verification": "C17 actual published SkillRegistry/Host/Remote uses synthetic fixed-source reads across restart. Manual/personal versions persist, only enabled installed source text is queued, and local fetch receipts prevent edited caches from authorizing updates. Not a publisher signature or live published-feed verification."
     },
-    "seedanceProtocolVerification": "Published pi-ai loopback SSE/tool round trip/cancellation/errors/usage; max_tokens compatibility configured; no live paid request",
+    "seedanceProtocolVerification": "Published pi-ai loopback SSE/tool round trip/cancellation/errors/usage; explicit max_tokens compatibility. 0037: one authorized real fixed default Flash text stream passed, requestCount1; no live tools or vision test.",
     "skillFeedSchema": 1,
     "skillFeedVerification": "Commit-pinned text candidates, SQLite fetched-catalog receipts, verified offline cache, optional trusted scheduling and immutable/rollback rejection checks. Legacy unmatched cache requires a fresh source read. Positive real publication and new browser controls remain unverified.",
     "mcpProgramRecipes": {
@@ -111,13 +112,23 @@
       "actionRecordsIncludingAliases": 60,
       "musicRegistrySha256": "4ef4c4df0034bef57c68a38b1c0b4dcf0cfc8ab10de01bf42fffaa62e8e8007c",
       "midjourneyRegistrySha256": "6e422516d934a765eeac0797427d221affbb12c80527f765f4528dbbb0def248",
-      "verification": "Three real public source reads match. C14 verifies all 18 configured text model ids through published adapter loopback and metadata-only ToolRuntime discovery. No live paid request or advanced protocol execution."
+      "verification": "C14: all18 exact text model ids pass published adapter loopback. C37: 15 explicit image routes serialize ordered native attachment bytes; remaining3 use native text placeholders. One authorized real default Flash text check passed; advanced/live vision/media capabilities remain unverified."
     },
     "gatewayCheck": {
       "stateSchema": 1,
       "policy": "flash-32-v1",
       "requestMaxTokens": 32,
-      "verification": "C19 published prepared-call, Host/Remote and pi-ai loopback; one dispatch, captured generation, bounded/redacted receipts and cancellation. Process-termination/storage-failure cases refuse replay. No live gateway or paid request; no new UI browser verification."
+      "verification": "C19 published prepared-call/Host/Remote/pi-ai loopback and failure/replay contracts remain synthetic. A separate 0037 isolated production GatewayChecks/published-runtime composition used the native saved credential and exactly one authorized fixed real Flash request; normal text completion, max_tokens32, reported41/11. No browser/full Agent/tool/vision/billing claim.",
+      "liveCheck": {
+        "state": "passed",
+        "requestCount": 1,
+        "maxTokens": 32,
+        "inputTokens": 41,
+        "outputTokens": 11,
+        "responseRecorded": false,
+        "browserVerified": false,
+        "preciseBillingVerified": false
+      }
     },
     "githubResourceSkills": {
       "stateSchema": 1,
@@ -422,6 +433,27 @@
         "userConfirmed": false,
         "paidCalls": 0
       }
+    },
+    "chatImageInputs": {
+      "docsSha256": "cd7d81ab06320a5d653a64e7413ca3834523fc7881b7b2bbf5077d2d878245e5",
+      "documentedImageRoutes": 15,
+      "textOnlyRoutes": 3,
+      "publishedContract": "C37",
+      "nativeDurableAttachments": true,
+      "nativeTextPlaceholderPolicyPreserved": true,
+      "localInlineImages": 30,
+      "fullDshCheck": {
+        "tests": 294,
+        "passed": 294,
+        "liveProviderCalls": 0
+      },
+      "liveVisionVerified": false,
+      "browserVerified": false,
+      "artifactFiles": 125,
+      "artifactSha256": "cc845f9a19ce9eb9697edab34a934e321594fb01d03a81dc9888259373e09349",
+      "installedPatchSha256": "f98e39721517543ad301f058a93d51a967b54179458724484c33ff09db14e84c",
+      "installedEntrySha256": "77ddfff9c1047fd627d96e005a13165149ac9eabca464d2ffdd3f1d896d516ac",
+      "configurationOnlyReplacementVerified": true
     }
   }
 }

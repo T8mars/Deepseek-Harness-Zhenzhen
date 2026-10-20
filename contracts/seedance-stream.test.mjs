@@ -81,7 +81,7 @@ test('C14: every reviewed chat route is offered by the published adapter and pre
   for (const model of models) {
     const result = await assemble(ctx, {model:model.id}); assert.equal(result.finish.kind, 'stop');
     assert.equal(server.requests.at(-1).body.model, model.id); assert.equal(server.requests.at(-1).body.max_tokens, 4096);
-    assert.deepEqual(model.input, ['text']);
+    assert.equal(model.input.includes('text'), true);
   }
   assert.equal(server.requests.length, 18);
 });

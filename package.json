@@ -64,7 +64,9 @@
     "yaml": "2.8.3",
     "zod": "4.4.3",
     "@deepseek-ai/dsh-client-ui-tool": "0.2.1-rc.2",
-    "react-dom": "19.2.0"
+    "react-dom": "19.2.0",
+    "@deepseek-ai/dsh-attachment": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-attachment-local": "0.2.1-rc.2"
   },
   "overrides": {
     "@deepseek-ai/cordis": "4.0.5",

@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { createServer, connect } from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
 import { parseDocument } from 'yaml';
+import { isDeepStrictEqual } from 'node:util';
 import { mcpChildEnvironment } from '../packages/dsh-zhen/lib/mcp-market.js';
 import { redactLauncherLine } from './log-output.mjs';
 
@@ -21,6 +22,8 @@ if (args.length && (args.length !== 2 || args[0] !== '--replacement-from' || !/^
 const previousArchive = args.length ? resolve('.runtime/packages', args[1]) : undefined;
 if (previousArchive && !args[1].endsWith('-' + createHash('sha256').update(readFileSync(previousArchive)).digest('hex').slice(0, 16) + '.tgz')) throw new Error('Previous artifact changed.');
 const expectedEntry = createHash('sha256').update(readFileSync('packages/dsh-zhen/lib/index.js')).digest('hex');
+const expectedPatch = createHash('sha256').update(readFileSync('packages/dsh-zhen/cordis.patch.yml')).digest('hex');
+const expectedProvider = parseDocument(readFileSync('packages/dsh-zhen/cordis.patch.yml', 'utf8')).toJS().find(row => row.id === 'llm-pi-ai').config.providers.seedance;
 const temp = realpathSync.native(tmpdir()), root = mkdtempSync(join(temp, 'dsh-zhen-install-smoke-'));
 const env = mcpChildEnvironment({ DSH_HOME: root });
 const pathKey = Object.keys(env).find(key => key.toLowerCase() === 'path') ?? 'PATH';
@@ -34,32 +37,37 @@ async function run(args) {
   return output;
 }
 async function choosePort() { const server = createServer(); await new Promise(done => server.listen(0, '127.0.0.1', done)); const port = server.address().port; await new Promise(done => server.close(done)); return port; }
-async function entryDigest() {
-  // Public CLI/pnpm exec resolves only our installed package entry, without
+async function bundleIdentity() {
+  // Public CLI/pnpm exec reads our installed entry and declared bundle patch, without
   // importing it or reading any profile-private data.
-  const output = await run(['plugin', '--profile', 'example', 'exec', process.execPath, '-e', "const{readFileSync}=require('node:fs');const{createHash}=require('node:crypto');console.log('DSH_ZHEN_ENTRY_SHA256='+createHash('sha256').update(readFileSync(require.resolve('dsh-zhen'))).digest('hex'))"]);
-  const value = output.match(/DSH_ZHEN_ENTRY_SHA256=([a-f0-9]{64})/);
-  if (!value) throw new Error('Installed bundle entry could not be resolved through the public CLI.');
-  return value[1];
+  const output = await run(['plugin', '--profile', 'example', 'exec', process.execPath, '-e', "const f=require('node:fs'),p=require('node:path'),c=require('node:crypto'),m=require('dsh-zhen/package.json');if(m.dsh?.bundle?.patch!=='./cordis.patch.yml')throw Error('Unexpected bundle patch');const root=p.dirname(require.resolve('dsh-zhen/package.json')),hash=x=>c.createHash('sha256').update(f.readFileSync(x)).digest('hex');console.log('DSH_ZHEN_IDENTITY='+JSON.stringify({entry:hash(require.resolve('dsh-zhen')),patch:hash(p.resolve(root,m.dsh.bundle.patch))}))"]);
+  const value = output.match(/DSH_ZHEN_IDENTITY=(\{[^\r\n]+\})/);
+  if (!value) throw new Error('Installed bundle identity could not be resolved through the public CLI.');
+  const identity = JSON.parse(value[1]);
+  if (!/^[a-f0-9]{64}$/.test(identity.entry) || !/^[a-f0-9]{64}$/.test(identity.patch)) throw new Error('Installed bundle identity is invalid.');
+  return identity;
 }
 async function listening(port) { return new Promise(done => { const socket = connect({ host: '127.0.0.1', port }); socket.setTimeout(250); socket.once('connect', () => { socket.destroy(); done(true); }); socket.once('error', () => done(false)); socket.once('timeout', () => { socket.destroy(); done(false); }); }); }
 try {
   console.log('Creating a disposable profile through the public DSH CLI…');
   await run(['--profile', 'example', '--from-default-profile', 'web', '--dump-config']);
-  let priorEntry;
+  let priorIdentity;
   if (previousArchive) {
     console.log('Installing the previous local artifact to verify same-version replacement…');
     await run(['plugin', '--profile', 'example', 'add', previousArchive, '--ignore-scripts']);
-    priorEntry = await entryDigest();
-    if (priorEntry === expectedEntry) throw new Error('Replacement probe requires a different previous bundle entry.');
+    priorIdentity = await bundleIdentity();
+    if (priorIdentity.entry === expectedEntry && priorIdentity.patch === expectedPatch) throw new Error('Replacement probe requires a different previous entry or bundle patch.');
   }
   console.log('Installing the exact local artifact into the disposable profile…');
   await run(['plugin', '--profile', 'example', 'add', archive, '--force', '--ignore-scripts']);
-  if (await entryDigest() !== expectedEntry) throw new Error('Installed bundle entry differs from the current artifact build.');
+  const identity = await bundleIdentity();
+  if (identity.entry !== expectedEntry || identity.patch !== expectedPatch) throw new Error('Installed bundle entry or patch differs from the current artifact build.');
   const text = await run(['--profile', 'example', '--dump-config']);
   const config = parseDocument(text, { customTags: [{ tag: 'tag:yaml.org,2002:js', resolve: value => value }] }).toJS();
   const rows = new Map(config.map(row => [row.id, row]));
   const models = rows.get('llm-pi-ai')?.config?.providers?.seedance?.models;
+  if (!isDeepStrictEqual(rows.get('llm-pi-ai')?.config?.providers?.seedance, expectedProvider)) throw new Error('Installed provider profile differs from the complete source declaration.');
+  if (!rows.has('attachment-local') || rows.get('attachment-local').disabled === true) throw new Error('Native attachment backend is unavailable.');
   if (models?.length !== 18 || rows.get('agent-default-model')?.config?.model !== 'deepseek/deepseek-v4.1-flash' || !rows.has('dsh-zhen')) throw new Error('Installed profile composition differs.');
   for (const name of ['session-log-deepseek','plugin-package-inventory-deepseek','deepseek-llm-api-extensions','otel','session-telemetry-otel','product-analytics','desktop-product-telemetry','ui-brand-official']) if (rows.get(name)?.disabled !== true) throw new Error('Required privacy/branding row differs.');
   const port = await choosePort();
@@ -70,7 +78,7 @@ try {
   if (!ready) throw new Error('Disposable Host did not open its loopback socket.');
   await delay(500);
   if (hostClosed) throw new Error('Disposable Host exited after startup.');
-  const evidence = { at: new Date().toISOString(), artifact: artifact.file, sha256: artifact.sha256, node: process.versions.node, installedViaPublicCli: true, installedEntrySha256: expectedEntry, replacementFrom: previousArchive ? args[1] : null, previousEntrySha256: priorEntry ?? null, modelRoutes: models.length, flashDefault: true, designatedCollectorsDisabled: true, hostLoopbackSocket: true, browserInspected: false, paidCalls: 0 };
+  const evidence = { at: new Date().toISOString(), artifact: artifact.file, sha256: artifact.sha256, node: process.versions.node, installedViaPublicCli: true, installedEntrySha256: expectedEntry, installedPatchSha256: expectedPatch, replacementFrom: previousArchive ? args[1] : null, previousEntrySha256: priorIdentity?.entry ?? null, previousPatchSha256: priorIdentity?.patch ?? null, completeProviderProfileMatches: true, nativeAttachmentsEnabled: true, imageModelRoutes: models.filter(model => model.input.includes('image')).length, modelRoutes: models.length, flashDefault: true, designatedCollectorsDisabled: true, hostLoopbackSocket: true, browserInspected: false, paidCalls: 0 };
   mkdirSync(resolve(workspace, '.runtime/evidence'), { recursive: true });
   writeFileSync(resolve(workspace, '.runtime/evidence/installed-bundle-smoke.json'), JSON.stringify(evidence, null, 2) + '\n');
   console.log(JSON.stringify(evidence));

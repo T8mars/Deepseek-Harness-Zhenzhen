@@ -10,25 +10,28 @@ operation records. These are inventory counts, not executable feature counts.
 
 | Category | Planned owner | Current behavior |
 | --- | --- | --- |
-| Chat | DSH | 18 exact model ids configured for text; local streaming contracts pass |
+| Chat | DSH | 18 exact text routes, 15 explicit image-input routes; local streaming and native attachment contracts pass; one real fixed Flash text check passes |
 | Video, image, enhancement, motion, audio | Canvas | Documented models/protocol distinctions indexed; execution adapters remain |
 | Suno, Flow Music/Lyria, Midjourney | Canvas | Distinct actions, billing SKUs, reference types, required fields, versions and synchronous exceptions indexed |
 | MiniMax H3 V2 | Canvas | Exact case-sensitive model and separate V2 protocol recorded |
 | Transcription, 3D, structured decisions | Canvas / DSH | Distinct synchronous/task protocols recorded; execution remains |
 | Upload | Canvas | Recorded separately from generation; no upload is performed by the catalog |
-| Wallet | Host | Explicit credential-backed read exists; live account remains unverified |
+| Wallet | Host | One real fixed HTTPS GET and production response parsing pass; no balance or account data is retained in evidence |
 | Action registries | Host | Public read and differences verified on the real service |
 | Task queries and settlement | Host | Eight fixed read protocols and terminal usage in the [task center](gateway-tasks.md); no job is submitted or retried |
 
 The default remains `deepseek/deepseek-v4.1-flash`. All 18 chat routes currently
-declare text input and a 4096 default response budget. Models with documented
+declare text input and a 4096 default response budget; 15 also declare image input
+from explicit reviewed documentation. Models with documented
 context capacities use those configured budgets; models without a known
 capacity use 262144 conservatively. These configuration limits are not a claim
 about each gateway model's maximum. Native conversation model selection can
 use the configured catalog after a credential is supplied. C14 mounts the
 published adapter and confirms that each exact id is offered and sent unchanged
-to an isolated SSE fixture. Real service verification and advanced image,
-audio/video, reasoning, search and structured-output support remain open.
+to an isolated SSE fixture. C37 verifies native attachment bytes and image order
+for all 15 declared image routes. A separately authorized single real Flash text
+stream passes; real vision quality, the full Agent loop, audio/video, reasoning,
+search and structured-output support remain open. See [0037](decisions/0037-chat-image-inputs.md).
 
 `zhen_capabilities` gives agents a bounded, paginated metadata search without
 reading a credential or sending user data. It provides no arbitrary HTTP tool,

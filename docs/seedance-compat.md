@@ -2,8 +2,11 @@
 
 Baseline contracts checked on 2026-10-20 against published DSH / llm-pi-ai
 0.2.1-rc.2 and Node 22.19.0 on Windows use example credentials and loopback.
-The separate live wallet verification is recorded in [0036](decisions/0036-seedance-credential-events.md);
-it does not verify chat permissions or billing.
+The live wallet verification is recorded in [0036](decisions/0036-seedance-credential-events.md).
+[0037](decisions/0037-chat-image-inputs.md) records one separately authorized real Flash
+stream: fixed text, max_tokens 32, one request, normal completion, reported usage
+41 input / 11 output tokens. No reply text or credential is retained. This is an
+isolated production-service/runtime check, not a browser or full Agent-loop test.
 
 The complete bundle config selects provider `seedance`, model
 `deepseek/deepseek-v4.1-flash`, OpenAI Chat Completions and the Host credential
@@ -20,9 +23,9 @@ for the distinction between model records, observed media actions and execution.
 
 | 已验证 | 待验证 | 未验证 |
 | --- | --- | --- |
-| `node --test contracts/seedance-stream.test.mjs`: the actual published adapter sends the full model id to loopback `/v1/chat/completions`, streams Chinese text and preserves synthetic usage 7 input / 2 output / 9 total | Gateway SSE field variation, error payloads and actual token accounting | Live gateway chat, model permissions, billing and network captures |
+| `node --test contracts/seedance-stream.test.mjs`: the actual published adapter sends the full model id to loopback `/v1/chat/completions`, streams Chinese text and preserves synthetic usage 7 input / 2 output / 9 total | Gateway SSE field variation, error payloads and actual token accounting | Full live conversations, other model permissions and billing beyond the separate fixed Flash check |
 | Fragmented tool arguments assemble correctly; the real ToolRuntime executes a synthetic lookup once; its call id and result reach the second request | Real Agent loop behavior with actual gateway tool responses | Media generation, uploads, actual filesystem tools or paid tool execution |
-| Missing/revoked named credentials make no HTTP request; synthetic values pass through `ctx.credentials` | Live credential rotation and account scope | Any real key or credential-file layout |
+| Missing/revoked named credentials make no HTTP request; synthetic values pass through `ctx.credentials` | Live credential rotation and broader account scope | Credential-file layout is never depended on; real fixed wallet/Flash reads are separate checks |
 | Synthetic 401 → AUTH, 402 → PI_AI_ERROR, 429 → RATE_LIMIT, 500 → SERVER; each sends one request | Distinct 402 / quota reporting through a future supported adapter seam | Precise insufficient-balance classification |
 | Active cancellation closes the local connection; idle watchdog closes a held stream; truncated tool calls are not executable | Service-side cancellation and real streaming failure behavior | Cancellation refunds or recovery of accepted paid jobs |
 
@@ -33,8 +36,12 @@ verified insufficient balance. The wallet remains a separate explicit Host read.
 The local watchdog test uses 150 ms; production retains the configured 120 s
 request and idle limits. The adapter and route use no automatic retry. These
 checks do not establish gateway idempotency or permit retrying paid tools.
-Reasoning, image input, structured output and cache pricing remain disabled or
-unverified despite documented model capabilities. The current route is text-only.
+Fifteen explicitly documented routes now declare text and image input. C37 uses
+the published durable attachment store and adapter against loopback SSE, comparing
+the actual ordered inline bytes with native request projections. The three other
+routes retain native text placeholders. Browser uploads and real vision quality
+remain unverified. Audio/video inputs, reasoning, structured output and cache
+pricing remain disabled or unverified; the one real Flash check used text only.
 
 ## Explicit short connection check
 

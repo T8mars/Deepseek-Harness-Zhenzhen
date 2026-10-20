@@ -10,13 +10,14 @@
       "id": "seedance-chat",
       "status": "in-progress",
       "liveVerified": false,
-      "verification": "18 reviewed text model routes are configured; the exact Flash default remains. C14 verifies published adapter discovery and exact-id loopback SSE for every route. Default-model tool round trip, credential revocation, usage, cancellation, timeout and errors passed. Live gateway, advanced modalities and structured 402 classification remain."
+      "verification": "18 reviewed text routes retain the exact Flash default. C14 loopback verifies ids and text; C12 tool/revocation/error contracts remain synthetic. 0037 separately authorized exactly one real fixed Flash32 text stream: normal completion, reported41 input/11 output, no retry. Full liveVerified remains false for all-model/full-Agent/vision coverage. Fifteen documented image routes now use native attachment projection; C37 passes. Reasoning/media/structured402 and broader live verification remain.",
+      "defaultModelLiveVerified": true
     },
     {
       "id": "seedance-connection-check",
       "status": "in-progress",
-      "liveVerified": false,
-      "verification": "Explicit fixed Flash check with preview/charge confirmation, max_tokens 32, captured prepared-call generation, durable single-submit receipt, cancellation and no automatic replay. Own SQLite schema 1 stores safe counts/status only. C19 actual published DSH/Host/Remote/pi-ai loopback and synthetic process-termination/storage-failure cases pass. Live gateway, new UI and provider-side billing/cancellation remain unverified."
+      "liveVerified": true,
+      "verification": "Fixed Flash32 production check with preview and explicit human fee confirmation passed in an isolated published LlmRuntime/pi-ai + GatewayChecks composition using the native stored credential. Exactly one request, normal completion, counts41/11; no reply text/credential retained and no retry. C19 failure/replay contracts remain synthetic. Actual browser flow, full conversations and provider billing/cancellation remain unverified."
     },
     {
       "id": "gateway-task-tracking",
@@ -149,6 +150,12 @@
       "id": "seedance-credential-events",
       "status": "implemented",
       "verification": "Native published credential-reference API updates now revoke Seedance wallet reads, unsubmitted check previews, existing task polling and media export tickets. Wallet generation checks reject late old-account results, including changes during credential resolution; own save clears the visible wallet. Four C36 contracts use actual LocalCredentials/Typert/Access/Gateway in fresh TEMP with example secrets and synthetic responses; full check291 and public-CLI 125-file same-version replacement smoke pass. Cross-process watcher timing, physical WebSocket and new browser interactions remain unverified. No Canvas edits. See decision0036."
+    },
+    {
+      "id": "seedance-image-input",
+      "status": "in-progress",
+      "liveVerified": false,
+      "verification": "Fifteen routes with explicit declarations in hash-matched official docs now advertise text/image through the complete owned provider patch. Actual LocalAttachments + LlmRuntime/pi-ai C37 stores synthetic PNGs and checks 30 ordered request images against native projected bytes across15 loopback routes. Three text routes retain native placeholders; missing store/forged refs refuse image transmission. C1 native backend and full check294 pass. Public-CLI replacement proves changed patch with unchanged JS entry and the full installed profile. Browser uploads, live vision quality and image billing remain unverified; no paid image request or Native Canvas modification. See decision0037."
     }
   ]
 }

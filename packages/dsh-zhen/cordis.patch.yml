@@ -7,7 +7,8 @@
     model: deepseek/deepseek-v4.1-flash
 
 # Upstream llm-pi-ai row has no config. This is the entire provider declaration.
-# Advanced reasoning/vision/stream-usage switches require gateway verification.
+# Image inputs follow the reviewed explicit docs declarations; C37 verifies the public attachment wire.
+# Reasoning/stream-usage switches and live image quality remain separately unverified.
 - id: llm-pi-ai
   config:
     providers:
@@ -21,7 +22,8 @@
         compat:
           maxTokensField: max_tokens
         # Source: Seedance llms.txt SHA256 cd7d81ab06320a5d653a64e7413ca3834523fc7881b7b2bbf5077d2d878245e5.
-        # Text input only. Unknown capacities use a 262144 request budget.
+        # C37: 15 explicitly documented image routes; other routes retain text-only declarations.
+        # Unknown capacities use a 262144 request budget.
         # maxTokens 4096 is the default response budget, not a verified gateway maximum.
         models:
           - id: deepseek/deepseek-v4.1-flash
@@ -30,18 +32,21 @@
             maxTokens: 4096
             input:
               - text
+              - image
           - id: deepseek/deepseek-v4-flash-vision-exp
             name: DeepSeek Vision Exp
             contextWindow: 1048576
             maxTokens: 4096
             input:
               - text
+              - image
           - id: glm/glm-5.3-flash
             name: GLM 5.3 Flash
             contextWindow: 262144
             maxTokens: 4096
             input:
               - text
+              - image
           - id: glm-5.3
             name: GLM 5.3
             contextWindow: 1048576
@@ -54,12 +59,14 @@
             maxTokens: 4096
             input:
               - text
+              - image
           - id: qwen/qwen3.8-flash-next
             name: Qwen 3.8 Flash Next
             contextWindow: 262144
             maxTokens: 4096
             input:
               - text
+              - image
           - id: qwen/qwen3.8-max
             name: Qwen 3.8 Max
             contextWindow: 1000000
@@ -72,60 +79,70 @@
             maxTokens: 4096
             input:
               - text
+              - image
           - id: zhenzhen/g6-astra
             name: GPT-6 Astra
             contextWindow: 1050000
             maxTokens: 4096
             input:
               - text
+              - image
           - id: zhenzhen/g6-sol
             name: GPT-6 Sol
             contextWindow: 1050000
             maxTokens: 4096
             input:
               - text
+              - image
           - id: zhenzhen/g6-luna
             name: GPT-6 Luna
             contextWindow: 1050000
             maxTokens: 4096
             input:
               - text
+              - image
           - id: zhenzhen/g5.6-sol
             name: GPT-5.6 Sol
             contextWindow: 262144
             maxTokens: 4096
             input:
               - text
+              - image
           - id: zhenzhen/g5.6-terra
             name: GPT-5.6 Terra
             contextWindow: 262144
             maxTokens: 4096
             input:
               - text
+              - image
           - id: zhenzhen/g5.6-luna
             name: GPT-5.6 Luna
             contextWindow: 262144
             maxTokens: 4096
             input:
               - text
+              - image
           - id: zhenzhen/g5.5
             name: GPT-5.5
             contextWindow: 262144
             maxTokens: 4096
             input:
               - text
+              - image
           - id: zhenzhen/gm-3.8-flash
             name: Gemini 3.8 Flash
             contextWindow: 262144
             maxTokens: 4096
             input:
               - text
+              - image
           - id: zhenzhen-op-5.5
             name: Opus 5.5
             contextWindow: 1000000
             maxTokens: 4096
             input:
               - text
+              - image
           - id: kimi-k3
             name: Kimi K3
             contextWindow: 1000000

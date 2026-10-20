@@ -24,6 +24,8 @@ test('C1/C8: actual DSH composition applies default model and disables outbound 
     for (const id of ['session-log-deepseek', 'plugin-package-inventory-deepseek', 'deepseek-llm-api-extensions', 'otel', 'session-telemetry-otel', 'product-analytics', 'desktop-product-telemetry', 'ui-brand-official', 'ui-deepseek-model-label-1017']) assert.equal(rows.get(id).disabled, true, id);
     assert.deepEqual(rows.get('ui-settings-models').config, { credentialOnboarding: false });
     assert.equal(rows.get('llm-pi-ai').config.providers.seedance.apiKeyEnv, 'SEEDANCE_API_KEY');
+    assert.equal(rows.has('attachment-local'), true);
+    assert.notEqual(rows.get('attachment-local').disabled, true);
   } finally { rmSync(home, { recursive: true, force: true }); }
 });
 

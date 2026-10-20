@@ -3,6 +3,10 @@
 > **状态：开发中（2026-10-20）。** 已有可运行的 DSH Web 扩展、创作首页、Seedance 凭据/钱包、本地文本知识库与会话检索、15 项技能市场与远端候选下载、画布检查/规划 MCP、聊天方案交接、连接页人工方案与窗口审批应用及更新检查。真实网关兼容、完整创作对接、远端发布和签名安装激活尚未完成。逐项实现与未验收范围见 [当前交付状态](docs/delivery-status.md)。
 > DSH-zhen 是 DeepSeek Harness（DSH）的非官方社区修改版：默认走 Seedance 网关的 `deepseek/deepseek-v4.1-flash`，「潮汐」主题 + 鲸鱼娘角色槽位，内置创作 SKILL 与 RAG，后续经专用 MCP 对接 T8-penguin-canvas。
 
+默认Flash已通过一次经用户确认的真实短消息检查；15个有明确文档依据的聊天
+模型现接入原生图片附件。本地图片请求验证通过，真实图片理解和浏览器上传
+体验仍待验收，见[0037记录](docs/decisions/0037-chat-image-inputs.md)。
+
 ## 本地开发运行
 
 需要 Node.js 22.19.0 或以上。依赖版本已锁定；不使用浮动 DSH `latest`。
