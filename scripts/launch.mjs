@@ -1,14 +1,15 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve, join, delimiter } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { parseDocument } from 'yaml';
 import { createHash } from 'node:crypto';
 import { redactLauncherLine } from './log-output.mjs';
-import { acquireRuntimeLease } from './runtime-lifecycle.mjs';
+import { acquireRuntimeLease, assertRuntimeLease } from './runtime-lifecycle.mjs';
 import { selectDefaultArt } from './launch-art.mjs';
 
-async function main() {
-if (process.argv.slice(2).some(value => !['--check', '--no-open'].includes(value))) throw new Error('Usage: npm start -- [--check] [--no-open]');
+export async function launch(preparedLease, flags = process.argv.slice(2)) {
+if (flags.some(value => !['--check', '--no-open'].includes(value))) throw new Error('Usage: npm start -- [--check] [--no-open]');
 const root = process.cwd();
 const runtime = resolve(root, '.runtime');
 const home = join(runtime, 'dsh-home');
@@ -32,7 +33,7 @@ function run(args) {
 if (!existsSync(archive)) throw new Error('Build and run npm run pack:bundle first.');
 const digest = createHash('sha256').update(readFileSync(archive)).digest('hex');
 if (digest !== artifact.sha256) throw new Error('Bundle artifact digest does not match.');
-const lease = await acquireRuntimeLease(runtime);
+const lease = preparedLease === undefined ? await acquireRuntimeLease(runtime) : await assertRuntimeLease(preparedLease, runtime);
 try {
 const installed = existsSync(marker) ? JSON.parse(readFileSync(marker, 'utf8')) : undefined;
 if (!installed) {
@@ -54,12 +55,12 @@ if (rows.get('agent-default-model')?.config?.provider !== 'seedance' || rows.get
 for (const id of ['session-log-deepseek', 'plugin-package-inventory-deepseek', 'deepseek-llm-api-extensions', 'otel', 'session-telemetry-otel', 'product-analytics', 'desktop-product-telemetry', 'ui-brand-official']) {
   if (rows.get(id)?.disabled !== true) throw new Error(`Required private default was overridden: ${id}`);
 }
-if (process.argv.includes('--check')) { console.log('Isolated profile and privacy defaults verified.'); }
+if (flags.includes('--check')) { console.log('Isolated profile and privacy defaults verified.'); }
 else {
 if (art.state === 'ready') console.log('已选择本机确认的社区默认美术。');
 else if (art.state === 'unavailable') console.log('默认美术暂不可用，将使用个人替换或水纹图形。');
 await lease.releasePort();
-const child = spawn(process.execPath, [cli, '--profile', 'zhen', '--host', '127.0.0.1', '--port', '5180', ...(process.argv.includes('--no-open') ? ['--no-open'] : [])], { env, windowsHide: true, stdio: ['inherit', 'pipe', 'pipe'] });
+const child = spawn(process.execPath, [cli, '--profile', 'zhen', '--host', '127.0.0.1', '--port', '5180', ...(flags.includes('--no-open') ? ['--no-open'] : [])], { env, windowsHide: true, stdio: ['inherit', 'pipe', 'pipe'] });
 for (const [stream, sink] of [[child.stdout, process.stdout], [child.stderr, process.stderr]]) {
   let pending = '';
   stream.setEncoding('utf8');
@@ -75,4 +76,4 @@ try {
 }
 } finally { await lease.release(); }
 }
-await main().catch(error => { console.error(redactLauncherLine(error.message)); process.exitCode = 1; });
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) await launch().catch(error => { console.error(redactLauncherLine(error.message)); process.exitCode = 1; });

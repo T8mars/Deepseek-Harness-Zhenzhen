@@ -1,20 +1,29 @@
 # DSH-zhen
 
-> **状态：开发中（2026-10-20）。** 已有可运行的 DSH Web 扩展、创作首页、Seedance 凭据/钱包、本地文本知识库与会话检索、15 项技能市场与远端候选下载、画布检查/规划 MCP、聊天方案交接、连接页人工方案与窗口审批应用及更新检查。真实网关兼容、完整创作对接、远端发布和签名安装激活尚未完成。
+> **状态：开发中（2026-10-20）。** 已有可运行的 DSH Web 扩展、创作首页、Seedance 凭据/钱包、本地文本知识库与会话检索、15 项技能市场与远端候选下载、画布检查/规划 MCP、聊天方案交接、连接页人工方案与窗口审批应用及更新检查。真实网关兼容、完整创作对接、远端发布和签名安装激活尚未完成。逐项实现与未验收范围见 [当前交付状态](docs/delivery-status.md)。
 > DSH-zhen 是 DeepSeek Harness（DSH）的非官方社区修改版：默认走 Seedance 网关的 `deepseek/deepseek-v4.1-flash`，「潮汐」主题 + 鲸鱼娘角色槽位，内置创作 SKILL 与 RAG，后续经专用 MCP 对接 T8-penguin-canvas。
 
 ## 本地开发运行
 
 需要 Node.js 22.19.0 或以上。依赖版本已锁定；不使用浮动 DSH `latest`。
 
+Windows下载或克隆源码后，可直接双击根目录 `start-dsh-zhen.cmd`。首次运行
+会按锁文件准备依赖、构建并检查扩展包，再通过官方CLI启动认证浏览器；后续
+依赖未变时复用安装。依赖损坏时可双击 `repair-dsh-zhen.cmd`，重新准备依赖，
+保留 `.runtime/dsh-home` 中的配置与资料。旧服务仍运行时会在准备前退出，
+请先在原DSH窗口停止服务；此入口不会强制结束现有进程。
+
+这是源码版的一键启动入口，仍需本机Node.js与首次依赖下载，不是独立安装器。
+命令行可直接运行 `npm start`，或用 `npm start -- --no-open` 禁止打开浏览器。
+仅检查准备与配置、不启动服务可用 `npm start -- --check`。
+
 ```powershell
-npm ci --ignore-scripts --no-audit --no-fund
-npm run check
-npm run pack:bundle
 npm start
 ```
 
-启动器通过 DSH 官方 CLI 创建独立配置并安装本项目扩展；测试数据位于忽略的 `.runtime/`。服务只监听 `127.0.0.1:5180`，默认打开认证浏览器。可用 `npm start -- --no-open` 禁止自动打开。进入侧栏“创作空间”使用功能。
+开发检查可在依赖准备后运行 `npm run check`；源码打包可用 `npm run pack:bundle`。
+
+启动器通过 DSH 官方 CLI 创建独立配置并安装本项目扩展；测试数据位于忽略的 `.runtime/`。服务只监听 `127.0.0.1:5180`，默认打开认证浏览器。进入侧栏“创作空间”使用功能。已手动构建/打包的开发者也可用 `npm run start:prepared -- --no-open` 跳过源码准备。
 
 可另运行 `npm run smoke:install`：通过官方 CLI 在一次性临时配置中安装当前已打包产物，核对组合配置并检查 Host 的回环监听，随后关闭并清理。该检查不使用浏览器或付费接口，也不替换现有开发配置。
 

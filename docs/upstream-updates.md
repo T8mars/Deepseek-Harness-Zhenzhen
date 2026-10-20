@@ -84,6 +84,16 @@ npm run smoke:install
 本地同版本 tarball 更新使用官方 CLI 转发的 `--force --ignore-scripts`，
 只在服务停止后执行。可在临时配置验证确实替换了旧入口字节：
 
+Windows一键入口与`npm start`还在任何`npm ci`、源码构建和打包前先持有同一
+端口/进程租约。准备完成后将原租约交给原启动器，不先放锁再争抢。租约只能
+由本模块发出、仍持有端口且路径/进程/随机回执匹配；伪造、已释放或异目录
+租约被拒绝。依赖身份变化或显式修复才重装，且始终禁用依赖安装脚本。
+缓存身份不证明任意模块文件未被修改；损坏时用`repair-dsh-zhen.cmd`明确修复。
+
+源码准备及`npm run check`使用`typecheck:clean`：先只清除自有生成目录内已过期
+或错位的声明，再强制重建。打包要求每个声明对应当前源码、所有声明导出存在；
+类型检查的增量缓存不能替代产物清单校验。说明见[0035](decisions/0035-one-click-source-start.md)。
+
 ```powershell
 npm run smoke:install -- --replacement-from dsh-zhen-0.1.0-EXAMPLE_ONLY.tgz
 ```

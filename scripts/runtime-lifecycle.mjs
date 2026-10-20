@@ -1,7 +1,17 @@
 import { createServer } from 'node:net';
 import { mkdir, open, lstat, readFile, unlink } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
+const issuedLeases = new WeakMap();
+
+/** Only this module's live, still-reserved lease can cross the setup handoff. */
+export async function assertRuntimeLease(lease, runtime, port = 5180) {
+  const record = issuedLeases.get(lease);
+  if (!record || record.runtime !== resolve(runtime) || record.port !== port || !record.active()) throw new Error('Prepared runtime ownership is unavailable.');
+  const current = await readLock(join(runtime, 'launch-lock.json'));
+  if (current?.value.pid !== process.pid || current.value.token !== record.token) throw new Error('Prepared runtime ownership changed.');
+  return lease;
+}
 
 async function readLock(path) {
   try {
@@ -41,7 +51,7 @@ export async function acquireRuntimeLease(runtime, port = 5180) {
     const handle = await open(path, 'wx', 0o600);
     try { await handle.writeFile(JSON.stringify({ schemaVersion: 1, pid: process.pid, token }) + '\n'); owned = true; }
     finally { await handle.close(); }
-    return {
+    const lease = {
       port: server.address().port,
       releasePort,
       async release() {
@@ -51,5 +61,7 @@ export async function acquireRuntimeLease(runtime, port = 5180) {
         finally { await releasePort(); }
       },
     };
+    issuedLeases.set(lease, { runtime: resolve(runtime), port: lease.port, token, active: () => owned && !released && reserved });
+    return lease;
   } catch (error) { await releasePort(); throw error; }
 }

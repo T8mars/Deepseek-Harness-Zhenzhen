@@ -362,6 +362,31 @@
         "liveProviderCalls": 0
       },
       "installedEntrySha256": "e8563374d37aa41466d5cccffc0b8575f948e83306e8b3bf66d2185bb063b904"
+    },
+    "sourceBootstrap": {
+      "schema": 1,
+      "entry": "start-dsh-zhen.cmd",
+      "repairEntry": "repair-dsh-zhen.cmd",
+      "runtime": "Node >=22.19.0",
+      "preparedLeaseHandoff": true,
+      "dependencyLifecycleScripts": false,
+      "dependencyIdentitySchema": 1,
+      "actualWindowsColdCheck": true,
+      "actualWarmHost": true,
+      "occupiedPortRefusedBeforePreparation": true,
+      "staleDeclarationsRemoved": 5,
+      "stalePackActuallyRefused": true,
+      "artifactFiles": 125,
+      "artifactSha256": "e035126642838d42b230a935ab504ff0dd68c9a0252d92b52d4b1a61b72321e3",
+      "installedEntrySha256": "e8563374d37aa41466d5cccffc0b8575f948e83306e8b3bf66d2185bb063b904",
+      "fullDshCheck": {
+        "tests": 287,
+        "passed": 287,
+        "liveProviderCalls": 0
+      },
+      "standaloneInstaller": false,
+      "browserVerified": false,
+      "nativeChanges": false
     }
   }
 }

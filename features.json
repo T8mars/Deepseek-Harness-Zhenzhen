@@ -139,6 +139,11 @@
       "handoff": "docs/handoffs/canvas-agent.md",
       "nativeChangeOwner": "canvas-agent-only",
       "releaseState": "deferred-by-user"
+    },
+    {
+      "id": "windows-source-bootstrap",
+      "status": "implemented",
+      "verification": "Node-only bootstrap, double-click Windows start/repair entries and npm start prepare exact dependencies without lifecycle scripts, build clean declarations and pack before the original public CLI launcher. Actual Chinese-path cold dependency setup/check and warm Host/lease handoff pass. Actual occupied-port refusal preserves dependency/installation/artifact state. Eight new startup/declaration units and full check287 pass. Actual stale declaration pack refusal preserves the artifact marker; current 125-file public-CLI disposable install smoke passes. This is a source launcher requiring Node and first downloads, not an installer; other machines/browser/system termination remain unverified. No Native Canvas modifications. See decision0035."
     }
   ]
 }
