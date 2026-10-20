@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "approvedAt": "2026-10-20T11:39:49.667Z",
+  "approvedBy": "project-owner",
+  "source": "explicit-owner-response",
+  "scope": "first-version local creator/tool reference corpus question baseline",
+  "criteriaFile": "benchmarks/creative-rag-questions.v1.json",
+  "criteriaSha256": "77686af0484b146cbdbe8ff9687d3599c2c67486883397064a87b89a4b89254e",
+  "referenceCorpus": {
+    "documents": 1008,
+    "indexed": 1007,
+    "skippedEmpty": 1,
+    "bytes": 10390272,
+    "manifestSha256": "c659df5f2dacdfd833e53b2297a0727bc1370eea6fe795d960ad62e727075c9d"
+  },
+  "topK": 5,
+  "questionCases": 10,
+  "minimumHitRate": 0.8,
+  "acceptedMeasurement": {
+    "implementationSha256": "f492da3b557d914a4a7f7e778d5ab1b2ba7be9cd37a42170ed41d3cf0e778035",
+    "reportSha256": "d1ea4bd25e7ba5aa89b45398810ec62f9bcc3a1ffa344f52bae092c8d9187d22",
+    "passed": 8,
+    "failedCaseIds": [
+      "scene-question",
+      "comedy-question"
+    ]
+  },
+  "fullM3UiOrLiveModelAcceptance": false
+}

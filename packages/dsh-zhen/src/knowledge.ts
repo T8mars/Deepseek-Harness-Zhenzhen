@@ -37,13 +37,35 @@ function queryTerms(text: string): string[] {
 
 const questionWords = new Set(['如何','怎么','怎样','什么','为什么','请问','能否','是否','有没有','能不能','应该','可以','能够','才能','请','问','帮','帮助','一下','一些','吗','呢','吧','啊','的','地','得','了','着','是','有','要','会','和','与','或','及','以及','我','你','他','她','它','我们','这个','那个','这些','那些','这','那','一','一个','个','场','篇','段','种','类','些','里','中','上','下','用','在','把','让','给','从','对','到','为']);
 const questionSegmenter = typeof Intl.Segmenter === 'function' && Intl.Segmenter.supportedLocalesOf(['zh-Hans']).length ? new Intl.Segmenter('zh-Hans', { granularity: 'word' }) : undefined;
+function questionSegments(query: string, compoundExists: (word: string) => boolean): { segment: string; index: number; isWordLike?: boolean }[] {
+  if (!questionSegmenter) return [];
+  const source = [...questionSegmenter.segment(query)], runs: { segment: string; index: number; isWordLike?: boolean }[] = [];
+  const single = (part: typeof runs[number]): boolean => !!part.isWordLike && /^\p{Script=Han}$/u.test(part.segment) && !questionWords.has(part.segment);
+  // ICU may split a compound into individual Han characters. Form contiguous
+  // runs first, so a later two-character word is not attached to an earlier one.
+  // Punctuation, whitespace and stop words remain explicit boundaries.
+  for (let i = 0; i < source.length; i++) {
+    const part = { segment: source[i]!.segment, index: source[i]!.index, isWordLike: source[i]!.isWordLike };
+    if (single(part)) while (i + 1 < source.length && [...part.segment].length < 4 && single(source[i + 1]!) && part.index + part.segment.length === source[i + 1]!.index && compoundExists(part.segment + source[i + 1]!.segment)) part.segment += source[++i]!.segment;
+    runs.push(part);
+  }
+  const parts: typeof runs = [];
+  for (const part of runs) {
+    const previous = parts.at(-1), length = previous ? [...previous.segment].length : 0;
+    // Attach only an isolated suffix; never glue a single-character prefix to
+    // the following word. No domain dictionary or document/path preference.
+    if (single(part) && previous?.isWordLike && length >= 2 && length < 4 && /^[\p{Script=Han}]+$/u.test(previous.segment) && !questionWords.has(previous.segment) && previous.index + previous.segment.length === part.index && compoundExists(previous.segment + part.segment)) previous.segment += part.segment;
+    else parts.push(part);
+  }
+  return parts;
+}
 /** Only recognized Chinese questions get a lexical fallback; keyword AND stays exact. */
-function questionGroups(query: string): { groups: string[][]; adjacent: string[] } {
+function questionGroups(query: string, compoundExists: (word: string) => boolean): { groups: string[][]; adjacent: string[] } {
   const empty = { groups: [], adjacent: [] };
   if (!questionSegmenter || !/\p{Script=Han}/u.test(query) || !/(?:如何|怎么|怎样|什么|为什么|请问|能否|是否|应该|[？?])/u.test(query)) return empty;
   const groups: string[][] = [], seen = new Set<string>(), adjacent = new Set<string>();
   let previous = '';
-  for (const part of questionSegmenter.segment(query.normalize('NFKC').toLowerCase())) {
+  for (const part of questionSegments(query.normalize('NFKC').toLowerCase(), compoundExists)) {
     if (!part.isWordLike || questionWords.has(part.segment)) { previous = ''; continue; }
     if (previous) {
       const boundary = [...previous].at(-1)! + [...part.segment][0]!;
@@ -238,7 +260,17 @@ export class KnowledgeStore {
       FROM diversified result JOIN chunks ch ON ch.id=result.id JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
       ORDER BY result.document_position,result.score,d.path,ch.line,ch.id LIMIT 12`).all(terms.join(' AND '), project, provider, provider);
     if (!rows.length) {
-      const plan = questionGroups(query);
+      const compounds = new Map<string, boolean>();
+      const plan = questionGroups(query, word => {
+        if (compounds.has(word)) return compounds.get(word)!;
+        if (compounds.size >= 32) return false;
+        // The vocabulary must come from the same authorized index as results.
+        // Exact text confirms continuity; encoded FTS terms narrow the lookup.
+        const exists = !!this.db.prepare(`SELECT 1 FROM search_index f JOIN chunks ch ON ch.id=f.chunk_id JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
+          WHERE search_index MATCH ? AND instr(ch.text,?)>0 AND c.project=? AND c.enabled=1 AND (?='' OR (c.cloud_provider=? AND c.agent_enabled=1)) LIMIT 1`).get(queryTerms(word).join(' AND '), word, project, provider, provider);
+        compounds.set(word, exists);
+        return exists;
+      });
       if (plan.groups.length) return this.questionSearch(project, plan, provider);
     }
     return rows.map(row => ({ id: String(row.id), collectionId: String(row.collection_id), collectionName: String(row.name), path: String(row.path), line: Number(row.line), text: String(row.text), epoch: Number(row.epoch) }));

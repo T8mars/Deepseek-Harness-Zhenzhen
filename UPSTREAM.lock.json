@@ -82,7 +82,7 @@
       "verification": "Original immutable public policy helper with inert dispatch accepts 73 L0 and refuses 123 non-direct operations. Actual business handlers, user data, real Canvas and paid providers were not exercised."
     },
     "ragSchema": 2,
-    "ragVerification": "C11/C35 source diversity, pre-provider revocation and source-context contracts remain. C38 published ToolRuntime question retrieval passes. Schema2 and keyword AND unchanged. Actual installed documentation provisional evaluation:1007 indexed, keyword8/10, Chinese questions7/10; below suggested80%, owner acceptance false. New UI, paid RAG chat and user-project corpus unverified.",
+    "ragVerification": "C11/C35 source diversity, pre-provider revocation and source context remain. C38/C41 actual published ToolRuntime and authorized compound-boundary regressions pass; full check331. Schema2, keyword AND and source bytes unchanged. Same1007 indexed installed-reference documents: keyword8/10, question7/10 to8/10. Owner adopted this fixed10-question80% first-version baseline; it passes. Approval is separate from immutable proposed criteria and original measurement. Browser/live-model/fullM3 and general user-project relevance remain unverified.",
     "artManifestSchema": 1,
     "artVerification": "Original community reference rendered locally; later explicit user authorization produced two built-in imagegen PNGs and a verified separate local ZIP. New generated-set Web rendering remains unverified after browser policy refusal.",
     "skillStoreSchema": 3,
@@ -583,6 +583,51 @@
       "authenticatedRequests": 0,
       "postRequests": 0,
       "paidCalls": 0
+    },
+    "ragCompoundWords": {
+      "decision": "0041",
+      "schema": 2,
+      "implementation": "Recognized question fallback only; contiguous single-Han runs then isolated suffixes, at most4 Han characters. Fusion requires exact contiguous text in current authorized index; no domain dictionary/path preference.",
+      "maxCompoundLookups": 32,
+      "maxCandidates": 512,
+      "maxResults": 12,
+      "keywordsChanged": false,
+      "indexRebuildRequired": false,
+      "criteria": {
+        "file": "benchmarks/creative-rag-questions.v1.json",
+        "sha256": "77686af0484b146cbdbe8ff9687d3599c2c67486883397064a87b89a4b89254e",
+        "approval": "owner-accepted-first-version-baseline",
+        "suggestedThreshold": 0.8,
+        "ownerAcceptance": true,
+        "approvalRecord": "benchmarks/creative-rag-questions.v1.approval.json"
+      },
+      "corpus": {
+        "documents": 1008,
+        "indexed": 1007,
+        "skipped": 1,
+        "failed": 0,
+        "bytes": 10390272,
+        "shaVerifiedCopies": 1008,
+        "sourceWrites": 0
+      },
+      "measurement": {
+        "keywordPassedBefore": 8,
+        "keywordPassedAfter": 8,
+        "questionPassedBefore": 7,
+        "questionPassedAfter": 8,
+        "casesPerKind": 10,
+        "indexMs": 3312,
+        "sqliteBytes": 62799872,
+        "warmMixedQueries": 20,
+        "queryP95Ms": 110.503,
+        "crossProjectHits": 0,
+        "revokedHits": 0,
+        "temporaryIndexRemoved": true
+      },
+      "modelCalls": 0,
+      "credentialReads": 0,
+      "nativeWrites": 0,
+      "verification": "Five synthetic compound/vocabulary/authorization/query-budget regressions plus C41 actual published ToolRuntime; full check331 and125-file public-CLI same-version replacement smoke pass. Fixed criteria unchanged; owner explicitly adopted these10 questions and80% first-version reference baseline after measurement. Score8/10 passes that baseline. Browser/live-model/fullM3 and general relevance/SLA remain unverified. See decision0041 and approval record."
     }
   }
 }
