@@ -1196,6 +1196,20 @@
       "publicCliFreshTempInstallAndUninstallVerified": true,
       "actualLocalActivationVerified": true,
       "archiveSha256": "10c79b2ca72a4c4deb8bdf9dd5d5f21bc4a8670e1cd235c98ff1839b1b5ebd9d"
+    },
+    "publishedAgentLoop": {
+      "sdkVersion": "0.2.1-rc.2",
+      "defaultModelServiceUsed": true,
+      "realFileChatRequests": 2,
+      "realNativeChatRequests": 4,
+      "initialNativeVerifierRequests": 6,
+      "nativeWindowApproval": false,
+      "verification": "0058 C59 actual published AgentLoop/default-model/session/projection/tools with synthetic adapter and real TEMP file. Separate real Flash two-request file roundtrip completed normally. Corrected real Native four-request plan-to-card adoption passed with original installed skill snapshot and no shell; intentionally cancelled after planning. Initial six-request handoff failure was verifier blocking Native GET, reproduced and corrected without paid model calls. Not browser/Desktop/free-form/native-window/generation proof. No production code change; full398/398 and byte-identical150-file local archive verified; no actual Host reinstall/restart. Current checkpoint CI remains separate.",
+      "localContractTests": 398,
+      "localPassed": 398,
+      "packageFiles": 150,
+      "byteIdenticalToInstalled0057Archive": true,
+      "reinstallOrRestartPerformed": false
     }
   }
 }

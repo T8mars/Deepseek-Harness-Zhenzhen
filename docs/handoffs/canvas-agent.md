@@ -8,6 +8,7 @@
 > 之前“已打开却找不到”、旧CLI不同步及浏览器审批问题，见[历史现场交接](canvas-agent-instance-discovery.md)。
 > 下面的旧基线、暂缓发版和故障记录仅供历史定位，不应重新叠加旧补丁。
 > 新增参考素材/编辑合同问题见[0050交接](canvas-agent-reference-assets.md)，网关动作覆盖见[0049交接](canvas-agent-api-coverage.md)。
+> 活动画布元数据的现场范围与确认请求见[0058交接](canvas-agent-active-context.md)；DSH没有据workspaces列表猜用户当前窗口，也没有要求重复新增已有接口。
 
 ## 用户当时决定（0033）
 

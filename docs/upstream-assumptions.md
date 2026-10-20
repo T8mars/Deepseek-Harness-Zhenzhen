@@ -110,3 +110,6 @@ C56/C57（0056）使用已发布ui-tool的tool.call.toolview结果block及稳定
 
 
 C58（0057）：已发布Cordis ctx.provide绑定服务到插件作用域，受信任扩展通过ctx.zhenRag注册并在dispose时注销。已发布HarnessError的固定code通过实际ToolRuntime保留为error.info.code；客户端只读取文档化ToolResultNode.error.code并映射固定说明，SSR不读取reason。实际Owner Gateway拒绝匿名及旧修订，LLM waterfall在适配器前阻断暂停后的旧资料会话。自有后端只提供候选编号，索引事务核对后才产生引用/授权；不修改任何上游协议或会话格式。
+
+
+C59（0058）：实际已发布AgentRegistry/AgentLoop、SessionStore、SessionProjection及默认模型服务驱动作用域工具到下一轮并正常结束，使用公开create/setup/followup/whenIdle/deriveMessages/dispose。schemas省略ScopeKey读取全局，显式Agent才看到其作用域工具；ToolResultMessage的关联字段为toolCallId。真实Flash文件会话正常completed独立验证；真实Native计划测试在首份结果后刻意取消，不称正常完整创作或Desktop。所有测试会话仅全新TEMP、内存SessionStore，不修改任何上游持久化格式或真实会话。新增四个精确SDK开发依赖，753项既有锁定版本/完整性/来源保持。
