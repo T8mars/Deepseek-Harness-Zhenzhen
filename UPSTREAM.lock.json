@@ -387,6 +387,41 @@
       "standaloneInstaller": false,
       "browserVerified": false,
       "nativeChanges": false
+    },
+    "seedanceCredentialEvents": {
+      "publishedContract": "C36",
+      "provider": "published LocalCredentials API events",
+      "walletEpochChecks": true,
+      "abortWalletReads": true,
+      "invalidateCheckTaskAndMedia": true,
+      "unrelatedReferencesIsolated": true,
+      "crossProcessWatcherVerified": false,
+      "browserVerified": false,
+      "newContractTests": 4,
+      "fullDshCheck": {
+        "tests": 291,
+        "passed": 291,
+        "liveProviderCalls": 0
+      },
+      "liveWallet": {
+        "verified": true,
+        "httpStatus": 200,
+        "method": "GET",
+        "path": "/api/usage/wallet/",
+        "requests": 1,
+        "rawResponseRetained": false,
+        "credentialVia": "ctx.credentials only",
+        "chatPermissionsVerified": false
+      },
+      "artifactFiles": 125,
+      "artifactSha256": "624097715f3cc375101cbfef6f9328bb090cb8cafcf31a94f3065b4924f2a227",
+      "installedEntrySha256": "77ddfff9c1047fd627d96e005a13165149ac9eabca464d2ffdd3f1d896d516ac",
+      "liveFlashPreview": {
+        "state": "expired",
+        "requests": 0,
+        "userConfirmed": false,
+        "paidCalls": 0
+      }
     }
   }
 }

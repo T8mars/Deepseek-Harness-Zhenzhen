@@ -81,7 +81,7 @@ function Workspace({ ctx }: { ctx: Context }): React.ReactElement {
         <section className="zhen-card"><div className="zhen-section-heading"><h2>Seedance 连接</h2><span>{configured ? '已保存令牌' : '待添加令牌'}</span></div>
           <p>默认模型 <strong>deepseek/deepseek-v4.1-flash</strong></p>
           <p className="zhen-muted">令牌由本机 DSH 凭据服务保存。钱包查询由 Host 发起；保存令牌不代表已验证聊天权限。</p>
-          <form onSubmit={event => { event.preventDefault(); const value = key; setKey(''); void action(async () => { unwrap(await ctx.remote.zhen.saveCredential(value)); setStatus(unwrap(await ctx.remote.zhen.status())); setNotice('令牌已保存。可以进入会话或手动查询钱包。'); }); }}>
+          <form onSubmit={event => { event.preventDefault(); const value = key; setKey(''); setWallet(undefined); void action(async () => { unwrap(await ctx.remote.zhen.saveCredential(value)); setStatus(unwrap(await ctx.remote.zhen.status())); setNotice('令牌已保存。可以进入会话或手动查询钱包。'); }); }}>
             <label className="zhen-label" htmlFor="zhen-key">API 令牌</label>
             <div className="zhen-input-row"><input id="zhen-key" type="password" value={key} onChange={event => setKey(event.target.value)} autoComplete="off" spellCheck={false} placeholder="粘贴 Seedance API 令牌" maxLength={4096}/><button className="zhen-primary" disabled={busy || !key || status?.credentialWritable === false}>保存令牌</button></div>
           </form>

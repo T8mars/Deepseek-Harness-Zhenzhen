@@ -11,12 +11,12 @@ export class GatewayError extends Error {
   constructor(code: string, message: string) { super(message); this.name = 'GatewayError'; this.code = code; }
 }
 
-export async function readWallet(key: string, fetcher: typeof fetch = fetch): Promise<Wallet> {
+export async function readWallet(key: string, fetcher: typeof fetch = fetch, signal?: AbortSignal): Promise<Wallet> {
   let response: Response;
   try {
     response = await fetcher('https://api.seedance.nz/api/usage/wallet/', {
       headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' },
-      signal: AbortSignal.timeout(15000), redirect: 'error',
+      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000), redirect: 'error',
     });
   } catch { throw new GatewayError('NETWORK', '钱包暂时无法连接，请稍后刷新。'); }
   if (!response.ok) {

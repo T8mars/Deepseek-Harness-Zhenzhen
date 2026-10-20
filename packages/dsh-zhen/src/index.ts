@@ -122,6 +122,9 @@ export default class ZhenService extends TypertRemoteService {
   private capabilityCatalog?: CapabilityCatalog;
   private capabilityMonitor?: CapabilityMonitor;
   private gatewayChecks?: GatewayChecks;
+  private seedanceGeneration = 0;
+  private walletClosed = false;
+  private readonly walletReads = new Set<AbortController>();
   private localSkillSources?: LocalSkills;
   private githubSkillSources?: GithubSkills;
   private mediaTasks?: GatewayTasks;
@@ -143,7 +146,11 @@ export default class ZhenService extends TypertRemoteService {
     ctx.effect(() => () => { this.localSkillSources?.close(); }, 'zhen: local skill directories');
     ctx.effect(() => () => { this.githubSkillSources?.close(); }, 'zhen: GitHub skill snapshots');
     ctx.effect(() => () => { this.githubReader?.close(); }, 'zhen: fixed first-party GitHub access');
-    ctx.on('credentials/reference-updated', ref => { if (ref === githubCredential) this.githubReader?.invalidate(); });
+    ctx.on('credentials/reference-updated', ref => {
+      if (ref === githubCredential) this.githubReader?.invalidate();
+      if (ref === seedanceCredential) this.invalidateSeedance();
+    });
+    ctx.effect(() => () => { this.walletClosed = true; this.stopWalletReads(); }, 'zhen: Seedance wallet reads');
     ctx.effect(() => () => this.mediaTasks?.close(), 'zhen: existing gateway tasks');
     ctx.effect(() => () => this.mediaExports?.close(), 'zhen: explicit media exports');
     ctx.effect(() => () => this.canvasPairing?.close(), 'zhen: explicit Canvas pairing');
@@ -630,15 +637,24 @@ export default class ZhenService extends TypertRemoteService {
     if (value.length < 8 || value.length > 4096 || /\s/.test(value)) {
       throw new RemoteError('zhen/refused', '请输入有效 API 令牌，不要包含空格或换行。', { reason: 'INVALID_CREDENTIAL' });
     }
-    this.gatewayChecks?.invalidate();
-    this.mediaTasks?.invalidate();
-    this.mediaExports?.invalidate();
+    this.invalidateSeedance();
     await this.ctx.credentials.set(seedanceCredential, value);
   }
 
   /** Remove this provider's locally writable credential. */
   @Remote
-  async removeCredential(): Promise<void> { this.gatewayChecks?.invalidate(); this.mediaTasks?.invalidate(); this.mediaExports?.invalidate(); await this.ctx.credentials.unset(seedanceCredential); }
+  async removeCredential(): Promise<void> { this.invalidateSeedance(); await this.ctx.credentials.unset(seedanceCredential); }
+
+  private stopWalletReads(): void {
+    this.seedanceGeneration++;
+    for (const controller of this.walletReads) controller.abort();
+  }
+  private invalidateSeedance(): void {
+    this.stopWalletReads();
+    this.gatewayChecks?.invalidate();
+    this.mediaTasks?.invalidate();
+    this.mediaExports?.invalidate();
+  }
 
   private tasks(): GatewayTasks { return this.mediaTasks ??= new GatewayTasks(dshHomePath('dsh-zhen', 'gateway-tasks.sqlite'), async () => (await this.ctx.credentials.resolve(seedanceCredential))?.value); }
   private async taskOperation<T>(run: () => T | Promise<T>): Promise<T> {
@@ -679,12 +695,23 @@ export default class ZhenService extends TypertRemoteService {
   /** Read wallet balance on the Host; a successful read does not verify chat access. */
   @Remote
   async wallet(): Promise<Wallet> {
-    const resolved = await this.ctx.credentials.resolve(seedanceCredential);
-    if (!resolved) throw new RemoteError('zhen/refused', '请先添加 Seedance API 令牌。', { reason: 'MISSING_CREDENTIAL' });
-    try { return await readWallet(resolved.value); }
-    catch (error) {
-      if (error instanceof GatewayError) throw new RemoteError('zhen/refused', error.message, { reason: error.code });
-      throw new RemoteError('zhen/refused', '钱包暂时不可用。', { reason: 'WALLET_UNAVAILABLE' });
+    const generation = this.seedanceGeneration, controller = new AbortController();
+    const current = (): boolean => !this.walletClosed && !controller.signal.aborted && generation === this.seedanceGeneration;
+    const changed = (): GatewayError => new GatewayError('CONFIG_CHANGED', '连接配置已变化，请重新查询钱包。');
+    this.walletReads.add(controller);
+    try {
+      if (!current()) throw changed();
+      const resolved = await this.ctx.credentials.resolve(seedanceCredential);
+      if (!current()) throw changed();
+      if (!resolved) throw new GatewayError('MISSING_CREDENTIAL', '请先添加 Seedance API 令牌。');
+      const result = await readWallet(resolved.value, fetch, controller.signal);
+      if (!current()) throw changed();
+      return result;
     }
+    catch (error) {
+      const failure = current() ? error : changed();
+      if (failure instanceof GatewayError) throw new RemoteError('zhen/refused', failure.message, { reason: failure.code });
+      throw new RemoteError('zhen/refused', '钱包暂时不可用。', { reason: 'WALLET_UNAVAILABLE' });
+    } finally { this.walletReads.delete(controller); }
   }
 }

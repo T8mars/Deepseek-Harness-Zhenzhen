@@ -1,7 +1,9 @@
 # Seedance chat compatibility
 
-Checked on 2026-10-20 against published DSH / llm-pi-ai 0.2.1-rc.2 and Node
-22.19.0 on Windows. No real API credential or paid request was used.
+Baseline contracts checked on 2026-10-20 against published DSH / llm-pi-ai
+0.2.1-rc.2 and Node 22.19.0 on Windows use example credentials and loopback.
+The separate live wallet verification is recorded in [0036](decisions/0036-seedance-credential-events.md);
+it does not verify chat permissions or billing.
 
 The complete bundle config selects provider `seedance`, model
 `deepseek/deepseek-v4.1-flash`, OpenAI Chat Completions and the Host credential

@@ -33,7 +33,7 @@
     {
       "id": "seedance-wallet-catalog",
       "status": "in-progress",
-      "verification": "Host wallet and UI implemented; live account remains unverified. A typed inventory has 275 records across 17 categories (211 models, 60 action records including aliases, four operations). Public docs/music/MJ source reads match the reviewed hashes. Daily differences, offline catalog, bounded Agent metadata search, 18 text profiles and source/identity tests pass; new UI and media execution remain unverified."
+      "verification": "Production wallet reader verified once against the real fixed HTTPS GET using a user-supplied credential saved only through ctx.credentials; HTTP200 and bounded field parsing pass, without recording the raw response, identity or balances. Chat permissions, task settlement and new browser behavior remain unverified. A typed inventory has 275 records across 17 categories (211 models, 60 action records including aliases, four operations). Public docs/music/MJ source reads match the reviewed hashes. Daily differences, offline catalog, bounded Agent metadata search, 18 text profiles and source/identity tests pass; new UI and media execution remain unverified."
     },
     {
       "id": "creator-ui",
@@ -144,6 +144,11 @@
       "id": "windows-source-bootstrap",
       "status": "implemented",
       "verification": "Node-only bootstrap, double-click Windows start/repair entries and npm start prepare exact dependencies without lifecycle scripts, build clean declarations and pack before the original public CLI launcher. Actual Chinese-path cold dependency setup/check and warm Host/lease handoff pass. Actual occupied-port refusal preserves dependency/installation/artifact state. Eight new startup/declaration units and full check287 pass. Actual stale declaration pack refusal preserves the artifact marker; current 125-file public-CLI disposable install smoke passes. This is a source launcher requiring Node and first downloads, not an installer; other machines/browser/system termination remain unverified. No Native Canvas modifications. See decision0035."
+    },
+    {
+      "id": "seedance-credential-events",
+      "status": "implemented",
+      "verification": "Native published credential-reference API updates now revoke Seedance wallet reads, unsubmitted check previews, existing task polling and media export tickets. Wallet generation checks reject late old-account results, including changes during credential resolution; own save clears the visible wallet. Four C36 contracts use actual LocalCredentials/Typert/Access/Gateway in fresh TEMP with example secrets and synthetic responses; full check291 and public-CLI 125-file same-version replacement smoke pass. Cross-process watcher timing, physical WebSocket and new browser interactions remain unverified. No Canvas edits. See decision0036."
     }
   ]
 }
