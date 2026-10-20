@@ -9,6 +9,7 @@ import { parseDocument } from 'yaml';
 import { isDeepStrictEqual } from 'node:util';
 import { mcpChildEnvironment } from '../packages/dsh-zhen/lib/mcp-market.js';
 import { redactLauncherLine } from './log-output.mjs';
+import { examplePdf } from '../contracts/fixtures/pdf-document.mjs';
 
 // Disposable profile created only by public CLI commands. No browser or HTTP UI
 // inspection, user credentials, conversations or paid calls are involved.
@@ -72,6 +73,30 @@ try {
   if (!rows.has('attachment-local') || rows.get('attachment-local').disabled === true) throw new Error('Native attachment backend is unavailable.');
   if (models?.length !== 18 || rows.get('agent-default-model')?.config?.model !== 'deepseek/deepseek-v4.1-flash' || !rows.has('dsh-zhen')) throw new Error('Installed profile composition differs.');
   for (const name of ['session-log-deepseek','plugin-package-inventory-deepseek','deepseek-llm-api-extensions','otel','session-telemetry-otel','product-analytics','desktop-product-telemetry','ui-brand-official']) if (rows.get(name)?.disabled !== true) throw new Error('Required privacy/branding row differs.');
+  // Exercise the installed worker and external dependency through the public
+  // CLI, not the development lib directory. Only this owned EXAMPLE profile.
+  const pdfFolder=join(root,'EXAMPLE_PDF_DOCS');mkdirSync(pdfFolder);
+  const pdfFile=join(pdfFolder,'EXAMPLE.pdf'),pdfBytes=examplePdf(['EXAMPLE ONLY\n示例角色蓝桥。','EXAMPLE ONLY\n示例场景雨夜古桥。']);writeFileSync(pdfFile,pdfBytes);
+  // plugin exec does not install the Host's peer-module resolver. Exercise the
+  // shipped standalone decoder here; C47 separately checks the actual Host
+  // service/index/grants composition. Do not import development-only peers.
+  const installedPdfProbe=String.raw`
+    import {spawn} from 'node:child_process';
+    import {readFileSync} from 'node:fs';
+    import {fileURLToPath} from 'node:url';
+    const worker=fileURLToPath(new URL('./lib/pdf-text-worker.js',import.meta.resolve('dsh-zhen/package.json')));
+    const env={};for(const key of Object.keys(process.env))if(['systemroot','windir','temp','tmp','lang','lc_all'].includes(key.toLowerCase()))env[key]=process.env[key];
+    const child=spawn(process.execPath,['--max-old-space-size=256',worker],{env,windowsHide:true,serialization:'advanced',stdio:['ignore','ignore','ignore','ipc']});
+    let value,failure;const deadline=setTimeout(()=>{failure=Error('EXAMPLE_INSTALLED_PDF_TIMEOUT');child.kill();},12000);
+    child.once('message',message=>{value=message;});child.once('error',()=>{failure=Error('EXAMPLE_INSTALLED_PDF_START');});
+    const closed=new Promise((done,reject)=>child.once('close',code=>{clearTimeout(deadline);failure||code!==0?reject(failure??Error('EXAMPLE_INSTALLED_PDF_EXIT')):done();}));
+    child.send({bytes:readFileSync(process.argv[1])},error=>{if(error){failure=Error('EXAMPLE_INSTALLED_PDF_IPC');child.kill();}});await closed;
+    if(value?.ok!==true||value.pageCount!==2||!value.pages?.find(p=>p.page===2&&p.text.includes('雨夜古桥')))throw Error('EXAMPLE_INSTALLED_PDF_CONTENT');
+    console.log('DSH_ZHEN_PDF='+JSON.stringify({page:2,workerOnly:true}));
+  `.replace(/\r?\n/g,' ');
+  const pdfOutput=await run(['plugin','--profile','example','exec',process.execPath,'--input-type=module','-e',installedPdfProbe,pdfFile]);
+  const pdfMatch=pdfOutput.match(/DSH_ZHEN_PDF=(\{[^\r\n]+\})/);if(!pdfMatch)throw new Error('Installed PDF verification did not return a receipt.');const pdfProof=JSON.parse(pdfMatch[1]);
+  if(pdfProof.page!==2||pdfProof.workerOnly!==true||!readFileSync(pdfFile).equals(pdfBytes))throw new Error('Installed PDF result differs or source bytes changed.');
   const port = await choosePort();
   host = spawn(process.execPath, [cli, '--profile', 'example', '--host', '127.0.0.1', '--port', String(port), '--no-open'], { cwd: root, env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
   capture(host.stdout); capture(host.stderr); host.once('error', () => {}); host.once('close', () => { hostClosed = true; });
@@ -80,7 +105,7 @@ try {
   if (!ready) throw new Error('Disposable Host did not open its loopback socket.');
   await delay(500);
   if (hostClosed) throw new Error('Disposable Host exited after startup.');
-  const evidence = { at: new Date().toISOString(), artifact: artifact.file, sha256: artifact.sha256, node: process.versions.node, installedViaPublicCli: true, installedEntrySha256: expectedEntry, installedPatchSha256: expectedPatch, installedClientSha256: expectedClient, installedSkillCatalogSha256: expectedSkills, replacementFrom: previousArchive ? args[1] : null, previousEntrySha256: priorIdentity?.entry ?? null, previousPatchSha256: priorIdentity?.patch ?? null, previousClientSha256: priorIdentity?.client ?? null, previousSkillCatalogSha256: priorIdentity?.skills ?? null, completeProviderProfileMatches: true, nativeAttachmentsEnabled: true, imageModelRoutes: models.filter(model => model.input.includes('image')).length, modelRoutes: models.length, flashDefault: true, designatedCollectorsDisabled: true, hostLoopbackSocket: true, browserInspected: false, paidCalls: 0 };
+  const evidence = { at: new Date().toISOString(), artifact: artifact.file, sha256: artifact.sha256, node: process.versions.node, installedViaPublicCli: true, installedEntrySha256: expectedEntry, installedPatchSha256: expectedPatch, installedClientSha256: expectedClient, installedSkillCatalogSha256: expectedSkills, replacementFrom: previousArchive ? args[1] : null, previousEntrySha256: priorIdentity?.entry ?? null, previousPatchSha256: priorIdentity?.patch ?? null, previousClientSha256: priorIdentity?.client ?? null, previousSkillCatalogSha256: priorIdentity?.skills ?? null, installedPdfWorkerVerified:true,installedPdfPage:pdfProof.page,installedPdfKnowledgeIndexVerified:false,pdfSourceBytesPreserved:true, completeProviderProfileMatches: true, nativeAttachmentsEnabled: true, imageModelRoutes: models.filter(model => model.input.includes('image')).length, modelRoutes: models.length, flashDefault: true, designatedCollectorsDisabled: true, hostLoopbackSocket: true, browserInspected: false, paidCalls: 0 };
   mkdirSync(resolve(workspace, '.runtime/evidence'), { recursive: true });
   writeFileSync(resolve(workspace, '.runtime/evidence/installed-bundle-smoke.json'), JSON.stringify(evidence, null, 2) + '\n');
   console.log(JSON.stringify(evidence));

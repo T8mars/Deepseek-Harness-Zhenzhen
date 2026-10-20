@@ -4,7 +4,7 @@
     {
       "id": "privacy-release-guard",
       "status": "implemented",
-      "verification": "Ignore patterns, local hooks, complete commit trees and npm file lists checked. First code checkpoint/tag pushed with no private roots. Remote CI did not start because GitHub account billing/spending limits block jobs."
+      "verification": "Ignore patterns, local hooks, complete commit trees and npm file lists checked; private root research and local corpus excluded. Owner made repository public. Corrected Windows CI39433495391 at dev18 passed335/335,125-file pack and public-CLI temporary install/Host smoke. New feature checkpoints need their own CI; this does not assert future success."
     },
     {
       "id": "seedance-chat",
@@ -71,7 +71,7 @@
     {
       "id": "local-rag",
       "status": "in-progress",
-      "verification": "C11/C35 source diversity, pre-provider revocation and source context remain. C38/C41 actual published ToolRuntime and authorized compound-boundary regressions pass; full check331. Schema2, keyword AND and source bytes unchanged. Same1007 indexed installed-reference documents: keyword8/10, question7/10 to8/10. Owner adopted this fixed10-question80% first-version baseline; it passes. Approval is separate from immutable proposed criteria and original measurement. Browser/live-model/fullM3 and general user-project relevance remain unverified. Import/search, exact workspace binding, independent cloud/Agent consent, source cards/open and immediate revocation remain. Local-only 创作资料 has1008 SHA-verified copies; not automatically imported. PDF/OCR/vector are unimplemented."
+      "verification": "Text-layer PDF import and actual page citations are implemented through pinned pdfjs-dist6.4.299 in a fixed local child; no OCR/cloud parser. Schema2 to3 transaction adds optional page and preserves existing text IDs, bindings and grants. C47 actual published Host/Gateway/ToolRuntime and SSR, six decoder and six knowledge tests pass; full348. Same1007-document corpus and unchanged fixed10-question/top5/80% owner-adopted baseline remain8/10. Standard W3C PDF verified locally. Installed decoder/startup are separate probes; browser/live-model/general creative quality/fullM3 remain unverified."
     },
     {
       "id": "canvas-mcp",
@@ -111,7 +111,7 @@
     {
       "id": "github-update-candidates",
       "status": "in-progress",
-      "verification": "Daily Host metadata monitoring and exact published-package candidate preparation implemented. Separate read-only validation and pure write-job publisher enforce a fixed file list; 42 guide identities and 190 public template rows with key/default-value digests require hash-bound review. C15, semantic precedence, publisher, Git collection and personal-skill compatibility tests passed. Real 23-package metadata matches the lock and next is unchanged. Running Host updates are refused before mutation. Repository is now public by owner action; historical Actions were blocked by account billing/spending limits, public Actions now execute. The first run passed333/334 and exposed Windows checkout conversion of immutable Native fixtures; decision0046 fixes exact-path attributes with a genuine Git red/green regression. Local335 and genuine Git red/green pass; see current Actions status for the corrected remote run; a real newer release, canary, promotion and signed activation remain."
+      "verification": "Daily Host metadata monitoring and exact published-package candidate preparation implemented. Separate read-only validation and pure write-job publisher enforce a fixed file list; 42 guide identities and 190 public template rows with key/default-value digests require hash-bound review. C15, semantic precedence, publisher, Git collection and personal-skill compatibility tests passed. Real 23-package metadata matches the lock and next is unchanged. Running Host updates are refused before mutation. Repository is now public by owner action; historical Actions were blocked by account billing/spending limits, public Actions now execute. The first run passed333/334 and exposed Windows checkout conversion of immutable Native fixtures; decision0046 fixes exact-path attributes with a genuine Git red/green regression. Corrected remote Windows run39433495391 passed335/335, pack and public-CLI install/Host smoke; a real newer release, canary, promotion and signed activation remain."
     },
     {
       "id": "signed-desktop-update",

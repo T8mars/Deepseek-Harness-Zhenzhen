@@ -81,3 +81,12 @@ authorized index windows; client cards consume recorded metadata through the
 published ui-tool keyed slot contract (C6). Actual React SSR checks replay,
 escaping, old-record fallback and error suppression; it does not establish
 browser rendering or live model use. See decision0034.
+
+C47 additionally establishes that the pinned published tool author DSL accepts
+`type: integer` but rejects `minimum`/`maximum` author-schema keywords. Page
+bounds remain in the owned decoder and strict Zod Remote/presentation DTOs;
+the tool author shape uses an integer and description only. Adding unsupported
+keywords prevents registration, so the actual ToolRuntime search/open composition
+is part of this contract. The installed standalone decoder is probed separately
+from Host composition; public `plugin exec` alone does not supply Host peer
+resolution, and this check does not import development-only peers. See0047.

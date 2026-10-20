@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,writeFileSync,readFileSync,realpathSync,rmSync,existsSync} from 'node:fs';
+import {join,resolve,relative,isAbsolute} from 'node:path';
+import {tmpdir} from 'node:os';
+import {createHash} from 'node:crypto';
+import {extractPdfPages} from '../packages/dsh-zhen/lib/pdf-text.js';
+import {KnowledgeStore} from '../packages/dsh-zhen/lib/knowledge.js';
+
+// Real W3C sample, one fixed anonymous download. Decoder/indexing stay local;
+// no real user document, credential, model, account or Native Canvas is used.
+const args=process.argv.slice(2);assert.ok(args.length===2&&args[0]==='--out-name'&&/^[A-Za-z0-9-]+\.json$/.test(args[1]));const output=resolve('.runtime/evidence',args[1]);assert.equal(existsSync(output),false);
+const source='https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',response=await fetch(source,{method:'GET',redirect:'error',signal:AbortSignal.timeout(15000),headers:{Accept:'application/pdf'}});assert.equal(response.status,200);assert.ok(response.body);const reader=response.body.getReader(),chunks=[];let size=0;try{while(true){const part=await reader.read();if(part.done)break;size+=part.value.byteLength;assert.ok(size<=2*1024*1024);chunks.push(part.value);}}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
+const bytes=Buffer.concat(chunks),sha=b=>createHash('sha256').update(b).digest('hex'),digest=sha(bytes),pages=await extractPdfPages(bytes);assert.equal(pages.length,1);assert.equal(pages[0].page,1);assert.match(pages[0].text,/Dummy PDF file/);
+const base=realpathSync.native(tmpdir()),root=realpathSync.native(mkdtempSync(join(base,'dsh-pdf-standard-EXAMPLE-'))),docs=join(root,'EXAMPLE_DOCS');mkdirSync(docs);const file=join(docs,'EXAMPLE_W3C.pdf');writeFileSync(file,bytes);const store=new KnowledgeStore(join(root,'EXAMPLE.sqlite'));let report;
+try{const collection=await store.create('EXAMPLE_PROJECT','示例标准PDF',docs),imported=await store.index('EXAMPLE_PROJECT',collection.id);assert.equal(imported.indexed,1);const hit=store.search('EXAMPLE_PROJECT','Dummy PDF')[0];assert.equal(hit.page,1);assert.equal(hit.path,'EXAMPLE_W3C.pdf');assert.equal(store.source('EXAMPLE_PROJECT',hit.id,hit.epoch).sections.find(s=>s.id===hit.id).page,1);assert.throws(()=>store.citation('EXAMPLE_PROJECT',hit.id,hit.epoch,'seedance'));assert.equal(sha(readFileSync(file)),digest);report={at:new Date().toISOString(),source,sourceSha256:digest,sourceBytes:bytes.length,pages:1,actualExternalPdf:true,actualDecoderProcess:true,localIndexAndPageCitationVerified:true,sourceBytesPreserved:true,cloudGrantAutomaticallyAdded:false,modelCalls:0,paidCalls:0,credentialReads:0,nativeWrites:0,browserInspected:false,downloadGets:1};}finally{store.close();const part=relative(base,realpathSync.native(root));assert.ok(part&&!isAbsolute(part)&&!part.startsWith('..')&&!part.includes('/')&&!part.includes('\\'));rmSync(root,{recursive:true,force:true,maxRetries:5,retryDelay:200});}
+mkdirSync(resolve('.runtime/evidence'),{recursive:true});writeFileSync(output,JSON.stringify({...report,temporaryDataAndProcessesRemoved:true},null,2)+'\n',{flag:'wx'});console.log(JSON.stringify({...report,temporaryDataAndProcessesRemoved:true}));

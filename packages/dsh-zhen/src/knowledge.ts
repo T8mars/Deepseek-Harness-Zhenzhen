@@ -3,14 +3,15 @@ import { randomUUID, createHash } from 'node:crypto';
 import { realpath, lstat, open, opendir } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve, relative, isAbsolute, extname, join } from 'node:path';
+import { extractPdfPages } from './pdf-text.ts';
 
 export interface KnowledgeCollection { id: string; project: string; name: string; root: string; epoch: number; enabled: boolean; cloudProvider: string; agentEnabled: boolean; documents: number; }
-export interface KnowledgeHit { id: string; collectionId: string; collectionName: string; path: string; line: number; text: string; epoch: number; }
+export interface KnowledgeHit { id: string; collectionId: string; collectionName: string; path: string; line: number; text: string; epoch: number; page?: number; }
 export interface KnowledgeSource { anchorId: string; sections: KnowledgeHit[]; firstSection: number; totalSections: number; earlierId: string | null; laterId: string | null; }
 export interface ImportResult { indexed: number; skipped: number; failed: number; }
 export interface KnowledgeBinding { project: string; root: string; epoch: number; }
 interface CollectionRow { id: string; project: string; name: string; root: string; epoch: number; enabled: number; cloud_provider: string; agent_enabled: number; }
-const allowedExtensions = new Set(['.md', '.txt', '.csv', '.json']);
+const allowedExtensions = new Set(['.md', '.txt', '.csv', '.json', '.pdf']);
 const excludedDirectories = new Set(['node_modules', 'vendor', 'dist', 'lib', 'coverage']);
 const maxFileBytes = 2 * 1024 * 1024;
 
@@ -90,17 +91,22 @@ export class KnowledgeStore {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = new DatabaseSync(path);
     const version = Number(this.db.prepare('PRAGMA user_version').get()?.user_version ?? 0);
-    if (version > 2) { this.db.close(); throw new Error('知识库由更新版本创建，请升级应用后再打开。'); }
-    this.db.exec(`PRAGMA foreign_keys=ON;
+    if (version > 3) { this.db.close(); throw new Error('知识库由更新版本创建，请升级应用后再打开。'); }
+    this.db.exec('PRAGMA foreign_keys=ON; BEGIN IMMEDIATE');
+    try {
+    this.db.exec(`
       CREATE TABLE IF NOT EXISTS collections(id TEXT PRIMARY KEY, project TEXT NOT NULL, name TEXT NOT NULL, root TEXT NOT NULL, epoch INTEGER NOT NULL DEFAULT 1, enabled INTEGER NOT NULL DEFAULT 1, cloud_provider TEXT NOT NULL DEFAULT '');
       CREATE TABLE IF NOT EXISTS documents(id TEXT PRIMARY KEY, collection_id TEXT NOT NULL REFERENCES collections(id) ON DELETE CASCADE, path TEXT NOT NULL, digest TEXT NOT NULL, UNIQUE(collection_id,path));
-      CREATE TABLE IF NOT EXISTS chunks(id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE, line INTEGER NOT NULL, text TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS chunks(id TEXT PRIMARY KEY, document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE, line INTEGER NOT NULL, text TEXT NOT NULL, page INTEGER NOT NULL DEFAULT 0);
       CREATE VIRTUAL TABLE IF NOT EXISTS search_index USING fts5(chunk_id UNINDEXED, terms);
       CREATE TABLE IF NOT EXISTS workspace_bindings(project TEXT PRIMARY KEY, root TEXT NOT NULL UNIQUE, epoch INTEGER NOT NULL DEFAULT 1);
       CREATE TABLE IF NOT EXISTS binding_revisions(id INTEGER PRIMARY KEY AUTOINCREMENT);
       CREATE TABLE IF NOT EXISTS session_grants(session_id TEXT NOT NULL, project TEXT NOT NULL, collection_id TEXT NOT NULL, epoch INTEGER NOT NULL, binding_epoch INTEGER NOT NULL, root TEXT NOT NULL, PRIMARY KEY(session_id,collection_id,epoch,binding_epoch));
-      PRAGMA user_version=2;`);
+      `);
     if (!(this.db.prepare('PRAGMA table_info(collections)').all() as { name: string }[]).some(column => column.name === 'agent_enabled')) this.db.exec('ALTER TABLE collections ADD COLUMN agent_enabled INTEGER NOT NULL DEFAULT 0');
+    if (!(this.db.prepare('PRAGMA table_info(chunks)').all() as { name: string }[]).some(column => column.name === 'page')) this.db.exec('ALTER TABLE chunks ADD COLUMN page INTEGER NOT NULL DEFAULT 0');
+    this.db.exec('PRAGMA user_version=3; COMMIT');
+    } catch (error) { this.db.exec('ROLLBACK'); this.db.close(); throw error; }
   }
   close(): void { this.db.close(); }
   binding(project: string): KnowledgeBinding | null {
@@ -193,9 +199,10 @@ export class KnowledgeStore {
       }
     };
     await walk(root);
-    const documents: Array<{ path: string; digest: string; text: string }> = [];
+    const documents: Array<{ path: string; digest: string; sections: Array<{text:string;page?:number}> }> = [];
     let failed = 0;
     let totalBytes = 0;
+    let extractedBytes = 0;
     for (const file of files) {
       // Authorization may be revoked while an async import is in progress.
       if (this.collection(project, id).epoch !== collection.epoch) throw new Error('资料权限已变化，本次导入已停止。');
@@ -214,9 +221,18 @@ export class KnowledgeStore {
           totalBytes += size;
           if (totalBytes > 32 * 1024 * 1024) throw new Error('IMPORT_BUDGET');
           const bytes = buffer.subarray(0, size);
-          const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-          if (text.includes('\0')) { skipped++; continue; }
-          documents.push({ path: relative(root, file).replaceAll('\\', '/'), digest: createHash('sha256').update(bytes).digest('hex'), text });
+          let sections:Array<{text:string;page?:number}>;
+          if (extname(file).toLowerCase() === '.pdf') {
+            sections = await extractPdfPages(bytes, () => { if (this.collection(project,id).epoch !== collection.epoch) throw new Error('资料权限已变化，本次导入已停止。'); });
+            if (!sections.length) { skipped++; continue; }
+          } else {
+            const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            if (text.includes('\0')) { skipped++; continue; }
+            sections = [{text}];
+          }
+          extractedBytes += sections.reduce((size,section)=>size+Buffer.byteLength(section.text),0);
+          if (extractedBytes > 32 * 1024 * 1024) throw new Error('IMPORT_BUDGET');
+          documents.push({ path: relative(root, file).replaceAll('\\', '/'), digest: createHash('sha256').update(bytes).digest('hex'), sections });
         } finally { await handle.close(); }
       } catch (error) { if (error instanceof Error && error.message === 'IMPORT_BUDGET') throw new Error('本次导入超过 32 MiB，请拆分资料集合。'); failed++; }
     }
@@ -228,11 +244,16 @@ export class KnowledgeStore {
       for (const document of documents) {
         const documentId = randomUUID();
         this.db.prepare('INSERT INTO documents(id,collection_id,path,digest) VALUES(?,?,?,?)').run(documentId, id, document.path, document.digest);
-        for (let offset = 0; offset < document.text.length; offset += 1400) {
-          const text = document.text.slice(offset, offset + 1600);
+        for (const section of document.sections) for (let offset = 0; offset < section.text.length; offset += 1400) {
+          // Preserve complete Unicode scalars at overlapping excerpt edges.
+          const low=(position:number)=>section.text.charCodeAt(position)>=0xdc00&&section.text.charCodeAt(position)<=0xdfff;
+          const high=(position:number)=>section.text.charCodeAt(position)>=0xd800&&section.text.charCodeAt(position)<=0xdbff;
+          const start=offset>0&&low(offset)&&high(offset-1)?offset-1:offset;
+          let end=Math.min(section.text.length,start+1600);if(end<section.text.length&&high(end-1)&&low(end))end--;
+          const text = section.text.slice(start, end);
           const chunkId = randomUUID();
-          const line = document.text.slice(0, offset).split('\n').length;
-          this.db.prepare('INSERT INTO chunks(id,document_id,line,text) VALUES(?,?,?,?)').run(chunkId, documentId, line, text);
+          const line = section.text.slice(0, start).split('\n').length;
+          this.db.prepare('INSERT INTO chunks(id,document_id,line,text,page) VALUES(?,?,?,?,?)').run(chunkId, documentId, line, text, section.page ?? 0);
           this.db.prepare('INSERT INTO search_index(chunk_id,terms) VALUES(?,?)').run(chunkId, lexicalTerms(text).join(' '));
         }
       }
@@ -256,7 +277,7 @@ export class KnowledgeStore {
       WHERE search_index MATCH ? AND c.project=? AND c.enabled=1 AND (?='' OR (c.cloud_provider=? AND c.agent_enabled=1))
     ), diversified AS (
       SELECT *,row_number() OVER (PARTITION BY document_id ORDER BY score,line,id) AS document_position FROM matched
-    ) SELECT ch.id,c.id AS collection_id,c.name,ch.line,ch.text,c.epoch,d.path
+    ) SELECT ch.id,c.id AS collection_id,c.name,ch.page,ch.line,ch.text,c.epoch,d.path
       FROM diversified result JOIN chunks ch ON ch.id=result.id JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
       ORDER BY result.document_position,result.score,d.path,ch.line,ch.id LIMIT 12`).all(terms.join(' AND '), project, provider, provider);
     if (!rows.length) {
@@ -273,7 +294,7 @@ export class KnowledgeStore {
       });
       if (plan.groups.length) return this.questionSearch(project, plan, provider);
     }
-    return rows.map(row => ({ id: String(row.id), collectionId: String(row.collection_id), collectionName: String(row.name), path: String(row.path), line: Number(row.line), text: String(row.text), epoch: Number(row.epoch) }));
+    return rows.map(row => ({ id: String(row.id), collectionId: String(row.collection_id), collectionName: String(row.name), path: String(row.path), line: Number(row.line), ...(Number(row.page)>0?{page:Number(row.page)}:{}), text: String(row.text), epoch: Number(row.epoch) }));
   }
   private questionSearch(project: string, { groups, adjacent }: { groups: string[][]; adjacent: string[] }, provider: string): KnowledgeHit[] {
     // Hex-encoded terms alone form the FTS grammar. Filter authority before the
@@ -313,27 +334,27 @@ export class KnowledgeStore {
     if (!chosen.length) return [];
     // Recheck current authority/epochs when fetching the final results; another
     // connection can revoke or rebuild a collection between these SQL statements.
-    const current = this.db.prepare(`SELECT ch.id,c.id AS collection_id,c.name,ch.line,ch.text,c.epoch,d.path
+    const current = this.db.prepare(`SELECT ch.id,c.id AS collection_id,c.name,ch.page,ch.line,ch.text,c.epoch,d.path
       FROM chunks ch JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
       WHERE c.project=? AND c.enabled=1 AND (?='' OR (c.cloud_provider=? AND c.agent_enabled=1)) AND ch.id IN (${chosen.map(() => '?').join(',')})`).all(project, provider, provider, ...chosen.map(item => item.id));
     const found = new Map(current.map(row => [String(row.id), row]));
     return chosen.flatMap(item => {
       const row = found.get(item.id);
-      return row && Number(row.epoch) === item.epoch ? [{ id: String(row.id), collectionId: String(row.collection_id), collectionName: String(row.name), path: String(row.path), line: Number(row.line), text: String(row.text), epoch: Number(row.epoch) }] : [];
+      return row && Number(row.epoch) === item.epoch ? [{ id: String(row.id), collectionId: String(row.collection_id), collectionName: String(row.name), path: String(row.path), line: Number(row.line), ...(Number(row.page)>0?{page:Number(row.page)}:{}), text: String(row.text), epoch: Number(row.epoch) }] : [];
     });
   }
   /** Read a bounded window of the authorized local index, without a cloud grant. */
   source(project: string, hitId: string, epoch: number): KnowledgeSource {
-    const anchor = this.db.prepare(`SELECT ch.id,ch.document_id,ch.rowid AS ordinal,ch.line,ch.text,c.id AS collection_id,c.name,c.epoch,d.path
+    const anchor = this.db.prepare(`SELECT ch.id,ch.document_id,ch.rowid AS ordinal,ch.page,ch.line,ch.text,c.id AS collection_id,c.name,c.epoch,d.path
       FROM chunks ch JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
       WHERE ch.id=? AND c.project=? AND c.enabled=1 AND c.epoch=?`).get(hitId, project, epoch);
     if (!anchor) throw new Error('资料引用已过期、已撤回，或不属于当前资料空间。');
     // Own index rows are inserted in source order. rowid breaks ties when many
     // overlapping chunks begin on the same physical line; no source file opens.
-    const before = this.db.prepare('SELECT id,line,text,rowid AS ordinal FROM chunks WHERE document_id=? AND rowid<? ORDER BY rowid DESC LIMIT 2').all(anchor.document_id!, anchor.ordinal!);
-    const after = this.db.prepare('SELECT id,line,text,rowid AS ordinal FROM chunks WHERE document_id=? AND rowid>? ORDER BY rowid LIMIT 2').all(anchor.document_id!, anchor.ordinal!);
+    const before = this.db.prepare('SELECT id,page,line,text,rowid AS ordinal FROM chunks WHERE document_id=? AND rowid<? ORDER BY rowid DESC LIMIT 2').all(anchor.document_id!, anchor.ordinal!);
+    const after = this.db.prepare('SELECT id,page,line,text,rowid AS ordinal FROM chunks WHERE document_id=? AND rowid>? ORDER BY rowid LIMIT 2').all(anchor.document_id!, anchor.ordinal!);
     const rows = [...before.slice(0, 1), anchor, ...after.slice(0, 1)];
-    const sections = rows.map(row => ({ id: String(row.id), collectionId: String(anchor.collection_id), collectionName: String(anchor.name), path: String(anchor.path), line: Number(row.line), text: String(row.text), epoch: Number(anchor.epoch) }));
+    const sections = rows.map(row => ({ id: String(row.id), collectionId: String(anchor.collection_id), collectionName: String(anchor.name), path: String(anchor.path), line: Number(row.line), ...(Number(row.page)>0?{page:Number(row.page)}:{}), text: String(row.text), epoch: Number(anchor.epoch) }));
     const firstSection = Number(this.db.prepare('SELECT count(*) AS n FROM chunks WHERE document_id=? AND rowid<?').get(anchor.document_id!, rows[0]!.ordinal!)?.n) + 1;
     const totalSections = Number(this.db.prepare('SELECT count(*) AS n FROM chunks WHERE document_id=?').get(anchor.document_id!)?.n);
     if (this.collection(project, String(anchor.collection_id)).epoch !== epoch) throw new Error('资料引用已变化，请重新检索。');
@@ -354,10 +375,10 @@ export class KnowledgeStore {
   }
   /** Revalidate a selected citation at use time. Caller must separately obtain cloud-send permission. */
   citation(project: string, hitId: string, epoch: number, provider: string): KnowledgeHit {
-    const row = this.db.prepare(`SELECT ch.id,c.id AS collection_id,c.name,ch.line,ch.text,c.epoch,c.cloud_provider,d.path
+    const row = this.db.prepare(`SELECT ch.id,c.id AS collection_id,c.name,ch.page,ch.line,ch.text,c.epoch,c.cloud_provider,d.path
       FROM chunks ch JOIN documents d ON d.id=ch.document_id JOIN collections c ON c.id=d.collection_id
       WHERE ch.id=? AND c.project=? AND c.enabled=1`).get(hitId, project);
     if (!row || row.epoch !== epoch || row.cloud_provider !== provider || provider !== 'seedance') throw new Error('引用已过期、已撤回，或尚未允许发送给该模型服务。');
-    return { id: String(row.id), collectionId: String(row.collection_id), collectionName: String(row.name), path: String(row.path), line: Number(row.line), text: String(row.text), epoch: Number(row.epoch) };
+    return { id: String(row.id), collectionId: String(row.collection_id), collectionName: String(row.name), path: String(row.path), line: Number(row.line), ...(Number(row.page)>0?{page:Number(row.page)}:{}), text: String(row.text), epoch: Number(row.epoch) };
   }
 }

@@ -81,8 +81,8 @@
       "publicPolicySha256": "cede026a92342d6502814a1c8baa28e21b77d69fc1903789e2d4bcb5ab0b03b1",
       "verification": "Original immutable public policy helper with inert dispatch accepts 73 L0 and refuses 123 non-direct operations. Actual business handlers, user data, real Canvas and paid providers were not exercised."
     },
-    "ragSchema": 2,
-    "ragVerification": "C11/C35 source diversity, pre-provider revocation and source context remain. C38/C41 actual published ToolRuntime and authorized compound-boundary regressions pass; full check331. Schema2, keyword AND and source bytes unchanged. Same1007 indexed installed-reference documents: keyword8/10, question7/10 to8/10. Owner adopted this fixed10-question80% first-version baseline; it passes. Approval is separate from immutable proposed criteria and original measurement. Browser/live-model/fullM3 and general user-project relevance remain unverified.",
+    "ragSchema": 3,
+    "ragVerification": "Text-layer PDF import and actual page citations are implemented through pinned pdfjs-dist6.4.299 in a fixed local child; no OCR/cloud parser. Schema2 to3 transaction adds optional page and preserves existing text IDs, bindings and grants. C47 actual published Host/Gateway/ToolRuntime and SSR, six decoder and six knowledge tests pass; full348. Same1007-document corpus and unchanged fixed10-question/top5/80% owner-adopted baseline remain8/10. Standard W3C PDF verified locally. Installed decoder/startup are separate probes; browser/live-model/general creative quality/fullM3 remain unverified.",
     "artManifestSchema": 1,
     "artVerification": "Original community reference rendered locally; later explicit user authorization produced two built-in imagegen PNGs and a verified separate local ZIP. New generated-set Web rendering remains unverified after browser policy refusal.",
     "skillStoreSchema": 3,
@@ -824,7 +824,59 @@
       },
       "targetedTests": 16,
       "packageSha256": "9af31c6167b91b1a21a7ffd6a2da5fd2d301d2f53c37be56e355f8193928c8ab",
-      "packageUnchanged": true
+      "packageUnchanged": true,
+      "correctedPublicCi": {
+        "id": 39433495391,
+        "commit": "f9eacc3563e6f27b9bdbc43af6d0c5c1b6bba3d6",
+        "conclusion": "success",
+        "tests": 335,
+        "passed": 335,
+        "packageFiles": 125,
+        "publicCliInstalled": true,
+        "hostLoopbackSocket": true,
+        "crossEnvironmentArchiveIdentical": false
+      }
+    },
+    "pdfLocalRag": {
+      "decision": "0047",
+      "contract": "C47",
+      "package": "pdfjs-dist",
+      "version": "6.4.299",
+      "integrity": "sha512-AVl138zALtfaAPvADulE0PZThbYzCBS79nL4pOSL/6Sm/4AH5A21BD9VHt97OlCuzJuCpmeZtAtkinisF4Vb1g==",
+      "inputBytes": 2097152,
+      "textBytes": 2097152,
+      "maxPages": 200,
+      "timeoutMs": 12000,
+      "v8HeapMiB": 256,
+      "totalNativeMemoryBound": false,
+      "maxPending": 4,
+      "parser": "fixed-local-child-ipc",
+      "remoteResources": false,
+      "ocr": false,
+      "existingSchemaMigration": "2-to-3-transaction-page-default-zero",
+      "fullCheck": {
+        "tests": 348,
+        "passed": 348
+      },
+      "standardPdf": {
+        "source": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "sha256": "3df79d34abbca99308e79cb94461c1893582604d68329a41fd4bec1885e6adb4",
+        "pages": 1
+      },
+      "referenceCorpus": {
+        "indexed": 1007,
+        "skipped": 1,
+        "failed": 0,
+        "keywords": "8/10",
+        "questions": "8/10",
+        "criteriaSha256": "77686af0484b146cbdbe8ff9687d3599c2c67486883397064a87b89a4b89254e",
+        "criteriaOwnerAccepted": true
+      },
+      "installedDecoderProbeScope": "installed standalone worker; actual service/index/grants composition separately established by C47",
+      "browserVerified": false,
+      "modelCalls": 0,
+      "paidCalls": 0,
+      "nativeWrites": 0
     }
   }
 }

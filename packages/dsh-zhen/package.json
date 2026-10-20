@@ -43,7 +43,8 @@
     "lib/typert.js",
     "lib/remote.js",
     "lib/canvas-server.js",
-    "lib/mcp-server.js"
+    "lib/mcp-server.js",
+    "lib/pdf-text-worker.js"
   ],
   "dsh": {
     "bundle": {
@@ -86,7 +87,8 @@
     "pnpm": "10.34.7",
     "semver": "7.8.5",
     "yaml": "2.8.3",
-    "zod": "4.4.3"
+    "zod": "4.4.3",
+    "pdfjs-dist": "6.4.299"
   },
   "peerDependenciesMeta": {
     "@deepseek-ai/dsh-host-webserver": {
