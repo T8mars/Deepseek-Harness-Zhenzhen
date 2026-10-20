@@ -79,6 +79,10 @@ export class CuratedMcpRuntime {
       const selected = this.market.active().find(item => item.id === id), mounted = this.mounted.get(id);
       if (!selected || !mounted?.plugin || mounted.state !== 'ready' || mounted.signature !== signature(selected)) return '此 MCP 连接未启用或正在切换，请检查连接页。';
       if (!execution.agent || canonicalMcpWorkspace(this.ctx.workingDirectory.get(execution.agent.session)) !== selected.workspace) return '此 MCP 只允许在其绑定的项目会话中调用。';
+      // Recheck at the tool boundary too: a prepared call can outlive a model
+      // request and must not regain authority after a connection is re-enabled.
+      try { this.market.assertSession(execution.agent.session.id, selected.workspace); }
+      catch { return '此会话的 MCP 授权已失效。重新启用连接后，请新建会话继续。'; }
     } catch { return '无法复核此 MCP 的项目权限，请检查连接页。'; }
     return undefined;
   }

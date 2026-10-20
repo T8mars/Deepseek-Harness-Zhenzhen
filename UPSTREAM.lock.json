@@ -102,7 +102,7 @@
     },
     "mcpProgramGrantSchema": 1,
     "mcpMarketStateSchema": 2,
-    "mcpProgramVerification": "Actual pinned packages installed hook-free and exercised via SDK stdio with synthetic graph/files; Node 22.19. C13/C18 cover actual DSH transport, project/resource grants, draining and restart. Real pinned memory re-download/restore preserved synthetic graph/data bytes; old grants stayed revoked. New UI, filesystem repair and real model use remain unverified.",
+    "mcpProgramVerification": "Actual pinned memory and filesystem programs exercised with EXAMPLE data only. Filesystem maintenance through published DSH ToolRuntime/stdio verified 14 registered tools, five exercised tools/15 calls, restart/fresh process, repair/original-program restore, outside-root/cross-project rejection and unchanged three-file/binary project bytes. Altered TEMP program failed launch; repaired damaged archive was unverified and refused restoration. C43 tool/resource-entry generation guard prevents old-session access after re-enable/repair/restore even with permissive pre-policy. Market schema2/grants schema1 unchanged. Browser, real user/model, broader servers and multi-Host maintenance remain unverified.",
     "upstreamCandidate": {
       "schemaVersion": 1,
       "observedGuides": 42,
@@ -678,6 +678,58 @@
         "passed": 333
       },
       "installedClientSha256": "5357835beb4b33c36ebbb22382a77b2d2e19830289d2a47d5889a764020973c1"
+    },
+    "mcpToolGeneration": {
+      "decision": "0043",
+      "contract": "C43",
+      "sessionFormatChanged": false,
+      "marketSchema": 2,
+      "grantsSchema": 1,
+      "checkAt": [
+        "model-request",
+        "tool/resource-entry",
+        "after-queue",
+        "after-result"
+      ],
+      "ordinaryRestartPreservesGrant": true,
+      "oldGrantRejectedAfter": [
+        "re-enable",
+        "repair",
+        "restore"
+      ],
+      "targetedTests": 15,
+      "fullCheck": {
+        "tests": 334,
+        "passed": 334
+      },
+      "filesystem": {
+        "package": "@modelcontextprotocol/server-filesystem",
+        "version": "2026.8.31",
+        "integrity": "sha512-kKaFkyAh6oipvc9+EAbJ552JafnMnOq5nzmzWkp1jJdBhTAAGpmIpWihUG1+rfNhmEFM98gUZDdCHCDD4v6a7Q==",
+        "registeredTools": 14,
+        "exercisedTools": [
+          "list_allowed_directories",
+          "read_text_file",
+          "write_file",
+          "edit_file",
+          "move_file"
+        ],
+        "toolCalls": 15,
+        "actualPublishedDshToolRuntime": true,
+        "syntheticAgentSessions": true,
+        "originalProgramSha256": "f15ff74cca579decaceac7686bf9349898af0ffa05068b860500e0856642a7fc",
+        "repairedProgramSha256": "c4cf6f03553b08c12db55db03483072c10d4ba19ed4fdf568f38d4afdf94a98e",
+        "originalProgramRestored": true,
+        "projectFiles": 3,
+        "projectBytesPreserved": true,
+        "binaryBytesPreserved": true,
+        "temporaryDataAndProcessesRemoved": true
+      },
+      "modelCalls": 0,
+      "credentialReads": 0,
+      "paidCalls": 0,
+      "nativeWrites": 0,
+      "browserVerified": false
     }
   }
 }

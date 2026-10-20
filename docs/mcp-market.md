@@ -89,6 +89,12 @@ and the separate memory data path are not moved or cleared. Completion leaves
 the connection disabled; inspect the new full digest and choose **信任程序并启用**
 again. Old conversation grants remain revoked after that new generation.
 
+Generation checks now run at the tool/resource entry as well as before the next
+model request, including the existing recheck after queued calls. A prepared
+call from an old conversation cannot regain access after re-enable, repair or
+restore. Start a new conversation after replacing/re-enabling a connection;
+ordinary restart preserves its generation and valid current conversation.
+
 The retained-record list can restore a program that matched its original digest.
 Restore checks its current tree before/after draining, preserves the replaced
 program in another record and also leaves the connection disabled. A damaged or
@@ -110,7 +116,7 @@ state. Keep compatible code and data together rather than deleting grant records
 or forcing a downgrade. Up to 100 retained records are supported; automatic
 archive deletion is not implemented.
 
-The complete check passes 106 tests. C18 uses the actual DSH MCP client and
+At decision0015, the complete check passed 106 tests. C18 uses the actual DSH MCP client and
 ToolRuntime with a synthetic server to verify drain-before-repair, no new calls
 during maintenance, retained data, revoked grants and a genuinely fresh server
 on restart. Filesystem fault, missing/damaged program, linked destination,
@@ -127,3 +133,20 @@ passed on Node 22.19.0 with nine tools; the root integrity stayed fixed while
 the reinstalled tree digest differed. Its temporary processes/data were cleaned.
 It uses no model or paid API, and does not verify the new browser controls or
 actual filesystem-server repair.
+
+```powershell
+node scripts/smoke-mcp-filesystem-maintenance.mjs
+```
+
+Decision0043 additionally verifies the actual pinned filesystem server through
+published DSH ToolRuntime and stdio. It registers 14 tools and exercises five
+(list_allowed_directories, read_text_file, write_file, edit_file, move_file),
+15 calls including refusals. Only owned EXAMPLE TEMP files and synthetic
+sessions are used. Restart, re-download and original-program restore preserve
+three project files including binary bytes; outside-root and cross-project calls
+are refused. Old sessions cannot write after renewed trust; a new session works.
+An altered stopped TEMP program is refused; repair retains the damaged copy as
+unverified and refuses its restoration. Temporary data/processes are removed.
+No model, credentials, paid API, Native changes or browser UI are involved.
+Full check334/334 passes. Use --out-name <new-name.json> for a distinct local
+evidence file; the script refuses to overwrite existing evidence.

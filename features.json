@@ -66,7 +66,7 @@
     {
       "id": "mcp-market",
       "status": "in-progress",
-      "verification": "Curated memory/filesystem packages support exact registry integrity, notices, hook-free install, full-tree pinning, project scopes, isolated env and reviewed candidate staging. Restart/re-download/hash-checked retained-program restore now drain calls and preserve data while requiring renewed trust after replacement. Market state schema 2 records archives; grants stay schema 1. C13/C18 use actual DSH composition with synthetic servers. Real pinned memory-server repair/restore retained a synthetic graph and original bytes on Node 22.19. New UI, filesystem repair, broader sources, signatures/revocations and automatic code activation remain unverified."
+      "verification": "Curated memory/filesystem exact-integrity hook-free installation, full-tree pinning, workspace scopes, isolated env, restart/drain/repair/retained-program restore. Market schema2 and grant schema1 unchanged. C43 red-before/green-after verifies stale-session tool/resource entry rejection after re-enable/repair/restore even with permissive pre-policy. Actual pinned filesystem through published DSH ToolRuntime/stdio: 14 registered tools, five exercised/15 calls, three-file EXAMPLE project and binary bytes preserved across restart/repair/original restore; outside-root/cross-project refusal; altered TEMP program launch and unverified damaged archive restore refused. Synthetic sessions, no model/paid/credential use; TEMP and processes removed. Targeted15/full334 pass. Browser, real-user/model, broader sources, signatures/revocations, multi-Host locks and automatic code activation remain unverified."
     },
     {
       "id": "local-rag",
