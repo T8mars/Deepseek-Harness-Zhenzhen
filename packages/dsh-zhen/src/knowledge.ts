@@ -3,6 +3,7 @@ import { randomUUID, createHash } from 'node:crypto';
 import { realpath, lstat, open, opendir } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve, relative, isAbsolute, extname, join } from 'node:path';
+import {HarnessError} from '@deepseek-ai/dsh-llm';
 import { extractPdfPages } from './pdf-text.ts';
 import {extractDocxText} from './docx-text.ts';
 import {documentFailure, documentFailureCodes} from './document-error.ts';
@@ -14,6 +15,9 @@ export interface KnowledgeHit { id: string; collectionId: string; collectionName
 export interface KnowledgeSource { anchorId: string; sections: KnowledgeHit[]; firstSection: number; totalSections: number; earlierId: string | null; laterId: string | null; }
 export interface ImportResult { indexed: number; skipped: number; failed: number; }
 export interface KnowledgeBinding { project: string; root: string; epoch: number; }
+export interface KnowledgeRetrievalScope { readonly project:string;readonly root:string;readonly bindingEpoch:number;readonly collections:readonly {readonly id:string;readonly epoch:number}[]; }
+export interface KnowledgeSelection { readonly id:string;readonly epoch:number; }
+export interface KnowledgeIndexPage{items:KnowledgeHit[];next:string|null;}
 interface CollectionRow { id: string; project: string; name: string; root: string; epoch: number; enabled: number; cloud_provider: string; agent_enabled: number; }
 const allowedExtensions = new Set(['.md', '.txt', '.csv', '.json', '.pdf', '.docx']);
 const excludedDirectories = new Set(['node_modules', 'vendor', 'dist', 'lib', 'coverage']);
@@ -150,19 +154,54 @@ export class KnowledgeStore {
     const root = process.platform === 'win32' ? physical.toLowerCase() : physical;
     if (provider !== 'seedance' || rows.some(row => row.enabled !== 1 || row.agent_enabled !== 1 || row.cloud_provider !== provider || row.current_epoch !== row.epoch || row.current_binding !== row.binding_epoch || row.current_root !== row.root || row.root !== root)) throw new Error('此会话引用的资料授权或工作目录已变化。请新建会话，或恢复原有权限后再继续。');
   }
-  async retrieveForAgent(sessionId: string, provider: string, directory: string, query: string): Promise<KnowledgeHit[]> {
+  private async retrievalScope(sessionId:string,provider:string,directory:string):Promise<KnowledgeRetrievalScope|null>{
     if (!sessionId || provider !== 'seedance') throw new Error('当前知识库只允许向已授权的 Seedance 会话提供片段。');
     const physical = await realpath(directory);
     const root = process.platform === 'win32' ? physical.toLowerCase() : physical;
-    const binding = this.db.prepare('SELECT * FROM workspace_bindings WHERE root=?').get(root);
-    if (!binding) return [];
     await this.assertSessionAllowed(sessionId, provider, root);
-    const hits = this.search(String(binding.project), query, provider);
-    for (const hit of hits) {
-      this.citation(String(binding.project), hit.id, hit.epoch, provider);
-      this.db.prepare('INSERT OR IGNORE INTO session_grants VALUES(?,?,?,?,?,?)').run(sessionId, String(binding.project), hit.collectionId, hit.epoch, Number(binding.epoch), root);
-    }
-    return hits;
+    return this.scopeAt(root,provider);
+  }
+  private scopeAt(root:string,provider:string):KnowledgeRetrievalScope|null{
+    const binding=this.db.prepare('SELECT * FROM workspace_bindings WHERE root=?').get(root);if(!binding)return null;
+    const collections=this.db.prepare('SELECT id,epoch FROM collections WHERE project=? AND enabled=1 AND agent_enabled=1 AND cloud_provider=? ORDER BY id').all(binding.project,provider).map(row=>Object.freeze({id:String(row.id),epoch:Number(row.epoch)}));
+    return Object.freeze({project:String(binding.project),root,bindingEpoch:Number(binding.epoch),collections:Object.freeze(collections)});
+  }
+  /** Query-scoped pages for trusted local index builders; scanning does not grant model access. */
+  async retrievalPage(sessionId:string,provider:string,directory:string,scope:KnowledgeRetrievalScope,after:string|null):Promise<KnowledgeIndexPage>{
+    if(after!==null&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(after))throw new HarnessError('检索后端返回了无效或未获授权的资料编号，本次结果未采用。','RAG_INVALID_RESULT');
+    const changed=()=>new HarnessError('资料授权或工作目录已变化，请重新检索。','RAG_ACCESS_CHANGED');
+    const current=await this.retrievalScope(sessionId,provider,directory);if(JSON.stringify(current)!==JSON.stringify(scope))throw changed();
+    this.db.exec('BEGIN');
+    try{
+      if(JSON.stringify(this.scopeAt(scope.root,provider))!==JSON.stringify(scope))throw changed();
+      const rows=this.db.prepare(`SELECT ch.id,c.id AS collection_id,c.name,d.path,ch.line,ch.page,ch.text,c.epoch FROM chunks ch JOIN documents d ON ch.document_id=d.id JOIN collections c ON d.collection_id=c.id
+        WHERE c.project=? AND c.enabled=1 AND c.agent_enabled=1 AND c.cloud_provider=? AND (? IS NULL OR ch.id>?) ORDER BY ch.id LIMIT 33`).all(scope.project,provider,after,after);
+      const allowed=new Map(scope.collections.map(item=>[item.id,item.epoch]));
+      const items=rows.slice(0,32).map(row=>{if(allowed.get(String(row.collection_id))!==Number(row.epoch))throw changed();return{id:String(row.id),collectionId:String(row.collection_id),collectionName:String(row.name),path:String(row.path),line:Number(row.line),...(Number(row.page)>0?{page:Number(row.page)}:{}),text:String(row.text),epoch:Number(row.epoch)};});
+      this.db.exec('COMMIT');return{items,next:rows.length>32?items.at(-1)!.id:null};
+    }catch(error){this.db.exec('ROLLBACK');throw error;}
+  }
+  /** A backend selects identifiers only. Canonical content and grants stay in this authority. */
+  async retrieveForAgent(sessionId: string, provider: string, directory: string, query: string,select?:(scope:KnowledgeRetrievalScope)=>Promise<readonly KnowledgeSelection[]>): Promise<KnowledgeHit[]> {
+    const scope=await this.retrievalScope(sessionId,provider,directory);if(!scope||!scope.collections.length)return [];
+    const selected=select?await select(scope):this.search(scope.project,query,provider).map(hit=>({id:hit.id,epoch:hit.epoch}));
+    const current=await this.retrievalScope(sessionId,provider,directory);
+    if(JSON.stringify(current)!==JSON.stringify(scope))throw Error('资料授权或会话绑定已变化，请重新检索。');
+    const invalid=()=>new HarnessError('检索后端返回了无效或未获授权的资料编号，本次结果未采用。','RAG_INVALID_RESULT');
+    if(!Array.isArray(selected)||selected.length>12)throw invalid();
+    this.db.exec('BEGIN IMMEDIATE');
+    try{
+    if(JSON.stringify(this.scopeAt(scope.root,provider))!==JSON.stringify(scope))throw Error('资料授权或会话绑定已变化，请重新检索。');
+    const allowed=new Map(scope.collections.map(item=>[item.id,item.epoch])),seen=new Set<string>();
+    const hits=selected.map(item=>{
+      if(!item||typeof item.id!=='string'||!Number.isSafeInteger(item.epoch)||item.epoch<1||seen.has(item.id))throw invalid();seen.add(item.id);
+      let hit:KnowledgeHit;try{hit=this.citation(scope.project,item.id,item.epoch,provider);}catch{throw invalid();}
+      if(allowed.get(hit.collectionId)!==hit.epoch)throw invalid();return hit;
+    });
+    // Nothing is granted until every selected identifier passed the same current snapshot.
+    for(const hit of hits)this.db.prepare('INSERT OR IGNORE INTO session_grants VALUES(?,?,?,?,?,?)').run(sessionId,scope.project,hit.collectionId,hit.epoch,scope.bindingEpoch,scope.root);
+    this.db.exec('COMMIT');return hits;
+    }catch(error){this.db.exec('ROLLBACK');throw error;}
   }
   private collection(project: string, id: string, allowDisabled = false): CollectionRow {
     const row = this.db.prepare('SELECT * FROM collections WHERE id=? AND project=?').get(id, project) as unknown as CollectionRow | undefined;

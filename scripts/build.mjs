@@ -9,7 +9,7 @@ const root = process.cwd();
 const pkg = resolve(root, 'packages/dsh-zhen');
 const manifest = JSON.parse(await readFile(resolve(pkg, 'package.json'), 'utf8'));
 await buildSkillCatalog(pkg);
-await build({entryPoints:['canvas-assets','canvas-reference-schema','canvas-desktop-discovery','canvas-setup-schema','canvas-guidance','docx-text','docx-parse','docx-text-worker','knowledge-import-schema','document-error'].map(name=>resolve(pkg,`src/${name}.ts`)),outdir:resolve(pkg,'lib'),bundle:true,platform:'node',target:'node22',format:'esm',packages:'external',sourcemap:false});
+await build({entryPoints:['rag-service','rag-backend-schema','canvas-assets','canvas-reference-schema','canvas-desktop-discovery','canvas-setup-schema','canvas-guidance','docx-text','docx-parse','docx-text-worker','knowledge-import-schema','document-error'].map(name=>resolve(pkg,`src/${name}.ts`)),outdir:resolve(pkg,'lib'),bundle:true,platform:'node',target:'node22',format:'esm',packages:'external',sourcemap:false});
 const upstream = JSON.parse(await readFile(resolve(root, 'UPSTREAM.lock.json'), 'utf8'));
 const compatibility = await readFile(resolve(pkg, 'src/compatibility.ts'), 'utf8');
 if (!compatibility.includes(`export const SUPPORTED_DSH = '${upstream.dsh.version}';`) || manifest.engines.dsh !== upstream.dsh.version) throw new Error('Runtime compatibility pin and package engine differ from the reviewed lock.');

@@ -1178,6 +1178,24 @@
       "exampleOnly": true,
       "requests": 4,
       "verification": "0056 actual tools answer TEMP source facts and cite relative path/line; final corrected checker passes. Prepared-call revocation blocks before transport with no extra request. Official credentials only; no source/user body recorded, no user grant or schema/rank changes. Not general retrieval quality or browser proof."
+    },
+    "localRagProviders": {
+      "service": "zhenRag",
+      "default": "lexical",
+      "maxProviders": 16,
+      "maxResults": 12,
+      "defaultAsyncDeadlineMs": 10000,
+      "automaticNetworkGrant": false,
+      "knowledgeSchemaChanged": false,
+      "verification": "0057 C58 plus related10 and final full397 pass. Actual published service/Owner/ToolRuntime, late-pause red/green, query-scoped authorized pages and canonical all-or-nothing grants. Real Flash EXAMPLE citations plus prepared-call pause/resume/revocation before transport pass; two requests. Exact150-file archive passed public CLI TEMP install/uninstall/full baseline restore and actual local activation with existing settings/index metadata/Canvas pairing preserved. Browser/independent third-party backend and this commit CI checked separately; no vector/OCR/sandbox claim.",
+      "maxIndexPage": 32,
+      "queryScopedIndexAccess": true,
+      "localTests": 397,
+      "realExampleChatRequests": 2,
+      "realCitationAndPauseAndRevocationVerified": true,
+      "publicCliFreshTempInstallAndUninstallVerified": true,
+      "actualLocalActivationVerified": true,
+      "archiveSha256": "10c79b2ca72a4c4deb8bdf9dd5d5f21bc4a8670e1cd235c98ff1839b1b5ebd9d"
     }
   }
 }

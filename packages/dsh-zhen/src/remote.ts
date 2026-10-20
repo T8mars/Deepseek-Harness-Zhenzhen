@@ -9,6 +9,9 @@ import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult }
 import {knowledgeImportReportSchema} from './knowledge-import-schema.ts';
 import type {KnowledgeImportReport} from './knowledge-import-schema.ts';
 import { ragSourceSchema } from './rag-schema.ts';
+import {ragBackendId,ragBackendStatusSchema} from './rag-backend-schema.ts';
+import type {RagBackendStatus} from './rag-backend-schema.ts';
+export {ragBackendMessages} from './rag-backend-schema.ts';
 export { ragPresentationSchema } from './rag-schema.ts';
 import { skillId, digestSchema, marketItemSchema, skillPackageSchema, skillFeedSnapshotSchema, skillAutoPolicySchema } from './market-schema.ts';
 import type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } from './market-schema.ts';
@@ -169,6 +172,8 @@ export interface ZhenRemote {
   bindKnowledge(project: string, directory: string): Promise<RemoteResult<KnowledgeBinding | null>>;
   setKnowledgeAgentAccess(project: string, collectionId: string, enabled: boolean): Promise<RemoteResult<void>>;
   knowledgeCollections(project: string): Promise<RemoteResult<KnowledgeCollection[]>>;
+  ragBackendStatus():Promise<RemoteResult<RagBackendStatus>>;
+  ragBackendConfigure(selected:string,enabled:boolean,expectedRevision:string):Promise<RemoteResult<RagBackendStatus>>;
   createKnowledge(project: string, name: string, folder: string): Promise<RemoteResult<KnowledgeCollection>>;
   indexKnowledge(project: string, collectionId: string): Promise<RemoteResult<ImportResult>>;
   knowledgeImportReport(project: string, collectionId: string): Promise<RemoteResult<KnowledgeImportReport | null>>;
@@ -314,6 +319,8 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/bindKnowledge': method('bindKnowledge', bindingSchema, 'Bind a local knowledge space to an exact working directory.', [['project', projectInput], ['directory', z.string().max(4096)]]),
   'zhen/setKnowledgeAgentAccess': method('setKnowledgeAgentAccess', z.void(), 'Set the separate permission for agent retrieval.', [['project', projectInput], ['collectionId', z.string().uuid()], ['enabled', z.boolean()]]),
   'zhen/knowledgeCollections': method('knowledgeCollections', z.array(collectionSchema), 'List local collections.', [['project', projectInput]]),
+  'zhen/ragBackendStatus':method('ragBackendStatus',ragBackendStatusSchema,'Read local retrieval backend availability.'),
+  'zhen/ragBackendConfigure':method('ragBackendConfigure',ragBackendStatusSchema,'Choose or pause a local retrieval backend without changing collection grants.',[['selected',ragBackendId],['enabled',z.boolean()],['expectedRevision',z.uuid()]]),
   'zhen/createKnowledge': method('createKnowledge', collectionSchema, 'Authorize a local folder.', [['project', projectInput], ['name', z.string().min(1).max(100)], ['folder', z.string().min(1).max(4096)]]),
   'zhen/indexKnowledge': method('indexKnowledge', importSchema, 'Index an authorized local collection.', [['project', projectInput], ['collectionId', z.string().uuid()]]),
   'zhen/knowledgeImportReport': method('knowledgeImportReport', knowledgeImportReportSchema.nullable(), 'Read bounded local import diagnostics for the current collection revision.', [['project', projectInput], ['collectionId', z.string().uuid()]]),

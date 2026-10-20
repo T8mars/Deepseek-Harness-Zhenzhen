@@ -3,6 +3,7 @@ import type { ZhenRemote } from 'dsh-zhen/remote';
 import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, KnowledgeBinding } from 'dsh-zhen';
 import type {KnowledgeImportReport} from 'dsh-zhen';
 import {ImportReport} from './KnowledgeImportReport.tsx';
+import {RagBackendSettings} from './RagBackendSettings.tsx';
 import { SourceWindow } from './RagSources.tsx';
 import { knowledgeLocation } from './rag-location.ts';
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
@@ -44,6 +45,7 @@ export function Knowledge({ api }: { api: ZhenRemote }): React.ReactElement {
     }
   }
   return <div className="zhen-settings">
+    <RagBackendSettings api={api}/>
     <section className="zhen-card"><h2>你的资料，留在本地</h2><p className="zhen-muted">导入 Markdown、TXT、CSV、JSON、DOCX 正文或带文字层的 PDF，按中文关键词查找。单文件上限 2 MiB，每次原文件和提取文本分别最多 32 MiB。PDF 最多 200 页、提取文字最多 2 MiB，单次解析限时 30 秒；无文字扫描件会跳过，密码保护或解析失败的文件计入失败，当前不做 OCR。Word 提取正文段落及表格，引用为提取文本行；不还原页码、自动编号、脚注、页眉页脚、文本框或图片，旧版 DOC 和加密文档暂不支持。</p>
       <label className="zhen-label" htmlFor="zhen-project">资料所属空间</label><input className="zhen-input" id="zhen-project" value={project} disabled={busy} maxLength={200} onChange={event => setProject(event.target.value)}/>
       <form onSubmit={event => { event.preventDefault(); void action(async () => { setReport(null); const collection = unwrap(await api.createKnowledge(project, name, folder)); const result = unwrap(await api.indexKnowledge(project, collection.id)); setName(''); setFolder(''); setNotice(`导入完成：${result.indexed} 个文件，跳过 ${result.skipped} 个，读取失败 ${result.failed} 个。`); await readReport(collection.id, true); }); }}>

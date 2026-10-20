@@ -2,7 +2,7 @@ import React from 'react';
 import { knowledgeLocation } from './rag-location.ts';
 import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client';
 import type { KnowledgeSource } from 'dsh-zhen';
-import { ragPresentationSchema } from 'dsh-zhen/remote';
+import { ragPresentationSchema,ragBackendMessages } from 'dsh-zhen/remote';
 
 /** Recorded metadata is display currency only, never authority for another read. */
 export function ragPresentation(block: { isError: boolean; meta?: unknown }): ReturnType<typeof ragPresentationSchema.safeParse> {
@@ -23,7 +23,9 @@ export function SourceWindow({ source, onNavigate }: { source: KnowledgeSource; 
 export function RagToolView(props: ToolCallViewProps): React.ReactElement {
   if (props.phase !== 'result') return <div className="zhen-rag-card" role="status">{props.toolName === 'zhen_rag_open' ? '正在读取已授权来源上下文…' : '正在检索本地资料…'}</div>;
   const parsed = ragPresentation(props.block);
-  if (!parsed.success) return <div className="zhen-rag-card"><p>{props.block.isError ? '资料读取未完成，请检查当前授权、会话绑定或引用版本。' : '此记录未提供兼容的来源卡片。'}</p>{!props.block.isError && <details><summary>查看原始工具记录</summary><pre tabIndex={0}>{props.block.content.filter(item => item.type === 'text').map(item => item.text).join('\n').slice(0, 24000)}</pre></details>}{props.inspect && <button type="button" onClick={props.inspect}>查看工具记录</button>}</div>;
+  const errorCode=props.block.error?.code;
+  const backendNotice=errorCode&&Object.hasOwn(ragBackendMessages,errorCode)?ragBackendMessages[errorCode as keyof typeof ragBackendMessages]:undefined;
+  if (!parsed.success) return <div className="zhen-rag-card"><p>{props.block.isError ? backendNotice??'资料读取未完成，请检查当前授权、会话绑定或引用版本。' : '此记录未提供兼容的来源卡片。'}</p>{!props.block.isError && <details><summary>查看原始工具记录</summary><pre tabIndex={0}>{props.block.content.filter(item => item.type === 'text').map(item => item.text).join('\n').slice(0, 24000)}</pre></details>}{props.inspect && <button type="button" onClick={props.inspect}>查看工具记录</button>}</div>;
   const value = parsed.data;
   return <div className="zhen-rag-card">
     <strong>{value.kind === 'search' ? `本地资料 · ${value.hits.length} 个片段` : '资料来源上下文'}</strong>

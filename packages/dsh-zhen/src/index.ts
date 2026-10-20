@@ -8,6 +8,12 @@ import type { Wallet } from './gateway.ts';
 import type {} from './remote.ts';
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths';
 import { KnowledgeStore } from './knowledge.ts';
+import {ZhenRag} from './rag-service.ts';
+import type {RagBackendStatus} from './rag-backend-schema.ts';
+import {ragBackendMessages} from './rag-backend-schema.ts';
+export {ZhenRag} from './rag-service.ts';
+export type {RagSearchProvider,RagProviderScope,RagContext} from './rag-service.ts';
+export type {RagBackendStatus} from './rag-backend-schema.ts';
 import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
 import type {KnowledgeImportReport} from './knowledge-import-schema.ts';
 import type {} from '@deepseek-ai/dsh-host-webserver';
@@ -109,7 +115,7 @@ export interface ZhenStatus {
 }
 
 declare module '@deepseek-ai/cordis' {
-  interface Context { zhen: ZhenService; }
+  interface Context { zhen: ZhenService;zhenRag:ZhenRag; }
 }
 
 const seedanceCredential = credentialRef('SEEDANCE_API_KEY');
@@ -119,6 +125,7 @@ const githubCredential = credentialRef('DSH_ZHEN_GITHUB_TOKEN');
 export default class ZhenService extends TypertRemoteService {
   static inject: string[] = ['credentials'];
   private knowledgeStore?: KnowledgeStore;
+  private readonly rag:ZhenRag;
   private skillMarket?: SkillMarket;
   private skillFeed?: SkillFeed;
   private githubReader?: GithubAccess;
@@ -149,6 +156,9 @@ export default class ZhenService extends TypertRemoteService {
 
   constructor(ctx: Context) {
     super(ctx, 'zhen');
+    this.rag=new ZhenRag(()=>this.knowledge(),dshHomePath('dsh-zhen','rag-backend.json'));
+    ctx.provide('zhenRag',this.rag);
+    ctx.effect(()=>()=>this.rag.close(),'zhen: local retrieval providers');
     ctx.effect(() => () => { this.knowledgeStore?.close(); }, 'zhen: local knowledge');
     ctx.effect(() => () => this.gatewayChecks?.close(), 'zhen: explicit connection checks');
     ctx.effect(() => () => { this.localSkillSources?.close(); }, 'zhen: local skill directories');
@@ -232,8 +242,8 @@ export default class ZhenService extends TypertRemoteService {
         const directory = await inner.workingDirectory.ensure(execution.agent, execution.signal);
         return { sessionId: execution.agent.session.id, provider: execution.agent.options.provider ?? '', directory };
       };
-      inner.tools.register(createRagTool(() => this.knowledge(), retrievalContext));
-      inner.tools.register(createRagOpenTool(() => this.knowledge(), retrievalContext));
+      inner.tools.register(createRagTool(() => this.knowledge(), retrievalContext,()=>this.rag));
+      inner.tools.register(createRagOpenTool(() => this.knowledge(), retrievalContext,()=>this.rag));
     });
     const service = this;
     ctx.on('llm/stream', async function* (options, next) {
@@ -245,7 +255,7 @@ export default class ZhenService extends TypertRemoteService {
         const workingDirectory = ctx.get('workingDirectory');
         if (!agent || !workingDirectory) throw new Error('此会话包含本地资料引用，无法复核当前工作目录。请打开原会话后继续，或新建会话。');
         const directory = await workingDirectory.ensure(agent, options.signal);
-        if (ragGrants) await service.knowledge().assertSessionAllowed(options.sessionId, options.provider, directory);
+        if (ragGrants){service.rag.assertAvailable();await service.knowledge().assertSessionAllowed(options.sessionId, options.provider, directory);service.rag.assertAvailable();}
         if (mcpGrants) service.mcps().assertSession(options.sessionId, directory);
       }
       yield* next();
@@ -598,6 +608,12 @@ export default class ZhenService extends TypertRemoteService {
   marketFork(id: string, digest: string, body: string, version = ''): string { return this.market().fork(id, digest, body, version); }
 
   /** List collections in the explicitly selected local project space. */
+  @Remote
+  ragBackendStatus():RagBackendStatus{return this.rag.snapshot();}
+  @Remote
+  ragBackendConfigure(selected:string,enabled:boolean,expectedRevision:string):RagBackendStatus{
+    try{return this.rag.configure(selected,enabled,expectedRevision);}catch(error){const proposed=error&&typeof error==='object'&&'code'in error?String(error.code):'';const code=Object.hasOwn(ragBackendMessages,proposed)?proposed as keyof typeof ragBackendMessages:'RAG_CONFIGURATION_INVALID';throw new RemoteError('zhen/refused',ragBackendMessages[code],{reason:code});}
+  }
   @Remote
   knowledgeCollections(project: string): KnowledgeCollection[] { return this.knowledge().list(project); }
 

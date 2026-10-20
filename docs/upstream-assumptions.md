@@ -107,3 +107,6 @@ C51 verifies DOCX extracted-line results through the published Host/Gateway/Tool
 
 
 C56/C57（0056）使用已发布ui-tool的tool.call.toolview结果block及稳定callId，实际ToolRuntime/MCP输出能解析同一原生方案，并经Owner Gateway采纳。自有main槽位key、sidebar id及公开layout.selectPanel使用相同MainPanelId身份；仅插件局部导航，不触及客户端引导。C6检查槽位存在，C57检验挂载前导航与实例隔离。实际RAG prepared.stream仍经过llm/stream权限waterfall：C11在prepare后撤权，再dispatch时在adapter之前拒绝；真实网关检查同样在transport之前阻断。这里不假定prepare冻结授权，也不声称SSR等同浏览器点击。
+
+
+C58（0057）：已发布Cordis ctx.provide绑定服务到插件作用域，受信任扩展通过ctx.zhenRag注册并在dispose时注销。已发布HarnessError的固定code通过实际ToolRuntime保留为error.info.code；客户端只读取文档化ToolResultNode.error.code并映射固定说明，SSR不读取reason。实际Owner Gateway拒绝匿名及旧修订，LLM waterfall在适配器前阻断暂停后的旧资料会话。自有后端只提供候选编号，索引事务核对后才产生引用/授权；不修改任何上游协议或会话格式。
