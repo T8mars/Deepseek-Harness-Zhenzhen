@@ -10,6 +10,8 @@ isolated production-service/runtime check, not a browser or full Agent-loop test
 
 Current narrow live evidence, using the same pinned published SDK:
 
+- [0063](decisions/0063-native-reasoning-replay.md): the actual default Flash uses native reasoning_details across two completed user turns and a single tool execution. Three final real requests preserve native structured replay and canonical tool results; include_usage=true is accepted. Three earlier one-request verifiers were incomplete due to overstrict assumptions and remain recorded. C68 separately covers three plain-field variants, structured opaque metadata and legal tool-only replies. No reasoning controls/config changes or other-model/billing/UI claim.
+
 - [0062](decisions/0062-default-stream-lifecycle.md): two real default Flash requests with max_tokens16/128 end as max-tokens before visible text. A separate request is cancelled on its first actual SSE delta, before a terminal frame or visible text; Agent ends aborted/user with no replacement request. Backend stop/refund and live cancellation after visible text are unverified. C67 covers complete AgentLoop limit, post-text cancel and pre-text cancel over loopback.
 
 - [0058](decisions/0058-published-agent-loop-validation.md): an actual AgentLoop/default-model/file-tool turn completes normally in two real Flash requests; a separate Native L0 plan-to-card test is intentionally cancelled after planning.
@@ -49,8 +51,9 @@ the actual ordered inline bytes with native request projections. The three other
 routes retain native text placeholders. C60 additionally verifies that the actual
 AgentLoop preserves a default-model image through the adapter wire. Decision0059
 records one real simple-image result. Browser uploads, other-model vision and
-general visual quality remain unverified. Audio/video inputs, reasoning, structured
-output and cache pricing remain disabled or unverified. The historical0037 fixed
+general visual quality remain unverified. Default native reasoning replay is separately
+verified in0063. Audio/video inputs, reasoning-effort controls, other-model replay,
+structured output and cache pricing remain disabled or unverified. The historical0037 fixed
 connection check remains text-only; it is separate from0058/0059.
 
 ## Explicit short connection check
@@ -91,3 +94,9 @@ reopen its database and refuse to replay the claim. Storage failures prove a
 successful claim must precede dispatch, and a failed completion write never
 authorizes replay. Full checks pass 122 tests. These are local contracts, not
 live gateway/browser verification. Public docs still match the reviewed hash.
+
+Native reasoning replay may use a plain signed field or structured reasoning_details.
+Preserve the native adapter state; do not coerce one representation to another or reject
+a valid tool response without thinking. C68 verifies these paths through the published
+AgentLoop. TokenUsage separates non-cache input from cacheReadTokens/cacheWriteTokens;
+its partial counters alone do not establish billing. See0063.

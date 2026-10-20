@@ -125,3 +125,6 @@ C64/C65/C66（0061）：Native workspaces 的 total/truncated 为可选原生元
 
 
 C67（0062）：已发布AgentLoop对原生finish max-tokens直接结束turn，不自行追加请求；用户取消按aborted/user记录，正文前不制造assistant回答，正文后保留已收到片段。三个actual loopback/SDK回归检查公开followup/whenIdle/cancel及dispose和连接关闭，不修改会话格式。真实默认Flash两请求触顶和一次首SSE delta取消另验证；SSE观察器原样转交字节，终帧前取消，不宣称后端停算或退款。
+
+
+C68（0063）：实际已发布AgentLoop/defaultModel/pi-ai保留原生生成的回放信息；三种普通推理字段、结构化reasoning_details（含分片合并及不透明EXAMPLE数据）、无推理工具响应均能到下一原生请求，工具ID/结果匹配且普通completed。当前默认请求include_usage=true由合同钉住，真实默认三个最终请求HTTP200并有原生用量事件。原生回放为opaque adapter state，不自行构造/改写上游持久化格式，也不强制reasoning_content或要求每次工具响应有推理。真实签名/正文仅内存比较；不开新开关、不推论所有模型或计费。

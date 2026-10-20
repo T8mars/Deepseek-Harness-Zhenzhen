@@ -10,7 +10,7 @@
       "id": "seedance-chat",
       "status": "in-progress",
       "liveVerified": false,
-      "verification": "18 reviewed text routes retain the exact Flash default. C14 loopback verifies ids and text; C12 tool/revocation/error contracts remain synthetic. 0037 separately authorized exactly one real fixed Flash32 text stream: normal completion, reported41 input/11 output, no retry. Full liveVerified remains false for all-model/full-Agent/vision coverage. Fifteen documented image routes now use native attachment projection; C37 passes. Reasoning/media/structured402 and broader live verification remain. Decision0058: actual published AgentLoop plus configured default-model service performs a two-request real Flash file-tool turn, canonical result in next request, correct17 answer and normal completed. New C59 covers actual lifecycle with synthetic adapter. Fresh TEMP only; not Desktop/UI or all models. Decision0062: actual default AgentLoop low budgets16/128 end max-tokens before visible text; separate first-delta cancel exits aborted/user without another request. C67 covers full AgentLoop limit and both cancellation timings; backend stop/refund, reasoning replay and real after-text cancel remain unverified.",
+      "verification": "18 reviewed text routes retain the exact Flash default. C14 loopback verifies ids and text; C12 tool/revocation/error contracts remain synthetic. 0037 separately authorized exactly one real fixed Flash32 text stream: normal completion, reported41 input/11 output, no retry. Full liveVerified remains false for all-model/full-Agent/vision coverage. Fifteen documented image routes now use native attachment projection; C37 passes. Reasoning/media/structured402 and broader live verification remain. Decision0058: actual published AgentLoop plus configured default-model service performs a two-request real Flash file-tool turn, canonical result in next request, correct17 answer and normal completed. New C59 covers actual lifecycle with synthetic adapter. Fresh TEMP only; not Desktop/UI or all models. Decision0062: actual default AgentLoop low budgets16/128 end max-tokens before visible text; separate first-delta cancel exits aborted/user without another request. C67 covers full AgentLoop limit and both cancellation timings; backend stop/refund, reasoning replay and real after-text cancel remain unverified. Decision0063: default Flash native reasoning_details replays across two completed user turns and one tool execution in three final real requests; include_usage=true accepted. C68 covers plain aliases/structured opaque replay/tool-only replies. Three earlier one-request verifiers incomplete from assumptions are retained. No config change or all-model/effort/billing/UI claim.",
       "defaultModelLiveVerified": true
     },
     {
@@ -191,6 +191,14 @@
       "verification": "C67 actual published AgentLoop/default-model/pi-ai loopback verifies max-tokens without continuation, post-text user cancel/prefix retention/socket close, pre-text cancel/no fabricated answer. Real default Flash caps16/128 both end max-tokens with no visible text; first combined verifier therefore incomplete, not falsely passed. Separate first-real-delta cancel before terminal frame exits aborted/user in one request. Only metadata observed, bytes forwarded unchanged; no backend billing/refund or reasoning switch/replay claim. Full410/410; same151-file archive as actual installed0061, no production source/config or Host restart. Current commit CI is checked separately.",
       "defaultLimitLiveVerified": true,
       "defaultPreTextCancellationLiveVerified": true,
+      "browserVerified": false
+    },
+    {
+      "id": "seedance-reasoning-replay",
+      "status": "in-progress",
+      "verification": "C68 actual published AgentLoop/default-model/pi-ai and loopback test three plain reasoning aliases, structured merged text/opaque metadata, and valid tool-only replies. Final three real default Flash requests across two completed user turns preserve native reasoning_details and canonical tool result, execute once and answer correctly; include_usage accepted. Three earlier single-request verifier attempts are retained incomplete due to overstrict presence/plain-field assumptions, not a product transport defect. No stored reasoning/signature/user content or production/config change. Full415/415 and final151-file archive match actual installed0061; no Host restart. Current commit CI remains separate.",
+      "defaultNativeReasoningReplayLiveVerified": true,
+      "allModelsLiveVerified": false,
       "browserVerified": false
     }
   ]

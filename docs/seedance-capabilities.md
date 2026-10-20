@@ -79,3 +79,10 @@ published AgentLoop loopback lifecycle regressions. The two low-budget requests 
 aborted/user without a replacement request. Observed reasoning_content field presence
 does not enable or certify reasoning switches/replay. No catalog/model/default changes;
 see [0062](decisions/0062-default-stream-lifecycle.md).
+
+0063 verifies actual default Flash structured reasoning_details replay across two
+completed user turns and one tool execution in three final requests. C68 covers
+three plain reasoning fields, structured native metadata and no-reasoning tool replies.
+The earlier0062 field-presence observation remains narrower. Reasoning-effort controls,
+other models and precise billing remain unverified; no model/default/config changes.
+See [0063](decisions/0063-native-reasoning-replay.md).
