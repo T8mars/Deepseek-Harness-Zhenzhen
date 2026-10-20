@@ -101,3 +101,20 @@ private-source read through the existing gh CLI matched all fifteen packages;
 that does not prove the application's real Bearer transport or browser UI.
 Removing the optional credential cancels old reads while retaining downloaded
 content and independent activation preferences.
+
+
+Decision0044 publishes knowledge-writing1.0.1 with a concrete retrieval/source-
+context workflow. Public-CLI replacement now also checks the full skill-catalog
+hash, including packages where Host/patch/client bytes do not change. Full334
+checks and this catalog-only replacement pass. The separate real-publication
+script requires explicit old/new commits and a fresh evidence filename:
+
+```powershell
+node scripts/smoke-skill-published-update.mjs --baseline <old-sha> --expected-commit <main-sha> --out-name <new-name.json>
+```
+
+It uses an explicit gh CLI read adapter for private GitHub bytes and three Node
+processes for staging/activation/reviewed rollback in EXAMPLE TEMP storage. The
+adapter constructs Response envelopes; this does not verify application Bearer
+HTTPS or browser controls. Publication must precede this positive check; results
+are recorded separately once the script completes.

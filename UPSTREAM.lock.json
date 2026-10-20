@@ -730,6 +730,26 @@
       "paidCalls": 0,
       "nativeWrites": 0,
       "browserVerified": false
+    },
+    "skillPublication": {
+      "decision": "0044",
+      "skill": "zhen-knowledge-writing",
+      "oldVersion": "1.0.0",
+      "version": "1.0.1",
+      "changedInstruction": true,
+      "scope": "first-party-text-v1",
+      "schemaChanged": false,
+      "baselineCommit": "3411be420da0bdc92c88fddfea2caf0aca306ce1",
+      "realPublicationVerification": "pending checkpoint push; no claim before actual run",
+      "transportScope": "existing gh CLI read adapter; not application Bearer",
+      "browserVerified": false,
+      "fullCheck": {
+        "tests": 334,
+        "passed": 334
+      },
+      "catalogOnlyPublicCliReplacementVerified": true,
+      "packageSha256": "9af31c6167b91b1a21a7ffd6a2da5fd2d301d2f53c37be56e355f8193928c8ab",
+      "skillCatalogSha256": "e4cb72f008ce4546335663bd7b46cfd414bc1fb544176236ac3931534c99b100"
     }
   }
 }
