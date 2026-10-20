@@ -2,3 +2,7 @@
 # unified-diff context lines. Source whitespace checks remain unchanged.
 integrations/canvas/*.patch -text whitespace=-blank-at-eol
 *.cmd text eol=crlf
+# Immutable reviewed source/license snapshots: preserve their SHA-256 bytes on
+# Windows checkouts as well as in Git. Do not normalize the fixture validator.
+contracts/fixtures/canvas-approval/approvals.cjs -text
+contracts/fixtures/canvas-approval/LICENSE -text
