@@ -90,11 +90,11 @@
       "scope": "first-party-text-v1",
       "defaultEnabled": false,
       "activation": "next-host-start",
-      "verification": "C17 actual published SkillRegistry/Host/Remote uses synthetic fixed-source reads across restart. Manual/personal versions persist, only enabled installed source text is queued, and local fetch receipts prevent edited caches from authorizing updates. Not a publisher signature or live published-feed verification."
+      "verification": "C17 actual published SkillRegistry/Host/Remote synthetic-feed contracts remain. Decision0044 additionally reads genuinely published 1.0.0/1.0.1 GitHub bytes via an explicit existing gh CLI adapter; three actual independent Node processes verify live-old staging, new startup activation and reviewed old-version rollback/automatic pause. Personal, disabled and uninstalled choices preserved; TEMP removed. This is not production application Bearer/fetch or browser proof, and not a publisher signature."
     },
     "seedanceProtocolVerification": "Published pi-ai loopback SSE/tool round trip/cancellation/errors/usage; explicit max_tokens compatibility. 0037: one authorized real fixed default Flash text stream passed, requestCount1; no live tools or vision test.",
     "skillFeedSchema": 1,
-    "skillFeedVerification": "Commit-pinned text candidates, SQLite fetched-catalog receipts, verified offline cache, optional trusted scheduling and immutable/rollback rejection checks. Legacy unmatched cache requires a fresh source read. Positive real publication and new browser controls remain unverified.",
+    "skillFeedVerification": "Commit-pinned real first-party feed publication and source receipts, verified offline cache, optional trusted scheduling, immutable version and rollback checks. Decision0044 uses actual GitHub bytes via gh CLI adapter (constructed Response envelopes), five authenticated CLI reads and three Node registry/tool lifetimes. Application Bearer HTTPS and new browser controls remain unverified.",
     "mcpProgramRecipes": {
       "memory": "2026.8.31",
       "filesystem": "2026.8.31",
@@ -740,7 +740,7 @@
       "scope": "first-party-text-v1",
       "schemaChanged": false,
       "baselineCommit": "3411be420da0bdc92c88fddfea2caf0aca306ce1",
-      "realPublicationVerification": "pending checkpoint push; no claim before actual run",
+      "realPublicationVerification": "passed through existing gh CLI read adapter, not application Bearer transport",
       "transportScope": "existing gh CLI read adapter; not application Bearer",
       "browserVerified": false,
       "fullCheck": {
@@ -749,7 +749,20 @@
       },
       "catalogOnlyPublicCliReplacementVerified": true,
       "packageSha256": "9af31c6167b91b1a21a7ffd6a2da5fd2d301d2f53c37be56e355f8193928c8ab",
-      "skillCatalogSha256": "e4cb72f008ce4546335663bd7b46cfd414bc1fb544176236ac3931534c99b100"
+      "skillCatalogSha256": "e4cb72f008ce4546335663bd7b46cfd414bc1fb544176236ac3931534c99b100",
+      "publishedCommit": "a9a2dc077c91a1430c44f90343fe188df2e9fe33",
+      "githubReads": 5,
+      "independentProcesses": 3,
+      "stagingPreservesLiveText": true,
+      "restartActivatesNewText": true,
+      "reviewedRollbackSurvivesRestart": true,
+      "personalDisabledAndUninstalledPreserved": true,
+      "temporaryDataAndProcessesRemoved": true,
+      "applicationCredentialReads": 0,
+      "modelCalls": 0,
+      "paidCalls": 0,
+      "nativeWrites": 0,
+      "applicationHttpsFetchVerified": false
     }
   }
 }

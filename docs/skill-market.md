@@ -116,5 +116,10 @@ node scripts/smoke-skill-published-update.mjs --baseline <old-sha> --expected-co
 It uses an explicit gh CLI read adapter for private GitHub bytes and three Node
 processes for staging/activation/reviewed rollback in EXAMPLE TEMP storage. The
 adapter constructs Response envelopes; this does not verify application Bearer
-HTTPS or browser controls. Publication must precede this positive check; results
-are recorded separately once the script completes.
+HTTPS or browser controls. The positive check passed after dev.15 publication: real GitHub bytes, five CLI
+reads and three independent processes. Old live text survived staging, the next
+process served1.0.1, and the third served a manually reviewed1.0.0 rollback with
+automatic updates paused. Personal text, disabled and uninstalled choices were
+preserved; owned TEMP data/processes were removed. This verifies the downstream
+market/provider lifecycle and published data; application Bearer HTTPS remains
+unverified.
