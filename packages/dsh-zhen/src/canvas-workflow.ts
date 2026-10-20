@@ -113,7 +113,7 @@ export class CanvasWorkflow {
     const { config, runtime } = await this.binding();
     const data = (await runtime.client.requestAgentControl(runtime.instance, '/api/agent-control/v1/workspaces', { accessToken: runtime.accessToken })).data;
     this.current(config);
-    const parsed = z.object({ canvases: z.array(z.object({ id: canvasEntity, projectId: canvasEntity, name: z.string().max(240), revision: z.number().int().positive() })).max(500) }).parse(data);
+    const parsed = z.object({ canvases: z.array(z.object({ id: canvasEntity, projectId: canvasEntity, name: z.string().max(240), revision: z.number().int().positive() })).max(500),total:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),truncated:z.boolean().optional() }).parse(data);
     return canvasWorkspacesSchema.parse(parsed);
   }); }
   preview(input: CanvasWorkflowInput): Promise<CanvasWorkflowView> { return this.serial(async () => {

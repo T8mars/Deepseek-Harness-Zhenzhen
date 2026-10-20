@@ -46,6 +46,7 @@ export function Connections({api}:{api:ZhenRemote}):React.ReactElement{
       <ol><li>打开桌面画布，选择下方检测到的画布。</li><li>在桌面画布核对验证码并批准，返回完成连接。</li><li>回到会话描述创作需求，审阅方案后再应用或生成。</li></ol>
       {check&&<p className="zhen-notice" role="status">{paired?'画布已连接。可以回到会话描述创作需求，或在下方审阅方案。':check.message}</p>}
       <button type="button" className="zhen-secondary zhen-margin" disabled={busy} onClick={()=>void action(()=>refresh(true))}>重新检测</button>
+      <p className="zhen-muted">画布3.3.9提供“设置 → Agent连接工具 → 安装/修复”。旧版没有此入口时，可使用本页检测出的配套工具，或通过画布自身升级后再重新检测、审阅连接。</p>
       {compatible?<details className="zhen-margin"><summary>更换画布或修复连接</summary>{candidates}</details>:candidates}
       {check?.state==='choose-instance'&&<div className="zhen-margin" aria-label="选择运行中的画布">
         {check.instances.map((item,index)=><button type="button" className="zhen-secondary zhen-margin" disabled={busy||!status?.configured} key={item.id} onClick={()=>void action(()=>connect(status!.root,item.id,status!.digest))}>使用画布 {index+1} · {item.version||'版本待确认'} · 端口 {item.port}</button>)}

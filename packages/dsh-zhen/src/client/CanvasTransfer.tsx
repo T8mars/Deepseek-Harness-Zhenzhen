@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
 import type { ZhenRemote } from 'dsh-zhen/remote';
 import type { CanvasTransferView, CanvasWorkspaces } from 'dsh-zhen';
+import {canvasTargetKey,selectedCanvasTarget,refreshedCanvasTarget} from './canvas-target.ts';
 
 function unwrap<T>(result: RemoteResult<T>): T { if (!result.ok) throw result.error; return result.value; }
 const labels: Record<CanvasTransferView['phase'], string> = {
@@ -11,8 +12,9 @@ const labels: Record<CanvasTransferView['phase'], string> = {
 export function CanvasTransferPanel({ api, receiptId, onConnections }: { api: ZhenRemote; receiptId: string; onConnections: () => void }): React.ReactElement {
   const [view, setView] = useState<CanvasTransferView | null>(null), [targets, setTargets] = useState<CanvasWorkspaces>({ canvases: [] });
   const [target, setTarget] = useState(''), [busy, setBusy] = useState(false), [confirmed, setConfirmed] = useState(false), [notice, setNotice] = useState('');
+  const [targetsLoaded,setTargetsLoaded]=useState(false);
   const generation = useRef(0), field = useId();
-  useEffect(() => { const version = ++generation.current; setBusy(false); setConfirmed(false); setView(null); setTargets({ canvases: [] }); setTarget('');
+  useEffect(() => { const version = ++generation.current; setBusy(false); setConfirmed(false); setView(null); setTargets({ canvases: [] }); setTarget('');setTargetsLoaded(false);
     void api.canvasTransferSnapshot().then(result => { if (generation.current === version) setView(unwrap(result)); }).catch(() => { if (generation.current === version) setNotice('交接进度暂未读到，请刷新进度。'); });
     return () => { generation.current++; };
   }, [api]);
@@ -23,14 +25,16 @@ export function CanvasTransferPanel({ api, receiptId, onConnections }: { api: Zh
     finally { if (generation.current === version) { try { const next = unwrap(await api.canvasTransferSnapshot()); if (generation.current === version) setView(next); } catch {} if (generation.current === version) setBusy(false); } }
   }
   const active = !!view && ['requesting', 'pending', 'submitting', 'unknown'].includes(view.phase);
-  const changed = !!view && ((!!receiptId && receiptId !== view.receiptId) || (!!target && target !== view.canvasId));
+  const selectedTarget=selectedCanvasTarget(targets,target);
+  const changed = !!view && ((!!receiptId && receiptId !== view.receiptId) || ((targetsLoaded||!!target)&&(!selectedTarget||selectedTarget.id!==view.canvasId||selectedTarget.projectId!==view.projectId)));
   return <section className="zhen-card" aria-label="已保存结果送到画布">
     <div className="zhen-section-heading"><h2>送到画布</h2><button type="button" className="zhen-link" onClick={onConnections}>画布连接与权限 ↗</button></div>
     <p>选择已保存结果和目标画布，先核对文件。导入项目后，可再预览并确认放到画布上。</p>
     <p className="zhen-muted">在配对页单独开启素材交接；放到画布还需要修改画布权限。每一步都由画布窗口确认。</p>
-    <button type="button" className="zhen-secondary" disabled={busy || active} onClick={() => void action(async version => { const result = unwrap(await api.canvasWorkspaces()); if (generation.current === version) { setTargets(result); setTarget(result.canvases[0]?.id ?? ''); } })}>读取可用画布</button>
-    <label className="zhen-label" htmlFor={`${field}-target`}>目标画布</label><select className="zhen-input" id={`${field}-target`} value={target} disabled={busy || active} onChange={event => { setTarget(event.currentTarget.value); setConfirmed(false); }}><option value="">先读取可用画布</option>{targets.canvases.map(item => <option key={item.id} value={item.id}>{item.name} · revision {item.revision}</option>)}</select>
-    <button type="button" className="zhen-secondary zhen-margin" disabled={busy || active || !receiptId || !target} onClick={() => { const selected = targets.canvases.find(item => item.id === target); if (selected) void action(async () => { unwrap(await api.canvasTransferPreview({ receiptId, projectId: selected.projectId, canvasId: selected.id })); }); }}>核对所选保存结果</button>
+    <button type="button" className="zhen-secondary" disabled={busy || active} onClick={() => void action(async version => { const result = unwrap(await api.canvasWorkspaces()); if (generation.current === version) { setTargets(result);setTargetsLoaded(true); setTarget(previous=>refreshedCanvasTarget(result,previous)); } })}>读取可用画布</button>
+    <label className="zhen-label" htmlFor={`${field}-target`}>目标画布</label><select className="zhen-input" id={`${field}-target`} value={target} disabled={busy || active} onChange={event => { setTarget(event.currentTarget.value); setConfirmed(false); }}><option value="">读取列表后按名称选择画布</option>{targets.canvases.map(item => <option key={canvasTargetKey(item)} value={canvasTargetKey(item)}>{item.name} · 修订 {item.revision}</option>)}</select>
+    {targets.canvases.length>1&&<p className="zhen-muted">请选择这次使用的画布；列表顺序不代表当前窗口。</p>}
+    <button type="button" className="zhen-secondary zhen-margin" disabled={busy || active || !receiptId || !selectedTarget} onClick={() => { const selected = selectedTarget; if (selected) void action(async () => { unwrap(await api.canvasTransferPreview({ receiptId, projectId: selected.projectId, canvasId: selected.id })); }); }}>核对所选保存结果</button>
     {!receiptId && <p className="zhen-muted">在上方保存记录点击“送到画布”选择文件。已有交接进度可继续查询。</p>}
     {view && <article className="zhen-task-row"><strong role="status">{labels[view.phase]}</strong>
       <p>{view.file.name} · {view.file.mime} · {view.file.size.toLocaleString()} B</p><p className="zhen-muted">项目 {view.projectId} · 画布 {view.canvasId} · revision {view.canvasRevision}</p>

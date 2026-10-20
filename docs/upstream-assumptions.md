@@ -119,3 +119,6 @@ C60（0059）：公开createUserMessage的image attachment引用经实际AgentLo
 
 
 C61/C62/C63（0060）：真实Git检出的已知打包文本使用精确LF规则，未来二进制/目录外策略不变，C46快照保护保持。现有CRLF工作目录不能假定由新属性自动改写；实际npm预览→独立规范副本→原npm打包保留全部清单/声明/私有守卫。真实完整构建包的原始CRLF归档先不同，调用实际pack.mjs后须回到完整规范SHA且源字节保持。此为自有构建策略，未改上游或Native协议；当前锁定工具链外的重现性另验。
+
+
+C64/C65/C66（0061）：Native workspaces 的 total/truncated 为可选原生元数据，DSH不补造旧响应的完整性，拒绝重复项目/画布身份及不足行数的total；实际已发布Host/Gateway/Remote验证Owner访问和严格投影。四个生产组件真实处理器验证组合身份、重排保留、目标消失清空及迟到响应失效，不将fake hooks/SSR当浏览器。3.3.9路由只读复核仍无当前窗口标志，不据此断言其他API不存在；精确握手及当前3.3.7 pin保持。

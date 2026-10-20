@@ -2,6 +2,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import type { ZhenRemote } from 'dsh-zhen/remote';
 import type { CanvasRunView, CanvasRunNodes, CanvasWorkspaces } from 'dsh-zhen';
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
+import {canvasTargetKey,selectedCanvasTarget,refreshedCanvasTarget} from './canvas-target.ts';
 function unwrap<T>(result: RemoteResult<T>): T { if (!result.ok) throw result.error; return result.value; }
 const phases: Record<CanvasRunView['phase'], string> = { preview: '待你核对运行计划', requesting: '正在请求画布窗口确认', pending: '等待画布窗口批准', submitting: '正在提交到画布', tracking: '画布已接收，可查询原运行', denied: '画布窗口已拒绝', expired: '计划已过期，请重新读取画布', unknown: '结果尚未确认，请只查询原运行' };
 const statuses: Record<string, string> = { accepted: '等待画布调度', pending: '等待确认', dispatching: '画布调度中', running: '执行中', completed: '画布标记完成', failed: '画布标记失败', cancelled: '已取消' };
@@ -10,7 +11,7 @@ export function CanvasRunPanel({ api, online }: { api: ZhenRemote; online: boole
   const [nodes, setNodes] = useState<CanvasRunNodes>(), [selected, setSelected] = useState<string[]>([]), [view, setView] = useState<CanvasRunView | null>(null);
   const [confirmed, setConfirmed] = useState(false), [feeAccepted, setFeeAccepted] = useState(false), [dirty, setDirty] = useState(false), [busy, setBusy] = useState(false), [notice, setNotice] = useState('');
   const generation = useRef(0), field = useId();
-  useEffect(() => { let active = true; const version = ++generation.current; setBusy(false);
+  useEffect(() => { let active = true; const version = ++generation.current; setBusy(false);setTargets({canvases:[]});setCanvas('');setNodes(undefined);setSelected([]);setConfirmed(false);setFeeAccepted(false);
     api.canvasRunSnapshot().then(result => { if (active && generation.current === version) setView(unwrap(result)); }).catch(() => { if (active && generation.current === version) setNotice('运行引用尚未读到，请刷新进度。'); });
     return () => { active = false; generation.current++; };
   }, [api, online]);
@@ -21,7 +22,7 @@ export function CanvasRunPanel({ api, online }: { api: ZhenRemote; online: boole
   }
   const active = !!view && ['requesting', 'pending', 'submitting', 'unknown'].includes(view.phase);
   async function loadNodes(more = false): Promise<void> {
-    const target = targets.canvases.find(item => item.id === canvas); if (!target) return;
+    const target = selectedCanvasTarget(targets,canvas); if (!target) return;
     const version = generation.current, result = unwrap(await api.canvasRunNodes(target.projectId, target.id, more ? nodes?.nextOffset ?? 0 : 0));
     if (generation.current !== version) return;
     if (more && nodes && nodes.revision !== result.revision) { setNodes(undefined); setSelected([]); throw Error('画布已变化，请重新读取节点。'); }
@@ -31,8 +32,9 @@ export function CanvasRunPanel({ api, online }: { api: ZhenRemote; online: boole
   return <section className="zhen-margin" aria-label="画布运行审批">
     <h3>运行画布中的生成节点</h3>
     <p className="zhen-muted">先选择节点并查看完整执行范围、服务和模型。当前无法确定费用；生成可能收费。你确认后，仍需在画布窗口批准，再返回单次提交。</p>
-    <button type="button" className="zhen-secondary" disabled={busy || !online || active} onClick={() => void action(async () => { const version = generation.current; const result = unwrap(await api.canvasWorkspaces()); if (generation.current === version) { setTargets(result); setCanvas(result.canvases[0]?.id ?? ''); setNodes(undefined); setSelected([]); setDirty(true); } })}>读取画布</button>
-    <label className="zhen-label" htmlFor={field}>目标画布</label><select id={field} className="zhen-input" value={canvas} disabled={busy || active} onChange={event => { setCanvas(event.currentTarget.value); setNodes(undefined); setSelected([]); setDirty(true); setConfirmed(false); setFeeAccepted(false); }}><option value="">选择画布</option>{targets.canvases.map(target => <option key={target.id} value={target.id}>{target.name}</option>)}</select>
+    <button type="button" className="zhen-secondary" disabled={busy || !online || active} onClick={() => void action(async () => { const version = generation.current; const result = unwrap(await api.canvasWorkspaces()); if (generation.current === version) { setTargets(result); setCanvas(previous=>refreshedCanvasTarget(result,previous)); setNodes(undefined); setSelected([]); setDirty(true); } })}>读取画布</button>
+    <label className="zhen-label" htmlFor={field}>目标画布</label><select id={field} className="zhen-input" value={canvas} disabled={busy || active} onChange={event => { setCanvas(event.currentTarget.value); setNodes(undefined); setSelected([]); setDirty(true); setConfirmed(false); setFeeAccepted(false); }}><option value="">按名称选择画布</option>{targets.canvases.map(target => <option key={canvasTargetKey(target)} value={canvasTargetKey(target)}>{target.name}</option>)}</select>
+    {targets.canvases.length>1&&<p className="zhen-muted">请选择这次使用的画布；列表顺序不代表当前窗口。</p>}
     <button type="button" className="zhen-secondary" disabled={busy || !online || !canvas || active} onClick={() => void action(() => loadNodes())}>读取当前节点</button>
     {nodes && <div className="zhen-margin">
       <p>基于 revision {nodes.revision}。选择要执行的生成节点，原生计划可能包含所需的上游生成节点，审批前会完整列出。</p>
