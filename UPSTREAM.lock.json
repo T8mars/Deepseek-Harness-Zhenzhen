@@ -15,9 +15,14 @@
     "reason": "Published DSH dependency ~4.0.5; independent from the Cordis next dist-tag."
   },
   "canvas": {
-    "commit": "e6702dc7770bcbe7d4895be22a06f4c7123a085b",
-    "version": "3.3.6",
-    "runtimeVerified": false
+    "commit": "b813be15df9e3e6ce2d1316250c4602513c08d48",
+    "version": "3.3.7",
+    "runtimeVerified": true,
+    "runtimeVerificationScope": "Source backend only: two anonymous loopback public status GETs200; exact HTTP compatibility fields matched by native CLI. No pairing, GUI, installed application, project/business operation or paid call.",
+    "releaseTag": "v3.3.7",
+    "releaseCommit": "dc4893656379c743bd67d5de2de764b7f2d163ff",
+    "releaseMetadataVerified": true,
+    "releaseAssetBytesReverified": false
   },
   "seedance": {
     "docs": "https://api.seedance.nz/docs/llms.txt",
@@ -32,7 +37,7 @@
   },
   "extensions": {
     "mcpSdk": "1.32.1",
-    "mcpVerification": "10 Canvas read/planning entries; C10/C16/C24 use actual published SDK/Host/ToolRuntime. A real local source CLI also mounted all 10 and returned APP_NOT_RUNNING without provider credential reads. A managed installed CLI was detected with different compatibility digests; no real paired application or business handler was verified.",
+    "mcpVerification": "10 Canvas read/planning entries; C10/C16/C24 use actual published SDK/Host/ToolRuntime. A real local source CLI also mounted all 10 and returned APP_NOT_RUNNING without provider credential reads. A managed installed CLI was detected with different compatibility digests; no real paired application or business handler was verified. 0040 supersedes the no-running-source observation: native3.3.7 public status and HTTP compatibility verified read-only; saved old pin remains CLI_CHANGED. C40 actual Host/Gateway/MCP preserves flat, legacy nested and explicit-null reports; full check325. No real pairing or business execution.",
     "canvasDiscovery": {
       "schemaVersion": 1,
       "maxCandidates": 8,
@@ -40,9 +45,9 @@
       "verification": "Six units and C24 cover inert installer/marker discovery, whole-tree fingerprints, canonical duplicates, metadata/path/link refusal, stale reviewed pins and previous-config preservation. Actual local installed/source inventories were read; new UI and real paired handshake remain unverified."
     },
     "canvasDevelopmentReplayFix": {
-      "status": "unreleased-workspace-only",
+      "status": "historical-source-verification; adopted-by-native-agent-in-v3.3.7",
       "providerCatalogDigest": "00dc6ba277f0937123ad7695c01a473a733df8b3d7890f4e7f9fe33e685edf5d",
-      "verification": "Six production-module transport tests pass; runtime catalog differs only in sourceDigest and official feature-sync passes. Canvas adjacent baseline failures remain visible. No paid DSH execution or production package is enabled by this source fix."
+      "verification": "Six production-module transport tests pass; runtime catalog differs only in sourceDigest and official feature-sync passes. Canvas adjacent baseline failures remain visible. No paid DSH execution or production package is enabled by this source fix. Historical test/source digests above are not current release identities. Native agent documents adoption in3.3.7; this DSH review verified release metadata and source status only, not all193 native tests or installed windows."
     },
     "canvasWindowPairing": {
       "locatorSchema": 1,
@@ -63,10 +68,10 @@
     "canvasNativeStoreTransactions": {
       "protocol": "t8-zcanvas-secure-store-transaction-v1",
       "dataSchema": "t8-zcanvas-secure-store-v1",
-      "status": "unreleased-workspace-only",
+      "status": "historical-source-verification; adopted-by-native-agent-in-v3.3.7",
       "storeSha256": "6cd53dc412c6e9c771cd7052cde37cb97bf943d966f3c0227037504677dc8b88",
       "coordinatorSha256": "bc45bde610bca44ebe336a7d5c4ef305ea85b3c96fff856ea5dda5b3775303e5",
-      "verification": "13 native concurrency/fault and 4 actual CLI cases, Electron seven-file 42-test matrix and feature-sync pass. Three C26 published DSH/Host/MCP contracts verify late native commit rejection, Windows DPAPI and old v1 reader compatibility using synthetic TEMP data. Only updated participating writers; no real window or production release."
+      "verification": "13 native concurrency/fault and 4 actual CLI cases, Electron seven-file 42-test matrix and feature-sync pass. Three C26 published DSH/Host/MCP contracts verify late native commit rejection, Windows DPAPI and old v1 reader compatibility using synthetic TEMP data. Only updated participating writers; no real window or production release. Historical test/source digests above are not current release identities. Native agent documents adoption in3.3.7; this DSH review verified release metadata and source status only, not all193 native tests or installed windows."
     },
     "canvasPlanning": {
       "schemaVersion": 1,
@@ -551,6 +556,33 @@
       "automaticallyImported": false,
       "cloudConsentGranted": false,
       "ownerProjectAcceptance": false
+    },
+    "canvasRuntimeReview": {
+      "decision": "0040",
+      "sourceHead": "b813be15df9e3e6ce2d1316250c4602513c08d48",
+      "sourceVersion": "3.3.7",
+      "sourceMatchesGithubMain": true,
+      "releaseTag": "v3.3.7",
+      "releaseCommit": "dc4893656379c743bd67d5de2de764b7f2d163ff",
+      "releaseAssetMetadataCount": 6,
+      "sourceCliDigest": "8a474a98bf33797018df9fe7fa9126ca55891100e64c87f91885bfc65b81b110",
+      "savedCliDigest": "fae0b706964edbebfc630853a66d32ec591dbb4dc05661f4bf22e86284cb1ec9",
+      "savedPinAutomaticallyPromoted": false,
+      "publicStatusPaths": [
+        "/api/status",
+        "/api/agent-control/v1/status"
+      ],
+      "publicStatusHttp200": true,
+      "httpCompatibilityMatched": true,
+      "flatReportPreserved": true,
+      "legacyNestedAndExplicitNullPreserved": true,
+      "realPairingCreated": false,
+      "nativeGuiVerified": false,
+      "installedApplicationVerified": false,
+      "nativeSourceWrites": 0,
+      "authenticatedRequests": 0,
+      "postRequests": 0,
+      "paidCalls": 0
     }
   }
 }

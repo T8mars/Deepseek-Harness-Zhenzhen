@@ -175,7 +175,9 @@ export class CanvasBridge {
   async status(): Promise<CanvasConnection> {
     try {
       const data = await this.read('status');
-      return { configured: true, root: this.config.root, digest: this.config.digest, instance: this.config.instance, connected: true, code: 'OK', message: '画布控制面已响应；业务操作仍需兼容检查与现有配对。', compat: data.compat ?? null };
+      // Native status is a flat compatibility report. Preserve legacy nested
+      // reports too, including an explicit null rather than replacing it.
+      return { configured: true, root: this.config.root, digest: this.config.digest, instance: this.config.instance, connected: true, code: 'OK', message: '画布控制面已响应；业务操作仍需兼容检查与现有配对。', compat: Object.hasOwn(data, 'compat') ? data.compat : data };
     } catch (error) {
       const safe = safeCanvasError(error);
       return { configured: true, root: this.config.root, digest: this.config.digest, instance: this.config.instance, connected: false, code: safe.code, message: safe.message, compat: null };

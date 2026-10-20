@@ -76,12 +76,12 @@
     {
       "id": "canvas-mcp",
       "status": "in-progress",
-      "verification": "10 read/planning entries reuse installed CLI discovery/handshake/secureStore. Local and live catalogs must match; 39 capability surfaces preserve 73 L0 versioned plan/preview routes with their exact scopes, plus eight existing inspection tools. C16 covers published DSH stdio/ToolRuntime, Host/Remote catalog, result identity, drift, expiration, no retry and reviewed CLI cache replacement. The immutable original Canvas policy helper accepted 73 L0 and refused 123 non-direct operations with inert dispatch. Installed Canvas, real creative handlers, new UI, secure media handoff, writes and paid execution remain unverified."
+      "verification": "0040: Canvas agent released3.3.7; source HEAD equals GitHub main. Source backend public status GETs200 and native CLI exact HTTP compatibility match. DSH now preserves flat status, legacy nested compat and explicit null through actual Host/Gateway codecs and MCP; C40 and full check325 pass. Persistent old CLI pin is deliberately unchanged, returning CLI_CHANGED pending explicit connection-page review. No Native writes, auth, pairing, business or paid calls; GUI/installed/full workflow unverified."
     },
     {
       "id": "canvas-local-discovery",
       "status": "in-progress",
-      "verification": "Fixed installer roots and managed markers are read without importing CLI code or opening a connection. Complete supported runtime fingerprints, local-path/link/metadata gates, canonical deduplication and a closed Remote schema pass six units. C24 actual published Host/MCP composition refuses stale reviewed digests before config/mount changes and preserves previous config, with zero credential reads. Both real local CLIs report APP_NOT_RUNNING; their compatibility digests differ. New UI and real pairing remain unverified. Actual installed 3.3.6 control status fails missing provider compatibility manifest. Unreleased Native source fixes that path and the stale-file discovery window; five discovery regressions and a 77-test related matrix pass. Existing trusted CLI pin is preserved; a changed source tree needs review/reconnection. See decision0032."
+      "verification": "Inert discovery, complete CLI fingerprints, canonical deduplication, path/link/metadata gates and stale-pin refusal are covered by six units and C24 actual published Host/MCP. 0040: Native3.3.7 source backend is discovered among1007 records; public GETs200 and exact HTTP compatibility pass. Source CLI digest matches native handoff. Existing old trusted pin is preserved and correctly returns CLI_CHANGED. Explicit connection review, real window pairing and installed application remain unverified. See decisions0032/0040."
     },
     {
       "id": "canvas-window-pairing",
@@ -106,7 +106,7 @@
     {
       "id": "canvas-paid-generation",
       "status": "in-progress",
-      "verification": "UI-only native run plan/unknown-price preview, human DSH confirmation, authoritative native window approval and single completion are implemented. Lost creation/completion acknowledgements recover by scoped GET; unknown or accepted never resubmits. Native unreleased source binds one plan to one operation and retains original run_intents authority. Eleven units, C29 actual published Host/Remote/ToolRuntime/MCP stdio, 20 native service regressions and separate real Native TEMP SQLite verify pass. Exactly one native intent accepted; Provider dispatcher, real window/UI, paid/live results and production release remain unverified. See decision 0027."
+      "verification": "Native run-plan preview, human DSH confirmation, authoritative native window approval and single submission boundaries are implemented. Lost acknowledgements recover by scoped GET; unknown or accepted never resubmits. C29 actual published Host/Remote/ToolRuntime/MCP, eleven units and isolated native TEMP evidence verify one accepted intent without Provider dispatch. Native agent adopted the source integration in released3.3.7; 0040 only checked release metadata and read-only source status. Real window/UI, paid execution, settlement and installed workflow remain unverified. See decisions0027/0040."
     },
     {
       "id": "github-update-candidates",
@@ -126,7 +126,7 @@
     {
       "id": "canvas-saved-media-transfer",
       "status": "in-progress",
-      "verification": "Owned saved-result references, ordinary-file/hash checks, independent asset-transfer pairing opt-in, separate human/native import and placement approvals, and GET-only recovery implemented. C32 uses actual published Gateway owner JSON and MCP stdio with synthetic copy/ledger fixtures; separate original Native TEMP SQLite/AssetUploadManager/Blob/Patch verifies one asset/placement and lost acknowledgements without Provider calls. Real saved download, new UI/window and installed application remain unverified. Actual installed 3.3.6 control status fails missing compatibility manifest; canonical source repair is tested but unreleased. See decision0030."
+      "verification": "Saved-result references, ordinary-file/hash checks, independent asset-transfer opt-in, separate native import/placement approvals and GET-only recovery are implemented. C32 actual published Gateway/MCP and original Native TEMP AssetUploadManager/Blob/Patch verify one asset/placement and lost acknowledgements without Provider calls. Native agent adopted integration in3.3.7; 0040 source status/HTTP compatibility pass and old CLI pin remains unchanged. Real saved download, UI/window, paired transfer and installed application remain unverified. See decisions0030/0040."
     },
     {
       "id": "optional-first-party-github-access",
@@ -136,10 +136,10 @@
     {
       "id": "canvas-integration-source-backup",
       "status": "implemented",
-      "verification": "Complete 38-file Native source/test/generated/documentation text patch, exact base and per-file SHA-256. C34 verifies integrity and reviewed public paths; independent verifier actually restores original Git blobs and applies/checks all 38 files in fresh system TEMP without modifying Native. Combined real Native routes/SQLite/MCP verification passes with simulated window approval and no Provider calls. Production package and human installed-window acceptance remain unverified. See decision0032.",
-      "handoff": "docs/handoffs/canvas-agent.md",
+      "verification": "Immutable38-file Native source/test/generated/documentation patch with exact base and per-file SHA. C34 and independent fresh-TEMP restoration verify integrity and patch application without modifying Native. Native agent now documents adoption in released3.3.7; do not reapply the historical patch. 0040 verifies release metadata, matching source/GitHub main and read-only source status; real installed-window acceptance and paid execution remain unverified. See decisions0032/0040.",
+      "handoff": "docs/handoffs/canvas-agent-v3.3.7-review.md",
       "nativeChangeOwner": "canvas-agent-only",
-      "releaseState": "deferred-by-user"
+      "releaseState": "native-agent-released-v3.3.7; DSH-installation-and-window-acceptance-unverified"
     },
     {
       "id": "windows-source-bootstrap",
