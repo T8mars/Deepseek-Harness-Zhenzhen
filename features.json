@@ -71,7 +71,7 @@
     {
       "id": "local-rag",
       "status": "in-progress",
-      "verification": "Text-layer PDF import and actual page citations are implemented through pinned pdfjs-dist6.4.299 in a fixed local child; no OCR/cloud parser. Schema2 to3 transaction adds optional page and preserves existing text IDs, bindings and grants. C47 actual published Host/Gateway/ToolRuntime and SSR, six decoder and six knowledge tests pass; full348. Same1007-document corpus and unchanged fixed10-question/top5/80% owner-adopted baseline remain8/10. Standard W3C PDF verified locally. Installed decoder/startup are separate probes; browser/live-model/general creative quality/fullM3 remain unverified."
+      "verification": "Text-layer PDF import and actual page citations are implemented through pinned pdfjs-dist6.4.299 in a fixed local child; no OCR/cloud parser. Schema2 to3 transaction adds optional page and preserves existing text IDs, bindings and grants. C47 actual published Host/Gateway/ToolRuntime and SSR, six decoder and six knowledge tests pass; full348. Same1007-document corpus and unchanged fixed10-question/top5/80% owner-adopted baseline remain8/10. Standard W3C PDF verified locally. Installed decoder/startup are separate probes; browser/live-model/general creative quality/fullM3 remain unverified. Decision0048 increases the bounded per-PDF cold-start budget to30s after the first dev19 Windows C47 import failed around12.2s (347/348); its exact decoder error was not retained. New local348 passes; new remote CI is verified separately."
     },
     {
       "id": "canvas-mcp",

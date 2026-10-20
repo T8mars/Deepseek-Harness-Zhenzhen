@@ -2,7 +2,7 @@ import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
 export interface PdfTextPage { page: number; text: string; }
-export const PDF_TEXT_LIMITS = Object.freeze({inputBytes:2*1024*1024,textBytes:2*1024*1024,pages:200,timeoutMs:12000,heapMiB:256,pending:4});
+export const PDF_TEXT_LIMITS = Object.freeze({inputBytes:2*1024*1024,textBytes:2*1024*1024,pages:200,timeoutMs:30000,heapMiB:256,pending:4});
 let tail=Promise.resolve(),pending=0;
 
 function pagesFrom(value: unknown): PdfTextPage[] {

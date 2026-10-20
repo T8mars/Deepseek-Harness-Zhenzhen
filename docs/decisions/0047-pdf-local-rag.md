@@ -49,3 +49,7 @@ quick_check。本机旧索引当前仍schema2、各表记录数保持；首次�
 [官方Node示例](https://github.com/mozilla/pdf.js/blob/master/examples/node/getinfo.mjs)、
 [W3C标准样本](https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf)、
 [Node22.19 SQLite备份](https://nodejs.org/download/release/v22.19.0/docs/api/sqlite.html#sqlitebackupsourceDb-destination-options)。
+
+后续真实CI39443210908为347/348，C47首次导入约12.2秒失败，打包/安装
+未执行；不覆盖本机348通过的独立事实。0048将总时限改为30秒，其余限额
+保持，后续新提交与CI单独核对，原dev19保留。

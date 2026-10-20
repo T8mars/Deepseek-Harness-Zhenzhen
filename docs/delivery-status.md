@@ -1,6 +1,6 @@
 # DSH-zhen 当前交付状态
 
-2026-10-20，开发检查点0047。项目可本地运行，整体仍在开发，尚未完成稳定版交付。
+2026-10-20，开发检查点0048。项目可本地运行，整体仍在开发，尚未完成稳定版交付。
 本文按原始需求区分实现与验收，不将接口目录、模拟调用或代码备份写成完整功能验收。
 
 | 需求 | 已验证 | 待验证 | 未验证或尚未实现 |
@@ -13,7 +13,7 @@
 | 本地RAG | 文本导入/检索、目录绑定、独立Agent同意、撤权检查；来源卡片与上下文；授权索引内的问句连续词还原；同1007篇参考文档与未改判据：关键词8/10保持、问句7/10→8/10；负责人已采纳这套10问与80%首版基线，当前达标；C47及完整348项通过；带文字层PDF本地导入、真实页码/提取文本行号、schema2→3事务迁移；标准W3C PDF及同参考基线复测通过 | 真实模型引用和浏览器交互；后续实际创作项目扩展 | 首版参考基线达标不代表完整M3或通用相关性；场景与喜剧两问未达判据；扫描件OCR/向量尚未实现；复杂PDF排版识别仍有限 |
 | 画布完整对接 | 原生Agent已接管并发布3.3.7；源码与GitHub main相符；源码后端两状态GET均200、HTTP兼容字段与CLI逐项相符；DSH兼容报告读取修正，C40及完整325项通过 | 连接页显式重新审阅新CLI，随后真人原生窗口配对；安装版及完整业务验收 | 旧CLI pin未改，当前生产连接正确拒绝CLI_CHANGED；源码状态成功不代表安装版、配对或付费创作已验。DSH Agent未修改画布 |
 | 便于跟进上游和画布 | 已发布npm精确锁定、上游候选检查/审阅门禁/工作流、画布能力及CLI摘要拒绝漂移 | 实际新版本候选、远端工作流、升级验收 | 本批顶层`next`查询未变化，未因此重新检查全部peer元数据；不自动合并上游或改写画布 |
-| GitHub备份与本项目更新 | 验证后提交并保留标签；真实私有GitHub手动dev8→9及启动自动dev10→12快进、实际新进程/配置检查通过；七份假本地文件保留，临时引用与检出清理；当前本地完整348项通过；dev18真实Windows CI335/335、打包及官方CLI临时安装/Host启动均成功 | 更新器文件本身改版的实际场景（本次三文件字节相同）、Windows交互；后续检查点远端回读及对应CI | 源码更新仍需Git与Node；独立安装器、签名及生产自动更新未完成；公开后Actions已实际执行，首次333/334发现夹具检出换行问题，0046已修正且运行39433495391全绿；新检查点仍以各自结果为准 |
+| GitHub备份与本项目更新 | 验证后提交并保留标签；真实私有GitHub手动dev8→9及启动自动dev10→12快进、实际新进程/配置检查通过；七份假本地文件保留，临时引用与检出清理；当前本地完整348项通过；dev18真实Windows CI335/335、打包及官方CLI临时安装/Host启动均成功 | 更新器文件本身改版的实际场景（本次三文件字节相同）、Windows交互；dev19实际CI347/348，C47疑似冷启动超时；0048调整后的新CI | 源码更新仍需Git与Node；独立安装器、签名及生产自动更新未完成；公开后Actions已实际执行，首次333/334发现夹具检出换行问题，0046已修正且运行39433495391全绿；新检查点仍以各自结果为准 |
 | 本地启动 | Windows一键准备/启动与修复入口；实际依赖安装及官方CLI配置检查；运行中拒绝准备 | 不同机器首次克隆、断网与无Node体验 | 仍为需要Node与首次下载的源码版本，不是免依赖安装版 |
 
 已按用户要求在本机创建`创作资料/`：1008篇已安装参考文档的摘要核对副本、项目分类及十个建议问题，忽略和发布检查保护；未自动导入、未开启云端或Agent权限，不能当作用户真实项目验收。
@@ -22,6 +22,6 @@
 画布侧事项请将 [3.3.7复核交接](handoffs/canvas-agent-v3.3.7-review.md) 交给其负责 Agent；
 本文件不授权画布发版、改变仓库可见性或自动发生费用。
 
-实现与验证细节见 [0047](decisions/0047-pdf-local-rag.md)、[0046](decisions/0046-immutable-fixture-checkout.md)、[0045](decisions/0045-public-anonymous-host.md)、[0044](decisions/0044-published-skill-update.md)、[0043](decisions/0043-mcp-session-filesystem.md)、[0042](decisions/0042-source-auto-build.md)、[0041](decisions/0041-rag-compound-words.md)、[0040](decisions/0040-canvas337-readonly-review.md)、[0039](decisions/0039-source-checkout-updates.md)、[源码更新](source-updates.md)、[0038](decisions/0038-rag-chinese-questions.md)、[0037](decisions/0037-chat-image-inputs.md)、[0036](decisions/0036-seedance-credential-events.md)、[0035](decisions/0035-one-click-source-start.md)、
+实现与验证细节见 [0048](decisions/0048-pdf-cold-start-budget.md)、[0047](decisions/0047-pdf-local-rag.md)、[0046](decisions/0046-immutable-fixture-checkout.md)、[0045](decisions/0045-public-anonymous-host.md)、[0044](decisions/0044-published-skill-update.md)、[0043](decisions/0043-mcp-session-filesystem.md)、[0042](decisions/0042-source-auto-build.md)、[0041](decisions/0041-rag-compound-words.md)、[0040](decisions/0040-canvas337-readonly-review.md)、[0039](decisions/0039-source-checkout-updates.md)、[源码更新](source-updates.md)、[0038](decisions/0038-rag-chinese-questions.md)、[0037](decisions/0037-chat-image-inputs.md)、[0036](decisions/0036-seedance-credential-events.md)、[0035](decisions/0035-one-click-source-start.md)、
 [0034](decisions/0034-rag-source-context.md)、[功能状态](../features.json) 与
 [上游锁](../UPSTREAM.lock.json)。本机日志和个人资料不进入 GitHub。

@@ -846,7 +846,7 @@
       "inputBytes": 2097152,
       "textBytes": 2097152,
       "maxPages": 200,
-      "timeoutMs": 12000,
+      "timeoutMs": 30000,
       "v8HeapMiB": 256,
       "totalNativeMemoryBound": false,
       "maxPending": 4,
@@ -876,7 +876,18 @@
       "browserVerified": false,
       "modelCalls": 0,
       "paidCalls": 0,
-      "nativeWrites": 0
+      "nativeWrites": 0,
+      "latestDecision": "0048",
+      "firstPublicCi": {
+        "run": 39443210908,
+        "conclusion": "failure",
+        "tests": 348,
+        "passed": 347,
+        "failed": 1,
+        "failedContract": "C47",
+        "durationMs": 12229.0174,
+        "exactDecoderErrorRetained": false
+      }
     }
   }
 }

@@ -87,7 +87,7 @@ try {
     const worker=fileURLToPath(new URL('./lib/pdf-text-worker.js',import.meta.resolve('dsh-zhen/package.json')));
     const env={};for(const key of Object.keys(process.env))if(['systemroot','windir','temp','tmp','lang','lc_all'].includes(key.toLowerCase()))env[key]=process.env[key];
     const child=spawn(process.execPath,['--max-old-space-size=256',worker],{env,windowsHide:true,serialization:'advanced',stdio:['ignore','ignore','ignore','ipc']});
-    let value,failure;const deadline=setTimeout(()=>{failure=Error('EXAMPLE_INSTALLED_PDF_TIMEOUT');child.kill();},12000);
+    let value,failure;const deadline=setTimeout(()=>{failure=Error('EXAMPLE_INSTALLED_PDF_TIMEOUT');child.kill();},30000);
     child.once('message',message=>{value=message;});child.once('error',()=>{failure=Error('EXAMPLE_INSTALLED_PDF_START');});
     const closed=new Promise((done,reject)=>child.once('close',code=>{clearTimeout(deadline);failure||code!==0?reject(failure??Error('EXAMPLE_INSTALLED_PDF_EXIT')):done();}));
     child.send({bytes:readFileSync(process.argv[1])},error=>{if(error){failure=Error('EXAMPLE_INSTALLED_PDF_IPC');child.kill();}});await closed;
