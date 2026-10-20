@@ -1160,6 +1160,24 @@
       "decision": "0055",
       "realFlashRequests": 2,
       "scope": "Default bundled Seedance Flash; published runtime and ToolRuntime read one fixed real EXAMPLE file in fresh system TEMP, return it to model, exact answer and normal stream finish; file unchanged and TEMP cleaned. No user project, Native write or official Desktop conversation proof."
+    },
+    "inlineCanvasPlan": {
+      "skillVersion": "1.0.3",
+      "agentToolsAdded": 0,
+      "automaticApproval": false,
+      "verification": "0056 C56/C57 and full391: bounded native L0 card, exact current Owner adoption, isolated per-plugin navigation. Actual installed3.3.7 MCP result-to-card adoption preserves original plan without replanning, native reported sideEffects zero. No Native repository/install/config/CLI mutation, apply/run/approval or generation. Actual browser unverified.",
+      "localTests": 391,
+      "publicCliFreshTempInstallAndUninstallVerified": true,
+      "actualLocalActivationVerified": true,
+      "archiveSha256": "e1c66c8100d9ba0137be029fadaac7df58c977362873568126107555010e3280",
+      "browserVerified": false
+    },
+    "realRagCitation": {
+      "provider": "seedance",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "exampleOnly": true,
+      "requests": 4,
+      "verification": "0056 actual tools answer TEMP source facts and cite relative path/line; final corrected checker passes. Prepared-call revocation blocks before transport with no extra request. Official credentials only; no source/user body recorded, no user grant or schema/rank changes. Not general retrieval quality or browser proof."
     }
   }
 }

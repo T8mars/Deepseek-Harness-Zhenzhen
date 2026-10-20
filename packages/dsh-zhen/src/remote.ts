@@ -13,6 +13,7 @@ export { ragPresentationSchema } from './rag-schema.ts';
 import { skillId, digestSchema, marketItemSchema, skillPackageSchema, skillFeedSnapshotSchema, skillAutoPolicySchema } from './market-schema.ts';
 import type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } from './market-schema.ts';
 import type { CanvasConnection } from './canvas.ts';
+export {canvasEntity,canvasPlanResultSchema} from './canvas-contract.ts';
 import { canvasDiscoverySchema } from './canvas-discovery-schema.ts';
 import type { CanvasDiscovery } from './canvas-discovery-schema.ts';
 import {canvasSetupDiscoverySchema,canvasConnectionCheckSchema} from './canvas-setup-schema.ts';

@@ -5,7 +5,7 @@ import type {} from '@deepseek-ai/dsh-client-ui-renderer/client';
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client';
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client';
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useSyncExternalStore } from 'react';
 import { GatewayCheck } from './GatewayCheck.tsx';
 import { TaskCenter } from './TaskCenter.tsx';
 import zhenRemote from 'dsh-zhen/remote';
@@ -21,21 +21,29 @@ import { ArtSettings, BrandMark, HeroArtwork } from './Art.tsx';
 import { connectDefaultArt } from './default-art-client.ts';
 import { Capabilities } from './Capabilities.tsx';
 import { RagToolView } from './RagSources.tsx';
+import {CanvasPlanToolView} from './CanvasPlanTool.tsx';
+import {createWorkspaceNavigation} from './workspace-navigation.ts';
+import type {WorkspaceNavigation,WorkspaceSection} from './workspace-navigation.ts';
+import type {ToolCallViewProps} from '@deepseek-ai/dsh-client-ui-tool/client';
+import type {MainPanelId} from '@deepseek-ai/dsh-client-ui-layout/client';
 import ragCss from './rag.css';
 
 export const inject = ['slots', 'layout', 'theme', 'remote'];
+// Public layout identity is the same registered sidebar id and main-slot key.
+const workspacePanel='zhen' as MainPanelId;
 
 function TideMark({ size = 28 }: { size?: number }): React.ReactElement {
   return <BrandMark size={size}/>;
 }
 
-function Workspace({ ctx }: { ctx: Context }): React.ReactElement {
+function Workspace({ ctx,navigation }: { ctx: Context;navigation:WorkspaceNavigation }): React.ReactElement {
   const [status, setStatus] = useState<ZhenStatus>();
   const [wallet, setWallet] = useState<Wallet>();
   const [key, setKey] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
-  const [section, setSection] = useState<'home' | 'settings' | 'knowledge' | 'market' | 'connections' | 'updates' | 'art' | 'tasks'>('home');
+  const section=useSyncExternalStore(navigation.subscribe,navigation.current,navigation.current);
+  const setSection=(value:WorkspaceSection)=>navigation.open(value);
   useEffect(() => {
     let mounted = true;
     ctx.remote.zhen.status().then(value => { if (mounted) setStatus(unwrap(value)); }).catch(() => { if (mounted) setNotice('扩展服务暂时不可用，请检查连接。'); });
@@ -102,6 +110,8 @@ function Workspace({ ctx }: { ctx: Context }): React.ReactElement {
 }
 
 export async function apply(ctx: Context): Promise<void> {
+  const navigation=createWorkspaceNavigation();
+  ctx.effect(()=>()=>navigation.dispose(),'zhen: workspace navigation');
   const unmount = await ctx.remote.$mount(zhenRemote);
   ctx.effect(() => () => { void unmount(); }, 'zhen: remote');
   ctx.effect(() => { const style = document.createElement('style'); style.dataset.dshZhen = ''; style.textContent = css; document.head.append(style); return () => style.remove(); }, 'zhen: styles');
@@ -126,10 +136,13 @@ export async function apply(ctx: Context): Promise<void> {
     '--dsw-alias-brand-primary': { light: '#0F5B6B', dark: '#7AD3DD' },
   }), 'zhen: theme');
   ctx.inject(['remote.zhen'], inner => {
+    const api=inner.remote.zhen;
+    const openCanvas=()=>{navigation.open('connections');inner.layout.selectPanel(workspacePanel);};
     inner.effect(() => connectDefaultArt(inner.remote.zhen), 'zhen: confirmed local default art');
-    inner.slots.inject('main', () => inner.slots.register({ name: 'main', key: 'zhen', inject: () => ({ ctx: inner }) }, Workspace));
+    inner.slots.inject('main', () => inner.slots.register({ name: 'main', key: workspacePanel, inject: () => ({ ctx: inner,navigation }) }, Workspace));
+    inner.slots.inject('tool.call.toolview',()=>inner.slots.register({name:'tool.call.toolview',key:'mcp__t8canvas__canvas_plan'},(props:ToolCallViewProps)=><CanvasPlanToolView {...props} api={api} onOpen={openCanvas}/>));
   });
-  ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: 'zhen', order: -100, label: '创作空间' }, TideMark));
+  ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: workspacePanel, order: -100, label: '创作空间' }, TideMark));
   ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({ name: 'sidebar.brand.mark' }, TideMark));
   ctx.slots.inject('sidebar.brand.name', () => ctx.slots.register({ name: 'sidebar.brand.name' }, () => <span>DSH-zhen</span>));
   ctx.slots.inject('conversation.hero.brand.mark', () => ctx.slots.register({ name: 'conversation.hero.brand.mark' }, () => <BrandMark kind="hero"/>));

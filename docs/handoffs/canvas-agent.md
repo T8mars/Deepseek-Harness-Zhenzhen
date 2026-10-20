@@ -4,7 +4,7 @@
 
 > 当前复核：用户已让画布Agent完成3.3.7并推送，DSH已只读确认源码后端状态与兼容字段。
 > 最新结果、DSH侧报告修正及下一步见[3.3.7复核交接](canvas-agent-v3.3.7-review.md)。
-> 当前桌面已打开仍无法配对：源码CLI与安装版图谱摘要不同，安装资源CLI逐项匹配，见[最新配套工具交接](canvas-agent-installed-cli-compat.md)。
+> 当前用户已改选安装资源CLI，原生精确握手与认证会话paired通过。此前源码CLI与安装版图谱摘要不同；导出修复要求见[最新配套工具交接](canvas-agent-installed-cli-compat.md)。0056已验证真实原生L0方案经聊天卡片采纳，无重新规划、批准或生成；完整窗口创作仍待验。
 > 之前“已打开却找不到”、旧CLI不同步及浏览器审批问题，见[历史现场交接](canvas-agent-instance-discovery.md)。
 > 下面的旧基线、暂缓发版和故障记录仅供历史定位，不应重新叠加旧补丁。
 > 新增参考素材/编辑合同问题见[0050交接](canvas-agent-reference-assets.md)，网关动作覆盖见[0049交接](canvas-agent-api-coverage.md)。

@@ -8,7 +8,7 @@ function packageFile(name, path) { return readFileSync(resolve(dirname(require.r
 
 test('C6: every registered slot exists in the pinned published slot contract', () => {
   const source = readFileSync('packages/dsh-zhen/src/client/index.tsx', 'utf8');
-  const registered = [...source.matchAll(/slots\.register\(\{ name: '([^']+)'/g)].map(match => match[1]);
+  const registered = [...source.matchAll(/slots\.register\(\{\s*name:\s*['"]([^'"]+)['"]/g)].map(match => match[1]);
   const declarations = [
     packageFile('@deepseek-ai/dsh-client-ui-layout', 'lib/types/client/index.d.ts'),
     packageFile('@deepseek-ai/dsh-client-ui-sidebar', 'lib/types/client/contract/slots.d.ts'),

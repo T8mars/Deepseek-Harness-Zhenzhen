@@ -37,8 +37,10 @@ test('C11: published LLM stream boundary blocks stale RAG content before the ada
     const stream = async provider => { for await (const _ of ctx.llm.stream({ provider, model: 'EXAMPLE_ONLY_MODEL', sessionId: 'EXAMPLE_SESSION', messages: [] })) {} };
     await stream('seedance'); assert.equal(calls, 1);
     await assert.rejects(stream('EXAMPLE_OTHER_PROVIDER'), /授权/); assert.equal(calls, 1);
+    const prepared=await ctx.llm.prepareCall({provider:'seedance',model:'EXAMPLE_ONLY_MODEL',maxTokens:32},new AbortController().signal);
     service.setKnowledgeAgentAccess('EXAMPLE_PROJECT', collection.id, false);
     await assert.rejects(stream('seedance'), /授权/); assert.equal(calls, 1);
+    await assert.rejects(async()=>{for await(const _ of prepared.stream({...prepared.config,sessionId:'EXAMPLE_SESSION',messages:[]})){}},/授权/);assert.equal(calls,1,'a captured adapter must still pass the current stream permission boundary');
   } finally {
     await ctx.fiber.dispose();
     if (previous === undefined) delete process.env.DSH_HOME; else process.env.DSH_HOME = previous;

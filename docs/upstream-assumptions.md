@@ -104,3 +104,6 @@ not real window, installed-user or Provider proof. See0049.
 C50 adds owner-only asset metadata via the published Host/Gateway/Remote and Native auth/client/store/approval fixture. Fixed receipt-v1 attachment vectors originate independently from Native source3.3.7. DSH refuses order/hash/revision drift and non-ready required decisions. Original Native fresh-TEMP image/edit-image/edit-video Patch binding is verified separately with a simulated window and no Provider traffic. Native image hash binding, duplicate slots and atomic asset revalidation remain open; see0050 and the reference-assets handoff.
 
 C51 verifies DOCX extracted-line results through the published Host/Gateway/ToolRuntime and unchanged source/session grant boundary, with the real local fixed worker and an independent python-docx fixture. No Word pages or new DSH protocol/session format is assumed. CRC, bounded native inflation, OPC main selection and strict XML checks are separately covered; see0051.
+
+
+C56/C57（0056）使用已发布ui-tool的tool.call.toolview结果block及稳定callId，实际ToolRuntime/MCP输出能解析同一原生方案，并经Owner Gateway采纳。自有main槽位key、sidebar id及公开layout.selectPanel使用相同MainPanelId身份；仅插件局部导航，不触及客户端引导。C6检查槽位存在，C57检验挂载前导航与实例隔离。实际RAG prepared.stream仍经过llm/stream权限waterfall：C11在prepare后撤权，再dispatch时在adapter之前拒绝；真实网关检查同样在transport之前阻断。这里不假定prepare冻结授权，也不声称SSR等同浏览器点击。

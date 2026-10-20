@@ -122,3 +122,6 @@ npm run evaluate:rag:corpus -- --root "D:\Example\CreativeNotes" --cases "D:\Exa
 
 单文件原12秒总时限在首个远端PDF合同约12.2秒失败后调整为30秒；
 [0048](decisions/0048-pdf-cold-start-budget.md)保留该失败证据与新验证范围。
+
+
+0056真实模型补验：默认Seedance Flash经实际本地检索工具回答临时EXAMPLE资料，事实及相对路径/行号引用通过；资料授权在请求准备后撤销时，实际权限waterfall在传输前拦截，没有再次发网关请求。只使用两份TEMP示例、共4次小规模聊天请求，未发送用户资料或改变用户授权，已清理。原固定1007篇/10问/80%基线仍为8/10历史结果；本例不替代通用相关性或浏览器验收。见[0056](decisions/0056-inline-canvas-plan-and-real-rag.md)。
