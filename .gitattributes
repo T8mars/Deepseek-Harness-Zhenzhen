@@ -14,5 +14,6 @@ packages/dsh-zhen/THIRD_PARTY_NOTICES.md text eol=lf
 packages/dsh-zhen/package.json text eol=lf
 packages/dsh-zhen/cordis.patch.yml text eol=lf
 packages/dsh-zhen/catalog/*.json text eol=lf
+market/skills.v1.json text eol=lf
 packages/dsh-zhen/skills/*/SKILL.md text eol=lf
 packages/dsh-zhen/skills/*/manifest.json text eol=lf

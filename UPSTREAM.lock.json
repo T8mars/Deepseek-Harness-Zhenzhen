@@ -1485,6 +1485,13 @@
         "passed": 481,
         "failure": "C26 APP_CONNECTION_FAILED; reproduced idle transport issue addressed in0069",
         "publicationStepsExecuted": false
+      },
+      "buildPurityIssue": {
+        "observedRun": 39538106897,
+        "sourceDirty": true,
+        "reason": "Generated public feed autocrlf conversion state; tracked and built bytes identical",
+        "fixDecision": "0070",
+        "actualCleanPreviewVerified": false
       }
     },
     "canvasIdleTransport": {
@@ -1518,6 +1525,25 @@
       "ownSchema": 3,
       "ownRowsPreserved": true,
       "nativePairingRechecked": false
+    },
+    "generatedFeedCleanBuild": {
+      "decision": "0070",
+      "contract": "C75",
+      "targetedTests": 1,
+      "exactPath": "market/skills.v1.json",
+      "eol": "lf",
+      "realCleanCloneReproduced": true,
+      "firstStatusRegressionPassed": true,
+      "cleanGateRelaxed": false,
+      "modelRequests": 0,
+      "nativeWrites": 0,
+      "verification": "Two actual clean GitHub clones reproduce a clean npm-ci followed by market/skills.v1.json M after build: autocrlf checkout has246CRLF, generated LF is byte-identical to Git blob and semantically identical, diff numstat empty. C75 invokes actual buildSkillCatalog in real autocrlf Git clone; original first status fails, narrow LF attribute passes without a preliminary diff refresh. No publisher clean gate bypass, feed content, upstream or app code change. Full/package/current CI/clean preview separately verified. Full487/487 and canonical legacy pack match the actual installed0069 archive exactly; no app reinstall/restart. Current CI and clean preview separately checked after backup.",
+      "localTests": 487,
+      "localPassed": 487,
+      "packageFiles": 152,
+      "localPackageSha256": "a0f861ccb800f0e09908cc3e3c6a1295286d1b39c7dbe964e26eef5b9d769443",
+      "byteIdenticalToInstalled0069Archive": true,
+      "reinstallOrRestartPerformed": false
     }
   }
 }

@@ -143,3 +143,5 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 - C73：发布器沿用C72确认的官方Git市场来源；通过实际SDK校验稳定空索引及多版本canary索引。服务端run_attempt/job字段实际只读核对，事务API桩覆盖发布和恢复，但不冒充真实写入/Pages证明。写任务只用内置模块/受控Git，不调用SDK或候选程序；新安装依赖只在读取权限任务执行。
 
 - C74：原始CLI公开requestAgentControl options.fetch在固定快照中由真实HTTP请求验证；DSH仅注入本机GET/POST JSON一次性HTTP传输（agent:false，发现选项同样转发），原始握手/凭据/响应检查仍由CLI负责。保留原始快照hash；真实DPAPI/MCP合同继续运行。阻塞后原实现连接失败与修复后成功、已受理POST丢响应无重发分别有回归，不证明实际用户Native窗口已验收。
+
+- C75：自有buildSkillCatalog的公共feed在autocrlf Git新检出后必须第一次status就干净。真实Git clone/生产生成器验证精确LF属性，不能先git diff刷新后才宣称来源干净。没有改变上游或市场格式/内容。

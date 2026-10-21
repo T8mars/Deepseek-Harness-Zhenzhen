@@ -236,6 +236,11 @@
       "status": "in-progress",
       "verification": "C74 four actual HTTP regressions cover real default idle expiry plus event-loop block, fresh discovery/control sockets despite stale shared fetch pool, UTF8 POST/auth/method preservation, one accepted-but-lost POST, no redirect following, original256KiB response limit and abort before/during body. CanvasBridge injects a builtin loopback GET/POST JSON transport through original public fetch/discoveryOptions.fetch hooks; Node http.request agent:false creates one-use sockets, Connection:close/identity encoding, no retry. Original CLI owns exact handshake, native credentials and protocol parsing. C74+C25+C26 nine tests and clean typecheck pass, including original Windows DPAPI and actual published MCP. Native installed3.3.7 public JS option signatures read-only verified; no native file/config/runtime writes. Final full/activation/CI/preview remain separate. Final full486/486 and canonical legacy checkout pack agree; actual152-file package replacement/uninstall complete baseline passes. Own running DSH updated through public CLI; all152 installed bytes, public settings hash, own schema3/seven-table row counts/quick_check, art, config and migration backup preserved. No Native pairing check or approval; new CI/preview separately checked after backup.",
       "nativeWrites": 0
+    },
+    {
+      "id": "generated-feed-clean-build",
+      "status": "in-progress",
+      "verification": "Two actual clean GitHub clones reproduce a clean npm-ci followed by market/skills.v1.json M after build: autocrlf checkout has246CRLF, generated LF is byte-identical to Git blob and semantically identical, diff numstat empty. C75 invokes actual buildSkillCatalog in real autocrlf Git clone; original first status fails, narrow LF attribute passes without a preliminary diff refresh. No publisher clean gate bypass, feed content, upstream or app code change. Full/package/current CI/clean preview separately verified. Full487/487 and canonical legacy pack match the actual installed0069 archive exactly; no app reinstall/restart. Current CI and clean preview separately checked after backup."
     }
   ]
 }
