@@ -36,7 +36,7 @@ import type { GithubAccessInfo } from './github-access-schema.ts';
 import type { MarketItem, SkillPackage, SkillAutoPolicy } from './market-schema.ts';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, join } from 'node:path';
 import * as mcpClient from '@deepseek-ai/dsh-mcp-client';
 import { CanvasBridge, inspectCanvasCli, safeCanvasError } from './canvas.ts';
 import type { CanvasConfig, CanvasConnection } from './canvas.ts';
@@ -139,6 +139,7 @@ export default class ZhenService extends TypertRemoteService {
   static inject: string[] = ['credentials'];
   private knowledgeStore?: KnowledgeStore;
   private readonly knowledgeFile=dshHomePath('dsh-zhen','knowledge.sqlite');
+  private readonly mcpHome=dshHomePath('dsh-zhen','mcp');
   private readonly rag:ZhenRag;
   private skillMarket?: SkillMarket;
   private skillFeed?: SkillFeed;
@@ -262,9 +263,10 @@ export default class ZhenService extends TypertRemoteService {
     });
     const service = this;
     ctx.on('llm/stream', async function* (options, next) {
-      const file = dshHomePath('dsh-zhen', 'knowledge.sqlite');
-      const ragGrants = !!options.sessionId && existsSync(file) && service.knowledge().hasSessionGrants(options.sessionId);
-      const mcpGrants = !!options.sessionId && existsSync(dshHomePath('dsh-zhen', 'mcp', 'session-grants.sqlite')) && service.mcps().hasSessionGrants(options.sessionId);
+      // Existing handles remain authoritative even if ambient home or the path
+      // changes. Cold discovery uses the same fixed path as its service owner.
+      const ragGrants = !!options.sessionId && (!!service.knowledgeStore || existsSync(service.knowledgeFile)) && service.knowledge().hasSessionGrants(options.sessionId);
+      const mcpGrants = !!options.sessionId && (!!service.mcpMarket || existsSync(join(service.mcpHome,'session-grants.sqlite'))) && service.mcps().hasSessionGrants(options.sessionId);
       if (options.sessionId && (ragGrants || mcpGrants)) {
         const agent = ctx.get('agents')?.get(options.sessionId);
         const workingDirectory = ctx.get('workingDirectory');
@@ -314,7 +316,7 @@ export default class ZhenService extends TypertRemoteService {
   async gatewayCatalogCheck(): Promise<CapabilityCheck> { return this.capabilityUpdates().check(this.mcpOperations.signal); }
   @Remote
   gatewayCatalogAutomatic(enabled: boolean): void { this.capabilityUpdates().setAutomatic(enabled); }
-  private mcps(): McpMarket { return this.mcpMarket ??= new McpMarket(dshHomePath('dsh-zhen', 'mcp')); }
+  private mcps(): McpMarket { return this.mcpMarket ??= new McpMarket(this.mcpHome); }
   @Remote
   mcpSnapshot(): McpMarketView {
     const snapshot = this.mcps().snapshot();

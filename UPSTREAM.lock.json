@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T21:27:33.866Z",
+  "checkedAt": "2026-10-21T21:47:55.004Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1914,6 +1914,18 @@
       "localPassed": 760,
       "packageFiles": 172,
       "localPackageSha256": "fa0a64e5ef1fcfd0b7b7c354a11508c491591a696b2ffb3e3e16976e3e5d480f"
+    },
+    "homeBoundGrantGates": {
+      "status": "implemented",
+      "targetedTests": 12,
+      "relatedTests": 46,
+      "fullRegressionPending": false,
+      "source": "fixed own Host knowledge/MCP paths and existing handle, public llm/stream hook",
+      "verification": "C98 adds12 actual published LlmRuntime/own ZhenService TEMP contracts; C98 with RAG/MCP/backup neighbors passes46/46. The previous production build reproduces8 failures when ambient DSH_HOME drifts after Host construction: revoked RAG and historical MCP grants can be skipped. Both cold and existing-service discovery now use the same fixed Host paths as their respective owners, and existing handles remain authoritative even when filesystem presence checks change. RAG and MCP each cover cold/warm and direct/already-prepared streams, block old denied grants before the synthetic adapter, preserve valid-current grants, and allow fresh grant-free sessions. Prepared calls are single-use; an initial post-fix fixture reused its consumed prepared call for a positive control and was corrected to a new direct control, leaving production dispatch rules unchanged. On actual local Windows, both attempted open-ledger renames are refused by the OS; tests record ledgerMoved=false, not a simulated missing-path proof. No source/schema/grant/session/credential format changes, new Remote, native writes, real network/model requests or user-app reinstall/restart. Only own service path discovery and the existing public stream boundary change. Complete application restore/preview/activation/UI and all original scope remain incomplete. Complete regression/archive/exact CI separately required. Complete772/772 and172-file archive pass C63 legacy-checkout packing, C76 actual two-version build/install/launcher full-payload checks, C97 own RAG restoration, and C98 fixed-origin grant gates; exact current CI is separately required.",
+      "localTests": 772,
+      "localPassed": 772,
+      "packageFiles": 172,
+      "localPackageSha256": "0e74ca0c8f65ad78701bbcb55d0d4beac9fbd8642fa6cfed99783f3d1f5788bf"
     }
   }
 }

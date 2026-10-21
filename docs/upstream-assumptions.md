@@ -183,3 +183,6 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 
 
 0086/C97：公开Cordis Context装配的自有ZhenService提供Host-only ragBackupLease，未新增Remote或上游协议。Node22.19公开node:sqlite backup/DatabaseSync实际TEMP验证可从自有现存或readonly handle创建一致副本；同handle total_changes与跨handle data_version需同时守住。readonly来源不调用KnowledgeStore构造迁移，公开入口独立bundle的Error类可能不同，只映射固定自有代码而不透传未知消息。恢复只执行自有已知schema与参数化数据插入，未执行归档SQLite/schema/trigger/provider。外部SDK源码不改，配置/会话/凭据/画布私有布局不读写。
+
+
+0087/C98：公开LlmRuntime的普通stream与prepareCall捕获适配器后的stream仍执行当前llm/stream hook；prepared对象只能提交一次（包括已被拒绝的提交），正向对照不重用。自有服务生命周期内的授权句柄与Host启动路径是同一来源，不得在最终检查时独立重读环境默认目录来决定跳过它。cold/warm、RAG/MCP与正负对照均由实际公开SDK验证；Windows打开库改名实际拒绝，仅按OS事实记录，不伪造路径移走。

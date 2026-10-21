@@ -1,5 +1,7 @@
 # DSH-zhen · 交接文档（给接手实现的 AGENT）
 
+> 2026-10-22检查点0087：0087修复Host环境数据目录变化导致RAG/MCP旧授权检查被跳过：固定同源目录，优先现有句柄，普通和预先准备的调用都保持撤权。新12/相邻46/46，原8个失败场景已修；有效授权/新会话继续正常。Windows拒绝打开库改名，未冒充路径已消失实测。完整772/772与172文件归档通过，精确CI另验。全部恢复和预览激活UI/fullM2及原目标仍未完成。见`docs/decisions/0087-home-bound-grant-gates.md`。
+
 > 2026-10-22检查点0086：0086新增RAG加密备份与独立恢复候选：六逻辑表/派生FTS重建，引用ID/页码/权限与绑定高水位保留；原件标明一致/变化/缺失，运行与磁盘后端设置分存，不激活。Host未打开的自有schema3库只读捕获，不建库或迁移；保留跨组件尾部来源检查。新增23/相邻44/44通过；完整760/760与172文件归档通过，精确CI另验。目录重绑定、依赖/其他状态恢复、总预览激活UI及fullM2仍未完成。见`docs/decisions/0086-rag-backup-restore.md`。
 
 > 2026-10-22检查点0085：0085新增完整认证后的配置恢复候选：公开SDK生成全部profile manifest，自有JSON overlay保留profile→machine→active覆盖和表达式；独立DSH/Agents home、安全来源名映射，Desktop保留为专用入口，兼容grant待迁移。新增17/相邻31/31及实际CLI夹具导出启动通过；完整737/737与170文件归档通过，精确CI另验。依赖实体/包管理器/DB/RAG和总预览激活UI/fullM2仍未完成。见`docs/decisions/0085-profile-restore-candidates.md`。
