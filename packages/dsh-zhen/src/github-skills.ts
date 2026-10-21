@@ -136,6 +136,21 @@ export class GithubSkills {
       return { ...structuredClone(source), running, skills };
     });
   }
+  /** Read all retained immutable releases, including unapproved or forgotten
+   * sources. Does not construct another Host or activate pending updates. */
+  backupState(): {schemaVersion:1;sources:GithubSkillSource[];running:Array<{id:string;digest:string}>;releases:Array<{root:string;release:GithubSkillRelease}>} {
+    if(this.closed||this.busy)throw new GithubSkillError('技能资源操作进行中或服务已关闭，请稍后备份。');this.reload();
+    const before=this.serialized,releases:Array<{root:string;release:GithubSkillRelease}>=[],parent=this.owned(join(this.root,'releases'));let metadataBytes=0;
+    if(existsSync(parent)){
+      const ids=readdirSync(parent).sort();if(ids.length>1024)throw new GithubSkillError('技能保留来源过多。');
+      for(const id of ids){if(!/^[a-f0-9]{64}$/.test(id)||!lstatSync(this.owned(join(parent,id))).isDirectory())throw new GithubSkillError('技能保留来源无效。');
+        const digests=readdirSync(this.owned(join(parent,id))).sort();if(digests.length>20)throw new GithubSkillError('技能保留版本过多。');
+        for(const digest of digests){const root=this.releaseRoot(id,digest),manifest=lstatSync(this.owned(join(root,'manifest.json')));if(!manifest.isFile())throw new GithubSkillError('技能版本清单无效。');metadataBytes+=manifest.size;if(releases.length>=1024||metadataBytes>64*1024**2)throw new GithubSkillError('技能备份清单过大。');releases.push({root,release:this.verify(id,digest)});}
+      }
+    }
+    this.reload();if(this.serialized!==before)throw new GithubSkillError('技能来源已变化，请重新备份。');
+    return structuredClone({schemaVersion:1,sources:this.sources,running:[...this.mounted].map(([id,digest])=>({id,digest})),releases});
+  }
   history(id: string): GithubSkillSummary[] {
     if (!/^[a-f0-9]{64}$/.test(id)) throw new GithubSkillError('技能来源标识无效。');
     const path = this.owned(join(this.root, 'releases', id)); if (!existsSync(path)) return [];

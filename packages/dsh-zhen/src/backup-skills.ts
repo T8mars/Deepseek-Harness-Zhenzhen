@@ -8,7 +8,7 @@ import {BackupError,DEFAULT_BACKUP_LIMITS,openBackupArchive,writeBackupArchive} 
 import type {BackupOptions,BackupRecord,BackupReceipt} from './backup-archive.ts';
 import {backupJsonString,parseBackupJson} from './backup-data.ts';
 
-const SCHEMA='dsh-zhen-skill-roots-v1',MAX_ROOTS=128,MAX_ENTRIES=80_000,MAX_MANIFEST=32*1024**2,CHUNK=64*1024;
+const SCHEMA='dsh-zhen-skill-roots-v1',MAX_ROOTS=1024,MAX_ENTRIES=80_000,MAX_MANIFEST=32*1024**2,CHUNK=64*1024;
 export interface SkillBackupRoot {
   key:string;path:string;kind:'user-dsh'|'user-agents'|'project-dsh'|'project-agents'|'custom';
   mode:'skill'|'library';enabled:boolean;workspace?:string;provenance?:Record<string,unknown>;
@@ -124,10 +124,17 @@ async function writeAll(file:FileHandle,bytes:Uint8Array){let offset=0;while(off
 export interface SkillRestoreCandidate {schema:typeof SCHEMA;root:string;roots:Array<{origin:SkillBackupRoot;restoredPath:string;present:boolean}>;files:number;activated:false;}
 /** Authentication is complete before a new candidate is created. No skill is installed or run. */
 export async function restoreSkillBackup(source:string,password:string,parentDirectory:string,options:BackupOptions={}):Promise<SkillRestoreCandidate>{
-  if(!isAbsolute(parentDirectory))throw new BackupError('BACKUP_PATH_INVALID');const parent=await realpath(parentDirectory),archive=await openBackupArchive(source,password,options);let root:string|undefined,complete=false;
+  if(!isAbsolute(parentDirectory))throw new BackupError('BACKUP_PATH_INVALID');const archive=await openBackupArchive(source,password,options);
+  try{return await restoreAuthenticatedSkillRecords(archive.records(),parentDirectory,options);}finally{await archive.close();}
+}
+/** Internal composition seam. Public restore entry points authenticate the full
+ * archive before passing any records here. Not exported from dsh-zhen/backup. */
+export async function restoreAuthenticatedSkillRecords(records:AsyncGenerator<BackupRecord>,parentDirectory:string,options:BackupOptions={},expectedRoots?:readonly SkillBackupRoot[]):Promise<SkillRestoreCandidate>{
+  if(!isAbsolute(parentDirectory))throw new BackupError('BACKUP_PATH_INVALID');const parent=await realpath(parentDirectory);let root:string|undefined,complete=false;
   try{
-    const records=archive.records(),first=await records.next();if(first.done||first.value.metadata.kind!=='skill-manifest'||first.value.metadata.schema!==SCHEMA||Object.keys(first.value.metadata).length!==2||first.value.size>MAX_MANIFEST)throw new BackupError('BACKUP_SKILL_MANIFEST_INVALID');
+    const first=await records.next();if(first.done||first.value.metadata.kind!=='skill-manifest'||first.value.metadata.schema!==SCHEMA||Object.keys(first.value.metadata).length!==2||first.value.size>MAX_MANIFEST)throw new BackupError('BACKUP_SKILL_MANIFEST_INVALID');
     const parts:Uint8Array[]=[];for await(const bytes of first.value.data)parts.push(bytes);const manifest=manifestSchema.parse(parseBackupJson(Buffer.concat(parts,first.value.size)));
+    if(expectedRoots&&backupJsonString(manifest.roots.map(({canonicalRoot:_canonical,excludedMetadata:_excluded,present:_present,...value})=>rootSchema.parse(value)))!==backupJsonString(expectedRoots.map(value=>rootSchema.parse(value))))throw new BackupError('BACKUP_SKILL_INVENTORY_ROOTS_MISMATCH');
     const keys=new Set<string>(),paths=new Set<string>(),nodePaths=new Map<string,'directory'|'file'>();
     for(const selected of manifest.roots){
       const absolute=(path:string)=>posix.isAbsolute(path)||win32.isAbsolute(path),excluded=selected.kind==='user-dsh'?['.git','.system']:['.git'];
@@ -155,5 +162,5 @@ export async function restoreSkillBackup(source:string,password:string,parentDir
     if(expected.size)throw new BackupError('BACKUP_SKILL_FILE_MISSING');options.signal?.throwIfAborted();
     await writeFile(join(root,'dsh-zhen-skill-restore.json'),backupJsonString(manifest)+'\n',{flag:'wx',mode:0o600});
     const result:SkillRestoreCandidate={schema:SCHEMA,root,roots:manifest.roots.map(({canonicalRoot:_canonical,excludedMetadata:_excluded,present,...selected},index)=>({origin:selected,restoredPath:rootPath(index),present})),files,activated:false};complete=true;return result;
-  }finally{try{await archive.close();}finally{if(root&&!complete){const actual=await realpath(root),part=relative(parent,actual);if(!part||isAbsolute(part)||part.startsWith('..')||/[\\/]/.test(part)||!part.startsWith('dsh-zhen-skill-restore-'))throw new BackupError('BACKUP_TEMP_BOUNDARY');await rm(actual,{recursive:true,force:true,maxRetries:3,retryDelay:100});}}}
+  }finally{if(root&&!complete){const actual=await realpath(root),part=relative(parent,actual);if(!part||isAbsolute(part)||part.startsWith('..')||/[\\/]/.test(part)||!part.startsWith('dsh-zhen-skill-restore-'))throw new BackupError('BACKUP_TEMP_BOUNDARY');await rm(actual,{recursive:true,force:true,maxRetries:3,retryDelay:100});}}
 }

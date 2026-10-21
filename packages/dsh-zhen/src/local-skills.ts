@@ -155,6 +155,12 @@ export class LocalSkills {
     this.syncWatches(watches); return views;
   }
   async list(): Promise<LocalSkillView[]> { const views = await this.collect(); if (!views) throw new Error('目录状态已变化，请刷新。'); return views; }
+  /** Host backup inventory includes disabled and unavailable roots, without a
+   * provider winner filter, resource scan, watcher change or activation. */
+  backupState(): {schemaVersion:1;sources:LocalSkillRecord[]} {
+    if(this.closed)throw new Error('技能来源服务已关闭。');this.reload();
+    return {schemaVersion:1,sources:structuredClone(this.sources)};
+  }
   provider(): SkillProvider {
     return { name: 'dsh-zhen-local-skills',
       list: async options => {

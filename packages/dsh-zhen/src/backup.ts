@@ -6,3 +6,5 @@ export {profileBackupRecords,writeProfileBackup,readProfileBackup} from './backu
 export type {ProfileBackupSource,ProfileBackupDocument} from './backup-profiles.ts';
 export {skillBackupRecords,writeSkillBackup,restoreSkillBackup,assertSkillResourcePath} from './backup-skills.ts';
 export type {SkillBackupRoot,SkillBackupSelection,SkillRestoreCandidate} from './backup-skills.ts';
+export {collectSkillBackupInventory,resolveSkillFilesystem,skillInventoryBackupRecords,writeSkillInventoryBackup,restoreSkillInventoryBackup} from './backup-skill-inventory.ts';
+export type {SkillInventorySource,SkillBackupInventory} from './backup-skill-inventory.ts';

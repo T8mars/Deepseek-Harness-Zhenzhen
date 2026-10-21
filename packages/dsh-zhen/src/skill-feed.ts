@@ -45,6 +45,13 @@ export class SkillFeed {
     catch { this.status = { ...this.status, state: 'error', message: '目录已校验，但自动安排未完成，当前技能保留。可重新检查或手动选择。' }; }
   }
   snapshot(): SkillFeedSnapshot { return { ...this.status }; }
+  /** Capture the running Host's exact offline candidates; never fetch or stage. */
+  backupState(): {status:SkillFeedSnapshot;catalog:SkillPackage[];persisted:{present:boolean;cache?:{status:SkillFeedSnapshot;catalog:SkillPackage[]}}} {
+    if(this.pending)throw new Error('技能目录检查进行中，请稍后备份。');
+    const present=existsSync(this.filename);let cache;
+    if(present){if(statSync(this.filename).size>MAX_BYTES)throw new Error('技能目录备份过大。');cache=cacheSchema.parse(JSON.parse(readFileSync(this.filename,'utf8')));}
+    return structuredClone({status:this.status,catalog:this.catalog,persisted:{present,...cache?{cache}:{}}});
+  }
   private save(status: SkillFeedSnapshot, catalog = this.catalog): void {
     const content = JSON.stringify({ status, catalog }) + '\n';
     if (Buffer.byteLength(content) > MAX_BYTES) throw new Error('Skill cache limit.');

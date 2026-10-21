@@ -27,6 +27,13 @@ export function readBundledCatalog(): SkillPackage[] {
 }
 
 type Selection = { id: string; active: string; pending: string; enabled: number; pending_mode: '' | 'manual' | 'automatic'; pending_revision: string; auto_paused: number; skipped: string };
+export interface MarketBackupState {
+  schemaVersion:3;
+  versions:Array<{key:string;package:SkillPackage}>;
+  selections:Selection[];
+  preferences:{id:number;enabled:number;scope:string;verified_revision:string;verified_digest:string};
+  bundled:SkillPackage[];catalog:SkillPackage[];
+}
 
 function compareVersion(left: string, right: string): number {
   const a = left.split('.').map(value => BigInt(value));
@@ -104,6 +111,23 @@ export class SkillMarket {
     } catch (error) { this.db.exec('ROLLBACK'); this.db.close(); throw error; }
   }
   close(): void { this.listeners.clear(); this.db.close(); }
+  /** A read transaction over every retained version, including records hidden
+   * by UI history limits. No startup activation or update staging occurs. */
+  backupState(): MarketBackupState {
+    this.db.exec('BEGIN');
+    try {
+      for(const table of ['versions','selections'])if((this.db.prepare('SELECT COUNT(*) AS count FROM '+table).get() as {count:number}).count>40000)throw new Error('技能备份记录过多。');
+      if((this.db.prepare('SELECT COALESCE(SUM(length(CAST(package AS BLOB))),0) AS bytes FROM versions').get() as {bytes:number}).bytes>64*1024**2)throw new Error('技能备份正文过大。');
+      const versions=(this.db.prepare('SELECT digest,id,version,package FROM versions ORDER BY rowid').all() as Array<{digest:string;id:string;version:string;package:string}>).map(row=>{
+        const item=verifySkill(JSON.parse(row.package));if(versionKey(item)!==row.digest||item.manifest.id!==row.id||item.manifest.version!==row.version)throw new Error('技能版本记录已变化。');return {key:row.digest,package:item};
+      });
+      const selections=(this.db.prepare('SELECT * FROM selections ORDER BY rowid').all() as Selection[]).map(row=>({...row}));
+      const preferences=this.db.prepare('SELECT * FROM update_preferences WHERE id=1').get() as MarketBackupState['preferences']|undefined;
+      if(!preferences)throw new Error('技能更新策略不可读取。');
+      const state:MarketBackupState={schemaVersion:3,versions,selections,preferences:{...preferences},bundled:[...this.bundled.values()].map(verifySkill),catalog:[...this.catalog.values()].map(verifySkill)};
+      this.db.exec('COMMIT');return structuredClone(state);
+    }catch(error){this.db.exec('ROLLBACK');throw error;}
+  }
   subscribe(listener: () => void): () => void { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   private changed(): void { for (const listener of this.listeners) listener(); }
   private selected(id: string): Selection | undefined { return this.db.prepare('SELECT * FROM selections WHERE id=?').get(id) as Selection | undefined; }

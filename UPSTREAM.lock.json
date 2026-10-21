@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T14:09:47.332Z",
+  "checkedAt": "2026-10-21T19:19:51.420Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1827,6 +1827,28 @@
       "localPassed": 662,
       "packageFiles": 166,
       "localPackageSha256": "764354bf25ab47598aa82bb072f00149098240ae6248ee68f50df434d5af4181"
+    },
+    "completeSkillInventoryBackup": {
+      "decision": "0082",
+      "export": "dsh-zhen/backup",
+      "filesystemSdk": "0.2.1-rc.2",
+      "schema": "dsh-zhen-skill-inventory-v1",
+      "maximumRoots": 1024,
+      "maximumStateBytes": 67108864,
+      "liveHostSourceCollection": false,
+      "databaseRestoreImplemented": false,
+      "activatesSources": false,
+      "credentialStoresIncluded": false,
+      "fullM2Complete": false,
+      "targetedTests": 28,
+      "targetedPassed": 28,
+      "relatedPassed": 62,
+      "fullRegressionPending": false,
+      "verification": "Decision0082 adds readonly backupState APIs to four own skill services and a composed encrypted inventory/resource candidate. C93 adds28 actual published filesystem-provider plus real own-service TEMP contracts; C91/C92/C93 pass62/62. Host-declared effective filesystem settings preserve project/custom/user/bundled roots, order and scope; duplicate workspaces merge, no-marker and nearest marker-file roots match published provider observations. Disabled/missing local sources, all retained/unapproved/orphan GitHub releases, market history beyond50, union catalog beyond100, personal forks, update policies and persisted/live feed state remain recoverable. 130 SDK roots are not truncated. Source/config/protected-policy mutation refuses publication; full archive authentication and both root lists are verified before candidate creation, while composition-tail cancellation cleans its own fresh directory. State JSON persists alongside resources without installing, trusting, activating or executing sources. Tests use actual Git-computed fixture responses, not real network/Native/user databases/credentials. Limits are1024 roots and64MiB state. Complete actual Host source collection, database/config restore, RAG, total preview/activation and UI/full M2/L2 remain incomplete. Full regression/archive/exact CI separately required. The first689/689 complete run is retained. A real own-cache probe with65 padded1MiB manifests and valid copied fixture resources first exposes missing cumulative metadata preflight. The source reader now refuses over64MiB or1024 releases before later payload verification; final full regression is required after this fix. Complete690/690 and167-file archive pass C63 legacy-checkout packing and C76 actual two-version build/install/launcher full-payload checks; exact current CI is separately required.",
+      "localTests": 690,
+      "localPassed": 690,
+      "packageFiles": 167,
+      "localPackageSha256": "ac006d918d9a0b1c55c85a6254d43757de5388c93bfd899384e11f98c6c12108"
     }
   }
 }
