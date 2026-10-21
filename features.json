@@ -206,6 +206,12 @@
       "status": "in-progress",
       "verification": "C69 compiles actual production Knowledge and drives handlers with fake hooks/EXAMPLE data: duplicate submission, full/partial import drafts, stale API results/busy, old create without dependent index, stale citation without clipboard, late binding versus edited workspace/new bind, project clear, source close ignoring late success/error. Initial corrected fixture reproduces four product failures out of five; final ten plus build/typeclean pass. Not DOM/browser/system clipboard or Host authorization/index/ranking changes; accepted work is not cancelled or retried. Full425/425, final151-file archive and public-CLI TEMP previous-package replacement/baseline uninstall pass. Same archive activated in own real DSH; installed bytes, settings, art and own index metadata preserved. Default browser opening was requested through official CLI; actual visual/system clipboard and current commit CI remain separate.",
       "browserVerified": false
+    },
+    {
+      "id": "market-client-operation-scope",
+      "status": "in-progress",
+      "verification": "C70 compiles five actual production components and drives handlers using fake hooks/EXAMPLE DTOs: API replacement, stale metadata/continuations, synchronous double-submit prevention, detail close and fork-draft preservation, MCP consent reset, GitHub cancellation scope, exact current install/trust identity and normal removal. Initial fifteen reproduce failures; final eighteen pass. A positive-test object-alias fixture was corrected to emulate serialized Remote snapshots, not treated as a production defect. Build/typeclean pass; full check/package/current CI separate. Accepted Host work is not cancelled or retried; no browser, program execution/download, Native write or real-model claim. Full443/443, final152-file archive and public-CLI TEMP previous-package replacement/baseline uninstall pass. Same archive activated in own real DSH; installed bytes, settings, art and own index metadata preserved. Default browser opening was requested through official CLI; actual visual/system clipboard and current commit CI remain separate.",
+      "browserVerified": false
     }
   ]
 }

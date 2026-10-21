@@ -134,3 +134,8 @@ choices survived. TEMP data and processes were removed. Run
 `node scripts/smoke-skill-public-host.mjs --baseline <old-sha> --expected-commit <main-sha> --out-name <new-name.json>`
 for distinct evidence. The test uses an isolated Host service/registry, not the
 user browser or a physical Gateway connection; private Bearer remains unverified.
+
+
+## 连接切换与操作状态
+
+技能市场及本机/GitHub技能面板在连接变化时清除旧详情、信任及来源输入。快速双击只发起一次操作，旧结果不再覆盖新状态或继续依赖操作；请核对原连接中已受理的工作，不会自动重试。关闭详情不会被迟到预览重开；另存时继续编辑的新草稿会保留。GitHub技能仅实际下载期间提供停止按钮。 处理器合同见[0065](decisions/0065-market-client-scope.md)；真实浏览器仍需另验。

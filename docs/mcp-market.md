@@ -150,3 +150,8 @@ unverified and refuses its restoration. Temporary data/processes are removed.
 No model, credentials, paid API, Native changes or browser UI are involved.
 Full check334/334 passes. Use --out-name <new-name.json> for a distinct local
 evidence file; the script refuses to overwrite existing evidence.
+
+
+## 连接切换与操作状态
+
+连接切换后清除旧程序维护确认和项目输入，必须在新连接重新审阅。快速双击不重复维护/启用；旧完成结果不能回填或解锁新操作。已经在Host受理的维护不会被此界面保护取消，请检查原处状态；没有自动重试或自动提高信任。 处理器合同见[0065](decisions/0065-market-client-scope.md)；真实浏览器仍需另验。

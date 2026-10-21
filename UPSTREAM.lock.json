@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-20T23:59:12.428Z",
+  "checkedAt": "2026-10-21T00:24:50.693Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1366,6 +1366,39 @@
       "localPassed": 425,
       "packageFiles": 151,
       "localPackageSha256": "e8fbf16771dc3c555298ad5151e08543ec4a2201d2786288af3d9f817d5a7436",
+      "actualUserHostUpdated": true,
+      "ownIndexMetadataPreserved": true,
+      "reinstallOrRestartPerformed": true
+    },
+    "marketClientScope": {
+      "decision": "0065",
+      "contract": "C70",
+      "targetedTests": 18,
+      "panels": [
+        "Market",
+        "LocalSkills",
+        "GithubSkills",
+        "McpMarket",
+        "Updates"
+      ],
+      "apiAndActionEpoch": true,
+      "synchronousDuplicateSubmissionGuard": true,
+      "oldConsentCleared": true,
+      "staleDependentForgetBlocked": true,
+      "staleAutomaticSnapshotBlocked": true,
+      "initialMetadataCannotRegressActions": true,
+      "closeInvalidatesPreview": true,
+      "forkDraftPreserved": true,
+      "cancelOnlyDuringDownload": true,
+      "hostPermissionOrUpdatePolicyChanged": false,
+      "nativeWrites": 0,
+      "modelRequests": 0,
+      "browserVerified": false,
+      "verification": "C70 compiles five actual production components and drives handlers using fake hooks/EXAMPLE DTOs: API replacement, stale metadata/continuations, synchronous double-submit prevention, detail close and fork-draft preservation, MCP consent reset, GitHub cancellation scope, exact current install/trust identity and normal removal. Initial fifteen reproduce failures; final eighteen pass. A positive-test object-alias fixture was corrected to emulate serialized Remote snapshots, not treated as a production defect. Build/typeclean pass; full check/package/current CI separate. Accepted Host work is not cancelled or retried; no browser, program execution/download, Native write or real-model claim.",
+      "localTests": 443,
+      "localPassed": 443,
+      "packageFiles": 152,
+      "localPackageSha256": "ded8a86a6e20d7bb8e7ce478d02daad0b5f1d1cd5fc668f5736b13f703ea1909",
       "actualUserHostUpdated": true,
       "ownIndexMetadataPreserved": true,
       "reinstallOrRestartPerformed": true
