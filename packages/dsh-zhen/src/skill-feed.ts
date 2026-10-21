@@ -23,7 +23,8 @@ export class SkillFeed {
   private status: SkillFeedSnapshot = { source: SOURCE, automatic: true, checkedAt: '', revision: '', state: 'idle', count: 0, message: '内置技能可离线使用；远端目录尚未检查。' };
   private catalog: SkillPackage[] = [];
   private pending?: Promise<SkillFeedSnapshot>;
-  constructor(private readonly filename: string, private readonly market: SkillMarket, private readonly fetcher: typeof fetch = fetch, private readonly github?: GithubAccess) {
+  constructor(private readonly filename: string, private readonly market: SkillMarket, private readonly fetcher: typeof fetch = fetch, private readonly github?: GithubAccess,options?:{candidateState:ReturnType<SkillFeed['backupState']>}) {
+    if(options){const live=cacheSchema.parse({status:options.candidateState.status,catalog:options.candidateState.catalog});if(live.status.count!==live.catalog.length)throw Error('Invalid restored feed.');this.status=structuredClone(live.status);this.catalog=structuredClone(live.catalog);return;}
     if (!existsSync(filename)) return;
     try {
       if (statSync(filename).size > MAX_BYTES) throw new Error();

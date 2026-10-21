@@ -54,6 +54,7 @@ function verifyTree(entries: TreeEntry[], expected: string, recursive: boolean):
  */
 export class GithubSkills {
   private readonly root: string;
+  private readonly rootIdentity:string;
   private sources: GithubSkillSource[] = [];
   private serialized = '';
   private readonly listeners = new Set<() => void>();
@@ -62,9 +63,11 @@ export class GithubSkills {
   private closed = false;
   private readonly lifetime = new AbortController();
   private downloading?: AbortController;
-  constructor(root: string, private readonly fetcher: typeof fetch = fetch) {
+  constructor(root: string, private readonly fetcher: typeof fetch = fetch,options:{candidate?:boolean}={}) {
     mkdirSync(root, { recursive: true }); this.root = realpathSync.native(root);
+    const initial=lstatSync(this.root,{bigint:true});this.rootIdentity=initial.dev+':'+initial.ino;
     this.reload();
+    if(options.candidate)return;
     let changed = false;
     for (const source of this.sources) if (source.pending) {
       try { this.verify(source.id, source.pending); if (source.enabled) source.active = source.pending; }
@@ -138,9 +141,10 @@ export class GithubSkills {
   }
   /** Read all retained immutable releases, including unapproved or forgotten
    * sources. Does not construct another Host or activate pending updates. */
-  backupState(): {schemaVersion:1;sources:GithubSkillSource[];running:Array<{id:string;digest:string}>;releases:Array<{root:string;release:GithubSkillRelease}>} {
-    if(this.closed||this.busy)throw new GithubSkillError('技能资源操作进行中或服务已关闭，请稍后备份。');this.reload();
-    const before=this.serialized,releases:Array<{root:string;release:GithubSkillRelease}>=[],parent=this.owned(join(this.root,'releases'));let metadataBytes=0;
+  backupState(): {schemaVersion:1;root:string;statePresent:boolean;sources:GithubSkillSource[];running:Array<{id:string;digest:string}>;releases:Array<{root:string;release:GithubSkillRelease}>} {
+    if(this.closed||this.busy)throw new GithubSkillError('技能资源操作进行中或服务已关闭，请稍后备份。');
+    const rootCurrent=()=>{const info=lstatSync(this.root,{bigint:true});if(info.isSymbolicLink()||!info.isDirectory()||info.dev+':'+info.ino!==this.rootIdentity)throw new GithubSkillError('技能缓存根已变化。');};rootCurrent();this.reload();
+    const before=this.serialized,statePresent=existsSync(this.stateFile),releases:Array<{root:string;release:GithubSkillRelease}>=[],parent=this.owned(join(this.root,'releases'));let metadataBytes=0;
     if(existsSync(parent)){
       const ids=readdirSync(parent).sort();if(ids.length>1024)throw new GithubSkillError('技能保留来源过多。');
       for(const id of ids){if(!/^[a-f0-9]{64}$/.test(id)||!lstatSync(this.owned(join(parent,id))).isDirectory())throw new GithubSkillError('技能保留来源无效。');
@@ -148,8 +152,8 @@ export class GithubSkills {
         for(const digest of digests){const root=this.releaseRoot(id,digest),manifest=lstatSync(this.owned(join(root,'manifest.json')));if(!manifest.isFile())throw new GithubSkillError('技能版本清单无效。');metadataBytes+=manifest.size;if(releases.length>=1024||metadataBytes>64*1024**2)throw new GithubSkillError('技能备份清单过大。');releases.push({root,release:this.verify(id,digest)});}
       }
     }
-    this.reload();if(this.serialized!==before)throw new GithubSkillError('技能来源已变化，请重新备份。');
-    return structuredClone({schemaVersion:1,sources:this.sources,running:[...this.mounted].map(([id,digest])=>({id,digest})),releases});
+    this.reload();if(this.serialized!==before||existsSync(this.stateFile)!==statePresent)throw new GithubSkillError('技能来源已变化，请重新备份。');
+    rootCurrent();return structuredClone({schemaVersion:1,root:this.root,statePresent,sources:this.sources,running:[...this.mounted].map(([id,digest])=>({id,digest})),releases});
   }
   history(id: string): GithubSkillSummary[] {
     if (!/^[a-f0-9]{64}$/.test(id)) throw new GithubSkillError('技能来源标识无效。');

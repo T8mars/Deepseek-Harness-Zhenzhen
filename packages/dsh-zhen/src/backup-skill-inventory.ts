@@ -20,8 +20,10 @@ import {localSkillStateSchema} from './local-skills-schema.ts';
 import {githubSkillStateSchema,githubSkillReleaseSchema} from './github-skills-schema.ts';
 import {skillFeedSnapshotSchema,skillPackageSchema,digestSchema} from './market-schema.ts';
 import {SUPPORTED_DSH} from './compatibility.ts';
+import {githubProjectionAnchor,restoreManagedSkills} from './backup-managed-skills.ts';
+import type {ManagedSkillRestore} from './backup-managed-skills.ts';
 
-const SCHEMA='dsh-zhen-skill-inventory-v1',MAX_STATE=64*1024**2;
+const LEGACY_SCHEMA='dsh-zhen-skill-inventory-v1',SCHEMA='dsh-zhen-skill-inventory-v2',MAX_STATE=64*1024**2;
 const sha=(value:string)=>createHash('sha256').update(value).digest('hex');
 type ResolvedFilesystem={providerName:string;includeDefaultRoots:boolean;dshHome:string;agentsHome:string;customSkillDirs:string[];bundledSkillDir?:string};
 export type ResolvedSkillFilesystem=ResolvedFilesystem;
@@ -36,11 +38,11 @@ export interface SkillInventorySource {
   protectedContainers:readonly string[];forbiddenTrees:readonly string[];
 }
 export interface SkillBackupInventory {
-  schema:typeof SCHEMA;sdkVersion:string;
+  schema:typeof SCHEMA|typeof LEGACY_SCHEMA;sdkVersion:string;
   filesystem:Array<{id:string;config:ResolvedFilesystem;enabled?:boolean}>;
   projects:Array<{cwd:string;projectRoot:string}>;
   local:ReturnType<LocalSkills['backupState']>;
-  github:ReturnType<GithubSkills['backupState']>;
+  github:Omit<ReturnType<GithubSkills['backupState']>,'root'|'statePresent'>&{root?:string;statePresent?:boolean};
   market:MarketBackupState;feed:ReturnType<SkillFeed['backupState']>;
   roots:SkillBackupRoot[];
   coverage:{allDeclaredSources:true;allRetainedManagedReleases:true;credentials:false;activatesSources:false;wholeApplicationRestore:false};
@@ -50,10 +52,10 @@ const cacheSchema=z.object({status:skillFeedSnapshotSchema,catalog:z.array(skill
 const feedSchema=cacheSchema.extend({persisted:z.object({present:z.boolean(),cache:cacheSchema.optional()}).strict()}).strict();
 const path=z.string().min(1).max(4096).refine(value=>posix.isAbsolute(value)||win32.isAbsolute(value)),resolvedSchema=z.object({providerName:z.string().min(1).max(128),includeDefaultRoots:z.boolean(),dshHome:path,agentsHome:path,customSkillDirs:z.array(path).max(128),bundledSkillDir:path.optional()}).strict();
 const rootSchema=z.object({key:z.string().min(1).max(128),path,kind:z.enum(['user-dsh','user-agents','project-dsh','project-agents','custom']),mode:z.enum(['skill','library']),enabled:z.boolean(),workspace:path.optional(),provenance:z.record(z.string(),z.unknown())}).strict();
-const inventorySchema=z.object({schema:z.literal(SCHEMA),sdkVersion:z.literal(SUPPORTED_DSH),filesystem:z.array(z.object({id:z.string().min(1).max(128),config:resolvedSchema,enabled:z.boolean().optional()}).strict()).max(16),projects:z.array(z.object({cwd:path,projectRoot:path}).strict()).max(128),local:localSkillStateSchema,github:z.object({schemaVersion:z.literal(1),sources:githubSkillStateSchema.shape.sources,running:z.array(z.object({id:digestSchema,digest:digestSchema}).strict()).max(16),releases:z.array(z.object({root:path,release:githubSkillReleaseSchema}).strict()).max(1024)}).strict(),market:marketSchema,feed:feedSchema,roots:z.array(rootSchema).max(1024),coverage:z.object({allDeclaredSources:z.literal(true),allRetainedManagedReleases:z.literal(true),credentials:z.literal(false),activatesSources:z.literal(false),wholeApplicationRestore:z.literal(false)}).strict()}).strict();
+const inventorySchema=z.object({schema:z.enum([LEGACY_SCHEMA,SCHEMA]),sdkVersion:z.literal(SUPPORTED_DSH),filesystem:z.array(z.object({id:z.string().min(1).max(128),config:resolvedSchema,enabled:z.boolean().optional()}).strict()).max(16),projects:z.array(z.object({cwd:path,projectRoot:path}).strict()).max(128),local:localSkillStateSchema,github:z.object({schemaVersion:z.literal(1),root:path.optional(),statePresent:z.boolean().optional(),sources:githubSkillStateSchema.shape.sources,running:z.array(z.object({id:digestSchema,digest:digestSchema}).strict()).max(16),releases:z.array(z.object({root:path,release:githubSkillReleaseSchema}).strict()).max(1024)}).strict(),market:marketSchema,feed:feedSchema,roots:z.array(rootSchema).max(1024),coverage:z.object({allDeclaredSources:z.literal(true),allRetainedManagedReleases:z.literal(true),credentials:z.literal(false),activatesSources:z.literal(false),wholeApplicationRestore:z.literal(false)}).strict()}).strict();
 
 function validate(input:unknown):SkillBackupInventory{
-  backupJsonString(input);const value=inventorySchema.parse(input);try{validateMarketBackupState(value.market,verifySkill);}catch{throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');}
+  backupJsonString(input);const value=inventorySchema.parse(input);if(value.schema===SCHEMA&&(value.github.root===undefined||value.github.statePresent===undefined))throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');if(value.github.statePresent===false&&value.github.sources.length)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');githubProjectionAnchor(value);try{validateMarketBackupState(value.market,verifySkill);}catch{throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');}
   for(const items of [value.feed.catalog,...value.feed.persisted.cache?[value.feed.persisted.cache.catalog]:[]]){const names=new Set<string>();for(const item of items){verifySkill(item);if(names.has(item.manifest.id))throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');names.add(item.manifest.id);}}
   for(const cache of [value.feed,...value.feed.persisted.cache?[value.feed.persisted.cache]:[]])if(cache.status.count!==cache.catalog.length)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');
   if(value.feed.persisted.present!==!!value.feed.persisted.cache)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');
@@ -118,21 +120,21 @@ export async function* skillInventoryBackupRecords(resolveSource:()=>SkillInvent
 export async function writeSkillInventoryBackup(destination:string,password:string,source:()=>SkillInventorySource,options:BackupOptions={}):Promise<BackupReceipt>{return writeBackupArchive(destination,password,skillInventoryBackupRecords(source,options),options);}
 export interface SkillInventoryRestoreCandidate extends SkillRestoreCandidate{
   inventory:SkillBackupInventory;market:{database:string;metadata:string;restored:true;activated:false};
-  readyForActivation:false;restoreCoverage:{marketDatabase:true;localSourceState:false;githubSourceState:false;feedState:false;wholeApplicationRestore:false};
+  managed:ManagedSkillRestore;readyForActivation:false;restoreCoverage:{marketDatabase:true;localSourceState:true;githubSourceState:true;feedState:true;wholeApplicationRestore:false};
 }
 export async function restoreSkillInventoryBackup(source:string,password:string,parent:string,options:BackupOptions={}):Promise<SkillInventoryRestoreCandidate>{
   if(!isAbsolute(parent))throw new BackupError('BACKUP_PATH_INVALID');const directory=await realpath(parent),archive=await openBackupArchive(source,password,options);let candidate:SkillRestoreCandidate|undefined,complete=false;
   try{
-    const records=archive.records(),first=await records.next();if(first.done||first.value.metadata.kind!=='skill-inventory'||first.value.metadata.schema!==SCHEMA||Object.keys(first.value.metadata).length!==2||first.value.size>MAX_STATE)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');
+    const records=archive.records(),first=await records.next();if(first.done||first.value.metadata.kind!=='skill-inventory'||![SCHEMA,LEGACY_SCHEMA].includes(String(first.value.metadata.schema))||Object.keys(first.value.metadata).length!==2||first.value.size>MAX_STATE)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');
     const parts:Uint8Array[]=[];for await(const bytes of first.value.data)parts.push(bytes);let inventory:SkillBackupInventory;
-    try{inventory=validate(parseBackupJson(Buffer.concat(parts,first.value.size)));}catch{throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');}
-    candidate=await restoreAuthenticatedSkillRecords(records,directory,options,inventory.roots);options.signal?.throwIfAborted();
+    try{inventory=validate(parseBackupJson(Buffer.concat(parts,first.value.size)));if(inventory.schema!==first.value.metadata.schema)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');}catch{throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');}
+    candidate=await restoreAuthenticatedSkillRecords(records,directory,options,inventory.roots,githubProjectionAnchor(inventory));options.signal?.throwIfAborted();
     const stateDirectory=join(candidate.root,'state');await mkdir(stateDirectory,{mode:0o700});const database=join(stateDirectory,'skills.sqlite'),exclusive=await open(database,'wx',0o600);await exclusive.close();
-    const market=new SkillMarket(database,[]);try{await market.restoreBackupState(inventory.market,options.signal);if(backupJsonString(market.backupState())!==backupJsonString(inventory.market))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');}finally{market.close();}
-    const metadata=join(candidate.root,'dsh-zhen-skill-inventory.json'),restored={marketDatabase:true,localSourceState:false,githubSourceState:false,feedState:false,wholeApplicationRestore:false} as const;
+    const market=new SkillMarket(database,[]);let managed:ManagedSkillRestore;try{await market.restoreBackupState(inventory.market,options.signal);if(backupJsonString(market.backupState())!==backupJsonString(inventory.market))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');managed=await restoreManagedSkills(candidate,inventory,market,options);if(backupJsonString(market.backupState())!==backupJsonString(inventory.market))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');}finally{market.close();}
+    const metadata=join(candidate.root,'dsh-zhen-skill-inventory.json'),restored={marketDatabase:true,localSourceState:true,githubSourceState:true,feedState:true,wholeApplicationRestore:false} as const;
     await writeFile(metadata,backupJsonString(inventory)+'\n',{flag:'wx',mode:0o600});options.signal?.throwIfAborted();
-    await writeFile(join(candidate.root,'dsh-zhen-skill-inventory-restore.json'),backupJsonString({schema:SCHEMA,market:{database,metadata,restored:true,activated:false},readyForActivation:false,restoreCoverage:restored,activated:false})+'\n',{flag:'wx',mode:0o600});options.signal?.throwIfAborted();
-    complete=true;return {...candidate,inventory,market:{database,metadata,restored:true,activated:false},readyForActivation:false,restoreCoverage:restored};
+    await writeFile(join(candidate.root,'dsh-zhen-skill-inventory-restore.json'),backupJsonString({schema:SCHEMA,managed,roots:candidate.roots,anchors:candidate.anchors,market:{database,metadata,restored:true,activated:false},readyForActivation:false,restoreCoverage:restored,activated:false})+'\n',{flag:'wx',mode:0o600});options.signal?.throwIfAborted();
+    complete=true;return {...candidate,inventory,managed,market:{database,metadata,restored:true,activated:false},readyForActivation:false,restoreCoverage:restored};
   }catch(error){options.signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_SKILL_RESTORE_FAILED');}
   finally{try{await archive.close();}finally{if(candidate&&!complete){const actual=await realpath(candidate.root),part=relative(directory,actual);if((await lstat(candidate.root)).isSymbolicLink()||!part||isAbsolute(part)||part.startsWith('..')||/[\\/]/.test(part)||!part.startsWith('dsh-zhen-skill-restore-'))throw new BackupError('BACKUP_TEMP_BOUNDARY');await rm(actual,{recursive:true,force:true,maxRetries:3,retryDelay:100});}}}
 }

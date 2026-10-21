@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T22:15:53.962Z",
+  "checkedAt": "2026-10-21T23:04:29.392Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1944,6 +1944,30 @@
       "localPassed": 785,
       "packageFiles": 173,
       "localPackageSha256": "0179f4d5023d8e92a9ff12031f01136488efab0eccb12586238e9b1f527404d3"
+    },
+    "managedSkillRestoreCandidate": {
+      "entry": "dsh-zhen/backup restoreSkillInventoryBackup",
+      "decision": "0089-managed-skill-restore",
+      "inventoryWriter": "dsh-zhen-skill-inventory-v2",
+      "inventoryReaders": [
+        "dsh-zhen-skill-inventory-v1",
+        "dsh-zhen-skill-inventory-v2"
+      ],
+      "targetedTests": 26,
+      "fullRegressionPending": false,
+      "physicalSharedRoots": true,
+      "localSourceState": true,
+      "githubSourceState": true,
+      "feedState": true,
+      "marketUnchangedAfterManagedChecks": true,
+      "activated": false,
+      "readyForActivation": false,
+      "wholeApplicationRestore": false,
+      "verification": "C100 adds26 encrypted-archive and actual own LocalSkills/GithubSkills/SkillFeed TEMP contracts. Skill inventories now write v2 with explicit GitHub cache origin and state-file presence; v1 remains readable, including inferred retained-release cache roots. Complete authentication and resource/inventory validation precede a fresh inactive candidate. Equal and nested canonical origins share one physical forest; differing bytes, node types, presence, complete-view omissions and portable spellings refuse before destination creation, with explicit SDK .system exclusions respected. Every duplicate archive payload is still independently hashed. Local IDs, mode, enablement, policy and confirmation time survive with new actual dev:ino identities; absent roots remain absent with an unmatchable sentinel so later replacement directories do not inherit trust. GitHub candidates verify every retained immutable manifest/resource without mounting or promoting pending; current/pending/latest, unapproved/forgotten/disabled releases and original-running provenance remain distinct. Shared SDK/Local/cache roots preserve original matching state-file bytes. Feed runtime and persisted cache remain separate without offering catalogs, staging updates, fetching or granting revision evidence. The actual market is verified unchanged after managed-source checks. Cancellation at three persistence boundaries cleans only the fresh candidate. Candidate readyForActivation/activated/wholeApplicationRestore remain false. No upstream or Native changes, live user database reads, app replacement/restart, credentials or model requests. Full dependency/package-manager restoration, historical directories, other own state, total-source barrier and unified preview/activation/UI plus original project scope remain incomplete. Complete regression/archive/exact CI separately required. Complete811/811 and175-file archive pass C63 legacy-checkout packing, C76 actual two-version build/install/launcher full-payload checks, C97 RAG, C98 fixed-home gates, C99 market/schema and C100 managed-source restoration; exact current CI remains separate.",
+      "localTests": 811,
+      "localPassed": 811,
+      "packageFiles": 175,
+      "localPackageSha256": "6350bffe0311ede43d19293543c3cd744fb41bb5e4ac5beb7fd184204f3a6def"
     }
   }
 }
