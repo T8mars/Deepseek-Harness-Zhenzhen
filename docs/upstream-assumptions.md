@@ -147,3 +147,5 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 - C75：自有buildSkillCatalog的公共feed在autocrlf Git新检出后必须第一次status就干净。真实Git clone/生产生成器验证精确LF属性，不能先git diff刷新后才宣称来源干净。没有改变上游或市场格式/内容。
 
 - C76：官方CLI安装自身两个版本后，公开package.json必须报告实际安装版本。生产构建保持其他151文件/执行位全同，更新baseline合成自身版本。裸plugin exec无Host peer resolver，测试使用Node公开模块hook指向精确已声明SDK peer，不修改app-boot或生产解析链；凭据仅存在状态桩。
+
+- C77/C78：Actions ZIP/ZIP64仅作有界平面普通文件读取，服务器SHA/大小和实际包相互核对；原始artifact不能自证成功，必须配套同仓main服务器run/job/step/首次attempt、固定完整payload/SDK及源码脚本摘要。七个完整UTC日按服务器付费步骤计，失败/缺天/重复/漂移拒绝。真实GitHub ZIP读取已验，候选工作流/七日/稳定发布尚未验。

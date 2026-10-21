@@ -123,3 +123,8 @@ Pages是独立只读导出与部署任务：仓库Pages须设置为GitHub Action
 C76以真实生产双构建、双打包及官方CLI双安装验证，只忽略manifest版本即可
 得到相同payload摘要；依赖、其他151文件和执行位仍逐一参与。测试的peer解析
 hook仅用于裸CLI加载，不随应用分发，不代表Host授权或W5七日观察已通过。
+
+0072加入Actions原始证据读取和固定候选七日规则，详见[决策](decisions/0072-candidate-observation-evidence.md)。
+公开只读API预先拒绝写请求；ZIP在内存限界读取，验证服务器摘要和完整文件集合。
+七个完整UTC日须逐一核对实际候选包/SDK、服务器付费步骤、首次attempt与原始收据；
+本次尚未将规则接入候选W6/promote工作流，不能把EXAMPLE测试当真实七日或稳定发布。

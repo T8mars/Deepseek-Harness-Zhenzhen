@@ -6,6 +6,7 @@ import {tmpdir,devNull} from 'node:os';
 import {isDeepStrictEqual} from 'node:util';
 import {releaseDocuments,DISTRIBUTION_REPOSITORY} from './release-snapshot.mjs';
 import {canonicalVersion} from './upstream-policy.mjs';
+import {downloadActionArtifact} from './actions-artifact.mjs';
 
 export const RELEASE_REPO='T8mars/Deepseek-Harness-Zhenzhen';
 export const FEED_REF='heads/codex/distribution';
@@ -20,13 +21,14 @@ async function boundedBody(response,limit){
   return Buffer.concat(chunks);
 }
 /** Only fixed GitHub hosts, no redirects with credentials, no response-body logging or mutation retry. */
-export function releaseApi(token,{fetchImpl=globalThis.fetch}={}){
-  if(typeof token!=='string'||!token||/[\r\n]/.test(token))throw Error('GitHub release credential is unavailable.');
+export function releaseApi(token,{fetchImpl=globalThis.fetch,readOnly=false}={}){
+  if(!(readOnly&&token===undefined)&&(typeof token!=='string'||!token||/[\r\n]/.test(token)))throw Error('GitHub release credential is unavailable.');
   async function request(path,{method='GET',body,bytes,optional=false}={}){
+    if(readOnly&&(method!=='GET'||body!==undefined||bytes!==undefined))throw Error('Read-only release client refused a mutation.');
     if(!/^\/(?:git\/|actions\/|releases(?:\/|\?|$))/.test(path)||path.includes('..')||/[\r\n#]/.test(path))throw Error('GitHub release endpoint refused.');
     const upload=bytes!==undefined;
     const url=(upload?'https://uploads.github.com/repos/':'https://api.github.com/repos/')+RELEASE_REPO+path;
-    let response;try{response=await fetchImpl(url,{method,redirect:'error',signal:AbortSignal.timeout(45000),headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':upload?'application/octet-stream':'application/json'},body:upload?bytes:body===undefined?undefined:JSON.stringify(body)});}catch{throw Error('GitHub release request failed; publication state must be inspected before retrying.');}
+    let response;try{response=await fetchImpl(url,{method,redirect:'error',signal:AbortSignal.timeout(45000),headers:{...(token?{Authorization:'Bearer '+token}:{}),Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':upload?'application/octet-stream':'application/json'},body:upload?bytes:body===undefined?undefined:JSON.stringify(body)});}catch{throw Error('GitHub release request failed; publication state must be inspected before retrying.');}
     if(optional&&response.status===404)return null;
     if(!response.ok)throw Error('GitHub release request refused (HTTP '+response.status+').');
     const raw=await boundedBody(response,2*1024*1024);try{return JSON.parse(raw);}catch{throw Error('GitHub release response was not valid JSON.');}
@@ -35,7 +37,7 @@ export function releaseApi(token,{fetchImpl=globalThis.fetch}={}){
     if(!Number.isSafeInteger(id)||id<=0)throw Error('Release asset identity refused.');
     let url='https://api.github.com/repos/'+RELEASE_REPO+'/releases/assets/'+id;
     for(let n=0;n<3;n++){
-      const headers=n===0?{Authorization:'Bearer '+token,Accept:'application/octet-stream','X-GitHub-Api-Version':'2022-11-28'}:{};
+      const headers=n===0?{...(token?{Authorization:'Bearer '+token}:{}),Accept:'application/octet-stream','X-GitHub-Api-Version':'2022-11-28'}:{};
       let response;try{response=await fetchImpl(url,{redirect:'manual',headers,signal:AbortSignal.timeout(45000)});}catch{throw Error('Release asset read failed.');}
       if([301,302,303,307,308].includes(response.status)){
         let next;try{next=new URL(response.headers.get('location'));}catch{throw Error('Release asset redirect refused.');}
@@ -45,7 +47,7 @@ export function releaseApi(token,{fetchImpl=globalThis.fetch}={}){
     }
     throw Error('Release asset redirect limit exceeded.');
   }
-  return {request,asset};
+  return {request,asset,artifact:id=>downloadActionArtifact(token,id,fetchImpl)};
 }
 
 export function requireReleaseRun(run,jobs,{sourceCommit,runId,attempt,requiredJobs}){
@@ -97,6 +99,7 @@ function validateRecord(r){
   const e=r?.runtimeEvidence;
   if(!r||Object.keys(r).sort().join(',')!=='archiveSha256,payloadSha256,publishTimestamp,releaseId,runtimeEvidence,snapshotCommit,sourceCommit,tag,upstream,version'||!/^\d+\.\d+\.\d+-canary\.[1-9]\d*$/.test(r.version??'')||r.tag!=='v'+r.version||!hex(r.sourceCommit,40)||!hex(r.snapshotCommit,40)||!hex(r.archiveSha256,64)||!hex(r.payloadSha256,64)||!canonicalVersion(r.upstream?.version)||!hex(r.upstream?.commit,40)||Object.keys(r.upstream).sort().join(',')!=='commit,version'||!Number.isSafeInteger(r.publishTimestamp)||r.publishTimestamp<0||!Number.isSafeInteger(r.releaseId)||r.releaseId<=0||!e||e.workflow!=='release.yml'||e.sourceCommit!==r.sourceCommit||!Number.isSafeInteger(e.runId)||e.runId<=0||!Number.isSafeInteger(e.attempt)||e.attempt<=0||!Number.isSafeInteger(e.contractsRunId)||e.contractsRunId<=0||!Array.isArray(e.jobIds)||e.jobIds.length!==3||e.jobIds.some(id=>!Number.isSafeInteger(id)||id<=0)||Object.keys(e).sort().join(',')!=='attempt,contractsRunId,jobIds,runId,sourceCommit,workflow')throw Error('Distribution ledger record refused.');
 }
+export {validateRecord as validateCanaryRecord};
 export function distributionFeed(previous,record){
   if(!previous)previous={schemaVersion:1,canary:[],stable:[]};
   if(Object.keys(previous).sort().join(',')!=='canary,schemaVersion,stable'||previous.schemaVersion!==1||!Array.isArray(previous.canary)||previous.canary.length>100||!Array.isArray(previous.stable)||previous.stable.length)throw Error('Distribution ledger shape or unsupported stable state refused.');

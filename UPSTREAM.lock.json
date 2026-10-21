@@ -1563,6 +1563,48 @@
       "previousPackageReplacementAndUninstall": true,
       "actualOwnHostUpdated": true,
       "installedAllPayloadMatched": true
+    },
+    "candidateObservationEvidence": {
+      "decision": "0072",
+      "contracts": [
+        "C77",
+        "C78"
+      ],
+      "targetedTests": 17,
+      "adjacentPublisherTests": 15,
+      "realActionsArchiveReadVerified": true,
+      "serverArchiveDigestMatched": true,
+      "zipFilesystemExtraction": false,
+      "candidateW6Connected": false,
+      "promoteWorkflowImplemented": false,
+      "realSevenDayObservationVerified": false,
+      "modelRequests": 0,
+      "verification": "C77 nine tests cover bounded builtin ZIP/ZIP64/streaming descriptor/CRC/header/path/mode validation, server archive SHA/size and credential-stripped Actions redirects; C73 fifteen adjacent publisher tests pass. Actual GitHub W4 input ZIP393432 bytes matches server SHA and contains only inert metadata plus known152-file archive/source/clean state. C78 eight tests bind exact canary/payload/SDK, original source scripts and complete server run/job/step/first attempt/raw artifact proof to seven complete UTC days including current-day regressions. EXAMPLE policy tests are not real observation or connected W5/W6; collector, candidate smoke wiring, promote workflow and stable publication remain. No SDK/candidate execution in new readers or paid calls. Full505/505 and canonical legacy/C76 stable archives match the actual installed0071 archive; no app reinstall/restart or new paid check. Current exact commit CI/default preview remain separate.",
+      "localTests": 505,
+      "localPassed": 505,
+      "packageFiles": 152,
+      "localPackageSha256": "7dfdb814b5e653890cb9558c2a2061c3fc01bc740c53f1f8f1c9a0da88aaee17",
+      "byteIdenticalToInstalled0071Archive": true,
+      "reinstallOrRestartPerformed": false
+    },
+    "canvas340Review": {
+      "decision": "0072",
+      "sourceCommit": "4259a9f11f8293db9250d5e6aa95ab3b400972cb",
+      "releaseTag": "v3.4.0",
+      "releaseCommit": "f482ccce24cef89662682e207b37266e945c0f23",
+      "livePublicAppVersion": "3.4.0",
+      "liveActiveContextAdvertised": true,
+      "activeContextSchema": "t8-agent-active-context-v1",
+      "targetedTests": 10,
+      "passed": 10,
+      "installedCliDigest": "2e2caf615098eff892b1b30a86e5f4c3eb88a17d8d5cd7005874c2f903ce723c",
+      "installedManifestDigest": "479215e422f20730355b83d7a87f83180c271ea7b43ca29c076af33c8f87bd12",
+      "dshCurrentConnectionCode": "CLI_CHANGED",
+      "dshTrustChanged": false,
+      "realPairingOrApprovalVerified": false,
+      "releaseAssetBytesVerified": false,
+      "nativeWrites": 0,
+      "verification": "Read source/release metadata, actual installed executable/public status3.4.0, new active-context marker and installed CLI; ten isolated Node/real-HTTP/CLI regressions pass, reviewed source/protected files unchanged. EventEmitter windows are not actual Electron GUI proof. Own saved trust still old337 pin and correctly reports CLI_CHANGED. One production native CLI synthetic idle GET-to-POST passes, not a general sleep/DPAPI claim. No new confirmed required native code fix; new DSH active-context adapter still pending."
     }
   }
 }
