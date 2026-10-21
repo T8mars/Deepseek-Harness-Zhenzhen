@@ -290,6 +290,13 @@
       "status": "in-progress",
       "liveVerified": false,
       "verification": "C90 executes both production decoder wrappers with deterministic synthetic child timing. Before the fix four queued/immediate-reply cases fail and two final-close cases pass; six pass after fixed authority normalization. Existing real DOCX/PDF child cases plus C90 pass18/18. Dev50 actual main CI39600300348 failed621/622 in C51 and is retained, not rerun or reported green. New complete regression/archive/exact CI remain required. No permission, parser budget, process-close, data, Native or model changes. Complete628/628 and163-file archive pass C63/C76 full payload and actual two-version install/launcher boundaries. Previous dev50 CI failure is retained; this exact commit CI remains separately required."
+    },
+    {
+      "id": "encrypted-profile-and-skill-backup",
+      "status": "in-progress",
+      "liveVerified": false,
+      "fullM2Complete": false,
+      "verification": "C91 fourteen actual published SDK TEMP contracts preserve all initialized named profiles, machine patches, active overlays, expression data, dependency metadata and explicit compatibility without source cleanup/module execution/credential-store reads. A known SDK-retired bundle remains byte-unchanged. Coverage explicitly excludes package artifacts, package-manager files and profile restoration. C92 twenty contracts preserve complete Host-selected declared skill roots including shadowed/disabled definitions, flat shared binaries, scripts, empty directories and provenance; actual filesystem provider/registry round trips pass. Authentication and complete path preflight precede fresh inactive candidate creation; origin paths never select restore destinations. Links, protected scope overlap, late source mutation, device aliases, normalization collisions and malformed/missing/duplicate records refuse; excluded VCS metadata does not invalidate unrelated resources. Pure device and actual TEMP source-collision red/green evidence retained. Source discovery/managed market state, configuration restore, dependencies, RAG, UI and full M2/L2 remain incomplete. Complete regression/archive/exact CI separately required. No Native writes, app restart or model requests. Complete662/662 and166-file archive pass C63 legacy-checkout packing and C76 actual two-version build/install/launcher full-payload checks; exact current CI is separately required."
     }
   ]
 }

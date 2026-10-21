@@ -2,3 +2,7 @@ export {BackupError,DEFAULT_BACKUP_LIMITS,openBackupArchive,writeBackupArchive} 
 export type {BackupLimits,BackupOptions,BackupReceipt,BackupRecord,OpenBackupArchive} from './backup-archive.ts';
 export {sessionBackupRecords,writeSessionBackup,restoreSessionBackup} from './backup-sessions.ts';
 export type {SessionRestoreCandidate} from './backup-sessions.ts';
+export {profileBackupRecords,writeProfileBackup,readProfileBackup} from './backup-profiles.ts';
+export type {ProfileBackupSource,ProfileBackupDocument} from './backup-profiles.ts';
+export {skillBackupRecords,writeSkillBackup,restoreSkillBackup,assertSkillResourcePath} from './backup-skills.ts';
+export type {SkillBackupRoot,SkillBackupSelection,SkillRestoreCandidate} from './backup-skills.ts';

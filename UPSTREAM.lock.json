@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T12:43:41.079Z",
+  "checkedAt": "2026-10-21T14:09:47.332Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1807,6 +1807,26 @@
       "localPassed": 628,
       "packageFiles": 163,
       "localPackageSha256": "bd3d3ac9b6a4bcaee38b6557faa410fe999af82397d6cd61b37781d17efbb3d7"
+    },
+    "encryptedProfileAndSkillBackup": {
+      "decision": "0081",
+      "export": "dsh-zhen/backup",
+      "profileSdk": "0.2.1-rc.2",
+      "includeSdk": "1.0.10",
+      "profileRestoreImplemented": false,
+      "automaticSkillSourceInventory": false,
+      "skillRestoreActivation": false,
+      "credentialStoresIncluded": false,
+      "packageArtifactsIncluded": false,
+      "fullM2Complete": false,
+      "targetedTests": 34,
+      "targetedPassed": 34,
+      "fullRegressionPending": false,
+      "verification": "C91 fourteen actual published SDK TEMP contracts preserve all initialized named profiles, machine patches, active overlays, expression data, dependency metadata and explicit compatibility without source cleanup/module execution/credential-store reads. A known SDK-retired bundle remains byte-unchanged. Coverage explicitly excludes package artifacts, package-manager files and profile restoration. C92 twenty contracts preserve complete Host-selected declared skill roots including shadowed/disabled definitions, flat shared binaries, scripts, empty directories and provenance; actual filesystem provider/registry round trips pass. Authentication and complete path preflight precede fresh inactive candidate creation; origin paths never select restore destinations. Links, protected scope overlap, late source mutation, device aliases, normalization collisions and malformed/missing/duplicate records refuse; excluded VCS metadata does not invalidate unrelated resources. Pure device and actual TEMP source-collision red/green evidence retained. Source discovery/managed market state, configuration restore, dependencies, RAG, UI and full M2/L2 remain incomplete. Complete regression/archive/exact CI separately required. No Native writes, app restart or model requests. Complete662/662 and166-file archive pass C63 legacy-checkout packing and C76 actual two-version build/install/launcher full-payload checks; exact current CI is separately required.",
+      "localTests": 662,
+      "localPassed": 662,
+      "packageFiles": 166,
+      "localPackageSha256": "764354bf25ab47598aa82bb072f00149098240ae6248ee68f50df434d5af4181"
     }
   }
 }

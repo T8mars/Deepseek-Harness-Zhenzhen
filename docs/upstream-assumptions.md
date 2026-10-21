@@ -165,3 +165,6 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 0079/C89：SessionPersistence 的公开分页/flush/不透明 revision 与实例 identity 支持会话快照屏障，已用真实固定 JSONL 服务验证源变化拒绝。SessionStore.create 不自动代建持久化 owner；无 owner 的活动会话必须拒绝，不读废弃同步事件补洞。分支使用公开 buildForkSeed 的 end-seed 标记，cut 单独经 create options 保存。冷读 header 的默认 delegationDepth=0 与原构造参数存在规范差异，比较实际公开读值。sessionLogZipEntries 负责已知内容的规范附件投影，includeDescendants=false 不调用 lineage 查询；未知可忽略记录保留而不猜附件。本地附件使用 sha256: 前缀，公开 commitPreparedImageFile 加 readImage 验证保留规范化字节/尺寸/原尺寸，通用文件经流式保存返回完全相同引用。查询服务 openAt=never 不创建查询数据库。各项以实际已发布 SDK 的 C89 往返及拒绝案例为范围，不推广到未实现的完整 profile 或其他附件后端。
 
 0079活动竞态补充：固定SDK可在最终list生成revision后、调用方接收前排入live event，此时磁盘revision不变。真实SessionStore/JSONL先红后绿验证，末尾再次flush并比较公开Session.seq才能覆盖该缓冲窗口；未调用废弃同步事件读取。
+
+
+0081/C91：固定app-boot公开loadOptionalPatches与readProfileManifest/readProfilePlugins/readProfileCompatibility可逻辑读取全部已初始化配置档而不执行表达式、模块或dropRetiredBundles；实际retired bundle及源文件字节保持的TEMP合同已过。依赖清单不是依赖实体/pnpm锁文件，coverage明确false；不把只读API存在泛化成完整恢复writer。C92使用真实FileSystemSkillProvider和SkillRegistry验证相同来源序列的投影，registry胜出定义不是完整资源闭包；声明根的平铺共享文件和shadowed定义分别保留。来源自动发现/实际来源优先级接线仍待开发，恢复候选不激活。
