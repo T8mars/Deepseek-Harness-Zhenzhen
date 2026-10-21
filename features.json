@@ -223,6 +223,13 @@
       "id": "release-artifact-preparation",
       "status": "in-progress",
       "verification": "C72 twelve tests cover shared package paths, bounded USTAR/PAX/no links/secrets, manifest and tag identity, version-normalized payload+mode, actual Git object IDs/fsck, genuine upstream market parser/git install target, immutable stage reuse and existing-stage validation. Actual GitHub compiled fixture snapshot contains package152+provenance only; official CLI installs exact commit/path and verifies all152 bytes, Host/privacy/provider/workers, then stops/uninstalls to complete baseline. No Release/index/Pages publication, paid calls or Native changes. W4 publisher/Pages and W5 promotion/seven-day observations still need implementation. Full467/467 after restoring the isolated pack fixture dependency, same152-file archive as actual installed0065. Normal old-archive replacement/uninstall and explicit-existing-stage real GitHub full-package install/uninstall pass. No active Host reinstall/restart; current commit CI separate."
+    },
+    {
+      "id": "isolated-canary-publisher",
+      "status": "in-progress",
+      "verification": "C73 fifteen tests cover exact inert inputs, server run/attempt/complete job proof and main contracts, bounded fixed GitHub API/credential-stripped asset redirects, immutable snapshot reuse, draft/asset readback/publication ordering, idempotent recovery, conflicts, official market format, fixed canonical feed and parent history/non-force concurrency, and isolated write/install/Pages permissions. W4 workflow defaults to preview; actual canary/version required for publication. Local synthetic transactions are not a real Release or Pages deployment; W5 promotion and seven-day observation still need implementation. Real hydrate CLI exposed a normalization mismatch; SDK normalization fixed it, new real TEMP Git/CLI reuse regression passes. Full482/482 and unchanged152-file archive verified. Current CI/default workflow preview separately verified later.",
+      "productCanaryPublished": false,
+      "pagesDeployed": false
     }
   ]
 }

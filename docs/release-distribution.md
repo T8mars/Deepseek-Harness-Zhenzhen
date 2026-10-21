@@ -1,7 +1,8 @@
 # 候选包、Git 快照和分发索引
 
-当前是 W4/W5 的准备层，尚未发布正式 Release、市场索引或 Pages，晋升工作流
-仍需继续实现。开发备份标签不等于产品发布。
+W4 `release.yml` 已实现默认预览、不可变编译快照、隔离安装验证、Canary Release、
+通道索引和可选 Pages 部署。W5 晋升仍需实现；正式 Release、索引和 Pages 尚未
+实际发布。开发备份标签不等于产品发布。
 
 ## 为什么需要构建快照
 
@@ -42,7 +43,7 @@ payload摘要只忽略package.json中的version并对该JSON做规范化，其�
 
 ## 真实Git安装探针
 
-快照需先由后续发布器或明确的测试备份动作写入目标GitHub仓库，才可运行：
+快照需先由发布器或明确的测试备份动作写入目标GitHub仓库，才可运行：
 
 ```powershell
 node scripts/smoke-install.mjs --git-snapshot
@@ -70,3 +71,42 @@ node scripts/smoke-install.mjs --git-stage EXAMPLE_REPLACE_WITH_OWNED_STAGE_NAME
 后续发布API与Pages部署分别参照
 [GitHub Releases](https://docs.github.com/en/rest/releases/releases)和
 [Pages工作流](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。
+
+## W4 操作与恢复
+
+在 GitHub Actions 运行 **Prepare or publish DSH-zhen canary**，默认 channel 是
+development、publish 为 false。它会完整检查、打包、临时安装/卸载，再保存14天
+的两文件发布输入和预览。默认流程不会建立远端快照、产品标签、Release或索引，
+不调用模型。开发预览不需要仓库密钥。
+
+真实候选必须先在源码里使用真正的 `x.y.z-canary.N` 包版本并通过 main 的检查。
+选择 canary、填写匹配的 `v版本` 标签并启用 publish 才发布；当前0.1.0不能
+直接当作canary。该操作没有稳定版发布入口。
+
+1. build任务只有读取权限，运行所有检查与官方CLI临时安装；发布输入只含归档和
+   来源元数据，不携带源码、凭据或用户目录。
+2. snapshot任务不安装依赖、不执行包。仅用受控Git和Node内置模块，重新核对
+   来源提交/时间/manifest/runtime pin、归档全部字节及Git对象，并核对GitHub
+   服务端同一次工作流的成功build和精确提交的main检查，再建立不可变快照引用。
+3. verify任务只有读取权限，从同一源码独立构建相同归档，经官方CLI安装真实
+   Git提交，核对全包文件、Host/解析器与完整卸载基线。无写令牌或网关密钥。
+4. finalize任务不运行候选包；服务端核对build/snapshot/verify成功后建立草稿
+   Release，上传tgz、compat、provenance和SHA256SUMS，逐字节回读再公开。Canary
+   始终是prerelease且不设为latest。索引使用实际published_at时间。
+5. 最后将索引写入 `codex/distribution`，保留前版本和父提交，非强制快进。
+   `channels/canary/market/index.json`用于候选，`market/index.json`保留稳定通道，
+   当前稳定通道为空；不会将canary写进稳定通道。原始Git地址也可读取索引。
+
+发布标签、快照、资产或已登记版本存在且不一致时停止，不覆盖、不删除、不强推。
+相同输入重跑可复用；已有compat中的安装证明必须重新向GitHub核对。上传中断、
+并发冲突或响应丢失后，先查远端状态再重跑；未知/部分/额外资产不会自动清理。
+Release已公开而索引更新失败时，可用相同候选恢复索引，不能改名掩盖资产冲突。
+索引账本最多100个候选，满后须单独审核保留策略，不悄悄丢历史版本。
+
+Pages是独立只读导出与部署任务：仓库Pages须设置为GitHub Actions，并设置
+`DISTRIBUTION_PAGES_ENABLED=true`。未配置时只跳过Pages，已发布的Git索引仍可用。
+部署需要官方Pages环境与相应权限；流水线不会修改仓库Pages设置或静默打开开关。
+站点只包含核验过的五份静态文件。没有将安装任务与pages/id-token写权限混用。
+
+发布任务没有Seedance密钥、不发送模型请求。W6费用开关和凭据仍独立配置。W5的
+七日观察、ack和稳定晋升尚未完成，不以W4测试通过代替这些条件。

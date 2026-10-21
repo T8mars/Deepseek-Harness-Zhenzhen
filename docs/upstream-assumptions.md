@@ -139,3 +139,5 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 - C71：独立W6只使用已发布Llm.prepareCall/PiAi与LocalCredentials的正式接口，临时环境快照不暴露进程密钥。实际SDK经合成fetch检查固定请求、错误/用量/触顶，另有新CLI一次真实默认Flash。不能推导所有模型、Agent工具、实际CI secret或七天稳定性；默认不借应用GatewayChecks做后台收费。
 
 - C72：已发布dsh-plugin-market-index格式1仅npm或Git固定提交，不接受tgz；使用实际parseMarketIndex/marketInstallTarget验证。确定性Git对象由真实Git核对，真实GitHub commit/path经公共CLI安装全部152文件/卸载恢复。仅当前Host/pin/Windows和此包，不证明未来版本、Unix或正式市场发布。
+
+- C73：发布器沿用C72确认的官方Git市场来源；通过实际SDK校验稳定空索引及多版本canary索引。服务端run_attempt/job字段实际只读核对，事务API桩覆盖发布和恢复，但不冒充真实写入/Pages证明。写任务只用内置模块/受控Git，不调用SDK或候选程序；新安装依赖只在读取权限任务执行。

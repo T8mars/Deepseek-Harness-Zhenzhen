@@ -1,0 +1,181 @@
+name: Prepare or publish DSH-zhen canary
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Preview development builds, or prepare an actually versioned canary'
+        type: choice
+        options: [development, canary]
+        default: development
+        required: true
+      tag:
+        description: 'Exact version tag; empty uses the development backup tag'
+        type: string
+        default: ''
+      publish:
+        description: 'Publish canary snapshot, verified Release and channel feed (never stable)'
+        type: boolean
+        default: false
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: dsh-zhen-distribution
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.repository == 'T8mars/Deepseek-Harness-Zhenzhen' && github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '22.19.0'
+          cache: npm
+      - run: node scripts/check-private.mjs
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run check
+      - run: npm run pack:bundle
+      - run: npm run smoke:install
+      - name: Prepare inert publication input
+        run: |
+          if ($env:RELEASE_PUBLISH -eq 'true' -and $env:RELEASE_CHANNEL -ne 'canary') {
+            throw 'Publication requires the canary channel and a matching real canary package version.'
+          }
+          if ($env:RELEASE_TAG) {
+            node scripts/release-input.mjs export --channel "$env:RELEASE_CHANNEL" --tag "$env:RELEASE_TAG"
+          } else {
+            node scripts/release-input.mjs export --channel "$env:RELEASE_CHANNEL"
+          }
+        env:
+          RELEASE_CHANNEL: ${{ inputs.channel }}
+          RELEASE_TAG: ${{ inputs.tag }}
+          RELEASE_PUBLISH: ${{ inputs.publish }}
+      - run: node scripts/publish-release.mjs preview
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/release-input/*
+          if-no-files-found: error
+          retention-days: 14
+  snapshot:
+    needs: build
+    if: inputs.publish && inputs.channel == 'canary'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '22.19.0'
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: release-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/release-input
+      - name: Upload validated immutable snapshot without executing the package
+        run: node scripts/publish-release.mjs snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DSH_PUBLISH_CANARY: ${{ inputs.publish }}
+  verify:
+    needs: [build, snapshot]
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '22.19.0'
+          cache: npm
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: release-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/release-input
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run build
+      - run: npm run pack:bundle
+      - id: stage
+        run: node scripts/release-input.mjs hydrate
+      - name: Install exact Git snapshot, check all bytes, start Host and restore TEMP baseline
+        run: node scripts/smoke-install.mjs --git-stage "$env:RELEASE_STAGE"
+        env:
+          RELEASE_STAGE: ${{ steps.stage.outputs.stage }}
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-install-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/evidence/git-bundle-smoke.json
+          if-no-files-found: error
+          retention-days: 90
+  finalize:
+    needs: [build, snapshot, verify]
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    outputs:
+      feed_commit: ${{ steps.publish.outputs.feed_commit }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '22.19.0'
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: release-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/release-input
+      - id: publish
+        name: Verify server jobs, publish immutable assets, then update the canary feed
+        run: node scripts/publish-release.mjs finalize
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DSH_PUBLISH_CANARY: ${{ inputs.publish }}
+  site:
+    needs: finalize
+    if: vars.DISTRIBUTION_PAGES_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '22.19.0'
+      - run: node scripts/publish-release.mjs export-feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DSH_FEED_COMMIT: ${{ needs.finalize.outputs.feed_commit }}
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        with:
+          path: .runtime/pages
+  pages:
+    needs: site
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

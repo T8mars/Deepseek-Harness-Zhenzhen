@@ -1451,6 +1451,33 @@
       "byteIdenticalToInstalled0065Archive": true,
       "actualGitExistingStageVerified": true,
       "reinstallOrRestartPerformed": false
+    },
+    "canaryPublisher": {
+      "decision": "0068",
+      "contract": "C73",
+      "targetedTests": 15,
+      "workflow": "release.yml",
+      "defaultPublish": false,
+      "builtinOnlyWriteJobs": true,
+      "separateReadOnlyGitInstall": true,
+      "separateCanaryAndStableFeeds": true,
+      "immutableAssets": true,
+      "forcePush": false,
+      "pagesVariable": "DISTRIBUTION_PAGES_ENABLED",
+      "pagesEnabled": false,
+      "productCanaryPublished": false,
+      "stablePublished": false,
+      "promotionImplemented": false,
+      "modelRequests": 0,
+      "nativeWrites": 0,
+      "verification": "C73 fifteen tests cover exact inert inputs, server run/attempt/complete job proof and main contracts, bounded fixed GitHub API/credential-stripped asset redirects, immutable snapshot reuse, draft/asset readback/publication ordering, idempotent recovery, conflicts, official market format, fixed canonical feed and parent history/non-force concurrency, and isolated write/install/Pages permissions. W4 workflow defaults to preview; actual canary/version required for publication. Local synthetic transactions are not a real Release or Pages deployment; W5 promotion and seven-day observation still need implementation. Real hydrate CLI exposed a normalization mismatch; SDK normalization fixed it, new real TEMP Git/CLI reuse regression passes. Full482/482 and unchanged152-file archive verified. Current CI/default workflow preview separately verified later.",
+      "localTests": 482,
+      "localPassed": 482,
+      "packageFiles": 152,
+      "localPackageSha256": "ded8a86a6e20d7bb8e7ce478d02daad0b5f1d1cd5fc668f5736b13f703ea1909",
+      "byteIdenticalToInstalled0065Archive": true,
+      "realLocalPreviewAndHydratePassed": true,
+      "reinstallOrRestartPerformed": false
     }
   }
 }

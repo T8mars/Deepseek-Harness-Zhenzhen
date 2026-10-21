@@ -125,3 +125,5 @@ npm run smoke:install -- --replacement-from dsh-zhen-0.1.0-EXAMPLE_ONLY.tgz
 ## 可安装的分发预览
 
 0067补齐归档验证/编译Git快照/真实格式索引与compat预览。上游format1不接受tgz源，采用固定Git提交中的完整构建包；一次真实GitHub安装全152文件核对及卸载恢复通过。见[准备与探针](release-distribution.md)。测试备份分支不等于正式Release/索引/Pages，W4发布器和W5晋升仍需继续实现。
+
+W4现已实现`release.yml`，操作、隔离权限和失败恢复见[候选分发](release-distribution.md)。默认仅预览，正式canary需真版本及显式publish；稳定晋升W5仍待完成。上游pin没有因此更新。
