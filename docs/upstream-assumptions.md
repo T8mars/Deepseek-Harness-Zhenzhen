@@ -149,3 +149,5 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 - C76：官方CLI安装自身两个版本后，公开package.json必须报告实际安装版本。生产构建保持其他151文件/执行位全同，更新baseline合成自身版本。裸plugin exec无Host peer resolver，测试使用Node公开模块hook指向精确已声明SDK peer，不修改app-boot或生产解析链；凭据仅存在状态桩。
 
 - C77/C78：Actions ZIP/ZIP64仅作有界平面普通文件读取，服务器SHA/大小和实际包相互核对；原始artifact不能自证成功，必须配套同仓main服务器run/job/step/首次attempt、固定完整payload/SDK及源码脚本摘要。七个完整UTC日按服务器付费步骤计，失败/缺天/重复/漂移拒绝。真实GitHub ZIP读取已验，候选工作流/七日/稳定发布尚未验。
+
+- C79/C80：候选W6重查公开不可变资产、确定性Git与原服务器安装证据；observer全payload及实际适配器须同pin，真实SDK读取候选归档配置，首次attempt之外在付费前拒绝。采集按服务器created_at截止、完整分页并复读，不只取success；原ZIP与单项元数据核验后按服务器paid-step计日。合成SDK/TEMP/HTTP与分页事务已验，真实候选CI/七日/稳定发布未验。

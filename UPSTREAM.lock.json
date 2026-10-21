@@ -1605,6 +1605,35 @@
       "releaseAssetBytesVerified": false,
       "nativeWrites": 0,
       "verification": "Read source/release metadata, actual installed executable/public status3.4.0, new active-context marker and installed CLI; ten isolated Node/real-HTTP/CLI regressions pass, reviewed source/protected files unchanged. EventEmitter windows are not actual Electron GUI proof. Own saved trust still old337 pin and correctly reports CLI_CHANGED. One production native CLI synthetic idle GET-to-POST passes, not a general sleep/DPAPI claim. No new confirmed required native code fix; new DSH active-context adapter still pending."
+    },
+    "candidateSmokeAndCollector": {
+      "decision": "0073",
+      "contracts": [
+        "C79",
+        "C80"
+      ],
+      "targetedTests": 20,
+      "candidateW6Connected": true,
+      "collectorImplemented": true,
+      "candidateAttemptRetriesAllowed": false,
+      "candidateArtifactRetentionDays": 90,
+      "serverCutoffRequired": true,
+      "completeHistoryLimitExclusive": 1000,
+      "maxCandidateObservations": 100,
+      "maxArchiveBytes": 67108864,
+      "promoteWorkflowImplemented": false,
+      "realCandidatePaidCiVerified": false,
+      "realSevenDayObservationVerified": false,
+      "modelRequests": 0,
+      "nativeWrites": 0,
+      "verification": "C79 twelve tests wire fixed published-canary revalidation and immutable observer input to the actual W6 SDK diagnostic and safe two-file artifact export; production Llm/PiAi uses candidate archive config with synthetic HTTP and TEMP native credentials, no live paid call. Source/assets/original W4 jobs, full payload/actual adapter/pin, first attempt, input links/drift, export safety and secret-step isolation pass. C80 eight tests cover complete paginated history without success/branch/event filtering, server promotion cutoff, current/first attempt, raw artifact identity, final history re-read and seven complete UTC days; failed/pending/retried/missing/changed/expired records refuse promotion. Workflow is connected but real candidate-paid CI/seven-day observation, upstream ack review, promote workflow and stable publishing remain unverified or incomplete. Real autocrlf Git clone first failed script SHA comparison; three exact LF attributes make the same actual-script clone pass without digest normalization or relaxed proof. Full525/525, canonical C63/C76 stable package and final152-file archive match actual installed0071. Anonymous public read correctly refuses absent canary feed with zero gateway requests. No actual DSH reinstall/restart, native write or paid request; exact current CI separately checked.",
+      "localTests": 525,
+      "localPassed": 525,
+      "sourceAutocrlfRedThenGreenVerified": true,
+      "packageFiles": 152,
+      "localPackageSha256": "7dfdb814b5e653890cb9558c2a2061c3fc01bc740c53f1f8f1c9a0da88aaee17",
+      "byteIdenticalToInstalled0071Archive": true,
+      "reinstallOrRestartPerformed": false
     }
   }
 }

@@ -9,6 +9,7 @@ import {readFileSync,writeFileSync,mkdirSync,existsSync,lstatSync,realpathSync,m
 import {resolve,join,relative,isAbsolute} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
+import {readSmokeCandidate} from './candidate-smoke-input.mjs';
 
 export const SMOKE_POLICY='default-flash-single-512-v1';
 export const SMOKE_MODEL='deepseek/deepseek-v4.1-flash';
@@ -58,9 +59,12 @@ function evidenceDirectory(root){
 }
 
 /** Isolated diagnostic only. It never loads Agent sessions, tools or user files. */
-export async function runGatewaySmoke({workspace=process.cwd(),mode,runId,commit,sourceDirty=false,credentialValue,fetcher=globalThis.fetch}){
+export async function runGatewaySmoke({workspace=process.cwd(),mode,runId,commit,sourceDirty=false,credentialValue,candidateTag='',fetcher=globalThis.fetch}){
   if(active)throw fail('SETUP');
   if(!['ci','local'].includes(mode)||!/^[a-z0-9][a-z0-9-]{0,63}$/.test(runId??'')||!/^[a-f0-9]{40}$/.test(commit??''))throw fail('SETUP');
+  if(typeof candidateTag!=='string'||candidateTag&&sourceDirty)throw fail('SETUP');
+  // Check immutable candidate/archive/installed SDK before resolving credentials or spending an attempt.
+  const candidate=candidateTag?readSmokeCandidate({workspace,mode,runId,commit,tag:candidateTag}):undefined;
   const directory=evidenceDirectory(workspace),stem=join(directory,'real-gateway-smoke-'+runId);
   // A spent attempt cannot be rerun, even if it crashed without a final receipt.
   writeFileSync(stem+'.intent.json',JSON.stringify({schemaVersion:1,at:new Date().toISOString(),policy:SMOKE_POLICY,mode,commit,runId,maxRequests:1,maxTokens:512})+'\n',{flag:'wx'});
@@ -68,6 +72,7 @@ export async function runGatewaySmoke({workspace=process.cwd(),mode,runId,commit
   const previousHome=process.env.DSH_HOME,originalFetch=globalThis.fetch,transport=smokeTransport(fetcher),ctx=new Context(),controller=new AbortController();
   const sourceSha256=Object.fromEntries(['gateway-smoke-core.mjs','real-gateway-smoke.mjs','check-smoke-ci.mjs'].map(name=>[name,createHash('sha256').update(readFileSync(new URL(name,import.meta.url))).digest('hex')]));
   const report={schemaVersion:1,at:new Date().toISOString(),policy:SMOKE_POLICY,mode,repository:REPOSITORY,commit,runId,sourceDirty,sourceSha256,provider:'seedance',model:SMOKE_MODEL,maxTokens:512,outcome:'not-run',code:'SETUP',requests:0,blockedRequests:0,httpStatus:null,finishKind:'unknown',inputTokens:null,outputTokens:null,visibleTextMatched:false,temporaryCleaned:false,userSessionsAccessed:false,nativeWrites:0};
+  if(candidate)report.candidate=candidate.binding;
   let home,base;
   try{
     base=realpathSync.native(tmpdir());home=realpathSync.native(mkdtempSync(join(base,'dsh-gateway-smoke-')));process.env.DSH_HOME=home;
@@ -81,7 +86,7 @@ export async function runGatewaySmoke({workspace=process.cwd(),mode,runId,commit
       await ctx.credentials.set(ref,credentialValue);
     }
     if(!(await ctx.credentials.describe(ref)).configured)throw fail('MISSING_CREDENTIAL');
-    const rows=parse(readFileSync(new URL('../packages/dsh-zhen/cordis.patch.yml',import.meta.url),'utf8'));
+    const rows=parse(candidate?candidate.archive.files.get('cordis.patch.yml').toString('utf8'):readFileSync(new URL('../packages/dsh-zhen/cordis.patch.yml',import.meta.url),'utf8'));
     const defaults=rows.find(x=>x.id==='agent-default-model')?.config,config=structuredClone(rows.find(x=>x.id==='llm-pi-ai')?.config);
     if(defaults?.provider!=='seedance'||defaults.model!==SMOKE_MODEL||config?.providers?.seedance?.baseURL!=='https://api.seedance.nz/v1'||config.providers.seedance.apiKeyEnv!=='SEEDANCE_API_KEY'||config.providers.seedance.compat?.maxTokensField!=='max_tokens')throw fail('ROUTE_REFUSED');
     globalThis.fetch=transport.fetch;

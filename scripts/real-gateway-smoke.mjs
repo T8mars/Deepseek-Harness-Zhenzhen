@@ -11,7 +11,7 @@ export async function main(args=process.argv.slice(2)){
   if(invocation.commit&&invocation.commit!==commit)throw new Error('Checkout identity refused.');
   const sourceDirty=!!execFileSync('git',['status','--porcelain','--untracked-files=normal'],{encoding:'utf8',windowsHide:true,stdio:['ignore','pipe','pipe']}).trim();
   if(invocation.mode==='ci'&&sourceDirty)throw new Error('Dirty checkout refused.');
-  const report=await runGatewaySmoke({...invocation,commit,sourceDirty,credentialValue});
+  const report=await runGatewaySmoke({...invocation,commit,sourceDirty,credentialValue,candidateTag:process.env.DSH_SMOKE_CANARY||''});
   console.log(JSON.stringify(report));
   return report.outcome==='passed'?0:1;
 }

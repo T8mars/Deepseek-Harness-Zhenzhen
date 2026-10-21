@@ -1,4 +1,5 @@
 name: Controlled real gateway smoke
+run-name: Flash observation · ${{ (github.event_name == 'workflow_dispatch' && inputs.canary_tag) || (github.event_name == 'schedule' && vars.REAL_GATEWAY_SMOKE_CANARY) || 'main' }}
 on:
   workflow_dispatch:
     inputs:
@@ -7,6 +8,11 @@ on:
         required: true
         type: boolean
         default: false
+      canary_tag:
+        description: 'Optional fixed published canary tag; blank checks main without promotion evidence'
+        required: false
+        type: string
+        default: ''
   schedule:
     - cron: '43 2 * * *'
 permissions:
@@ -22,12 +28,16 @@ jobs:
     permissions:
       contents: read
       actions: read
+    env:
+      DSH_SMOKE_CANARY: ${{ (github.event_name == 'workflow_dispatch' && inputs.canary_tag) || (github.event_name == 'schedule' && vars.REAL_GATEWAY_SMOKE_CANARY) || '' }}
+      DSH_SMOKE_CONFIRM: ${{ inputs.confirm_paid_check }}
+      DSH_SMOKE_SCHEDULE_ENABLED: ${{ vars.REAL_GATEWAY_SMOKE_ENABLED }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: '22.19.0'
           cache: npm
@@ -38,14 +48,29 @@ jobs:
           GH_TOKEN: ${{ github.token }}
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: npm run build
+      - if: env.DSH_SMOKE_CANARY != ''
+        run: npm run pack:bundle
+      - name: Bind fixed published canary
+        if: env.DSH_SMOKE_CANARY != ''
+        run: node scripts/prepare-candidate-smoke.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
       - name: One fixed real Flash request
         run: node scripts/real-gateway-smoke.mjs --ci
         env:
           SEEDANCE_API_KEY: ${{ secrets.SEEDANCE_API_KEY }}
-          DSH_SMOKE_CONFIRM: ${{ inputs.confirm_paid_check }}
-          DSH_SMOKE_SCHEDULE_ENABLED: ${{ vars.REAL_GATEWAY_SMOKE_ENABLED }}
+      - name: Export candidate observation
+        if: always() && env.DSH_SMOKE_CANARY != ''
+        run: node scripts/export-candidate-observation.mjs
+      - if: always() && env.DSH_SMOKE_CANARY != ''
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: candidate-observation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/candidate-observation/*
+          if-no-files-found: ignore
+          retention-days: 90
       - if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: gateway-smoke-${{ github.run_id }}-${{ github.run_attempt }}
           path: .runtime/evidence/real-gateway-smoke-${{ github.run_id }}-${{ github.run_attempt }}.json
@@ -60,13 +85,13 @@ jobs:
       actions: read
       issues: write
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: '22.19.0'
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         continue-on-error: true
         with:
           name: gateway-smoke-${{ github.run_id }}-${{ github.run_attempt }}
