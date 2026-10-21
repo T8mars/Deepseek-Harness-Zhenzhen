@@ -171,3 +171,6 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 
 
 0082/C93：FileSystemSkillProvider公开Config的本机默认/项目/custom/user/bundled根通过实际provider观测核对，含无Git标记回退、最近Git标记文件和禁用default roots。agent-instructions的findProjectRoot只见内部声明而非已发布根出口，未深导入；本项目用自有标记元数据定位，异常拒绝，不读取Git内容或猜虚拟文件系统。有效配置只保留根设置，不序列化环境或执行访问器。四个自有服务快照与真实SDK provider的TEMP组合不是实际用户Host/Remote/UI验收；原SDK源码不变。
+
+
+0083/C94：固定Loader.entries遍历条目和嵌套树；Entry.fiber.config公开定义为validated config，读取不再次执行原配置表达式。Entry.disabled getter可能执行表达式，备份不调用。实际Group的disabled不阻止自身挂载，而由子条目继承；不依据普通条目的禁用行为猜Group。Builtin字典和moduleNamespace公开导出身份用于识别别名，不调用loader.import/refresh。Cordis FiberState是ambient const enum无运行时出口，用公开声明数值与实际生命周期合同核对。LocalFileSystem公有类识别host-local，未知backend拒绝，不从方法形状猜本机。工作区/live seam专项为接口夹具，不能扩展为持久化registry/实际用户Host验收。PatchOptions.name仍是匹配守卫，不是模块替换入口。

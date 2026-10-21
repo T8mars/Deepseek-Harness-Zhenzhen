@@ -20,7 +20,7 @@
     "branch": "main",
     "policy": "commit-and-push-validated-updates",
     "firstCheckpointTag": "v0.1.0-dev.1",
-    "latestCheckpointTag": "v0.1.0-dev.53"
+    "latestCheckpointTag": "v0.1.0-dev.54"
   },
   "repositoryVisibility": "public-owner-confirmed"
 }

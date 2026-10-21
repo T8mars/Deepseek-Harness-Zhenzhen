@@ -21,6 +21,11 @@ import type {} from '@deepseek-ai/dsh-host-webserver';
 import type {} from '@deepseek-ai/dsh-skill';
 import { SkillMarket, readBundledCatalog } from './market.ts';
 import { SkillFeed } from './skill-feed.ts';
+import {hostSkillInventorySource} from './backup-host-skills.ts';
+import type {HostSkillBackupPolicy} from './backup-host-skills.ts';
+import {skillInventoryBackupRecords} from './backup-skill-inventory.ts';
+import {BackupError} from './backup-archive.ts';
+import type {BackupOptions,BackupRecord} from './backup-archive.ts';
 import { GithubAccess } from './github-access.ts';
 import { FIRST_PARTY_REPOSITORY, githubCredentialValue } from './github-access-schema.ts';
 import type { GithubAccessInfo } from './github-access-schema.ts';
@@ -356,6 +361,16 @@ export default class ZhenService extends TypertRemoteService {
     return this.skillMarket;
   }
   private feed(): SkillFeed { this.market(); return this.skillFeed!; }
+  /** Host-only stream for the composed backup. Not a browser Remote: source
+   * paths, backup passwords and archive bytes stay on the Host. Never construct
+   * a managed service here, since its startup may activate a pending update. */
+  skillBackupRecords(policy:()=>HostSkillBackupPolicy,options:BackupOptions={}):AsyncGenerator<BackupRecord>{
+    return skillInventoryBackupRecords(()=>{
+      const local=this.localSkillSources,github=this.githubSkillSources,market=this.skillMarket,feed=this.skillFeed;
+      if(!local||!github||!market||!feed)throw new BackupError('BACKUP_HOST_SERVICES_UNAVAILABLE');
+      return hostSkillInventorySource(this.ctx,{local,github,market,feed},policy());
+    },options);
+  }
   @Remote
   marketFeedSnapshot(): import('./market-schema.ts').SkillFeedSnapshot { return this.feed().snapshot(); }
   @Remote

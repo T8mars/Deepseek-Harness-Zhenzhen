@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T19:19:51.420Z",
+  "checkedAt": "2026-10-21T19:54:19.084Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1849,6 +1849,24 @@
       "localPassed": 690,
       "packageFiles": 167,
       "localPackageSha256": "ac006d918d9a0b1c55c85a6254d43757de5388c93bfd899384e11f98c6c12108"
+    },
+    "hostSkillInventoryBackup": {
+      "schemaVersion": 1,
+      "sdkVersion": "0.2.1-rc.2",
+      "status": "host-only-source-adapter",
+      "targetedTests": 16,
+      "targetedPassed": 16,
+      "relatedPassed": 78,
+      "fullRegressionPending": false,
+      "fullM2Complete": false,
+      "userHostActivated": false,
+      "historicalSessionDirectoriesAutoCollected": false,
+      "virtualProvidersSupported": false,
+      "verification": "C94 adds16 actual published Loader/filesystem/LocalFileSystem and own ZhenService TEMP contracts. Public Entry.fiber.config supplies validated active settings without replaying expressions; known disabled literals and builtin aliases retain inactive roots. Real Group materializes children while disabling nested providers. Workspace/default/live/explicit historical paths merge in order with128 unique-directory limit,16 filesystem entries and4096 loader-node traversal budget. Workspace/live directory seams are fixtures, not actual WorkspaceRegistry persistence proof. Unknown backends refuse without calls; pending or absent services refuse without activation; source lifecycle changes reject final publication; encrypted inactive resource/state restoration preserves disabled roots and old missing-enabled semantics. No Host-tree serialization, credential reads, source imports, native writes, user-app reinstall/restart or model calls. Direct third-party providers and historical changed directories require additional adapters/total session integration. Complete backup/restoration/UI and M2/L2 remain incomplete. Complete regression/archive/exact CI separately required. Complete706/706 and168-file archive pass C63 legacy-checkout packing and C76 actual two-version build/install/launcher full-payload checks; exact current CI is separately required.",
+      "localTests": 706,
+      "localPassed": 706,
+      "packageFiles": 168,
+      "localPackageSha256": "eb8f4f1ea09759b0db7d8bb246ef4c1d37a7aa58c45dde413a592c9bead939d6"
     }
   }
 }
