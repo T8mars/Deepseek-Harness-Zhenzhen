@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-20T23:36:12.640Z",
+  "checkedAt": "2026-10-20T23:59:12.428Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1342,6 +1342,33 @@
       "localPackageSha256": "45238140737c8812df83824e2d0a82ef49eb34c2f7b3dee0402feaff88d26e51",
       "byteIdenticalToInstalled0061Archive": true,
       "reinstallOrRestartPerformed": false
+    },
+    "knowledgeClientScope": {
+      "decision": "0064",
+      "contract": "C69",
+      "targetedTests": 10,
+      "apiAndProjectEpoch": true,
+      "synchronousDuplicateSubmissionGuard": true,
+      "staleDependentIndexBlocked": true,
+      "staleClipboardDispatchBlocked": true,
+      "importDraftPreserved": true,
+      "workspaceDraftPreserved": true,
+      "sourceCloseInvalidatesNavigation": true,
+      "independentBindingReadSequence": true,
+      "hostAuthorizationChanged": false,
+      "retrievalAlgorithmChanged": false,
+      "indexSchemaChanged": false,
+      "modelRequests": 0,
+      "nativeWrites": 0,
+      "browserVerified": false,
+      "verification": "C69 compiles actual production Knowledge and drives handlers with fake hooks/EXAMPLE data: duplicate submission, full/partial import drafts, stale API results/busy, old create without dependent index, stale citation without clipboard, late binding versus edited workspace/new bind, project clear, source close ignoring late success/error. Initial corrected fixture reproduces four product failures out of five; final ten plus build/typeclean pass. Not DOM/browser/system clipboard or Host authorization/index/ranking changes; accepted work is not cancelled or retried.",
+      "localTests": 425,
+      "localPassed": 425,
+      "packageFiles": 151,
+      "localPackageSha256": "e8fbf16771dc3c555298ad5151e08543ec4a2201d2786288af3d9f817d5a7436",
+      "actualUserHostUpdated": true,
+      "ownIndexMetadataPreserved": true,
+      "reinstallOrRestartPerformed": true
     }
   }
 }

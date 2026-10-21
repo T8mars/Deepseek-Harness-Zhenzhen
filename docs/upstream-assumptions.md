@@ -128,3 +128,6 @@ C67（0062）：已发布AgentLoop对原生finish max-tokens直接结束turn，�
 
 
 C68（0063）：实际已发布AgentLoop/defaultModel/pi-ai保留原生生成的回放信息；三种普通推理字段、结构化reasoning_details（含分片合并及不透明EXAMPLE数据）、无推理工具响应均能到下一原生请求，工具ID/结果匹配且普通completed。当前默认请求include_usage=true由合同钉住，真实默认三个最终请求HTTP200并有原生用量事件。原生回放为opaque adapter state，不自行构造/改写上游持久化格式，也不强制reasoning_content或要求每次工具响应有推理。真实签名/正文仅内存比较；不开新开关、不推论所有模型或计费。
+
+
+C69（0064）：自有知识库生产组件通过React公开hooks保存API实例/资料空间代次和同步single-flight，独立读序号处理集合/绑定/来源，异步Remote返回不被当作当前界面的事实。测试执行真实组件事件处理器，覆盖迟到响应/错误、依赖调用停止、草稿/绑定保持、剪贴板调用前拦截及面板关闭；没有改动上游RPC、会话格式、Host授权或检索算法。fake hooks/剪贴板桩仅单元验证，不声称真实浏览器或系统权限处理。
