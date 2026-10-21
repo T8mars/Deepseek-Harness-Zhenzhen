@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.2/pi-ai-azure-provider/guide.md",
+  "digest": "1b4119f4d7d2ede8950358b9f6acbc368a21fe4b",
+  "decision": "not-applicable",
+  "rationale": "本包只配置Seedance提供方，不声明azure-openai-responses提供方或Azure部署映射；网关中的模型ID不等同Azure直连提供方键，原生Azure由SDK处理。"
+}

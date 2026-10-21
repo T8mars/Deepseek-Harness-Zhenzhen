@@ -1,5 +1,5 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": { "rootDir": "src", "outDir": "lib/types" },
-  "include": ["src/*.ts", "src/client/art-validation.ts"], "exclude": []
+  "include": ["src/*.ts", "src/client/art-validation.ts", "src/client/credential-source.ts"], "exclude": []
 }

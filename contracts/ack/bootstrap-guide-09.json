@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/deepseek-model-discovery/guide.md",
+  "digest": "a5fa635ccd4364918c5a8ce0cda17d23970d8b4f",
+  "decision": "not-applicable",
+  "rationale": "默认路由为llm-pi-ai中的Seedance，不消费DeepSeek官方API-key发现器。用户显式启用官方路径时继承SDK的凭据发现和空目录行为，不改写其选择或添加登录绕过。"
+}

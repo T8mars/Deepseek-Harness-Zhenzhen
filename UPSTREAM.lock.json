@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T07:46:51.341Z",
+  "checkedAt": "2026-10-21T08:22:41.086Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1649,7 +1649,7 @@
       "upstreamReviewRecomputed": true,
       "initialGuideCount": 42,
       "initialProfileRows": 190,
-      "initialApplicabilityReviewCompleted": false,
+      "initialApplicabilityReviewCompleted": true,
       "realShippedSdkProfileVerified": true,
       "builtinOnlyWriterImportVerified": true,
       "stableFeedImplemented": true,
@@ -1659,14 +1659,15 @@
       "realStablePublicationVerified": false,
       "modelRequests": 0,
       "nativeWrites": 0,
-      "verification": "W5 now connects default-preview promote.yml, pure tracked-source applicability and W3 ancestry/SDK-contract review, actual shipped-template digest capture in a read-only SDK job, original published W4+seven raw W6 evidence recomputation, isolated snapshot/write and exact-Git install jobs, immutable five-asset stable publication and canonical retained stable/canary feed. C81 nine, C82 nine, C83 nine and C84 three pass. Recovery rechecks original proofs, never overwrites public assets or automatically retries accepted-but-lost mutations; main advancement/conflicting identities/out-of-order stable versions refuse before mutation. Actual published SDK captures190 fresh template fact rows; actual writer import graph permits builtins only. Launcher now validates full final/canary archive+manifest before lease/profile; C76 asserts both actual production bundles pass that boundary. Synthetic transactions are not real seven days or publication. Initial42-guide applicability review, real candidate/stable release, elapsed observation and true new-SDK migration remain unverified or incomplete. Full555/555, actual C63 legacy checkout/C76 stable package and final152-file archive equal installed0071; both production version archives pass the new launch boundary. Own Host identity/5180 verified; no reinstall/restart or native writes. Exact current CI and default W5 preview remain separately verified after backup.",
-      "localTests": 555,
-      "localPassed": 555,
-      "packageFiles": 152,
-      "localPackageSha256": "7dfdb814b5e653890cb9558c2a2061c3fc01bc740c53f1f8f1c9a0da88aaee17",
-      "byteIdenticalToInstalled0071Archive": true,
+      "verification": "W5 now connects default-preview promote.yml, pure tracked-source applicability and W3 ancestry/SDK-contract review, actual shipped-template digest capture in a read-only SDK job, original published W4+seven raw W6 evidence recomputation, isolated snapshot/write and exact-Git install jobs, immutable five-asset stable publication and canonical retained stable/canary feed. C81 nine, C82 nine, C83 nine and C84 three pass. Recovery rechecks original proofs, never overwrites public assets or automatically retries accepted-but-lost mutations; main advancement/conflicting identities/out-of-order stable versions refuse before mutation. Actual published SDK captures190 fresh template fact rows; actual writer import graph permits builtins only. Launcher now validates full final/canary archive+manifest before lease/profile; C76 asserts both actual production bundles pass that boundary. Synthetic transactions are not real seven days or publication. Initial42-guide technical applicability review is now complete in decision0076; real candidate/stable release, elapsed observation and true new-SDK migration remain unverified. Decision0076 completes the actual42-guide initial technical review and shipped190-row profile acknowledgment. Final full563/563 and154-file package pass C63/C76 real build/install boundaries. The new credential-source implementation changes the archive; it is not byte-identical to installed0071 and was not activated/restarted. Exact current CI/default W5 preview remain separately verified.",
+      "localTests": 563,
+      "localPassed": 563,
+      "packageFiles": 154,
+      "localPackageSha256": "0d0272d07702e30c0f31ae9f5ad0ba35d6e9a498ebb822a2be7242e925d9e6cf",
+      "byteIdenticalToInstalled0071Archive": false,
       "launcherBoundaryRealProductionBundlesVerified": true,
-      "reinstallOrRestartPerformed": false
+      "reinstallOrRestartPerformed": false,
+      "initialApplicabilityReviewDecision": "0076"
     },
     "canvas341Review": {
       "decision": "0075",
@@ -1691,6 +1692,59 @@
       "realPairingOrApprovalVerified": false,
       "installed341Verified": false,
       "verification": "Read-only review confirms prior active-context handoff exists in installed/running3.4.0; current main/release metadata are3.4.1. Installed bundled CLI discovery/exact handshake pass; saved DSH pin still old and returns CLI_CHANGED without promotion. In fresh TEMP, ten active-context and five production-function exit-transport tests pass; protected files/source/worktree unchanged. Nine existing DSH setup/status/idle contracts pass. EventEmitter/VM fixtures are not actual Electron or installed341 upgrade proof. No new confirmed required native code fix; DSH active-context integration, real owner pairing and generated works remain pending."
+    },
+    "initialSdkApplicabilityReview": {
+      "decision": "0076",
+      "upstream": {
+        "version": "0.2.1-rc.2",
+        "tag": "dsh-v0.2.1-rc.2",
+        "commit": "687f282e8625c6b8d11ff58211a90524be2e4317"
+      },
+      "guideCount": 42,
+      "profileRows": 190,
+      "baselineSha256": "7d7889b44168979debc695ff8f499cf042563443886226655903cde3b2509d42",
+      "profileSha256": "bc2effc3aa72422498ca9ef2036667078960d7499fdc202abe5c10d2f4d2cb97",
+      "requiredAcknowledgments": 43,
+      "technicalReview": true,
+      "humanPublicationApprovalClaimed": false,
+      "initialReviewComplete": true,
+      "observationsOnlyBaselineUnmodified": true,
+      "contracts": [
+        "C85",
+        "C83"
+      ],
+      "modelRequests": 0,
+      "nativeWrites": 0,
+      "verification": "All42 pinned guide texts and Git blobs were read and checked against owned source; individual technical decisions and a separate baseline/profile C6 record are present. Actual public CLI fresh-TEMP template matches190 facts. Seven C85 tests exercise actual Node PTC nested RAG/canonical metadata and pause/revoke refusal, native PiAi missing/saved/unset catalog, native stored-over-environment fallback via Owner Remote and production client handlers. A fresh Git fixture with all43 real records removes only initial-review missing status, while an absent published Canary still blocks. OS sandbox enforcement, actual Session persistence, browser/new installed UI, real seven days/stable release and future SDK migration are not certified.",
+      "localTests": 563,
+      "localPassed": 563,
+      "packageFiles": 154,
+      "localPackageSha256": "0d0272d07702e30c0f31ae9f5ad0ba35d6e9a498ebb822a2be7242e925d9e6cf",
+      "reinstallOrRestartPerformed": false
+    },
+    "seedanceCredentialSource": {
+      "decision": "0076",
+      "contract": "C85",
+      "sources": [
+        "none",
+        "stored",
+        "environment",
+        "fallback",
+        "unknown"
+      ],
+      "rawSourceExposed": false,
+      "legacyStatusAccepted": true,
+      "storedOverEnvironmentVerified": true,
+      "unsetEnvironmentFallbackVerified": true,
+      "clientHandlersVerified": true,
+      "browserVerified": false,
+      "realCredentialsRead": false,
+      "modelRequests": 0,
+      "localTests": 563,
+      "localPassed": 563,
+      "packageFiles": 154,
+      "localPackageSha256": "0d0272d07702e30c0f31ae9f5ad0ba35d6e9a498ebb822a2be7242e925d9e6cf",
+      "reinstallOrRestartPerformed": false
     }
   }
 }

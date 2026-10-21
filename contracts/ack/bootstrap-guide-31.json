@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.2/deepseek-account-identity-watch/guide.md",
+  "digest": "9d8844fa394df62814e2f9e331c7de1d4b1c2e81",
+  "decision": "not-applicable",
+  "rationale": "未订阅DeepSeekAccount.watch或据此同步Platform用户身份，Seedance凭据变更使用原生credentials事件；不改变上游账号UI的默认订阅行为。"
+}

@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.1.7-rc.2/schedule-optional-bundle/guide.md",
+  "digest": "72ffb9f689e48717319cdfcd1ebcbaeeeb5734eb",
+  "decision": "not-applicable",
+  "rationale": "本包不覆盖schedule/time-context/ui-schedule，也不选择临时experimental-schedule-bundle；当前固定SDK已按后续指南7退役该bundle，继承发行Web配置，无需编辑用户profile。"
+}

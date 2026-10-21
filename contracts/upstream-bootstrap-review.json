@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "target": {
+    "version": "0.2.1-rc.2",
+    "commit": "687f282e8625c6b8d11ff58211a90524be2e4317"
+  },
+  "baselineSha256": "7d7889b44168979debc695ff8f499cf042563443886226655903cde3b2509d42",
+  "profileReview": {
+    "contract": "C6",
+    "decision": "handled",
+    "digest": "bc2effc3aa72422498ca9ef2036667078960d7499fdc202abe5c10d2f4d2cb97",
+    "rationale": "已逐项核对固定SDK发行Web的190行事实，并在全新TEMP通过公开CLI再次读取相同摘要。本扩展只完整替换默认模型、llm-pi-ai、ui-settings-models三行配置，禁用九行并插入自身；其他行继承发行模板。C1/C2/C6/C7/C8验证组合、完整Provider、公开槽位、主题及出站禁用；C63/C76另有实际CLI安装合同。未据此声称Desktop窗口、15分钟实网或所有第三方插件已验收。"
+  }
+}

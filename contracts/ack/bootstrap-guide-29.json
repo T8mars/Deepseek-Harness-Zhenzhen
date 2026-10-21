@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/web-listener-trust-config/guide.md",
+  "digest": "6f18f4d7a1a8ddf383b6afd033a40938797d9098",
+  "decision": "handled",
+  "rationale": "不依赖已移除webRuntime或覆盖connection信任表达式；启动明确绑定127.0.0.1并复用发行webStartup配置，正常临时Host安装探针通过，不使用通配网络监听。"
+}

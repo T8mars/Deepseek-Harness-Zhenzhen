@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.2/stored-credentials-precedence/guide.md",
+  "digest": "5726a62e2395a59b933f9092cb82892d82bdbba5",
+  "decision": "handled",
+  "rationale": "凭据只经ctx.credentials读写。C85用EXAMPLE同名启动环境与本地值实测：本地值优先，unset后回退环境；实际Owner Remote只返回规范来源枚举，未知来源路径不外泄。界面区分环境与本地，移除后重新读取并说明回退；原生产处理器已验证，不读取或手改用户凭据布局。"
+}

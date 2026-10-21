@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.0-rc.2/account-sign-in-errors/guide.md",
+  "digest": "9c6fad0bc45ceb6051f7fb92157a6b412eee9ffd",
+  "decision": "not-applicable",
+  "rationale": "默认模型通过Seedance及原生凭据服务连接；本扩展没有account/getState、startSignIn或SignInErrorCode的自定义校验器，账号登录视图继续由固定SDK负责。"
+}

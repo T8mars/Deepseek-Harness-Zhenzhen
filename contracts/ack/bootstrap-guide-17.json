@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/new-session-generations/guide.md",
+  "digest": "2c699ccfa2d954e68321a5d556b58b8ebd307c0b",
+  "decision": "not-applicable",
+  "rationale": "客户端没有自定义uiWorkspace.startSession或重连实现，保留SDK新会话创建新Agent的行为，不重写会话文件或在现有Agent上伪造新preset；实际浏览器行为仍待验。"
+}

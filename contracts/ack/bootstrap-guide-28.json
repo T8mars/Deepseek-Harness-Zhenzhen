@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/tool-presentation-mode/guide.md",
+  "digest": "c6a2ce9328ffaee8c6c5eb2b49a2294805726fa4",
+  "decision": "handled",
+  "rationale": "本包只沿用当前发行的native/ptc工具呈现，不设置both或DSH_TOOLS_MODE；C85用实际ToolRuntime与NodePtcRuntime验证两种呈现下的RAG调用，不新增已移除的混合模式。"
+}

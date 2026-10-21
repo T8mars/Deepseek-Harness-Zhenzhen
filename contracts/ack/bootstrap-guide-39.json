@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.2/sdk-minimal-image-compaction/guide.md",
+  "digest": "a1cd0795fa328090aef1a159e0df586d615e7103",
+  "decision": "handled",
+  "rationale": "受控W6使用直接Llm.prepareCall且不加载Agent会话或compaction，保持单次出站上限；应用的SDK图像/摘要默认行为保留，verifier累计计数不是全账户账单，不修改历史日志以规避摘要行为。"
+}

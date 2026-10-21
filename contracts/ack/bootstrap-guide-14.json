@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/jsonl-persistence-plugin/guide.md",
+  "digest": "a05bdef3eb834b8e835ab1adc04feb0935863bf8",
+  "decision": "not-applicable",
+  "rationale": "扩展不默认导入、直接构造或继承JSONL持久化实现；发行Web负责挂载原生服务，自有RAG等SQLite存储不替代SessionPersistence，也不改写会话格式。"
+}

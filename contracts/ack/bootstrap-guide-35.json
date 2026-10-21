@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.2/operator-connect/guide.md",
+  "digest": "edd504ea64cf150826cfd2886a4137617f8116c9",
+  "decision": "handled",
+  "rationale": "产品使用原生浏览器Connection而不实现非页面$stream/$on恢复；非页面合同peer明确interactions:none，只测生成的单次Remote调用。未新增手工连接令牌/事件订阅或泄露Cookie。"
+}

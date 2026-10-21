@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/ssh-helper-launch/guide.md",
+  "digest": "5f32a8363d0449210324608362762fa5736d1989",
+  "decision": "not-applicable",
+  "rationale": "未提供自定义SSH/PTC launch配置或旧nodeExecutable/bootstrapPath getter调用；本机Canvas桥走原CLI回环控制面，自有stdio MCP启动不属于SDK SSH协议配置。"
+}

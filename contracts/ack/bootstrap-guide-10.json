@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/desktop-test-auth-popup/guide.md",
+  "digest": "4a70b5f34ff0f38c2ff220d462ba06079608849e",
+  "decision": "not-applicable",
+  "rationale": "当前A层不修改Desktop测试更新策略、飞书认证或私有desktop设置，使用发行Web扩展；未启用测试认证弹窗，官方Desktop真实验收仍单列待验。"
+}

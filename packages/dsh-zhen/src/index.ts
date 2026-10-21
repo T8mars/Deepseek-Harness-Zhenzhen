@@ -1,5 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis';
 import { credentialRef } from '@deepseek-ai/dsh-credentials';
+import { credentialSource } from './client/credential-source.ts';
 import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
 import { readWallet, GatewayError } from './gateway.ts';
 import { DefaultArt } from './default-art.ts';
@@ -111,6 +112,7 @@ export interface ZhenStatus {
   model: string;
   credentialConfigured: boolean;
   credentialWritable: boolean;
+  credentialSource?: import('./client/credential-source.ts').CredentialSource;
   gatewayVerified: boolean;
 }
 
@@ -651,7 +653,7 @@ export default class ZhenService extends TypertRemoteService {
   async status(): Promise<ZhenStatus> {
     const info = await this.ctx.credentials.describe(seedanceCredential);
     return { version: ownBundleVersion(), provider: 'seedance', model: 'deepseek/deepseek-v4.1-flash',
-      credentialConfigured: info.configured, credentialWritable: info.writable, gatewayVerified: false };
+      credentialConfigured: info.configured, credentialWritable: info.writable, credentialSource: credentialSource(info.configured, info.source), gatewayVerified: false };
   }
 
   private checks(): GatewayChecks {

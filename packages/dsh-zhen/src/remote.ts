@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { createTypertRemoteInfo } from '@deepseek-ai/dsh-typert-protocol/remote-info';
 import type { RemoteResult, TypertRemoteCodecSpec, TypertRemoteMethodSpec } from '@deepseek-ai/dsh-typert-protocol';
 import type { Wallet, ZhenStatus } from './index.ts';
+import { credentialSources } from './client/credential-source.ts';
 import { githubAccessSchema, githubCredentialValue } from './github-access-schema.ts';
 import type { GithubAccessInfo } from './github-access-schema.ts';
 import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
@@ -189,7 +190,7 @@ declare module '@deepseek-ai/dsh-typert-protocol' {
 }
 
 const statusSchema: z.ZodType<ZhenStatus> = z.object({ version: z.string(), provider: z.string(), model: z.string(),
-  credentialConfigured: z.boolean(), credentialWritable: z.boolean(), gatewayVerified: z.boolean() }).strict();
+  credentialConfigured: z.boolean(), credentialWritable: z.boolean(), credentialSource: z.enum(credentialSources).optional(), gatewayVerified: z.boolean() }).strict();
 const walletSchema: z.ZodType<Wallet> = z.object({ amount: z.number().finite(), usedAmount: z.number().finite(), currency: z.string().regex(/^[A-Z]{3,8}$/), checkedAt: z.string() }).strict();
 const collectionSchema: z.ZodType<KnowledgeCollection> = z.object({ id: z.string(), project: z.string(), name: z.string(), root: z.string(), epoch: z.number().int(), enabled: z.boolean(), cloudProvider: z.string(), agentEnabled: z.boolean(), documents: z.number().int() }).strict();
 const hitSchema: z.ZodType<KnowledgeHit> = z.object({ id: z.string(), collectionId: z.string(), collectionName: z.string(), path: z.string(), line: z.number().int(), page: z.number().int().min(1).max(200).optional(), text: z.string(), epoch: z.number().int() }).strict();

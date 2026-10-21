@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/team-direct-inbox/guide.md",
+  "digest": "974c1aa13cecc903f5f3fae82401bd2496128d7e",
+  "decision": "not-applicable",
+  "rationale": "未插入experimental-agent-team配置，也无maxPendingMessagesPerMember、旧队列状态或工具send_message回执解析；没有重发历史Team消息或修改Session记录。"
+}

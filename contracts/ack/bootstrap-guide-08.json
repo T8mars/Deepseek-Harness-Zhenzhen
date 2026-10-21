@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.0-rc.2/subpath-plugin-display-manifest/guide.md",
+  "digest": "4f7ee72f0224402565dd34615ff791ac1a87e0fd",
+  "decision": "not-applicable",
+  "rationale": "包只导出真实根package.json，没有client/package.json或其他子路径显示manifest，故不依赖已移除的子路径manifest回退规则；未据此声称新的插件页图标已实显验收。"
+}

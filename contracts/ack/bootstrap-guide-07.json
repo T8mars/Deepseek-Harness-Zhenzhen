@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.0-rc.2/schedule-bundle-retired/guide.md",
+  "digest": "d95d2b3b16005e9bb5c6ee343a140a201ecd19f7",
+  "decision": "not-applicable",
+  "rationale": "当前包不声明被退役的experimental-schedule-bundle或顶层time-context覆盖，保留发行Web的schedule和原生preset工具，启动仅使用公开CLI，不手改用户manifest。"
+}

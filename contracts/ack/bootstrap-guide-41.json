@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.3/plugin-engines-dsh/guide.md",
+  "digest": "44a0281a25921e915346bde280ccdc36fc73cf69",
+  "decision": "handled",
+  "rationale": "本包engines.dsh是精确受支持发布版且与SDK peers锁步，无workspace范围或自定义旧peers拒绝记录解析；实际公开CLI完整包安装与版本契约已通过，不能据此声称支持未来SDK。"
+}

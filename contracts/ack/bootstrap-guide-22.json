@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/session-title-provider-strategy/guide.md",
+  "digest": "bf0eb87a912026a790a073b9fea0b19a9f2c36b5",
+  "decision": "not-applicable",
+  "rationale": "未调用被删除的session-title注册/生成辅助函数，也没有自定义标题provider配置targetWords等字段；继承SDK标题策略，不重写既有Session事件或标题。"
+}

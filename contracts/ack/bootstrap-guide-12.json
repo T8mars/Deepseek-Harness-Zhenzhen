@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/instruction-home-override/guide.md",
+  "digest": "4c8f1564076753fee0fdc77f73e9bf72bc999975",
+  "decision": "handled",
+  "rationale": "未给agent-instructions行传dshHome；启动器统一设置进程DSH_HOME，自有存储通过公开dshHomePath解析同一home，不写或解析原生指令/profile私有布局。"
+}

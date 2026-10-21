@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.1.7-rc.2/transcript-view-legacy-normal/guide.md",
+  "digest": "cfb2be279317272ec0c9eadb6582dc77c8339255",
+  "decision": "not-applicable",
+  "rationale": "扩展没有读取或重写ui-chat.transcriptView，保留SDK对normal和缺省值的显示规则及用户已保存选择，不迁移原生设置。"
+}

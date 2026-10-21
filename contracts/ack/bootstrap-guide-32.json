@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.2/deepseek-account-model-catalog/guide.md",
+  "digest": "9bedcf6c07c8db5be86068f31a4795d919a63398",
+  "decision": "not-applicable",
+  "rationale": "自定义模型配置属于llm-pi-ai的Seedance路线，不覆盖llm-deepseek-account.models或构造账号目录。用户原生账号路线继续由SDK管理，不编辑其保存配置。"
+}

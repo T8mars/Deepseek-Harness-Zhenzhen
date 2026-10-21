@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/subagent-preset-composition/guide.md",
+  "digest": "c41f6f4c265138d1a138ff22da54a77650f597f3",
+  "decision": "not-applicable",
+  "rationale": "本包不覆盖dsh-tool-subagent的persona/toolFilter，不自建SubagentStartRequest或fork限制字段；创作MCP的权限规则是独立工具授权，不冒充子Agent配置迁移。"
+}

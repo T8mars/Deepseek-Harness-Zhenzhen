@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/python-optional-resources/guide.md",
+  "digest": "21c5a025e5816747130152dbfc81bfe3d5dc52fd",
+  "decision": "not-applicable",
+  "rationale": "本发行形式是固定npm CLI和Node扩展，不分发Python runtime wheel或调用其Office/primary-runtime下载函数。DOCX/PDF本地提取走自有Node worker，不以此宣称外部Python创作技能均兼容。"
+}

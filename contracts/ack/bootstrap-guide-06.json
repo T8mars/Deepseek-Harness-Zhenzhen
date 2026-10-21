@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.0-rc.2/remove-runtime-invariants/guide.md",
+  "digest": "e42dc95ac6622ea975f39e797768aa2532ff2df6",
+  "decision": "handled",
+  "rationale": "无dsh-invariants或/invariant导入与被删行覆盖，不依赖INVARIANT异常中止事件。凭据事件同步递增代次并取消活动请求，授权与入口拒绝由自有检查执行，不依赖监听器重抛。"
+}

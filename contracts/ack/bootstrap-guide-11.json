@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/experimental-package-composition/guide.md",
+  "digest": "678146bfc12cf01e9ba7ce5cec11a078908c05a9",
+  "decision": "handled",
+  "rationale": "自有bundle使用完整插入/整行配置和明确已发布peers，不靠启用已移除的Ralph/hooks/webhook行。C1/C6/C7及实际公开CLI安装Host覆盖本包组合，不推广为任意可选官方插件已测试。"
+}

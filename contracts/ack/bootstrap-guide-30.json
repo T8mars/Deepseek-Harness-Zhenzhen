@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/working-directory/guide.md",
+  "digest": "d51f48713c613c34a3a62604d66345e9871b64a3",
+  "decision": "handled",
+  "rationale": "RAG通过workingDirectory.ensure取得执行目录并在结果及请求准入时重新核验授权。两工具的presentationMeta仅投影参数和规范结果；C85实际Node PTC子进程经run_code嵌套调用，结果与原生相同，暂停及撤权不返回片段或元数据。该合同不替代操作系统沙箱或浏览器验收。"
+}

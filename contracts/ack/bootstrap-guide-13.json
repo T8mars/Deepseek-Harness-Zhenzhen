@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/job-id-identity/guide.md",
+  "digest": "16ded54d2060df00e48f9372780d05fa997fa019",
+  "decision": "not-applicable",
+  "rationale": "没有SDK job registry生命周期映射、JobExecutionId或按序号构造job_output/job_kill参数；网关/画布的自有任务ID属于各自协议，不能当作SDK JobId迁移。"
+}

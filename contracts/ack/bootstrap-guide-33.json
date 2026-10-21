@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.2/desktop-font-size-shortcuts/guide.md",
+  "digest": "f674031611e247cb32638e16ad47d54dac3cb651",
+  "decision": "not-applicable",
+  "rationale": "没有为Desktop重绑Ctrl/Cmd加减号或修改其快捷键协调器；本包网页组件保持发行行为，Desktop字体快捷键和真实可访问性验收仍单列待验。"
+}

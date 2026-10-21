@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/python-ptc-sandbox/guide.md",
+  "digest": "a2545db4f8ea66f173eec23bb7af8bd0c89825da",
+  "decision": "not-applicable",
+  "rationale": "未选择experimental-ptc-runtime-python或调用该直接服务，也不覆盖其sandboxPolicy；当前发行模板继续使用Node运行时，未新增绕过共享沙箱的Python入口。"
+}

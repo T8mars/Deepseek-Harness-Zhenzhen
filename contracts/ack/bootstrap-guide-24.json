@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/subagent-activations/guide.md",
+  "digest": "5a88ff2ee317a92d0593dbeb3244373f78c44aee",
+  "decision": "not-applicable",
+  "rationale": "没有旧in-process-driver依赖或start/startContinuable/foreground-job结果消费者，也不设置run_in_background等旧字段；托管子Agent行为仍由SDK提供，未编辑历史会话或触发额外委派。"
+}

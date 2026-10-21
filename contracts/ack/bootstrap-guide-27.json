@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/terminal-command-labels/guide.md",
+  "digest": "fdebb0aba5c00662236baf5a44af15aebc3c5618",
+  "decision": "not-applicable",
+  "rationale": "自有客户端未直接渲染TerminalBlock或构造TerminalBlockLabels，保留SDK原生终端的可访问标签；不能据类型检查推导所有实际键盘/窄屏界面已验收。"
+}

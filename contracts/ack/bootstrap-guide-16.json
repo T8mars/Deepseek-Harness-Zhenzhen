@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/native-subagent-bundle-tools/guide.md",
+  "digest": "830ee3b60bf9fec966fa72cde6ee5f7fac56ebc8",
+  "decision": "not-applicable",
+  "rationale": "未自建Codex/Claude原生子Agent工具行或BundleInfo/PluginPackageRef构造器，也无backgroundMode设置；可选原生bundle的选择、认证和托管激活继续归SDK，未绕过其启用流程。"
+}

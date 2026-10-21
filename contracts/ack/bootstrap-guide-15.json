@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/mock-messages-events/guide.md",
+  "digest": "eabae9f7245644ee2bef8cc935b607433ff02a93",
+  "decision": "not-applicable",
+  "rationale": "本项目不消费Messages mock-server事件流，也无只接受未命名Messages事件的过滤器；现有网关检查使用OpenAI兼容路线及原生SDK解码，OpenAI夹具不是Messages协议。"
+}

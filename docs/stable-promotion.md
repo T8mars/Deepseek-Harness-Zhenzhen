@@ -22,7 +22,7 @@ CLI读取全新模板，核对基线摘要。它不会读取现用profile、会�
 `contracts/upstream-bootstrap-review.json`：schemaVersion1、精确target、规范基线
 SHA256，以及指向C6组合审阅、模板事实摘要和具体理由的profileReview。
 每篇指南还需`contracts/ack/*.json`，格式沿用上游升级审阅记录。
-当前有42篇指南、190行模板事实；尚未填写首次审阅，不声称它已经完成。
+当前42篇指南的逐项技术判断和190行发行模板审阅已记录，见[首次审阅](upstream-bootstrap-review.md)。这解除对应的来源审阅缺项，不代替实际候选、W3或七日证据。
 后续真实升级使用`UPSTREAM.prepared.json`及前后差异记录，不捏造一次初始升级。
 
 写入任务重读原始服务器证据，不执行SDK/候选代码。稳定发行版包含五份资产：

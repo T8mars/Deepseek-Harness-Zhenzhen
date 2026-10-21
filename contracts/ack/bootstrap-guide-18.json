@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/plugin-option-placement/guide.md",
+  "digest": "8bb89d56a9e076429178197d0dec4196d0022f67",
+  "decision": "handled",
+  "rationale": "启动、替换和卸载均将plugin的--profile放在转发的add/remove参数之前，使用--ignore-scripts；C63及C76真实公开CLI安装与回退路径已按当前发行SDK通过。"
+}

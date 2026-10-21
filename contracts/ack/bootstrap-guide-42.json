@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.md",
+  "digest": "b7724e5247b054c48ffd6c781653082f47c56bde",
+  "decision": "not-applicable",
+  "rationale": "没有DeepSeekAccount奖励通知消费者或getUnnotifiedBonuses解析器；Seedance钱包是另一固定协议的服务端读取，未把账号通知元数据套作余额或结算依据。"
+}

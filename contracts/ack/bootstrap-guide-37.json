@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.2/pi-ai-model-discovery/guide.md",
+  "digest": "0427fda13af3ae87bd490ea119cd73616478b8b9",
+  "decision": "handled",
+  "rationale": "Seedance在llm-pi-ai中明确配置apiKeyEnv。C85使用真实Llm/PiAi与全新TEMP原生凭据服务：无密钥目录为空，保存EXAMPLE密钥后显示全部18个配置模型，删除后恢复空目录，全程网络请求为零；目录可见不表示远端密钥有效。"
+}

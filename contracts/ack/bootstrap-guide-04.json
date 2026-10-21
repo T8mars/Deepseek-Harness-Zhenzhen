@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.0-rc.2/bundled-python-tests/guide.md",
+  "digest": "0c3978d20b0a15dee5ea7b81f552f6d797e27e28",
+  "decision": "not-applicable",
+  "rationale": "首方实现为Node/TypeScript，不导入numpy或pandas测试模块，也不分发Python运行时；第三方创作脚本另按其环境要求执行，不能由此断言所有外部技能兼容。"
+}

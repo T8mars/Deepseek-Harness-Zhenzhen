@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.1/session-title-adapters/guide.md",
+  "digest": "626851cf2822afe1fe546f15b739983001e9b099",
+  "decision": "handled",
+  "rationale": "默认Seedance路线通过发布的llm-pi-ai适配器注册，连接检查使用ctx.llm.prepareCall而非仅依赖stream中间件；本包没有自定义reasoning.efforts顺序或标题适配器。具体自动标题UI/生成行为不由该判断认证。"
+}

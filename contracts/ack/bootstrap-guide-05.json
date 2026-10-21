@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.0-rc.2/primary-runtime-python-aliases/guide.md",
+  "digest": "1a3545ee9b845923746a818c52f9bdb59c711ec3",
+  "decision": "not-applicable",
+  "rationale": "A层包不创建或重定位primary-runtime，也不设置DSH_PRIMARY_RUNTIME；当前Windows继续使用发行SDK原样运行时，未来自定义macOS/Linux载荷仍需单独验收。"
+}

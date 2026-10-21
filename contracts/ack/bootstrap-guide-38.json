@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.2/plugin-install-over-installed/guide.md",
+  "digest": "53b51a111317b56bc7b287266fc3d38677bea629",
+  "decision": "handled",
+  "rationale": "首方更新在停止服务并持有租约后走公开CLI替换，未调用HMR installBundle覆盖已装包；实际旧包替换、两版本安装和卸载恢复通过，原生插件页更新流程不由本包重写。"
+}

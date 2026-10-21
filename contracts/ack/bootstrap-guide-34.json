@@ -1,0 +1,8 @@
+{
+  "targetCommit": "687f282e8625c6b8d11ff58211a90524be2e4317",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-alpha.2/from-default-profile-replaces-target/guide.md",
+  "digest": "d4e13e3975a226ac0a41126a633707f662f6cd5c",
+  "decision": "handled",
+  "rationale": "启动器仅在没有安装标记且目标profile不存在时用from-default-profile，发现未归属已有profile即拒绝；替换/卸载走公开plugin CLI，临时探针在独立目录恢复基线，不将重置当作合并用户配置。"
+}
