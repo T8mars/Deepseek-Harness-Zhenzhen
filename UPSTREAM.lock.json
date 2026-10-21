@@ -1544,6 +1544,25 @@
       "localPackageSha256": "a0f861ccb800f0e09908cc3e3c6a1295286d1b39c7dbe964e26eef5b9d769443",
       "byteIdenticalToInstalled0069Archive": true,
       "reinstallOrRestartPerformed": false
+    },
+    "versionNeutralPackage": {
+      "decision": "0071",
+      "contract": "C76",
+      "targetedTests": 1,
+      "realProductionDoubleBuild": true,
+      "actualCliDoubleInstall": true,
+      "payloadNormalization": "package.json version only",
+      "installedVersionSource": "public own package.json",
+      "modelRequests": 0,
+      "nativeWrites": 0,
+      "verification": "C76 executes real production build/pack for EXAMPLE canary and stable in owned TEMP, compares all152 files/modes with only package.json version normalized, then official CLI installs each archive and actual installed status returns its own version/default Seedance Flash. Node public peer hook is test-only; credentials describe is a presence stub, not Host authorization/browser/live-model proof. Own runtime version now reads public installed package.json for status and UpdateMonitor baseline; generated external pin catalog no longer embeds own version. No upstream/private-profile changes or relaxed promotion digest. Full regression, replacement/uninstall, activation and exact current CI separately checked. Full488/488, canonical legacy checkout pack and C76 stable archive match. Public CLI TEMP previous-package replacement and full baseline uninstall pass; same archive installed in own live DSH, all152 bytes/public settings/own RAG metadata/art/backup preserved. No native pairing renewal/approval or model request. Current exact commit CI/default preview remain separate.",
+      "localTests": 488,
+      "localPassed": 488,
+      "packageFiles": 152,
+      "localPackageSha256": "7dfdb814b5e653890cb9558c2a2061c3fc01bc740c53f1f8f1c9a0da88aaee17",
+      "previousPackageReplacementAndUninstall": true,
+      "actualOwnHostUpdated": true,
+      "installedAllPayloadMatched": true
     }
   }
 }

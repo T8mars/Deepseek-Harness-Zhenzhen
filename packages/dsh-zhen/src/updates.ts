@@ -9,6 +9,13 @@ type Fetcher = typeof fetch;
 const version = /^\d+\.\d+\.\d+(?:-[a-z0-9.-]+)?$/i;
 const sha = /^[a-f0-9]{40}$/;
 
+/** Public metadata of this installed bundle, never an upstream profile file. */
+export function ownBundleVersion(): string {
+  const metadata = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  if (metadata.name !== 'dsh-zhen' || !version.test(metadata.version ?? '')) throw new Error('Installed bundle metadata is invalid.');
+  return metadata.version;
+}
+
 export async function readPublic(url: string, fetcher: Fetcher = fetch, signal?: AbortSignal, maxBytes = 4 * 1024 * 1024): Promise<string> {
   const target = new URL(url);
   if (!['https://api.github.com', 'https://raw.githubusercontent.com', 'https://registry.npmjs.org', 'https://api.seedance.nz'].includes(target.origin) || target.username || target.password) throw new Error('Metadata origin refused.');

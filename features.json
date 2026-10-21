@@ -241,6 +241,11 @@
       "id": "generated-feed-clean-build",
       "status": "in-progress",
       "verification": "Two actual clean GitHub clones reproduce a clean npm-ci followed by market/skills.v1.json M after build: autocrlf checkout has246CRLF, generated LF is byte-identical to Git blob and semantically identical, diff numstat empty. C75 invokes actual buildSkillCatalog in real autocrlf Git clone; original first status fails, narrow LF attribute passes without a preliminary diff refresh. No publisher clean gate bypass, feed content, upstream or app code change. Full/package/current CI/clean preview separately verified. Full487/487 and canonical legacy pack match the actual installed0069 archive exactly; no app reinstall/restart. Current CI and clean preview separately checked after backup."
+    },
+    {
+      "id": "version-neutral-package",
+      "status": "in-progress",
+      "verification": "C76 executes real production build/pack for EXAMPLE canary and stable in owned TEMP, compares all152 files/modes with only package.json version normalized, then official CLI installs each archive and actual installed status returns its own version/default Seedance Flash. Node public peer hook is test-only; credentials describe is a presence stub, not Host authorization/browser/live-model proof. Own runtime version now reads public installed package.json for status and UpdateMonitor baseline; generated external pin catalog no longer embeds own version. No upstream/private-profile changes or relaxed promotion digest. Full regression, replacement/uninstall, activation and exact current CI separately checked. Full488/488, canonical legacy checkout pack and C76 stable archive match. Public CLI TEMP previous-package replacement and full baseline uninstall pass; same archive installed in own live DSH, all152 bytes/public settings/own RAG metadata/art/backup preserved. No native pairing renewal/approval or model request. Current exact commit CI/default preview remain separate."
     }
   ]
 }

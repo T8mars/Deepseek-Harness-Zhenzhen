@@ -118,3 +118,8 @@ Pages是独立只读导出与部署任务：仓库Pages须设置为GitHub Action
 0069新主CI/默认预览均通过486，但预览如实sourceDirty=true，未发候选。0070
 修公共技能feed在autocrlf检出后生成LF造成的首个Git状态误报，仍要求真候选
 干净；不通过忽略变化、重置文件或先diff刷新来跳过门禁。新预览clean状态另验。
+
+0071：版本改从自身公开package.json读取，生成runtime pin不再包含自身版本。
+C76以真实生产双构建、双打包及官方CLI双安装验证，只忽略manifest版本即可
+得到相同payload摘要；依赖、其他151文件和执行位仍逐一参与。测试的peer解析
+hook仅用于裸CLI加载，不随应用分发，不代表Host授权或W5七日观察已通过。

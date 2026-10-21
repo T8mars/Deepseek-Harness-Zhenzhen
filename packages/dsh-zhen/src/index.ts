@@ -52,7 +52,7 @@ import type { CanvasAssets, CanvasAssetsQuery } from './canvas-reference-schema.
 import type { CanvasPairingView } from './canvas-pairing-schema.ts';
 import { canvasToolCatalogSchema } from './canvas-contract.ts';
 import type { CanvasToolCatalog } from './canvas-contract.ts';
-import { UpdateMonitor } from './updates.ts';
+import { UpdateMonitor, ownBundleVersion } from './updates.ts';
 import type { UpdateBaseline } from './updates.ts';
 import type { UpdateReport } from './update-schema.ts';
 import { createRagTool, createRagOpenTool } from './rag-tool.ts';
@@ -365,7 +365,8 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   marketPauseAuto(id: string, paused: boolean): void { this.feed().pauseAutoUpdate(id, paused); }
   private updates(): UpdateMonitor {
-    return this.updateMonitor ??= new UpdateMonitor(dshHomePath('dsh-zhen', 'updates.json'), JSON.parse(readFileSync(new URL('../catalog/runtime.json', import.meta.url), 'utf8')) as UpdateBaseline, fetch, this.githubAccess());
+    const baseline = { ...JSON.parse(readFileSync(new URL('../catalog/runtime.json', import.meta.url), 'utf8')), zhen: ownBundleVersion() } as UpdateBaseline;
+    return this.updateMonitor ??= new UpdateMonitor(dshHomePath('dsh-zhen', 'updates.json'), baseline, fetch, this.githubAccess());
   }
   private githubAccess(): GithubAccess {
     return this.githubReader ??= new GithubAccess(async () => {
@@ -649,7 +650,7 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   async status(): Promise<ZhenStatus> {
     const info = await this.ctx.credentials.describe(seedanceCredential);
-    return { version: '0.1.0', provider: 'seedance', model: 'deepseek/deepseek-v4.1-flash',
+    return { version: ownBundleVersion(), provider: 'seedance', model: 'deepseek/deepseek-v4.1-flash',
       credentialConfigured: info.configured, credentialWritable: info.writable, gatewayVerified: false };
   }
 
