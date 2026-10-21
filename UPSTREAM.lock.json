@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T08:22:41.086Z",
+  "checkedAt": "2026-10-21T12:17:34.493Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1773,6 +1773,23 @@
       "localPassed": 597,
       "packageFiles": 159,
       "localPackageSha256": "83785e448604771e8368c8c1589ea461c2bf79eeb1895c9e4fd0ff6da56797ae"
+    },
+    "encryptedSessionBackup": {
+      "decision": "0079",
+      "export": "dsh-zhen/backup",
+      "format": "DSHZBKP1",
+      "scope": "sessions-and-referenced-local-attachments",
+      "credentialStoresIncluded": false,
+      "existingDataOverwritten": false,
+      "activatesAgents": false,
+      "fullM2Complete": false,
+      "targetedTests": 25,
+      "targetedPassed": 25,
+      "verification": "C88 twelve archive and C89 thirteen actual published SDK TEMP contracts pass: encrypted streaming/authentication before restore, fork cut and informational event preservation, paged reads, owned live-session flush, source-revision/service replacement refusal, exact normalized image/file identity and candidate cleanup. No raw session/profile copying or credential-store read. Profile/machine patch/user skills/resources/RAG/UI/activation and full M2/L2 remain incomplete; complete regression/archive/exact CI are verified separately. After the first621/621 run, a real published SessionStore/JSONL interleaving deterministically reproduced late buffered events escaping disk-only revision checks. A final flush plus public live-sequence check rejects the exact red scenario; C89 now includes the25th archive/session test. Final full regression and current CI remain separately required. Final622/622 and163-file package pass C63 legacy-checkout packing and C76 actual two-version builds/installation/launcher boundaries with complete payload checks. Exact current CI remains separate.",
+      "localTests": 622,
+      "localPassed": 622,
+      "packageFiles": 163,
+      "localPackageSha256": "23d23c0bc98c097d44041138a54b6269ef4b2b3061ae1df58ceeb387975acd39"
     }
   }
 }

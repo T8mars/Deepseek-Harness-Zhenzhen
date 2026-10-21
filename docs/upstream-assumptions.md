@@ -161,3 +161,7 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 
 
 0078/C87：固定已发布Gateway对descriptor参数名集合精确匹配，即使某个codec允许undefined，也不接受调用方遗漏新增参数。实际先期三个旧调用失败后，保留原八条参数表，使用十个新Owner入口。C87实际Gateway再次核对旧参数、旧目录/节点回执及新Owner拒绝；没有修改上游协议或生成类型。DSH的CLI适配接口只声明loadSession的origin/sessionId/accessToken/expiresAt，操作者与权限继续来自原session接口，不能捏造储存字段。新请求包装器只复用原CLI请求并核对引用，不读取布局、修改CLI或提升信任。
+
+0079/C89：SessionPersistence 的公开分页/flush/不透明 revision 与实例 identity 支持会话快照屏障，已用真实固定 JSONL 服务验证源变化拒绝。SessionStore.create 不自动代建持久化 owner；无 owner 的活动会话必须拒绝，不读废弃同步事件补洞。分支使用公开 buildForkSeed 的 end-seed 标记，cut 单独经 create options 保存。冷读 header 的默认 delegationDepth=0 与原构造参数存在规范差异，比较实际公开读值。sessionLogZipEntries 负责已知内容的规范附件投影，includeDescendants=false 不调用 lineage 查询；未知可忽略记录保留而不猜附件。本地附件使用 sha256: 前缀，公开 commitPreparedImageFile 加 readImage 验证保留规范化字节/尺寸/原尺寸，通用文件经流式保存返回完全相同引用。查询服务 openAt=never 不创建查询数据库。各项以实际已发布 SDK 的 C89 往返及拒绝案例为范围，不推广到未实现的完整 profile 或其他附件后端。
+
+0079活动竞态补充：固定SDK可在最终list生成revision后、调用方接收前排入live event，此时磁盘revision不变。真实SessionStore/JSONL先红后绿验证，末尾再次flush并比较公开Session.seq才能覆盖该缓冲窗口；未调用废弃同步事件读取。

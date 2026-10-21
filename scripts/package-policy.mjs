@@ -1,5 +1,5 @@
 import {checkPackList} from './check-private.mjs';
-export const PACKAGE_FILE_PATTERN=/^(package\.json|NOTICE\.md|THIRD_PARTY_NOTICES\.md|LICENSE|lib\/(index\.js|client\.js|remote\.js|typert\.js|canvas-server\.js|mcp-server\.js|(?:pdf-text|docx-text)-worker\.js|(?:types|client-types)\/.*\.d\.ts)|cordis\.patch\.yml|skills\/[^/]+\/(SKILL\.md|manifest\.json)|catalog\/[^/]+\.json)$/;
+export const PACKAGE_FILE_PATTERN=/^(package\.json|NOTICE\.md|THIRD_PARTY_NOTICES\.md|LICENSE|lib\/(index\.js|client\.js|remote\.js|typert\.js|backup\.js|canvas-server\.js|mcp-server\.js|(?:pdf-text|docx-text)-worker\.js|(?:types|client-types)\/.*\.d\.ts)|cordis\.patch\.yml|skills\/[^/]+\/(SKILL\.md|manifest\.json)|catalog\/[^/]+\.json)$/;
 export function checkPackagePaths(entries){
   const paths=entries.map(entry=>typeof entry==='string'?entry:entry.path);
   checkPackList(paths);

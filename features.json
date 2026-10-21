@@ -277,6 +277,13 @@
       "id": "canvas-target-connection",
       "status": "in-progress",
       "verification": "Decision0078 adds opaque connection identities to new Owner-only directories and eight scoped target entry points. Exact legacy RPC argument lists and directory/node output shapes remain unchanged; current UI passes the identity for models/assets/nodes/plans/quotes/tasks/media previews. Actual CLI/session/Gateway/Owner and four production panels verify same-API re-pair refusal, before/after-request checks, no target query after metadata rotation, no second inspection after rotation, selection invalidation and no identified-target downgrade. C87 adds13 tests including the fixture UTF-8 regression; complete check/package/exact CI and actual new app remain separately verified. Legacy clients and Agent MCP do not acquire this explicit new identity guarantee. No real Native writes or model calls. First complete595/596 caught UTF-8 corruption in the synthetic HTTP fixture body decoder. A real loopback request forced a split within one Chinese character and failed before the fix; bounded byte accumulation followed by one UTF-8 decode passes, as does the original12000-character persistence/preview test. Production goal-integrity validation remains unchanged. C87 now adds13 tests. Complete597/597 and159-file package pass C63 real legacy packing and C76 real dual-version build/install/launcher boundaries. Exact current CI and new installed UI remain separate."
+    },
+    {
+      "id": "encrypted-session-backup",
+      "status": "in-progress",
+      "liveVerified": false,
+      "fullM2Complete": false,
+      "verification": "C88 twelve archive and C89 thirteen actual published SDK TEMP contracts pass: encrypted streaming/authentication before restore, fork cut and informational event preservation, paged reads, owned live-session flush, source-revision/service replacement refusal, exact normalized image/file identity and candidate cleanup. No raw session/profile copying or credential-store read. Profile/machine patch/user skills/resources/RAG/UI/activation and full M2/L2 remain incomplete; complete regression/archive/exact CI are verified separately. After the first621/621 run, a real published SessionStore/JSONL interleaving deterministically reproduced late buffered events escaping disk-only revision checks. A final flush plus public live-sequence check rejects the exact red scenario; C89 now includes the25th archive/session test. Final full regression and current CI remain separately required. Final622/622 and163-file package pass C63 legacy-checkout packing and C76 actual two-version builds/installation/launcher boundaries with complete payload checks. Exact current CI remains separate."
     }
   ]
 }
