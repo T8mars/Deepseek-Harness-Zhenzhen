@@ -218,6 +218,11 @@
       "status": "in-progress",
       "verification": "C71 twelve tests use actual published Llm/PiAi and TEMP LocalCredentials with synthetic fetch, verify one fixed request/redirect refusal, safe usage/error counts, incomplete limits, spent ID, missing secret, CI identity/explicit paid authority/latest exact main checks, secret isolation and optional deduplicated failure notification. New CLI made one authorized real local Flash request: HTTP200/stop/OK and TEMP cleanup. Dirty source and script digests recorded; not a CI attestation for the base commit. No secret uploaded, scheduled billing enabled or issue created. Actual GitHub paid execution/notification and W4/W5 publishing/promotion/seven-day observation remain. Full455/455, final152-file archive identical to actual installed0065. Core-script digests match the one local real run; no live Host reinstall/restart. Current CI and non-paid workflow entry separate.",
       "githubPaidJobVerified": false
+    },
+    {
+      "id": "release-artifact-preparation",
+      "status": "in-progress",
+      "verification": "C72 twelve tests cover shared package paths, bounded USTAR/PAX/no links/secrets, manifest and tag identity, version-normalized payload+mode, actual Git object IDs/fsck, genuine upstream market parser/git install target, immutable stage reuse and existing-stage validation. Actual GitHub compiled fixture snapshot contains package152+provenance only; official CLI installs exact commit/path and verifies all152 bytes, Host/privacy/provider/workers, then stops/uninstalls to complete baseline. No Release/index/Pages publication, paid calls or Native changes. W4 publisher/Pages and W5 promotion/seven-day observations still need implementation. Full467/467 after restoring the isolated pack fixture dependency, same152-file archive as actual installed0065. Normal old-archive replacement/uninstall and explicit-existing-stage real GitHub full-package install/uninstall pass. No active Host reinstall/restart; current commit CI separate."
     }
   ]
 }

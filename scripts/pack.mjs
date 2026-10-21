@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { checkRepository, checkPackList } from './check-private.mjs';
 import { checkDeclarations } from './declaration-output.mjs';
 import { createPackageStage } from './package-stage.mjs';
+import {checkPackagePaths} from './package-policy.mjs';
 
 const root = process.cwd();
 const manifest = JSON.parse(readFileSync(resolve(root, 'packages/dsh-zhen/package.json'), 'utf8'));
@@ -12,11 +13,10 @@ checkRepository(root);
 mkdirSync(resolve(root, '.runtime/packages'), { recursive: true });
 const npm = process.env.npm_execpath;
 if (!npm) throw new Error('Run with npm run pack:bundle.');
-const allowed = /^(package\.json|NOTICE\.md|THIRD_PARTY_NOTICES\.md|LICENSE|lib\/(index\.js|client\.js|remote\.js|typert\.js|canvas-server\.js|mcp-server\.js|(?:pdf-text|docx-text)-worker\.js|(?:types|client-types)\/.*\.d\.ts)|cordis\.patch\.yml|skills\/[^/]+\/(SKILL\.md|manifest\.json)|catalog\/[^/]+\.json)$/;
 function validate(files) {
   checkPackList(files);
   checkDeclarations(root, files, manifest);
-  for (const file of files) if (!allowed.test(file.path)) throw new Error(`Unexpected package entry: ${file.path}`);
+  checkPackagePaths(files);
 }
 const preview = JSON.parse(execFileSync(process.execPath, [npm, 'pack', './packages/dsh-zhen', '--ignore-scripts', '--json', '--dry-run'], { encoding: 'utf8' }))[0];
 validate(preview.files);

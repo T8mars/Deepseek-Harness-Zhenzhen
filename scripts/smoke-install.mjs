@@ -10,17 +10,20 @@ import { isDeepStrictEqual } from 'node:util';
 import { mcpChildEnvironment } from '../packages/dsh-zhen/lib/mcp-market.js';
 import { redactLauncherLine } from './log-output.mjs';
 import { examplePdf } from '../contracts/fixtures/pdf-document.mjs';
+import {prepareRelease,readReleaseStage} from './prepare-release.mjs';
 
 // Disposable profile created only by public CLI commands. No browser or HTTP UI
 // inspection, user credentials, conversations or paid calls are involved.
 const workspace = process.cwd(), cli = resolve('node_modules/@deepseek-ai/dsh/lib/bin.js');
 const artifact = JSON.parse(readFileSync('.runtime/package-artifact.json', 'utf8'));
-if (!/^dsh-zhen-[\d.]+-[a-f0-9]{16}\.tgz$/.test(artifact.file)) throw new Error('Invalid artifact.');
+if (!/^dsh-zhen-[0-9A-Za-z.-]+-[a-f0-9]{16}\.tgz$/.test(artifact.file)) throw new Error('Invalid artifact.');
 const archive = resolve('.runtime/packages', artifact.file);
 if (createHash('sha256').update(readFileSync(archive)).digest('hex') !== artifact.sha256) throw new Error('Artifact changed.');
 const args = process.argv.slice(2);
-if (args.length && (args.length !== 2 || args[0] !== '--replacement-from' || !/^dsh-zhen-[\d.]+-[a-f0-9]{16}\.tgz$/.test(args[1]) || args[1] === artifact.file)) throw new Error('Usage: smoke-install.mjs [--replacement-from <previous-local-artifact.tgz>]');
-const previousArchive = args.length ? resolve('.runtime/packages', args[1]) : undefined;
+const existingGitStage=args.length===2&&args[0]==='--git-stage',gitMode=existingGitStage||args.length===1&&args[0]==='--git-snapshot';
+if (!gitMode&&args.length && (args.length !== 2 || args[0] !== '--replacement-from' || !/^dsh-zhen-[0-9A-Za-z.-]+-[a-f0-9]{16}\.tgz$/.test(args[1]) || args[1] === artifact.file)) throw new Error('Usage: smoke-install.mjs [--replacement-from previous.tgz | --git-snapshot | --git-stage owned-stage-name]');
+const previousArchive = !gitMode&&args.length ? resolve('.runtime/packages', args[1]) : undefined;
+const distribution=gitMode?(existingGitStage?readReleaseStage({stageName:args[1],archiveBytes:readFileSync(archive),upstream:JSON.parse(readFileSync('UPSTREAM.lock.json','utf8')).dsh}):prepareRelease({channel:'development'})):undefined;
 if (previousArchive && !args[1].endsWith('-' + createHash('sha256').update(readFileSync(previousArchive)).digest('hex').slice(0, 16) + '.tgz')) throw new Error('Previous artifact changed.');
 const expectedEntry = createHash('sha256').update(readFileSync('packages/dsh-zhen/lib/index.js')).digest('hex');
 const expectedPatch = createHash('sha256').update(readFileSync('packages/dsh-zhen/cordis.patch.yml')).digest('hex');
@@ -62,10 +65,16 @@ try {
     priorIdentity = await bundleIdentity();
     if (priorIdentity.entry === expectedEntry && priorIdentity.patch === expectedPatch && priorIdentity.client === expectedClient && priorIdentity.skills === expectedSkills) throw new Error('Replacement probe requires a different previous entry, bundle patch, client or skill catalog.');
   }
-  console.log('Installing the exact local artifact into the disposable profile…');
-  await run(['plugin', '--profile', 'example', 'add', archive, '--force', '--ignore-scripts']);
+  console.log(gitMode?'Installing the exact compiled Git snapshot into the disposable profile…':'Installing the exact local artifact into the disposable profile…');
+  await run(['plugin', '--profile', 'example', 'add', distribution?.staged.manifest.installTarget.spec??archive, '--force', '--ignore-scripts']);
   const identity = await bundleIdentity();
   if (identity.entry !== expectedEntry || identity.patch !== expectedPatch || identity.client !== expectedClient || identity.skills !== expectedSkills) throw new Error('Installed bundle entry, patch, client or skill catalog differs from the current artifact build.');
+  let gitPayloadFiles;
+  if(distribution){
+    const expectedFile=join(root,'EXAMPLE_EXPECTED_PACKAGE.json');writeFileSync(expectedFile,JSON.stringify([...distribution.archive.files].map(([path,bytes])=>({path,sha256:createHash('sha256').update(bytes).digest('hex')}))));
+    const probe="const f=require('node:fs'),p=require('node:path'),c=require('node:crypto'),root=p.dirname(require.resolve('dsh-zhen/package.json')),expected=JSON.parse(f.readFileSync(process.argv[1],'utf8'));for(const item of expected){const file=p.join(root,item.path);if(!f.lstatSync(file).isFile()||f.lstatSync(file).isSymbolicLink()||c.createHash('sha256').update(f.readFileSync(file)).digest('hex')!==item.sha256)throw Error('EXAMPLE_INSTALLED_GIT_PAYLOAD_MISMATCH');}console.log('DSH_ZHEN_GIT_FILES='+expected.length)";
+    const output=await run(['plugin','--profile','example','exec',process.execPath,'-e',probe,expectedFile]);gitPayloadFiles=Number(output.match(/DSH_ZHEN_GIT_FILES=(\d+)/)?.[1]);if(gitPayloadFiles!==distribution.archive.files.size)throw Error('Git payload verification incomplete.');
+  }
   const text = await run(['--profile', 'example', '--dump-config']);
   const config = parseDocument(text, { customTags: [{ tag: 'tag:yaml.org,2002:js', resolve: value => value }] }).toJS();
   const rows = new Map(config.map(row => [row.id, row]));
@@ -128,14 +137,15 @@ try {
   if (!readFileSync(pdfFile).equals(pdfBytes) || !readFileSync(docxFile).equals(docxBytes)) throw new Error('EXAMPLE source bytes changed during uninstall.');
   const evidence = { at: new Date().toISOString(), artifact: artifact.file, sha256: artifact.sha256, node: process.versions.node, installedViaPublicCli: true, installedEntrySha256: expectedEntry, installedPatchSha256: expectedPatch, installedClientSha256: expectedClient, installedSkillCatalogSha256: expectedSkills, replacementFrom: previousArchive ? args[1] : null, previousEntrySha256: priorIdentity?.entry ?? null, previousPatchSha256: priorIdentity?.patch ?? null, previousClientSha256: priorIdentity?.client ?? null, previousSkillCatalogSha256: priorIdentity?.skills ?? null, installedDocxWorkerVerified:true,installedDocxWorkerSha256:docxProof.workerSha256,installedDocxTextMatched:true,installedDocxKnowledgeIndexVerified:false,docxSourceBytesPreserved:true,installedPdfWorkerVerified:true,installedPdfPage:pdfProof.page,installedPdfKnowledgeIndexVerified:false,pdfSourceBytesPreserved:true, completeProviderProfileMatches: true, nativeAttachmentsEnabled: true, imageModelRoutes: models.filter(model => model.input.includes('image')).length, modelRoutes: models.length, flashDefault: true, designatedCollectorsDisabled: true, hostLoopbackSocket: true, browserInspected: false, paidCalls: 0 };
   Object.assign(evidence, { uninstalledViaPublicCli: true, stoppedBeforeUninstall: true, completeBaselineRestored: true, uninstallSourceBytesPreserved: true, rollbackScope: 'fresh TEMP profile only; no user sessions, credentials or database rollback' });
+  if(distribution)Object.assign(evidence,{kind:'git-snapshot-install',gitSnapshotCommit:distribution.snapshot.commit,gitSourceCommit:distribution.snapshot.provenance.sourceCommit,gitSourceUrl:'https://github.com/T8mars/Deepseek-Harness-Zhenzhen.git',gitPayloadFiles,completeGitPayloadMatched:true,releaseOrIndexPublished:false});
   mkdirSync(resolve(workspace, '.runtime/evidence'), { recursive: true });
-  writeFileSync(resolve(workspace, '.runtime/evidence/installed-bundle-smoke.json'), JSON.stringify(evidence, null, 2) + '\n');
+  writeFileSync(resolve(workspace, gitMode?'.runtime/evidence/git-bundle-smoke.json':'.runtime/evidence/installed-bundle-smoke.json'), JSON.stringify(evidence, null, 2) + '\n');
   console.log(JSON.stringify(evidence));
 } finally {
   if (host && !hostClosed) { await new Promise(done => { host.once('close', done); host.kill(); }); }
   // A log is diagnostic evidence only; owner-token URLs are redacted.
   mkdirSync(resolve(workspace, '.runtime/evidence'), { recursive: true });
-  writeFileSync(resolve(workspace, '.runtime/evidence/installed-bundle-smoke.log'), logs);
+  writeFileSync(resolve(workspace, gitMode?'.runtime/evidence/git-bundle-smoke.log':'.runtime/evidence/installed-bundle-smoke.log'), logs);
   const absolute = realpathSync.native(root), rel = relative(temp, absolute);
   if (!rel || isAbsolute(rel) || rel.startsWith('..') || rel.includes('/') || rel.includes('\\') || !basename(absolute).startsWith('dsh-zhen-install-smoke-')) throw new Error('Temporary cleanup path refused.');
   rmSync(absolute, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });

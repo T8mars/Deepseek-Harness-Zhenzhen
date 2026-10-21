@@ -37,7 +37,7 @@ test('C63: the actual pack command restores a legacy CRLF checkout to the full c
   }
   writeFileSync(join(root, 'package.json'), JSON.stringify({name: 'example-packer-contract', version: '0.0.0', private: true, type: 'module'}));
   mkdirSync(join(root, 'scripts'));
-  for (const file of ['pack.mjs', 'package-stage.mjs', 'check-private.mjs', 'declaration-output.mjs']) copyFileSync(join(workspace, 'scripts', file), join(root, 'scripts', file));
+  for (const file of ['pack.mjs', 'package-stage.mjs', 'package-policy.mjs', 'check-private.mjs', 'declaration-output.mjs']) copyFileSync(join(workspace, 'scripts', file), join(root, 'scripts', file));
   const archive = folder => {
    const output = join(root, folder);
    mkdirSync(output);

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T00:58:33.651Z",
+  "checkedAt": "2026-10-21T01:47:33.617Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1424,6 +1424,32 @@
       "packageFiles": 152,
       "localPackageSha256": "ded8a86a6e20d7bb8e7ce478d02daad0b5f1d1cd5fc668f5736b13f703ea1909",
       "byteIdenticalToInstalled0065Archive": true,
+      "reinstallOrRestartPerformed": false
+    },
+    "releaseArtifactPreparation": {
+      "decision": "0067",
+      "contract": "C72",
+      "targetedTests": 12,
+      "marketSource": "commit-pinned compiled Git snapshot; upstream format1 has no tarball source",
+      "maxArchiveBytes": 8388608,
+      "maxExpandedBytes": 33554432,
+      "gitFixtureSnapshot": "7a76c19bb71685fa721d6100fadec345a7c288f7",
+      "gitFixtureFiles": 153,
+      "actualGitPayloadFiles": 152,
+      "actualGitInstallPassed": true,
+      "canaryReleasePublished": false,
+      "marketIndexPublished": false,
+      "pagesPublished": false,
+      "promotionImplemented": false,
+      "modelRequests": 0,
+      "nativeWrites": 0,
+      "verification": "C72 twelve tests cover shared package paths, bounded USTAR/PAX/no links/secrets, manifest and tag identity, version-normalized payload+mode, actual Git object IDs/fsck, genuine upstream market parser/git install target, immutable stage reuse and existing-stage validation. Actual GitHub compiled fixture snapshot contains package152+provenance only; official CLI installs exact commit/path and verifies all152 bytes, Host/privacy/provider/workers, then stops/uninstalls to complete baseline. No Release/index/Pages publication, paid calls or Native changes. W4 publisher/Pages and W5 promotion/seven-day observations still need implementation.",
+      "localTests": 467,
+      "localPassed": 467,
+      "packageFiles": 152,
+      "localPackageSha256": "ded8a86a6e20d7bb8e7ce478d02daad0b5f1d1cd5fc668f5736b13f703ea1909",
+      "byteIdenticalToInstalled0065Archive": true,
+      "actualGitExistingStageVerified": true,
       "reinstallOrRestartPerformed": false
     }
   }

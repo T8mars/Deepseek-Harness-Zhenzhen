@@ -137,3 +137,5 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
   C70连接绑定使用公开useLayoutEffect提交/清理，不在渲染中改归属ref；假hooks只执行处理器与effect，不证明React真实并发调度。
 
 - C71：独立W6只使用已发布Llm.prepareCall/PiAi与LocalCredentials的正式接口，临时环境快照不暴露进程密钥。实际SDK经合成fetch检查固定请求、错误/用量/触顶，另有新CLI一次真实默认Flash。不能推导所有模型、Agent工具、实际CI secret或七天稳定性；默认不借应用GatewayChecks做后台收费。
+
+- C72：已发布dsh-plugin-market-index格式1仅npm或Git固定提交，不接受tgz；使用实际parseMarketIndex/marketInstallTarget验证。确定性Git对象由真实Git核对，真实GitHub commit/path经公共CLI安装全部152文件/卸载恢复。仅当前Host/pin/Windows和此包，不证明未来版本、Unix或正式市场发布。
