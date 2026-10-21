@@ -212,6 +212,12 @@
       "status": "in-progress",
       "verification": "C70 compiles five actual production components and drives handlers using fake hooks/EXAMPLE DTOs: API replacement, stale metadata/continuations, synchronous double-submit prevention, detail close and fork-draft preservation, MCP consent reset, GitHub cancellation scope, exact current install/trust identity and normal removal. Initial fifteen reproduce failures; final eighteen pass. A positive-test object-alias fixture was corrected to emulate serialized Remote snapshots, not treated as a production defect. Build/typeclean pass; full check/package/current CI separate. Accepted Host work is not cancelled or retried; no browser, program execution/download, Native write or real-model claim. Full443/443, final152-file archive and public-CLI TEMP previous-package replacement/baseline uninstall pass. Same archive activated in own real DSH; installed bytes, settings, art and own index metadata preserved. Default browser opening was requested through official CLI; actual visual/system clipboard and current commit CI remain separate.",
       "browserVerified": false
+    },
+    {
+      "id": "controlled-real-gateway-smoke",
+      "status": "in-progress",
+      "verification": "C71 twelve tests use actual published Llm/PiAi and TEMP LocalCredentials with synthetic fetch, verify one fixed request/redirect refusal, safe usage/error counts, incomplete limits, spent ID, missing secret, CI identity/explicit paid authority/latest exact main checks, secret isolation and optional deduplicated failure notification. New CLI made one authorized real local Flash request: HTTP200/stop/OK and TEMP cleanup. Dirty source and script digests recorded; not a CI attestation for the base commit. No secret uploaded, scheduled billing enabled or issue created. Actual GitHub paid execution/notification and W4/W5 publishing/promotion/seven-day observation remain. Full455/455, final152-file archive identical to actual installed0065. Core-script digests match the one local real run; no live Host reinstall/restart. Current CI and non-paid workflow entry separate.",
+      "githubPaidJobVerified": false
     }
   ]
 }

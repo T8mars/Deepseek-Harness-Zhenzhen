@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T00:24:50.693Z",
+  "checkedAt": "2026-10-21T00:58:33.651Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1402,6 +1402,29 @@
       "actualUserHostUpdated": true,
       "ownIndexMetadataPreserved": true,
       "reinstallOrRestartPerformed": true
+    },
+    "controlledGatewaySmoke": {
+      "decision": "0066",
+      "contract": "C71",
+      "targetedTests": 12,
+      "policy": "default-flash-single-512-v1",
+      "maxRequests": 1,
+      "maxTokens": 512,
+      "automaticPaidDefault": false,
+      "notificationDefault": false,
+      "localRealRequests": 1,
+      "localRealPassed": true,
+      "actualApplicationChanged": false,
+      "nativeWrites": 0,
+      "githubSecretConfiguredByAgent": false,
+      "githubPaidJobVerified": false,
+      "verification": "C71 twelve tests use actual published Llm/PiAi and TEMP LocalCredentials with synthetic fetch, verify one fixed request/redirect refusal, safe usage/error counts, incomplete limits, spent ID, missing secret, CI identity/explicit paid authority/latest exact main checks, secret isolation and optional deduplicated failure notification. New CLI made one authorized real local Flash request: HTTP200/stop/OK and TEMP cleanup. Dirty source and script digests recorded; not a CI attestation for the base commit. No secret uploaded, scheduled billing enabled or issue created. Actual GitHub paid execution/notification and W4/W5 publishing/promotion/seven-day observation remain.",
+      "localTests": 455,
+      "localPassed": 455,
+      "packageFiles": 152,
+      "localPackageSha256": "ded8a86a6e20d7bb8e7ce478d02daad0b5f1d1cd5fc668f5736b13f703ea1909",
+      "byteIdenticalToInstalled0065Archive": true,
+      "reinstallOrRestartPerformed": false
     }
   }
 }

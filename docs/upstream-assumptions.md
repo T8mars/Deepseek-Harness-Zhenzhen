@@ -135,3 +135,5 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 - C70：自有五个市场/更新组件依赖公开React effect清理与ZhenRemote实例归属；用同步ref阻止下一次渲染前重复提交，以API/操作代次拒绝旧结果和依赖调用。编译实际组件并执行处理器，Remote例子使用分离DTO；不宣称物理网络重连必换实例、浏览器实显、Host取消或上游私有协议。
 
   C70连接绑定使用公开useLayoutEffect提交/清理，不在渲染中改归属ref；假hooks只执行处理器与effect，不证明React真实并发调度。
+
+- C71：独立W6只使用已发布Llm.prepareCall/PiAi与LocalCredentials的正式接口，临时环境快照不暴露进程密钥。实际SDK经合成fetch检查固定请求、错误/用量/触顶，另有新CLI一次真实默认Flash。不能推导所有模型、Agent工具、实际CI secret或七天稳定性；默认不借应用GatewayChecks做后台收费。

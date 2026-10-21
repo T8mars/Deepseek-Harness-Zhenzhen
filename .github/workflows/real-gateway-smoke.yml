@@ -1,0 +1,77 @@
+name: Controlled real gateway smoke
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_paid_check:
+        description: 'Send one fixed Flash request, max 512 output tokens; may incur gateway charges'
+        required: true
+        type: boolean
+        default: false
+  schedule:
+    - cron: '43 2 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: real-gateway-smoke
+  cancel-in-progress: false
+jobs:
+  smoke:
+    if: github.repository == 'T8mars/Deepseek-Harness-Zhenzhen' && github.ref == 'refs/heads/main' && ((github.event_name == 'workflow_dispatch' && inputs.confirm_paid_check) || (github.event_name == 'schedule' && vars.REAL_GATEWAY_SMOKE_ENABLED == 'true'))
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.19.0'
+          cache: npm
+      - run: node scripts/check-private.mjs
+      - name: Require exact main commit contracts
+        run: node scripts/check-smoke-ci.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run build
+      - name: One fixed real Flash request
+        run: node scripts/real-gateway-smoke.mjs --ci
+        env:
+          SEEDANCE_API_KEY: ${{ secrets.SEEDANCE_API_KEY }}
+          DSH_SMOKE_CONFIRM: ${{ inputs.confirm_paid_check }}
+          DSH_SMOKE_SCHEDULE_ENABLED: ${{ vars.REAL_GATEWAY_SMOKE_ENABLED }}
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: gateway-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/evidence/real-gateway-smoke-${{ github.run_id }}-${{ github.run_attempt }}.json
+          if-no-files-found: ignore
+          retention-days: 14
+  notify:
+    needs: smoke
+    if: always() && needs.smoke.result == 'failure' && github.repository == 'T8mars/Deepseek-Harness-Zhenzhen' && github.ref == 'refs/heads/main' && vars.REAL_GATEWAY_SMOKE_REPORT_FAILURE == 'true'
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.19.0'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        continue-on-error: true
+        with:
+          name: gateway-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/ci-gateway-report
+      - run: node scripts/report-gateway-smoke.mjs --publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DSH_SMOKE_REPORT_FAILURE: ${{ vars.REAL_GATEWAY_SMOKE_REPORT_FAILURE }}
