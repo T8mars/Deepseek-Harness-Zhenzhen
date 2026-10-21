@@ -158,3 +158,6 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 
 
 0077：自有Owner Remote新增严格活动元数据DTO，C86用实际已发布Typert/Access/Gateway核对编解码与Owner拒绝；真实MCP列出11个读/规划工具，不增加修改/批准工具。复用原生CLI/auth，不触及上游协议或生成类型。四面板处理器/SSR不是浏览器或Electron窗口验收。
+
+
+0078/C87：固定已发布Gateway对descriptor参数名集合精确匹配，即使某个codec允许undefined，也不接受调用方遗漏新增参数。实际先期三个旧调用失败后，保留原八条参数表，使用十个新Owner入口。C87实际Gateway再次核对旧参数、旧目录/节点回执及新Owner拒绝；没有修改上游协议或生成类型。DSH的CLI适配接口只声明loadSession的origin/sessionId/accessToken/expiresAt，操作者与权限继续来自原session接口，不能捏造储存字段。新请求包装器只复用原CLI请求并核对引用，不读取布局、修改CLI或提升信任。

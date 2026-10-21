@@ -450,11 +450,21 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   canvasActiveTargets():Promise<CanvasActiveTargets>{return this.workflowOperation(()=>this.workflows().activeTargets());}
   @Remote
+  canvasTargetWorkspaces():Promise<CanvasWorkspaces>{return this.workflowOperation(()=>this.workflows().workspaces(true));}
+  @Remote
+  canvasTargetActive():Promise<CanvasActiveTargets>{return this.workflowOperation(()=>this.workflows().activeTargets(true));}
+  @Remote
   canvasWorkflowModels(input:CanvasModelsQuery):Promise<CanvasModels>{return this.workflowOperation(()=>this.workflows().models(input));}
+  @Remote
+  canvasTargetModels(input: CanvasModelsQuery,expectedConnection:string):Promise<CanvasModels>{return this.workflowOperation(()=>this.workflows().models(input,expectedConnection));}
   @Remote
   canvasWorkflowAssets(input:CanvasAssetsQuery):Promise<CanvasAssets>{return this.workflowOperation(()=>this.workflows().assets(input));}
   @Remote
+  canvasTargetAssets(input: CanvasAssetsQuery,expectedConnection:string):Promise<CanvasAssets>{return this.workflowOperation(()=>this.workflows().assets(input,expectedConnection));}
+  @Remote
   canvasWorkflowPreview(input: CanvasWorkflowInput): Promise<CanvasWorkflowView> { return this.workflowOperation(() => this.workflows().preview(input)); }
+  @Remote
+  canvasTargetWorkflowPreview(input: CanvasWorkflowInput,expectedConnection:string): Promise<CanvasWorkflowView> { return this.workflowOperation(() => this.workflows().preview(input,expectedConnection)); }
   @Remote
   canvasWorkflowApprove(id: string, confirmation: boolean): Promise<CanvasWorkflowView> { return this.workflowOperation(() => this.workflows().approve(id, confirmation)); }
   @Remote
@@ -463,9 +473,13 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   canvasRunSnapshot(): Promise<CanvasRunView | null> { return this.workflowOperation(() => this.runs().snapshot()); }
   @Remote
-  canvasRunNodes(projectId: string, canvasId: string, offset = 0): Promise<CanvasRunNodes> { return this.workflowOperation(() => this.runs().nodes(projectId, canvasId, offset)); }
+  canvasRunNodes(projectId: string, canvasId: string, offset = 0): Promise<CanvasRunNodes> { return this.workflowOperation(() => this.runs().nodes(projectId, canvasId, offset).then(({connectionId:_,...data})=>data)); }
+  @Remote
+  canvasTargetRunNodes(projectId: string, canvasId: string, offset = 0,expectedConnection:string): Promise<CanvasRunNodes> { return this.workflowOperation(() => this.runs().nodes(projectId, canvasId, offset,expectedConnection)); }
   @Remote
   canvasRunQuote(selection: CanvasRunSelection): Promise<CanvasRunView> { return this.workflowOperation(() => this.runs().quote(selection)); }
+  @Remote
+  canvasTargetRunQuote(selection: CanvasRunSelection,expectedConnection:string): Promise<CanvasRunView> { return this.workflowOperation(() => this.runs().quote(selection,expectedConnection)); }
   @Remote
   canvasRunApprove(quoteId: string, confirmed: boolean, unknownPriceAccepted: boolean): Promise<CanvasRunView> { return this.workflowOperation(() => this.runs().approve(quoteId, confirmed, unknownPriceAccepted)); }
   @Remote
@@ -476,12 +490,18 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   canvasTasksList(scope: CanvasTaskScope): Promise<CanvasTaskList> { return this.workflowOperation(() => this.nativeTasks().list(scope)); }
   @Remote
+  canvasTargetTasksList(scope: CanvasTaskScope,expectedConnection:string): Promise<CanvasTaskList> { return this.workflowOperation(() => this.nativeTasks().list(scope,expectedConnection)); }
+  @Remote
   canvasTaskDetail(reference: CanvasTaskReference): Promise<CanvasTaskDetail> { return this.workflowOperation(() => this.nativeTasks().detail(reference)); }
+  @Remote
+  canvasTargetTaskDetail(reference: CanvasTaskReference,expectedConnection:string): Promise<CanvasTaskDetail> { return this.workflowOperation(() => this.nativeTasks().detail(reference,expectedConnection)); }
   private transfers(): CanvasTransfer { return this.canvasTransfer ??= new CanvasTransfer(dshHomePath('dsh-zhen', 'canvas-transfer.json'), () => this.canvasConfig(), id => this.media().receipt(id)); }
   @Remote
   canvasTransferSnapshot(): Promise<CanvasTransferView | null> { return this.workflowOperation(() => this.transfers().snapshot()); }
   @Remote
   canvasTransferPreview(input: CanvasTransferInput): Promise<CanvasTransferView> { return this.workflowOperation(() => this.transfers().preview(input)); }
+  @Remote
+  canvasTargetTransferPreview(input: CanvasTransferInput,expectedConnection:string): Promise<CanvasTransferView> { return this.workflowOperation(() => this.transfers().preview(input,expectedConnection)); }
   @Remote
   canvasTransferApprove(id: string, confirmed: boolean): Promise<CanvasTransferView> { return this.workflowOperation(() => this.transfers().approve(id, confirmed)); }
   @Remote

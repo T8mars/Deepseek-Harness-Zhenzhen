@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module';
 import {readCanvasActiveContext} from './canvas-active-context.ts';
+import {assertCanvasTargetConnection,canvasTargetRuntime} from './canvas-target-binding.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { request as httpRequest } from 'node:http';
 import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
@@ -170,13 +171,15 @@ export class CanvasBridge {
     if (!sameCanvasCatalog(expected, actual)) throw new CanvasError('CAPABILITY_CATALOG_CHANGED', '画布高层能力与已审阅 CLI 不一致，请更新并重新连接。');
     return actual;
   }
-  async inspect(input: CanvasInspectionRequest): Promise<Record<string, unknown>> {
+  async inspect(input: CanvasInspectionRequest,expectedConnection?:string): Promise<Record<string, unknown>> {
     const parsed = canvasInspectionRequest.parse(input), request = { ...parsed, requestId: parsed.requestId ?? randomUUID() };
-    const { client, instance, accessToken } = await this.paired();
+    const connection=expectedConnection===undefined?await this.paired():canvasTargetRuntime(this.config,await this.workflowRuntime(),expectedConnection);assertCanvasTargetConnection(expectedConnection,this.config,connection as CanvasWorkflowRuntime);
+    const {client,instance,accessToken}=connection;
     // The existing /tools controller admits only eight bounded read/simulation
     // operations. No generic route, approval or provider submission is exposed.
     const data = canvasInspectionResultSchema.parse((await client.requestAgentControl(instance, '/api/agent-control/v1/tools', { accessToken, method: 'POST', body: request })).data);
     if (data.tool !== request.tool || data.requestId !== request.requestId || data.projectId !== request.projectId || data.canvasId !== request.canvasId) throw new CanvasError('INSPECTION_RESULT_MISMATCH', '画布检查结果与当前项目、画布或请求不一致。');
+    if(expectedConnection!==undefined)assertCanvasTargetConnection(expectedConnection,this.config,await this.workflowRuntime());
     return data;
   }
   async plan(input: CanvasPlanRequest): Promise<Record<string, unknown>> {

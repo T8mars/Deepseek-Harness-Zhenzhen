@@ -1,3 +1,4 @@
+import {canvasTargetApi} from './canvas-target-api.ts';
 import React, { useEffect, useId, useRef, useState } from 'react';
 import type { ZhenRemote } from 'dsh-zhen/remote';
 import type { CanvasRunView, CanvasRunNodes, CanvasWorkspaces } from 'dsh-zhen';
@@ -26,7 +27,7 @@ export function CanvasRunPanel({ api, online }: { api: ZhenRemote; online: boole
   const active = !!view && ['requesting', 'pending', 'submitting', 'unknown'].includes(view.phase);
   async function loadNodes(more = false): Promise<void> {
     const target = selectedCanvasTarget(targets,canvas); if (!target) return;
-    const version = generation.current, result = unwrap(await api.canvasRunNodes(target.projectId, target.id, more ? nodes?.nextOffset ?? 0 : 0));
+    const version = generation.current, result = unwrap(await canvasTargetApi(api, target.connectionId).canvasRunNodes(target.projectId, target.id, more ? nodes?.nextOffset ?? 0 : 0));
     if (generation.current !== version) return;
     if (more && nodes && nodes.revision !== result.revision) { setNodes(undefined); setSelected([]); throw Error('画布已变化，请重新读取节点。'); }
     setNodes(more && nodes ? { ...result, nodes: [...nodes.nodes, ...result.nodes].filter((item, index, items) => items.findIndex(other => other.id === item.id) === index) } : result);
@@ -37,10 +38,10 @@ export function CanvasRunPanel({ api, online }: { api: ZhenRemote; online: boole
     <p className="zhen-muted">先选择节点并查看完整执行范围、服务和模型。当前无法确定费用；生成可能收费。你确认后，仍需在画布窗口批准，再返回单次提交。</p>
     <ActiveCanvasTargets report={activeTargets} disabled={busy||!online||active} onRead={()=>void action(async()=>{
       const version=generation.current,epoch=++targetEpoch.current;setActiveTargets(undefined);setCanvas('');setNodes(undefined);setSelected([]);setDirty(true);setConfirmed(false);setFeeAccepted(false);
-      const result=unwrap(await api.canvasActiveTargets());if(generation.current!==version||targetEpoch.current!==epoch)return;
+      const result=unwrap(await canvasTargetApi(api).canvasActiveTargets());if(generation.current!==version||targetEpoch.current!==epoch)return;
       setActiveTargets(result);setTargets(result.workspaces);const selected=activeCanvasTarget(result);setCanvas(selected?canvasTargetKey(selected):'');
     })} onChoose={windowId=>{if(busy||!online||active||!activeTargets)return;targetEpoch.current++;const selected=activeCanvasTarget(activeTargets,windowId);setCanvas(selected?canvasTargetKey(selected):'');setActiveTargets(undefined);setNodes(undefined);setSelected([]);setDirty(true);setConfirmed(false);setFeeAccepted(false);if(!selected)setNotice(activeCanvasUnavailable);}}/>
-    <button type="button" className="zhen-secondary" disabled={busy || !online || active} onClick={() => {targetEpoch.current++;setActiveTargets(undefined);void action(async () => { const version = generation.current; const result = unwrap(await api.canvasWorkspaces()); if (generation.current === version) { setTargets(result); setCanvas(previous=>refreshedCanvasTarget(result,previous)); setNodes(undefined); setSelected([]); setDirty(true); } });}}>读取画布</button>
+    <button type="button" className="zhen-secondary" disabled={busy || !online || active} onClick={() => {targetEpoch.current++;setActiveTargets(undefined);void action(async () => { const version = generation.current; const result = unwrap(await canvasTargetApi(api).canvasWorkspaces()); if (generation.current === version) { setTargets(result); setCanvas(previous=>refreshedCanvasTarget(result,previous)); setNodes(undefined); setSelected([]); setDirty(true); } });}}>读取画布</button>
     <label className="zhen-label" htmlFor={field}>目标画布</label><select id={field} className="zhen-input" value={canvas} disabled={busy || active} onChange={event => {targetEpoch.current++;setActiveTargets(undefined); setCanvas(event.currentTarget.value); setNodes(undefined); setSelected([]); setDirty(true); setConfirmed(false); setFeeAccepted(false); }}><option value="">按名称选择画布</option>{targets.canvases.map(target => <option key={canvasTargetKey(target)} value={canvasTargetKey(target)}>{target.name}</option>)}</select>
     {targets.canvases.length>1&&<p className="zhen-muted">请选择这次使用的画布；列表顺序不代表当前窗口。</p>}
     <button type="button" className="zhen-secondary" disabled={busy || !online || !canvas || active} onClick={() => void action(() => loadNodes())}>读取当前节点</button>
@@ -48,7 +49,7 @@ export function CanvasRunPanel({ api, online }: { api: ZhenRemote; online: boole
       <p>基于 revision {nodes.revision}。选择要执行的生成节点，原生计划可能包含所需的上游生成节点，审批前会完整列出。</p>
       <div className="zhen-canvas-tool-list" role="group" aria-label="选择运行节点">{nodes.nodes.map(node => <label className="zhen-checkbox" key={node.id}><input type="checkbox" disabled={busy || active || !node.executable} checked={selected.includes(node.id)} onChange={event => { const checked = event.currentTarget.checked; setSelected(ids => checked ? [...new Set([...ids, node.id])] : ids.filter(id => id !== node.id)); setDirty(true); setConfirmed(false); setFeeAccepted(false); }}/><span>{node.label}{!node.executable && '（非生成节点）'}<br/><code>{node.id}</code></span></label>)}</div>
       {nodes.hasMore && <button type="button" className="zhen-link" disabled={busy || active} onClick={() => void action(() => loadNodes(true))}>加载更多节点</button>}
-      <button type="button" className="zhen-secondary zhen-margin" disabled={busy || !online || active || selected.length === 0 || selected.length > 500} onClick={() => void action(async () => { const version = generation.current; unwrap(await api.canvasRunQuote({ projectId: nodes.projectId, canvasId: nodes.canvasId, canvasRevision: nodes.revision, nodeIds: selected })); if (generation.current === version) setDirty(false); })}>查看运行计划与费用信息</button>
+      <button type="button" className="zhen-secondary zhen-margin" disabled={busy || !online || active || selected.length === 0 || selected.length > 500} onClick={() => void action(async () => { const version = generation.current; unwrap(await canvasTargetApi(api, nodes.connectionId).canvasRunQuote({ projectId: nodes.projectId, canvasId: nodes.canvasId, canvasRevision: nodes.revision, nodeIds: selected })); if (generation.current === version) setDirty(false); })}>查看运行计划与费用信息</button>
     </div>}
     {view && <article className="zhen-card zhen-margin">
       <strong role="status">{phases[view.phase]}</strong><p>费用未知 · 以画布及对应服务最终结算为准。</p>

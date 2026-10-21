@@ -2,6 +2,7 @@ import { mkdirSync, lstatSync, readFileSync, writeFileSync, renameSync, unlinkSy
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import {assertCanvasTargetConnection,canvasTargetConnection,canvasTargetRuntime} from './canvas-target-binding.ts';
 import { CanvasBridge, CanvasError, inspectCanvasCli } from './canvas.ts';
 import type { CanvasConfig, CanvasWorkflowRuntime } from './canvas.ts';
 import { canvasEntity, canvasInstance } from './canvas-contract.ts';
@@ -45,9 +46,9 @@ export class CanvasRuns {
     if (['preview', 'pending'].includes(state.view.phase) && Date.parse(state.view.expiresAt) <= Date.now()) return { ...state.view, phase: 'expired' };
     return state.view;
   }
-  private async runtime() {
+  private async runtime(expectedConnection?:string) {
     const config = this.configured(); if (!config) throw new CanvasError('CANVAS_NOT_CONFIGURED', '请先连接画布。'); this.current(config);
-    const runtime = await new CanvasBridge(config).workflowRuntime(); this.current(config);
+    const runtime = canvasTargetRuntime(config,await new CanvasBridge(config).workflowRuntime(),expectedConnection);assertCanvasTargetConnection(expectedConnection,config,runtime); this.current(config);
     const status = (await runtime.client.requestAgentControl(runtime.instance, '/api/agent-control/v1/status')).data;
     this.current(config);
     if (!z.object({ schema: z.literal('t8-agent-run-control-v1'), singleUsePlan: z.literal(true), operationLookup: z.literal(true), approvalLookup: z.literal(true) }).safeParse(status.runControl).success) throw new CanvasError('RUN_CONTROL_UPDATE_REQUIRED', '当前画布尚未提供运行计划单次提交与查询恢复，请更新画布控制面后使用生成审批。');
@@ -59,20 +60,20 @@ export class CanvasRuns {
     if (state.config.root !== config.root || state.config.digest !== config.digest || state.config.instance !== config.instance || state.instanceId !== runtime.instance.instanceId || state.origin !== runtime.instance.origin || state.sessionId !== runtime.sessionId || state.actorId !== runtime.actorId || saved?.sessionId !== state.sessionId || saved.origin !== state.origin || saved.accessToken !== runtime.accessToken || Date.parse(saved.expiresAt) <= Date.now()) throw new CanvasError('RUN_CONNECTION_CHANGED', '运行引用属于原配对，请在原画布查询；不会重新提交。');
   }
   private require(quoteId: string): State { const state = this.read(); if (!state || state.view.quoteId !== quoteId) throw new CanvasError('RUN_QUOTE_CHANGED', '运行计划已变化，请刷新当前引用。'); return state; }
-  nodes(projectId: string, canvasId: string, offset = 0): Promise<CanvasRunNodes> { return this.serial(async () => {
+  nodes(projectId: string, canvasId: string, offset = 0,expectedConnection?:string): Promise<CanvasRunNodes> { return this.serial(async () => {
     canvasEntity.max(160).parse(projectId); canvasEntity.max(160).parse(canvasId); z.number().int().min(0).max(100000).parse(offset);
-    const { config } = await this.runtime(), bridge = new CanvasBridge(config);
-    const inspected = await bridge.inspect({ tool: 'inspectCanvas', projectId, canvasId, input: { nodeOffset: offset, nodeLimit: 100, edgeLimit: 1 } });
-    const schemas = await bridge.inspect({ tool: 'inspectNodeSchema', projectId, canvasId, input: { offset: 0, limit: 100, includeHidden: false } }); this.current(config);
+    const { config,runtime } = await this.runtime(expectedConnection), bridge = new CanvasBridge(config),connectionId=canvasTargetConnection(config,runtime);
+    const inspected = await bridge.inspect({ tool: 'inspectCanvas', projectId, canvasId, input: { nodeOffset: offset, nodeLimit: 100, edgeLimit: 1 } },connectionId);
+    const schemas = await bridge.inspect({ tool: 'inspectNodeSchema', projectId, canvasId, input: { offset: 0, limit: 100, includeHidden: false } },connectionId); this.current(config);
     const page = z.object({ canvasId: canvasEntity, revision: z.number().int().positive(), nodes: z.array(z.object({ id: canvasEntity, type: canvasEntity })).max(100), page: z.object({ hasMoreNodes: z.boolean() }) }).parse(inspected.data);
     const catalog = z.object({ items: z.array(z.object({ type: canvasEntity, label: z.string().max(240), executable: z.boolean() })).max(100), page: z.object({ hasMore: z.literal(false) }) }).parse(schemas.data);
     if (page.canvasId !== canvasId || inspected.canvasRevision !== schemas.canvasRevision || inspected.canvasRevision !== page.revision) throw new CanvasError('RUN_CANVAS_CHANGED', '读取节点期间画布已变化，请重新读取。');
-    return canvasRunNodesSchema.parse({ projectId, canvasId, revision: page.revision, nodes: page.nodes.map(node => { const type = catalog.items.find(item => item.type === node.type); return { ...node, label: type?.label || node.type, executable: type?.executable === true }; }), nextOffset: offset + page.nodes.length, hasMore: page.page.hasMoreNodes });
+    return canvasRunNodesSchema.parse({ projectId, canvasId, connectionId, revision: page.revision, nodes: page.nodes.map(node => { const type = catalog.items.find(item => item.type === node.type); return { ...node, label: type?.label || node.type, executable: type?.executable === true }; }), nextOffset: offset + page.nodes.length, hasMore: page.page.hasMoreNodes });
   }); }
-  quote(input: CanvasRunSelection): Promise<CanvasRunView> { return this.serial(async () => {
+  quote(input: CanvasRunSelection,expectedConnection?:string): Promise<CanvasRunView> { return this.serial(async () => {
     const selected = canvasRunSelection.parse(input), previous = this.read();
     if (previous && !['preview', 'denied', 'expired', 'tracking'].includes(previous.view.phase) && !(Date.parse(previous.view.expiresAt) <= Date.now() && !previous.view.submissionAttempted)) throw new CanvasError('RUN_PENDING', '请先处理当前审批；结果不明时只查询原运行。');
-    const { config, runtime } = await this.runtime();
+    const { config, runtime } = await this.runtime(expectedConnection);
     const plan = planSchema.parse((await runtime.client.requestAgentControl(runtime.instance, '/api/agent-control/v1/run-plans', { accessToken: runtime.accessToken, method: 'POST', body: { ...selected, mode: 'missing-failed-unlocked' } })).data); this.current(config);
     if (plan.projectId !== selected.projectId || plan.canvasId !== selected.canvasId || plan.canvasRevision !== selected.canvasRevision || !sameIds(plan.requestedNodeIds, selected.nodeIds) || !sameIds(plan.authorizedNodeIds, plan.declarations.flatMap(item => item.nodeIds)) || plan.requestedNodeIds.some(id => !plan.authorizedNodeIds.includes(id)) || plan.approvalBinding.sessionId !== runtime.sessionId || plan.approvalBinding.projectId !== selected.projectId || plan.approvalBinding.canvasId !== selected.canvasId || plan.approvalBinding.planDigest !== plan.planDigest || Date.parse(plan.expiresAt) <= Date.now() || Date.parse(plan.expiresAt) > Date.now() + 31 * 60_000) throw new CanvasError('RUN_PLAN_MISMATCH', '原生运行计划与节点、模型或配对不一致，未请求审批。');
     const view = canvasRunViewSchema.parse({ quoteId: plan.planId, planDigest: plan.planDigest, projectId: plan.projectId, canvasId: plan.canvasId, canvasRevision: plan.canvasRevision, requestedNodeIds: plan.requestedNodeIds, authorizedNodeIds: plan.authorizedNodeIds, declarations: plan.declarations, mode: plan.mode, expiresAt: plan.expiresAt, priceKnown: false, estimatedCost: null, phase: 'preview', submissionAttempted: false, approvalRequestId: '', intent: null });

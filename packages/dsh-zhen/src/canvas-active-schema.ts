@@ -1,6 +1,6 @@
 import {z} from 'zod';
 import {canvasInstance} from './canvas-contract.ts';
-import {canvasWorkspacesSchema} from './canvas-workflow-schema.ts';
+import {canvasWorkspacesSchema,canvasTargetWorkspacesSchema} from './canvas-workflow-schema.ts';
 
 export const ACTIVE_CONTEXT_MAX_AGE_MS = 30000;
 export const ACTIVE_CONTEXT_FUTURE_SKEW_MS = 5000;
@@ -39,3 +39,4 @@ export const canvasActiveContextSchema=z.object({
 export type CanvasActiveContext=z.infer<typeof canvasActiveContextSchema>;
 export const canvasActiveTargetsSchema=z.object({context:canvasActiveContextSchema,workspaces:canvasWorkspacesSchema}).strict();
 export type CanvasActiveTargets=z.infer<typeof canvasActiveTargetsSchema>;
+export const canvasTargetActiveSchema=z.object({context:canvasActiveContextSchema,workspaces:canvasTargetWorkspacesSchema}).strict();

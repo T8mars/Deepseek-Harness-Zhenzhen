@@ -3,8 +3,8 @@ import type {CanvasWorkspaces} from 'dsh-zhen';
 type CanvasTarget = CanvasWorkspaces['canvases'][number];
 
 /** UI identity includes the project; list positions and names are not identities. */
-export function canvasTargetKey(target: Pick<CanvasTarget, 'projectId' | 'id'>): string {
-  return JSON.stringify([target.projectId, target.id]);
+export function canvasTargetKey(target: Pick<CanvasTarget, 'projectId' | 'id' | 'connectionId'>): string {
+  return JSON.stringify(target.connectionId?[target.projectId,target.id,target.connectionId]:[target.projectId,target.id]);
 }
 
 export function selectedCanvasTarget(report: CanvasWorkspaces, key: string): CanvasTarget | undefined {

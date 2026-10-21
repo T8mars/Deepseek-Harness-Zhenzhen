@@ -272,6 +272,11 @@
       "id": "canvas-active-context",
       "status": "in-progress",
       "verification": "Decision0077 adds a metadata-only native active-context adapter, eleventh read/planning MCP tool, same-binding Owner context/directory read and four actual target panels. C86 21, related Canvas67 and complete584/584 pass with157-file archive; actual C63 legacy-checkout packing and C76 dual-version build/install/launcher boundaries preserve complete payload checks. Instance/time/readiness validation, paired read-only scope, exact revision/project identity, named ambiguity and late manual/API-switch replies pass. No native writes, trust promotion, real model requests, user-app replacement or browser/window acceptance. Exact current CI and installed UI remain separately verified."
+    },
+    {
+      "id": "canvas-target-connection",
+      "status": "in-progress",
+      "verification": "Decision0078 adds opaque connection identities to new Owner-only directories and eight scoped target entry points. Exact legacy RPC argument lists and directory/node output shapes remain unchanged; current UI passes the identity for models/assets/nodes/plans/quotes/tasks/media previews. Actual CLI/session/Gateway/Owner and four production panels verify same-API re-pair refusal, before/after-request checks, no target query after metadata rotation, no second inspection after rotation, selection invalidation and no identified-target downgrade. C87 adds13 tests including the fixture UTF-8 regression; complete check/package/exact CI and actual new app remain separately verified. Legacy clients and Agent MCP do not acquire this explicit new identity guarantee. No real Native writes or model calls. First complete595/596 caught UTF-8 corruption in the synthetic HTTP fixture body decoder. A real loopback request forced a split within one Chinese character and failed before the fix; bounded byte accumulation followed by one UTF-8 decode passes, as does the original12000-character persistence/preview test. Production goal-integrity validation remains unchanged. C87 now adds13 tests. Complete597/597 and159-file package pass C63 real legacy packing and C76 real dual-version build/install/launcher boundaries. Exact current CI and new installed UI remain separate."
     }
   ]
 }

@@ -33,7 +33,8 @@ export async function canvasPairingFixture({ dpapi = false, stdio = false, trans
   state.options = options;
   globalThis.__DSH_EXAMPLE_PAIRING_FIXTURES.set(id, state);
   const server = createServer(async (req, res) => {
-    let raw = ''; for await (const chunk of req) { raw += chunk; assert.ok(Buffer.byteLength(raw, 'utf8') <= 128 * 1024); }
+    const parts=[];let bytes=0;for await (const chunk of req) { bytes+=chunk.length;assert.ok(bytes<=128*1024);parts.push(chunk);state.onBodyChunk?.(chunk); }
+    const raw=Buffer.concat(parts).toString('utf8');
     const body = raw ? JSON.parse(raw) : {};
     state.requests.push({ path: req.url, method: req.method, keys: Object.keys(body), authorized: !!req.headers.authorization });
     try {

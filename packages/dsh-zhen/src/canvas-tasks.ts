@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import {assertCanvasTargetConnection,canvasTargetRuntime} from './canvas-target-binding.ts';
 import { CanvasBridge, CanvasError, inspectCanvasCli } from './canvas.ts';
 import type { CanvasConfig, CanvasWorkflowRuntime } from './canvas.ts';
 import { canvasEntity } from './canvas-contract.ts';
@@ -33,9 +34,9 @@ export class CanvasTasks {
     if (inspectCanvasCli(config.root, config.instance).digest !== config.digest) throw new CanvasError('CLI_CHANGED', '画布工具已变化，请重新审阅连接。');
     if (runtime) { const session = runtime.store.loadSession(runtime.instance.instanceId); if (!session || session.sessionId !== runtime.sessionId || session.origin !== runtime.instance.origin || session.accessToken !== runtime.accessToken || Date.parse(session.expiresAt) <= Date.now()) throw new CanvasError('TASK_CONNECTION_CHANGED', '画布配对已变化，请重新读取任务。'); }
   }
-  private async read(scope: CanvasTaskScope, id?: string): Promise<{ data: Record<string, unknown>; runtime: CanvasWorkflowRuntime }> {
+  private async read(scope: CanvasTaskScope, id?: string,expectedConnection?:string): Promise<{ data: Record<string, unknown>; runtime: CanvasWorkflowRuntime }> {
     const config = this.configured(); if (!config) throw new CanvasError('CANVAS_NOT_CONFIGURED', '请先在连接页连接画布。'); this.current(config);
-    const runtime = await new CanvasBridge(config).workflowRuntime(); this.current(config, runtime);
+    const runtime = canvasTargetRuntime(config,await new CanvasBridge(config).workflowRuntime(),expectedConnection); this.current(config, runtime);assertCanvasTargetConnection(expectedConnection,config,runtime);
     if (!runtime.scopes.includes('run:read')) throw new CanvasError('TASK_SCOPE_REQUIRED', '当前配对没有任务读取权限。');
     const path = '/api/agent-control/v1/run-intents' + (id ? '/' + encodeURIComponent(id) : '') + `?projectId=${encodeURIComponent(scope.projectId)}&canvasId=${encodeURIComponent(scope.canvasId)}`;
     const data = (await runtime.client.requestAgentControl(runtime.instance, path, { accessToken: runtime.accessToken })).data; this.current(config, runtime); return { data, runtime };
@@ -46,15 +47,15 @@ export class CanvasTasks {
     return intent;
   }
   private summary(intent: WireIntent) { return canvasTaskSummary.parse({ id: intent.id, projectId: intent.projectId, canvasId: intent.canvasId, canvasRevision: intent.canvasRevision, nodeCount: intent.nodeIds.length, provider: label(intent.provider), model: label(intent.model), status: canvasTaskStatus.safeParse(intent.status).success ? intent.status : 'unknown', runId: intent.runId, queueRevision: intent.queueRevision, createdAt: intent.createdAt, updatedAt: intent.updatedAt }); }
-  async list(input: CanvasTaskScope): Promise<CanvasTaskList> {
-    const scope = canvasTaskScope.parse(input), { data, runtime } = await this.read(scope);
+  async list(input: CanvasTaskScope,expectedConnection?:string): Promise<CanvasTaskList> {
+    const scope = canvasTaskScope.parse(input), { data, runtime } = await this.read(scope,undefined,expectedConnection);
     const parsed = z.object({ items: z.array(z.unknown()).max(100) }).parse(data);
     const items = parsed.items.map(value => this.summary(this.checked(value, scope, runtime)));
     if (new Set(items.map(item => item.id)).size !== items.length) throw new CanvasError('TASK_RESULT_MISMATCH', '原生任务列表包含重复引用，请在画布检查。');
     return canvasTaskListSchema.parse({ ...scope, items, limit: 100, atLimit: items.length === 100 });
   }
-  async detail(input: CanvasTaskReference): Promise<CanvasTaskDetail> {
-    const reference = canvasTaskReference.parse(input), { data, runtime } = await this.read(reference, reference.id), intent = this.checked(data, reference, runtime);
+  async detail(input: CanvasTaskReference,expectedConnection?:string): Promise<CanvasTaskDetail> {
+    const reference = canvasTaskReference.parse(input), { data, runtime } = await this.read(reference, reference.id,expectedConnection), intent = this.checked(data, reference, runtime);
     if (intent.id !== reference.id) throw new CanvasError('TASK_RESULT_MISMATCH', '返回了其他运行引用，未显示。');
     const evidence = wireEvidence.parse(data.artifactVerification), completed = intent.status === 'completed';
     const successfulNodes = evidence.nodeRuns.filter(node => node.status === 'succeeded').length, successfulAttempts = evidence.nodeRuns.filter(node => !!node.latestAttemptId && node.latestAttemptStatus === 'succeeded').length;

@@ -17,7 +17,8 @@ export { ragPresentationSchema } from './rag-schema.ts';
 import { skillId, digestSchema, marketItemSchema, skillPackageSchema, skillFeedSnapshotSchema, skillAutoPolicySchema } from './market-schema.ts';
 import type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } from './market-schema.ts';
 import type { CanvasConnection } from './canvas.ts';
-import {canvasActiveTargetsSchema} from './canvas-active-schema.ts';
+import {canvasActiveTargetsSchema,canvasTargetActiveSchema} from './canvas-active-schema.ts';
+import {canvasTargetWorkspacesSchema} from './canvas-workflow-schema.ts';
 import type {CanvasActiveTargets} from './canvas-active-schema.ts';
 export {ACTIVE_CONTEXT_MAX_AGE_MS,ACTIVE_CONTEXT_FUTURE_SKEW_MS,activeContextFresh} from './canvas-active-schema.ts';
 export {canvasEntity,canvasPlanResultSchema} from './canvas-contract.ts';
@@ -144,23 +145,33 @@ export interface ZhenRemote {
   canvasWorkflowSnapshot(): Promise<RemoteResult<CanvasWorkflowView | null>>;
   canvasWorkspaces(): Promise<RemoteResult<CanvasWorkspaces>>;
   canvasActiveTargets():Promise<RemoteResult<CanvasActiveTargets>>;
+  canvasTargetWorkspaces():Promise<RemoteResult<CanvasWorkspaces>>;
+  canvasTargetActive():Promise<RemoteResult<CanvasActiveTargets>>;
   canvasWorkflowModels(input:CanvasModelsQuery):Promise<RemoteResult<CanvasModels>>;
+  canvasTargetModels(input: CanvasModelsQuery,expectedConnection:string):Promise<RemoteResult<CanvasModels>>;
   canvasWorkflowAssets(input:CanvasAssetsQuery):Promise<RemoteResult<CanvasAssets>>;
+  canvasTargetAssets(input: CanvasAssetsQuery,expectedConnection:string):Promise<RemoteResult<CanvasAssets>>;
   canvasWorkflowPreview(input: CanvasWorkflowInput): Promise<RemoteResult<CanvasWorkflowView>>;
+  canvasTargetWorkflowPreview(input: CanvasWorkflowInput,expectedConnection:string): Promise<RemoteResult<CanvasWorkflowView>>;
   canvasWorkflowApprove(id: string, confirmation: boolean): Promise<RemoteResult<CanvasWorkflowView>>;
   canvasWorkflowComplete(id: string): Promise<RemoteResult<CanvasWorkflowView>>;
   canvasRunSnapshot(): Promise<RemoteResult<CanvasRunView | null>>;
   canvasRunNodes(projectId: string, canvasId: string, offset?: number): Promise<RemoteResult<CanvasRunNodes>>;
+  canvasTargetRunNodes(projectId: string, canvasId: string, offset: number,expectedConnection:string): Promise<RemoteResult<CanvasRunNodes>>;
   canvasRunQuote(selection: CanvasRunSelection): Promise<RemoteResult<CanvasRunView>>;
+  canvasTargetRunQuote(selection: CanvasRunSelection,expectedConnection:string): Promise<RemoteResult<CanvasRunView>>;
   canvasRunApprove(quoteId: string, confirmed: boolean, unknownPriceAccepted: boolean): Promise<RemoteResult<CanvasRunView>>;
   canvasRunSubmit(quoteId: string): Promise<RemoteResult<CanvasRunView>>;
   canvasRunRefresh(quoteId: string): Promise<RemoteResult<CanvasRunView>>;
   canvasTasksList(scope: CanvasTaskScope): Promise<RemoteResult<CanvasTaskList>>;
+  canvasTargetTasksList(scope: CanvasTaskScope,expectedConnection:string): Promise<RemoteResult<CanvasTaskList>>;
   canvasTaskDetail(reference: CanvasTaskReference): Promise<RemoteResult<CanvasTaskDetail>>;
+  canvasTargetTaskDetail(reference: CanvasTaskReference,expectedConnection:string): Promise<RemoteResult<CanvasTaskDetail>>;
   defaultArtInfo(): Promise<RemoteResult<DefaultArtInfo>>;
   defaultArtChunk(request: DefaultArtChunkRequest): Promise<RemoteResult<DefaultArtChunk>>;
   canvasTransferSnapshot(): Promise<RemoteResult<CanvasTransferView | null>>;
   canvasTransferPreview(input: CanvasTransferInput): Promise<RemoteResult<CanvasTransferView>>;
+  canvasTargetTransferPreview(input: CanvasTransferInput,expectedConnection:string): Promise<RemoteResult<CanvasTransferView>>;
   canvasTransferApprove(id: string, confirmed: boolean): Promise<RemoteResult<CanvasTransferView>>;
   canvasTransferComplete(id: string): Promise<RemoteResult<CanvasTransferView>>;
   canvasTransferPlacement(id: string): Promise<RemoteResult<CanvasTransferView>>;
@@ -291,24 +302,34 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/canvasTools': method('canvasTools', canvasToolCatalogSchema.nullable(), 'Read and cross-check the existing versioned Canvas planning catalog.'),
   'zhen/canvasWorkflowSnapshot': method('canvasWorkflowSnapshot', canvasWorkflowSchema.nullable(), 'Read non-secret native workflow application progress.'),
   'zhen/canvasWorkspaces': method('canvasWorkspaces', canvasWorkspacesSchema, 'List native Canvas targets for explicit UI planning.'),
+  'zhen/canvasTargetWorkspaces':method('canvasTargetWorkspaces',canvasTargetWorkspacesSchema,'Owner-only target directory carrying an opaque connection identity. No trust, workspace or approval change.'),
+  'zhen/canvasTargetActive':method('canvasTargetActive',canvasTargetActiveSchema,'Owner-only current window and target directory carrying the same connection identity.'),
   'zhen/canvasActiveTargets':method('canvasActiveTargets',canvasActiveTargetsSchema,'Owner read only: current native window metadata and available targets under the same reviewed connection/session. Never changes workspace, trust or approval.'),
   'zhen/canvasWorkflowModels':method('canvasWorkflowModels',canvasModelsSchema,'Read scoped public native models/readiness for explicit UI selection without settings or credentials.',[['input',canvasModelsQuery]]),
+  'zhen/canvasTargetModels':method('canvasTargetModels',canvasModelsSchema,'Read scoped public native models/readiness for explicit UI selection without settings or credentials.',[['input',canvasModelsQuery],['expectedConnection',z.string().regex(/^[a-f0-9]{64}$/)]] ),
   'zhen/canvasWorkflowAssets':method('canvasWorkflowAssets',canvasAssetsSchema,'Read scoped public native reference metadata without media URLs or file contents.',[['input',canvasAssetsQuery]]),
+  'zhen/canvasTargetAssets':method('canvasTargetAssets',canvasAssetsSchema,'Read scoped public native reference metadata without media URLs or file contents.',[['input',canvasAssetsQuery],['expectedConnection',z.string().regex(/^[a-f0-9]{64}$/)]] ),
   'zhen/canvasWorkflowPreview': method('canvasWorkflowPreview', canvasWorkflowSchema, 'Prepare a native creative plan without writes or Provider calls.', [['input', canvasWorkflowInput]]),
+  'zhen/canvasTargetWorkflowPreview': method('canvasTargetWorkflowPreview', canvasWorkflowSchema, 'Prepare a native creative plan without writes or Provider calls.', [['input', canvasWorkflowInput],['expectedConnection',z.string().regex(/^[a-f0-9]{64}$/)]] ),
   'zhen/canvasWorkflowApprove': method('canvasWorkflowApprove', canvasWorkflowSchema, 'Human UI confirmation requests authoritative Canvas window approval.', [['id', z.uuid()], ['confirmation', z.boolean()]]),
   'zhen/canvasWorkflowComplete': method('canvasWorkflowComplete', canvasWorkflowSchema, 'Explicitly check a native window approval and apply its bound structure once.', [['id', z.uuid()]]),
   'zhen/canvasRunSnapshot': method('canvasRunSnapshot', canvasRunViewSchema.nullable(), 'Read references for the current native run quote without secrets.'),
   'zhen/canvasRunNodes': method('canvasRunNodes', canvasRunNodesSchema, 'Read bounded native node/schema metadata for explicit selection.', [['projectId', z.string().min(1).max(160)], ['canvasId', z.string().min(1).max(160)], ['offset', z.number().int().min(0).max(100000).default(0)]]),
+  'zhen/canvasTargetRunNodes': method('canvasTargetRunNodes', canvasRunNodesSchema.refine(value=>value.connectionId!==undefined,'Target connection identity is required.'), 'Read bounded native node/schema metadata for explicit selection.', [['projectId', z.string().min(1).max(160)], ['canvasId', z.string().min(1).max(160)], ['offset', z.number().int().min(0).max(100000).default(0)],['expectedConnection',z.string().regex(/^[a-f0-9]{64}$/)]]),
   'zhen/canvasRunQuote': method('canvasRunQuote', canvasRunViewSchema, 'Prepare a native run plan; price remains unknown and no intent is reserved.', [['selection', canvasRunSelection]]),
+  'zhen/canvasTargetRunQuote': method('canvasTargetRunQuote', canvasRunViewSchema, 'Prepare a native run plan; price remains unknown and no intent is reserved.', [['selection', canvasRunSelection],['expectedConnection',z.string().regex(/^[a-f0-9]{64}$/)]] ),
   'zhen/canvasRunApprove': method('canvasRunApprove', canvasRunViewSchema, 'Human review and explicit unknown-price acceptance request native window approval.', [['quoteId', z.uuid()], ['confirmed', z.boolean()], ['unknownPriceAccepted', z.boolean()]]),
   'zhen/canvasRunSubmit': method('canvasRunSubmit', canvasRunViewSchema, 'Explicit native window completion may reserve one durable intent. No repeat after ambiguity.', [['quoteId', z.uuid()]]),
   'zhen/canvasRunRefresh': method('canvasRunRefresh', canvasRunViewSchema, 'GET-only native operation/approval lookup; never retries submission.', [['quoteId', z.uuid()]]),
   'zhen/canvasTasksList': method('canvasTasksList', canvasTaskListSchema, 'Read at most 100 native intents owned by the current pairing in an explicit canvas; no local paid ledger.', [['scope', canvasTaskScope]]),
+  'zhen/canvasTargetTasksList': method('canvasTargetTasksList', canvasTaskListSchema, 'Read at most 100 native intents owned by the current pairing in an explicit canvas; no local paid ledger.', [['scope', canvasTaskScope],['expectedConnection',z.string().regex(/^[a-f0-9]{64}$/)]] ),
   'zhen/canvasTaskDetail': method('canvasTaskDetail', canvasTaskDetailSchema, 'GET-only original intent and bounded completion evidence summary without URLs or raw error messages.', [['reference', canvasTaskReference]]),
+  'zhen/canvasTargetTaskDetail': method('canvasTargetTaskDetail', canvasTaskDetailSchema, 'GET-only original intent and bounded completion evidence summary without URLs or raw error messages.', [['reference', canvasTaskReference],['expectedConnection',z.string().regex(/^[a-f0-9]{64}$/)]] ),
   'zhen/defaultArtInfo': method('defaultArtInfo', defaultArtInfoSchema, 'Read the confirmed local default-art manifest summary without a Host path.'),
   'zhen/defaultArtChunk': method('defaultArtChunk', defaultArtChunkSchema, 'Read one bounded chunk of an already captured, hash-pinned raster; no arbitrary file access.', [['request', defaultArtChunkRequest]]),
   'zhen/canvasTransferSnapshot': method('canvasTransferSnapshot', canvasTransferViewSchema.nullable(), 'Read local saved-media handoff references without paths or approval secrets.'),
   'zhen/canvasTransferPreview': method('canvasTransferPreview', canvasTransferViewSchema, 'Preview an owned export receipt in an explicit native project/canvas.', [['input', canvasTransferInput]]),
+  'zhen/canvasTargetTransferPreview': method('canvasTargetTransferPreview', canvasTransferViewSchema, 'Preview an owned export receipt in an explicit native project/canvas.', [['input', canvasTransferInput],['expectedConnection',z.string().regex(/^[a-f0-9]{64}$/)]] ),
   'zhen/canvasTransferApprove': method('canvasTransferApprove', canvasTransferViewSchema, 'Human review requests native file-copy or placement approval.', [['id', z.uuid()], ['confirmed', z.boolean()]]),
   'zhen/canvasTransferComplete': method('canvasTransferComplete', canvasTransferViewSchema, 'Check authoritative window approval and complete the bound local copy/placement once.', [['id', z.uuid()]]),
   'zhen/canvasTransferPlacement': method('canvasTransferPlacement', canvasTransferViewSchema, 'Preview placement of the already managed native asset; no Provider call.', [['id', z.uuid()]]),

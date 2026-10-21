@@ -2,6 +2,7 @@ import { mkdirSync, lstatSync, readFileSync, writeFileSync, renameSync, unlinkSy
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import {assertCanvasTargetConnection,canvasTargetConnection,canvasTargetRuntime} from './canvas-target-binding.ts';
 import { CanvasBridge, CanvasError, inspectCanvasCli } from './canvas.ts';
 import type { CanvasConfig, CanvasWorkflowRuntime } from './canvas.ts';
 import { canvasEntity, canvasInstance } from './canvas-contract.ts';
@@ -49,10 +50,10 @@ export class CanvasWorkflow {
     try { writeFileSync(temporary, bytes, { mode: 0o600, flag: 'wx' }); renameSync(temporary, this.file); }
     finally { try { unlinkSync(temporary); } catch {} }
   }
-  private async binding() {
+  private async binding(expectedConnection?:string) {
     const config = this.configured(); if (!config) throw new CanvasError('CANVAS_NOT_CONFIGURED', '请先连接并配对画布。');
-    this.current(config); const runtime = await new CanvasBridge(config).workflowRuntime(); this.current(config);
-    return { config, runtime };
+    this.current(config); const runtime = await new CanvasBridge(config).workflowRuntime(); this.current(config);assertCanvasTargetConnection(expectedConnection,config,runtime);
+    return { config, runtime:canvasTargetRuntime(config,runtime,expectedConnection) };
   }
   private matches(record: Stored, config: CanvasConfig, runtime: CanvasWorkflowRuntime): void {
     this.current(config);
@@ -69,13 +70,13 @@ export class CanvasWorkflow {
     const data=(await runtime.client.requestAgentControl(runtime.instance,'/api/agent-control/v1/models?'+query.toString(),{accessToken:runtime.accessToken})).data;
     this.currentSession(config,runtime);return canvasModelsView(input,data);
   }
-  models(input:CanvasModelsQuery):Promise<CanvasModels>{return this.serial(async()=>{const request=canvasModelsQuery.parse(input),{config,runtime}=await this.binding();return this.readModels(request,config,runtime);});}
+  models(input:CanvasModelsQuery,expectedConnection?:string):Promise<CanvasModels>{return this.serial(async()=>{const request=canvasModelsQuery.parse(input),{config,runtime}=await this.binding(expectedConnection);return this.readModels(request,config,runtime);});}
   private referenceScope(runtime:CanvasWorkflowRuntime):void{if(!runtime.scopes.includes('asset:read'))throw new CanvasError('WORKFLOW_ASSET_SCOPE_REQUIRED','请选择读取素材权限，并在画布窗口批准配对。');}
   private async readAssets(input:CanvasAssetsQuery,config:CanvasConfig,runtime:CanvasWorkflowRuntime):Promise<CanvasAssets>{
     this.referenceScope(runtime);this.currentSession(config,runtime);const params=new URLSearchParams({projectId:input.projectId,canvasId:input.canvasId,kind:input.kind,query:input.query??'',offset:String(input.offset??0),limit:'25'});
     const data=(await runtime.client.requestAgentControl(runtime.instance,'/api/agent-control/v1/assets?'+params.toString(),{accessToken:runtime.accessToken})).data;this.currentSession(config,runtime);return canvasAssetsView(input,data);
   }
-  assets(input:CanvasAssetsQuery):Promise<CanvasAssets>{return this.serial(async()=>{const request=canvasAssetsQuery.parse(input),{config,runtime}=await this.binding();return this.readAssets(request,config,runtime);});}
+  assets(input:CanvasAssetsQuery,expectedConnection?:string):Promise<CanvasAssets>{return this.serial(async()=>{const request=canvasAssetsQuery.parse(input),{config,runtime}=await this.binding(expectedConnection);return this.readAssets(request,config,runtime);});}
   private async readReferences(projectId:string,keys:CanvasReferenceKey[],config:CanvasConfig,runtime:CanvasWorkflowRuntime):Promise<CanvasAsset[]>{
     canvasReferenceKeys.parse(keys);this.referenceScope(runtime);const refs:CanvasAsset[]=[];
     for(const key of keys){this.currentSession(config,runtime);const data=(await runtime.client.requestAgentControl(runtime.instance,'/api/agent-control/v1/assets/'+encodeURIComponent(key.assetId)+'?'+new URLSearchParams({projectId}).toString(),{accessToken:runtime.accessToken})).data;this.currentSession(config,runtime);const asset=canvasAssetView(projectId,data),current=canvasAssetKey(asset);if(current.assetId!==key.assetId||current.contentHash!==key.contentHash||current.contentRevision!==key.contentRevision)throw new CanvasError('WORKFLOW_REFERENCE_CHANGED','参考素材内容或修订号已变化，请重新选择并预览。');refs.push(asset);}
@@ -112,24 +113,24 @@ export class CanvasWorkflow {
     // Adopt the exact native plan; do not issue another planning POST.
     return this.stage(plan, config, runtime);
   }); }
-  private async readWorkspaces(config:CanvasConfig,runtime:CanvasWorkflowRuntime):Promise<CanvasWorkspaces>{
+  private async readWorkspaces(config:CanvasConfig,runtime:CanvasWorkflowRuntime,scoped=false):Promise<CanvasWorkspaces>{
     this.currentSession(config,runtime);
     const data = (await runtime.client.requestAgentControl(runtime.instance, '/api/agent-control/v1/workspaces', { accessToken: runtime.accessToken })).data;
     this.currentSession(config,runtime);
     const parsed = z.object({ canvases: z.array(z.object({ id: canvasEntity, projectId: canvasEntity, name: z.string().max(240), revision: z.number().int().positive() })).max(500),total:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),truncated:z.boolean().optional() }).parse(data);
-    return canvasWorkspacesSchema.parse(parsed);
+    return canvasWorkspacesSchema.parse(scoped?{...parsed,canvases:parsed.canvases.map(canvas=>({...canvas,connectionId:canvasTargetConnection(config,runtime)}))}:parsed);
   }
-  workspaces(): Promise<CanvasWorkspaces> { return this.serial(async () => {const {config,runtime}=await this.binding();return this.readWorkspaces(config,runtime);}); }
-  activeTargets():Promise<CanvasActiveTargets>{return this.serial(async()=>{
+  workspaces(scoped=false): Promise<CanvasWorkspaces> { return this.serial(async () => {const {config,runtime}=await this.binding();return this.readWorkspaces(config,runtime,scoped);}); }
+  activeTargets(scoped=false):Promise<CanvasActiveTargets>{return this.serial(async()=>{
     const {config,runtime}=await this.binding();this.currentSession(config,runtime);
     const context=await readCanvasActiveContext(runtime);this.currentSession(config,runtime);
-    const workspaces=await this.readWorkspaces(config,runtime);this.currentSession(config,runtime);
+    const workspaces=await this.readWorkspaces(config,runtime,scoped);this.currentSession(config,runtime);
     // Directory reads cannot turn an old window reply into current metadata.
     return canvasActiveTargetsSchema.parse({context:parseCanvasActiveContext(context,runtime.instance.instanceId),workspaces});
   });}
-  preview(input: CanvasWorkflowInput): Promise<CanvasWorkflowView> { return this.serial(async () => {
+  preview(input: CanvasWorkflowInput,expectedConnection?:string): Promise<CanvasWorkflowView> { return this.serial(async () => {
     const request = canvasWorkflowInput.parse(input); this.available();
-    const { config, runtime } = await this.binding();
+    const { config, runtime } = await this.binding(expectedConnection);
     const keys=request.references??[];
     if(keys.length)await this.readAssets({projectId:request.projectId,canvasId:request.canvasId,kind:request.kind==='audio'?'audio':'image'},config,runtime);
     const references=keys.length?await this.readReferences(request.projectId,keys,config,runtime):[];

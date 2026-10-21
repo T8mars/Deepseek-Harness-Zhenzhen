@@ -2,6 +2,7 @@ import { lstatSync, readFileSync, mkdirSync, openSync, writeFileSync, fsyncSync,
 import { dirname, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
+import {assertCanvasTargetConnection,canvasTargetRuntime} from './canvas-target-binding.ts';
 import { CanvasBridge, CanvasError, inspectCanvasCli } from './canvas.ts';
 import type { CanvasConfig, CanvasWorkflowRuntime } from './canvas.ts';
 import { canvasEntity, canvasInstance } from './canvas-contract.ts';
@@ -30,9 +31,9 @@ export class CanvasTransfer {
     if (inspectCanvasCli(config.root, config.instance).digest !== config.digest) throw new CanvasError('CLI_CHANGED', '画布工具已变化，请重新审阅连接。');
     if (runtime) { const saved = runtime.store.loadSession(runtime.instance.instanceId); if (!saved || saved.sessionId !== runtime.sessionId || saved.origin !== runtime.instance.origin || saved.accessToken !== runtime.accessToken || Date.parse(saved.expiresAt) <= Date.now()) throw new CanvasError('TRANSFER_CONNECTION_CHANGED', '原生配对已变化，请查询原画布。'); }
   }
-  private async runtime() {
+  private async runtime(expectedConnection?:string) {
     const config = this.configured(); if (!config) throw new CanvasError('CANVAS_NOT_CONFIGURED', '请先在连接页连接画布。'); this.current(config);
-    const runtime = await new CanvasBridge(config).workflowRuntime(); this.current(config, runtime);
+    const runtime = canvasTargetRuntime(config,await new CanvasBridge(config).workflowRuntime(),expectedConnection);assertCanvasTargetConnection(expectedConnection,config,runtime); this.current(config, runtime);
     const status = (await runtime.client.requestAgentControl(runtime.instance, '/api/agent-control/v1/status')).data; this.current(config, runtime);
     const control = z.object({ schema: z.literal('t8-agent-asset-control-v1'), approvalLookup: z.literal(true), hashLookup: z.literal(true), patchLookup: z.literal(true), maxImportBytes: z.number().int().positive().max(2 * 1024 ** 3) }).safeParse(status.assetControl);
     if (!control.success) throw new CanvasError('TRANSFER_UPDATE_REQUIRED', '当前画布尚不支持素材交接恢复，请更新画布控制面后使用。'); return { config, runtime, maxBytes: control.data.maxImportBytes };
@@ -53,10 +54,10 @@ export class CanvasTransfer {
     state.view.placement.baseRevision = receipt.baseRevision; state.view.phase = receipt.status; state.view.appliedRevision = receipt.appliedRevision; return true;
   }
   snapshot(): CanvasTransferView | null { const state = this.read(); if (!state) return null; if (['requesting', 'submitting'].includes(state.view.phase)) return { ...state.view, phase: 'unknown' }; if (['preview', 'pending'].includes(state.view.phase) && Date.parse(state.view.expiresAt) <= Date.now()) return { ...state.view, phase: 'expired' }; return state.view; }
-  preview(input: CanvasTransferInput): Promise<CanvasTransferView> { return this.serial(async () => {
+  preview(input: CanvasTransferInput,expectedConnection?:string): Promise<CanvasTransferView> { return this.serial(async () => {
     const selected = canvasTransferInput.parse(input), previous = this.read(); if (previous && ['requesting', 'pending', 'submitting', 'unknown'].includes(previous.view.phase) && !(Date.parse(previous.view.expiresAt) <= Date.now() && !previous.view.submissionAttempted)) throw new CanvasError('TRANSFER_PENDING', '请先处理当前交接，结果不明时只查询原操作。');
     const receipt = this.receipt(selected.receiptId); if (!receipt) throw new CanvasError('TRANSFER_RECEIPT_MISSING', '请选择现有的本机保存记录。'); gatewayMediaReceiptSchema.parse(receipt);
-    const { config, runtime, maxBytes } = await this.runtime(); if (!runtime.scopes.includes('asset:transfer')) throw new CanvasError('TRANSFER_SCOPE_REQUIRED', '请在配对中单独申请素材交接权限，并由画布窗口批准。');
+    const { config, runtime, maxBytes } = await this.runtime(expectedConnection); if (!runtime.scopes.includes('asset:transfer')) throw new CanvasError('TRANSFER_SCOPE_REQUIRED', '请在配对中单独申请素材交接权限，并由画布窗口批准。');
     const state: State = { schemaVersion: 1, config, instanceId: runtime.instance.instanceId, origin: runtime.instance.origin, sessionId: runtime.sessionId, actorId: runtime.actorId, view: canvasTransferViewSchema.parse({ ...selected, id: randomUUID(), canvasRevision: 1, file: { name: basename(receipt.path), size: receipt.bytes, sha256: receipt.sha256, mime: receipt.mime }, maxImportBytes: maxBytes, stage: 'import', phase: 'preview', asset: null, assetSource: 'none', placement: null, approvalRequestId: '', expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(), submissionAttempted: false, appliedRevision: null }) };
     const existing = await this.findAsset(state, runtime); this.match(state, config, runtime);
     if (existing) { state.view.asset = existing; state.view.assetSource = 'catalog-match'; state.view.phase = 'available'; }
