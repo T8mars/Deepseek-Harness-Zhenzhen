@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T01:47:33.617Z",
+  "checkedAt": "2026-10-21T07:46:51.341Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1667,6 +1667,30 @@
       "byteIdenticalToInstalled0071Archive": true,
       "launcherBoundaryRealProductionBundlesVerified": true,
       "reinstallOrRestartPerformed": false
+    },
+    "canvas341Review": {
+      "decision": "0075",
+      "sourceCommit": "c800daa285e34d8fb6032ce2d148248d8faa37bf",
+      "releaseTag": "v3.4.1",
+      "releaseCommit": "7d05f7ab1615a983afe9a84bf4ff167be150b3d7",
+      "livePublicAppVersion": "3.4.0",
+      "liveActiveContextAdvertised": true,
+      "activeContextSchema": "t8-agent-active-context-v1",
+      "exactNativeHandshakeVerified": true,
+      "targetedNativeTests": 15,
+      "nativePassed": 15,
+      "targetedDshTests": 9,
+      "dshPassed": 9,
+      "installedCliDigest": "2e2caf615098eff892b1b30a86e5f4c3eb88a17d8d5cd7005874c2f903ce723c",
+      "installedManifestDigest": "479215e422f20730355b83d7a87f83180c271ea7b43ca29c076af33c8f87bd12",
+      "dshCurrentConnectionCode": "CLI_CHANGED",
+      "dshTrustChanged": false,
+      "nativeWrites": 0,
+      "modelRequests": 0,
+      "releaseAssetBytesVerified": false,
+      "realPairingOrApprovalVerified": false,
+      "installed341Verified": false,
+      "verification": "Read-only review confirms prior active-context handoff exists in installed/running3.4.0; current main/release metadata are3.4.1. Installed bundled CLI discovery/exact handshake pass; saved DSH pin still old and returns CLI_CHANGED without promotion. In fresh TEMP, ten active-context and five production-function exit-transport tests pass; protected files/source/worktree unchanged. Nine existing DSH setup/status/idle contracts pass. EventEmitter/VM fixtures are not actual Electron or installed341 upgrade proof. No new confirmed required native code fix; DSH active-context integration, real owner pairing and generated works remain pending."
     }
   }
 }
