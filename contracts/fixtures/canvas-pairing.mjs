@@ -72,7 +72,7 @@ export async function canvasPairingFixture({ dpapi = false, stdio = false, trans
   else writeFileSync(join(root, 'src/secureStore.cjs'), `const native=require('./native-secureStore.cjs');const state=${get};const count={configuredInstances:0,loadPending:1,storePending:2,deletePending:1,loadSession:1,storeSession:2,storeApproval:2,loadApproval:2,deleteApproval:2};for(const name of Object.keys(count))exports[name]=(...args)=>{if(name==='storeSession'||name==='storePending')state.storeWrites++;const at=count[name],options={...args[at],...state.options};return native[name](...args.slice(0,at),options);};`);
   let config = inspectCanvasCli(root);
   const file = join(base, 'EXAMPLE_DSH', 'canvas-pairing.json'), pairing = new CanvasPairing(file, () => config);
-  return { base, root, file, pairing, state, auth, credentialFile, config: () => config, changeConfig: next => { config = next; },
+  return { base, root, file, pairing, state, auth, credentialFile, server, config: () => config, changeConfig: next => { config = next; },
     originalStore: require(join(root, 'src/native-secureStore.cjs')),
     approve(scopes) { const pending = auth.listPendingPairings()[0]; assert.ok(pending); return auth.approvePairing({ pairingId: pending.pairingId, userCode: pending.userCode, approvedScopes: scopes, approvedBy: 'EXAMPLE_WINDOW_OWNER' }); },
     async dispose() { pairing.close(); await new Promise(done => server.close(done)); globalThis.__DSH_EXAMPLE_PAIRING_FIXTURES.delete(id); const rel = relative(realpathSync.native(tmpdir()), base); assert.ok(rel && !isAbsolute(rel) && !rel.startsWith('..')); rmSync(base, { recursive: true, force: true }); },

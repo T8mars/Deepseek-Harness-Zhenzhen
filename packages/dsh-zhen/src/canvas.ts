@@ -1,5 +1,6 @@
 import { createRequire } from 'node:module';
 import { createHash, randomUUID } from 'node:crypto';
+import { request as httpRequest } from 'node:http';
 import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { isAbsolute, join, relative } from 'node:path';
 import { canvasPlanRequest, canvasInspectionRequest, canvasInspectionResultSchema, canvasToolCatalogSchema, projectCanvasSurfaces, sameCanvasCatalog, canvasPlanResultSchema } from './canvas-contract.ts';
@@ -10,8 +11,8 @@ import type {CanvasConnectionCheck} from './canvas-setup-schema.ts';
 export interface CanvasConfig { root: string; digest: string; instance: string; }
 export interface CanvasConnection { configured: boolean; root: string; digest: string; instance?: string; connected: boolean; code: string; message: string; compat: unknown; }
 type Instance = { instanceId: string; origin: string; appVersion?: string };
-type CliClient = { selectInstance(id: string): Promise<Instance>; requestAgentControl(instance: Instance, path: string, options?: { accessToken?: string; method?: 'POST'; body?: unknown; timeoutMs?: number }): Promise<{ data: Record<string, unknown>; ok: boolean }> };
-type CliDiscovery = { discoverInstances(): Promise<Instance[]> };
+type CliClient = { selectInstance(id: string, options?: {discoveryOptions?: {fetch?: typeof globalThis.fetch}}): Promise<Instance>; requestAgentControl(instance: Instance, path: string, options?: { accessToken?: string; method?: 'POST'; body?: unknown; timeoutMs?: number; fetch?: typeof globalThis.fetch }): Promise<{ data: Record<string, unknown>; ok: boolean }> };
+type CliDiscovery = { discoverInstances(options?: {fetch?: typeof globalThis.fetch}): Promise<Instance[]> };
 type CliStore = { loadSession(id: string): { accessToken: string; expiresAt: string } | null };
 export interface CanvasPairingRuntime {
   instance: Instance;
@@ -35,6 +36,40 @@ export interface CanvasWorkflowRuntime {
 }
 export type CanvasOperation = 'status' | 'capabilities' | 'workspaces' | 'models' | 'capability-graph' | 'capability-tools' | 'task' | 'creator-session';
 const loadedCliDigests = new Map<string, string>();
+// These public CLI fetch hooks only send loopback GET/POST JSON. A fresh Agent
+// avoids even borrowing an idle socket left in a shared fetch pool. Preserve the
+// CLI's auth/protocol/response checks and its abort signal; never retry a POST.
+const canvasControlFetch: typeof globalThis.fetch = async (input, options) => {
+  if (!(typeof input === 'string' || input instanceof URL) || (options?.body != null && typeof options.body !== 'string')) throw new TypeError('Canvas transport input refused.');
+  const url = new URL(String(input)), method = options?.method ?? 'GET';
+  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) || url.username || url.password || !['GET','POST'].includes(method) || options?.redirect !== 'error') throw new TypeError('Canvas transport destination refused.');
+  const headers = new Headers(options?.headers); headers.set('connection', 'close'); headers.set('accept-encoding', 'identity');
+  return new Promise<Response>((resolve, reject) => {
+    const request = httpRequest(url, { method, headers: Object.fromEntries(headers), agent: false, signal: options?.signal ?? undefined }, response => {
+      const status = response.statusCode ?? 0;
+      if (status < 200 || status > 599 || ([301,302,303,307,308].includes(status) && response.headers.location)) { response.destroy(); reject(new TypeError('Canvas transport response refused.')); return; }
+      const parts: Buffer[] = []; let bytes = 0, settled = false;
+      const finish = () => {
+        if (settled) return; settled = true;
+        try {
+          const resultHeaders = new Headers(); for (const [key,value] of Object.entries(response.headers)) if (value !== undefined) resultHeaders.set(key, Array.isArray(value) ? value.join(', ') : value);
+          resolve(new Response([204,205,304].includes(status) ? null : Buffer.concat(parts), { status, headers: resultHeaders }));
+        } catch { response.destroy(); reject(new TypeError('Canvas transport response refused.')); }
+      };
+      response.on('data', (chunk: Buffer) => {
+        // Return at most one byte over the original CLI limit so its existing
+        // length check reports the native error before attempting JSON parsing.
+        const remaining = 256 * 1024 + 1 - bytes;
+        if (remaining > 0) { const part = chunk.subarray(0, remaining); parts.push(part); bytes += part.length; }
+        if (bytes > 256 * 1024) { finish(); response.destroy(); }
+      });
+      response.once('end', finish); response.once('error', reject);
+    });
+    request.once('error', reject);
+    request.once('upgrade', (_response, socket) => { socket.destroy(); reject(new TypeError('Canvas transport upgrade refused.')); });
+    request.end(options?.body ?? undefined);
+  });
+};
 
 export class CanvasError extends Error {
   constructor(readonly code: string, message: string) { super(message); }
@@ -87,7 +122,12 @@ export class CanvasBridge {
         }
         loadedCliDigests.set(current.root, current.digest);
       }
-      this.modules = { client: require(join(current.root, 'src/agentClient.cjs')), discovery: require(join(current.root, 'src/discovery.cjs')), store: require(join(current.root, 'src/secureStore.cjs')) };
+      const nativeClient = require(join(current.root, 'src/agentClient.cjs')) as CliClient;
+      const nativeDiscovery = require(join(current.root, 'src/discovery.cjs')) as CliDiscovery;
+      this.modules = { client: {
+        selectInstance: id => nativeClient.selectInstance(id, { discoveryOptions: { fetch: canvasControlFetch } }),
+        requestAgentControl: (instance, path, options) => nativeClient.requestAgentControl(instance, path, { ...options, fetch: canvasControlFetch }),
+      }, discovery: { discoverInstances: () => nativeDiscovery.discoverInstances({ fetch: canvasControlFetch }) }, store: require(join(current.root, 'src/secureStore.cjs')) };
     }
     return this.modules;
   }

@@ -1477,7 +1477,47 @@
       "localPackageSha256": "ded8a86a6e20d7bb8e7ce478d02daad0b5f1d1cd5fc668f5736b13f703ea1909",
       "byteIdenticalToInstalled0065Archive": true,
       "realLocalPreviewAndHydratePassed": true,
-      "reinstallOrRestartPerformed": false
+      "reinstallOrRestartPerformed": false,
+      "firstRemotePreview": {
+        "run": 39534246824,
+        "conclusion": "failure",
+        "tests": 482,
+        "passed": 481,
+        "failure": "C26 APP_CONNECTION_FAILED; reproduced idle transport issue addressed in0069",
+        "publicationStepsExecuted": false
+      }
+    },
+    "canvasIdleTransport": {
+      "decision": "0069",
+      "contract": "C74",
+      "targetedTests": 4,
+      "relatedTargetedPassed": 9,
+      "originalIdleReproduced": true,
+      "fetchOption": "public control fetch, selectInstance.discoveryOptions.fetch and discoverInstances.fetch",
+      "connection": "close",
+      "automaticRetry": false,
+      "nativeCliModified": false,
+      "nativeWrites": 0,
+      "modelRequests": 0,
+      "verification": "C74 four actual HTTP regressions cover real default idle expiry plus event-loop block, fresh discovery/control sockets despite stale shared fetch pool, UTF8 POST/auth/method preservation, one accepted-but-lost POST, no redirect following, original256KiB response limit and abort before/during body. CanvasBridge injects a builtin loopback GET/POST JSON transport through original public fetch/discoveryOptions.fetch hooks; Node http.request agent:false creates one-use sockets, Connection:close/identity encoding, no retry. Original CLI owns exact handshake, native credentials and protocol parsing. C74+C25+C26 nine tests and clean typecheck pass, including original Windows DPAPI and actual published MCP. Native installed3.3.7 public JS option signatures read-only verified; no native file/config/runtime writes. Final full/activation/CI/preview remain separate. Final full486/486 and canonical legacy checkout pack agree; actual152-file package replacement/uninstall complete baseline passes. Own running DSH updated through public CLI; all152 installed bytes, public settings hash, own schema3/seven-table row counts/quick_check, art, config and migration backup preserved. No Native pairing check or approval; new CI/preview separately checked after backup.",
+      "transport": "builtin http.request agent:false; no shared pool; bounded JSON response; original native error parsing",
+      "intermediateHeaderOnly": {
+        "localTests": 484,
+        "passed": 484,
+        "archiveSha256": "7455de246f46829771c59194b147a8fd4da63549ca66712b3479b19308217eef",
+        "activated": false,
+        "published": false
+      },
+      "localTests": 486,
+      "localPassed": 486,
+      "packageFiles": 152,
+      "localPackageSha256": "a0f861ccb800f0e09908cc3e3c6a1295286d1b39c7dbe964e26eef5b9d769443",
+      "actualOwnRuntimeUpdated": true,
+      "actualOwnPayloadMatched": true,
+      "publicSettingsPreserved": true,
+      "ownSchema": 3,
+      "ownRowsPreserved": true,
+      "nativePairingRechecked": false
     }
   }
 }
