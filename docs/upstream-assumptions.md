@@ -177,3 +177,6 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 
 
 0084/C95：validated Fiber.config不保证保存provider构造时解析的缺省值。真实已发布filesystem启动后改环境可复现备份默认目录漂移。公开Cordis Events声明internal/config this:Fiber waterfall与internal/status(Fiber,oldValue)；观察next()后配置、在ACTIVE提交快照可保留当时默认和cwd，不修改config或读私有成员。预验证事件不能替代实际激活快照，C95真实事件/重启/依赖门/加密往返核对。自有bundle只补公开inject依赖，skills保留，根配置不改；未观察到且依赖缺省的旧活动来源拒绝，不猜。已解析模式先普通JSON安全检查再schema，不执行访问器。
+
+
+0085/C96：公开initProfile/writeProfileManifest可以生成fresh配置候选而无需私有patch writer；loadOverlayPatches接受自有JSON PatchOptions数据文件，实际readProfilePatches顺序为bundle→profile→machine→overlays→telemetry。旧archive只读验证后才创建候选，不用EntryOptions冒充PatchOptions。实际CLI dump/boot核对恢复数据，但测试提供EXAMPLE依赖，不当成依赖实体恢复。SDK CLI明确禁止大小写无关desktop profile，候选保留数据而不借hash名绕过专用入口；真实负例已核。公开setProfileVersionExemption要求informed acceptRisk，历史grant仅待迁移数据，本次不代授。原retired bundle保留，未调用会清理来源的loadProfileDirectory。

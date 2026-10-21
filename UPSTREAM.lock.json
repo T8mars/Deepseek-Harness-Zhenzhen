@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T20:17:46.991Z",
+  "checkedAt": "2026-10-21T20:48:56.429Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1878,11 +1878,27 @@
       "fullRegressionPending": false,
       "fullM2Complete": false,
       "userHostActivated": false,
-      "verification": "A real published filesystem probe reproduces post-activation environment default drift in0083: the provider keeps original roots while a fresh resolver reads new defaults. C95 adds14 actual Loader/filesystem and own Host TEMP contracts; C94 and upstream neighbors total35/35. A public config waterfall observes post-interpolation settings without changing config; ACTIVE status commits frozen root defaults/cwd, prevalidation does not replace the running snapshot, and unload invalidates it. Own bundle retains skills injection and adds zhenSkillBackupSources as an initialization gate. Host-local-resolved inventory avoids a second ambient fallback, including an originally absent bundled root. Unknown implicit old sources refuse; self-contained absolute configurations remain readable. Actual encrypted resource/state restoration stays on original roots despite subsequent environment changes, executes no resource script and activates no candidate. No private provider fields, user profiles/credentials, Native writes, user-app restart or model requests. Full historical directory collection, complete configuration/dependency/database/RAG restore, total preview/activation/UI and M2/L2 remain incomplete. Complete regression/archive/exact CI separately required. Complete706/720 and168-file archive pass C63 legacy-checkout packing and C76 actual two-version build/install/launcher full-payload checks; exact current CI is separately required.",
+      "verification": "A real published filesystem probe reproduces post-activation environment default drift in0083: the provider keeps original roots while a fresh resolver reads new defaults. C95 adds14 actual Loader/filesystem and own Host TEMP contracts; C94 and upstream neighbors total35/35. A public config waterfall observes post-interpolation settings without changing config; ACTIVE status commits frozen root defaults/cwd, prevalidation does not replace the running snapshot, and unload invalidates it. Own bundle retains skills injection and adds zhenSkillBackupSources as an initialization gate. Host-local-resolved inventory avoids a second ambient fallback, including an originally absent bundled root. Unknown implicit old sources refuse; self-contained absolute configurations remain readable. Actual encrypted resource/state restoration stays on original roots despite subsequent environment changes, executes no resource script and activates no candidate. No private provider fields, user profiles/credentials, Native writes, user-app restart or model requests. Full historical directory collection, complete configuration/dependency/database/RAG restore, total preview/activation/UI and M2/L2 remain incomplete. Complete regression/archive/exact CI separately required. Complete720/720 and169-file archive pass C63 legacy-checkout packing and C76 actual two-version build/install/launcher full-payload checks; exact current CI is separately required.",
       "localTests": 720,
       "localPassed": 720,
       "packageFiles": 169,
       "localPackageSha256": "21013f634cab1d9ba9b97f9c7b6325fc61dff7a15768f32ac282d31b4ab4eb45"
+    },
+    "profileRestoreCandidate": {
+      "schemaVersion": 1,
+      "sdkVersion": "0.2.1-rc.2",
+      "status": "inactive-profile-restore-candidate",
+      "targetedTests": 17,
+      "targetedPassed": 17,
+      "relatedPassed": 31,
+      "fullRegressionPending": false,
+      "fullM2Complete": false,
+      "userHostActivated": false,
+      "verification": "C96 adds17 actual published SDK TEMP contracts; with C91 total31/31. Complete archive authentication, all-record validation and executable manifest-structure preflight precede fresh candidate creation. Public initProfile/writeProfileManifest restore every manifest without reconstructing private SDK patch layout. Own portable overlays preserve profile then machine then active CLI order, whole-config replacement, expression data and missing-versus-empty provenance. Independent DSH/Agents homes and safe hashed profile names separate output from foreign origins, device aliases, case and normalization differences. Historical compatibility exemptions remain pending data rather than automatic acceptRisk grants. Cancellation after final sidecar persistence removes only the fresh candidate; repeated restores and original source bytes remain. Actual public CLI validates the reserved Desktop guard and dumps/boots a restored EXAMPLE overlay after fixture-only dependencies are supplied; this does not prove production dependency restoration. Candidates remain inactive/not ready; package artifacts, original package-manager state, configuration activation, database/RAG and total restore/UI/full M2/L2 remain incomplete. No user profiles/credentials, Native writes, user-app restart or model calls. Complete regression/archive/exact CI separately required. Complete737/737 and170-file archive pass C63 legacy-checkout packing and C76 actual two-version build/install/launcher full-payload checks; exact current CI is separately required.",
+      "localTests": 737,
+      "localPassed": 737,
+      "packageFiles": 170,
+      "localPackageSha256": "ab7149829a82c4388748f1678ba1029a8c70238a22430cfb63d3a275cb58167c"
     }
   }
 }

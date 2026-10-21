@@ -4,6 +4,8 @@ export {sessionBackupRecords,writeSessionBackup,restoreSessionBackup} from './ba
 export type {SessionRestoreCandidate} from './backup-sessions.ts';
 export {profileBackupRecords,writeProfileBackup,readProfileBackup} from './backup-profiles.ts';
 export type {ProfileBackupSource,ProfileBackupDocument} from './backup-profiles.ts';
+export {restoreProfileBackup} from './backup-profile-restore.ts';
+export type {ProfileRestoreCandidate,RestoredProfile} from './backup-profile-restore.ts';
 export {skillBackupRecords,writeSkillBackup,restoreSkillBackup,assertSkillResourcePath} from './backup-skills.ts';
 export type {SkillBackupRoot,SkillBackupSelection,SkillRestoreCandidate} from './backup-skills.ts';
 export {collectSkillBackupInventory,resolveSkillFilesystem,skillInventoryBackupRecords,writeSkillInventoryBackup,restoreSkillInventoryBackup} from './backup-skill-inventory.ts';

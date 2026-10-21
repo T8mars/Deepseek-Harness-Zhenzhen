@@ -1,6 +1,8 @@
 # DSH-zhen 当前交付状态
 
-2026-10-22，开发检查点0084。项目可本地运行，整体仍在开发，尚未完成稳定版交付。
+2026-10-22，开发检查点0085。项目可本地运行，整体仍在开发，尚未完成稳定版交付。
+
+0085新增完整认证后的配置恢复候选：公开SDK生成全部profile manifest，自有JSON overlay保留profile→machine→active覆盖和表达式；独立DSH/Agents home、安全来源名映射，Desktop保留为专用入口，兼容grant待迁移。新增17/相邻31/31及实际CLI夹具导出启动通过；完整737/737与170文件归档通过，精确CI另验。依赖实体/包管理器/DB/RAG和总预览激活UI/fullM2仍未完成。见[0085](decisions/0085-profile-restore-candidates.md)。
 
 0084修复启动后环境/cwd变化导致技能备份目录漂移：公开配置/状态事件记录激活根，自有bundle服务依赖保证先观察再启动；已解析来源不再回退当前环境。新增14及相邻35/35、完整720/720与169文件归档通过，精确CI另验。实际用户Host未换装，全M2/L2和原范围继续未完成。见[0084](decisions/0084-activation-bound-skill-roots.md)。
 
