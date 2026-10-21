@@ -7,6 +7,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {releaseDocuments,DISTRIBUTION_REPOSITORY} from './release-snapshot.mjs';
 import {canonicalVersion} from './upstream-policy.mjs';
 import {downloadActionArtifact} from './actions-artifact.mjs';
+import {requireStablePublication,validateStableRecord} from './stable-release-policy.mjs';
 
 export const RELEASE_REPO='T8mars/Deepseek-Harness-Zhenzhen';
 export const FEED_REF='heads/codex/distribution';
@@ -50,15 +51,15 @@ export function releaseApi(token,{fetchImpl=globalThis.fetch,readOnly=false}={})
   return {request,asset,artifact:id=>downloadActionArtifact(token,id,fetchImpl)};
 }
 
-export function requireReleaseRun(run,jobs,{sourceCommit,runId,attempt,requiredJobs}){
-  if(!run||run.id!==runId||run.run_attempt!==attempt||run.head_sha!==sourceCommit||run.head_branch!=='main'||run.event!=='workflow_dispatch'||run.path!=='.github/workflows/release.yml'||run.repository?.full_name!==RELEASE_REPO||run.head_repository?.full_name!==RELEASE_REPO||!Array.isArray(jobs?.jobs)||jobs.total_count!==jobs.jobs.length||jobs.jobs.length>100)throw Error('Release workflow identity or complete job evidence refused.');
+export function requireReleaseRun(run,jobs,{sourceCommit,runId,attempt,requiredJobs,workflow='release.yml'}){
+  if(!['release.yml','promote.yml'].includes(workflow)||!run||run.id!==runId||run.run_attempt!==attempt||run.head_sha!==sourceCommit||run.head_branch!=='main'||run.event!=='workflow_dispatch'||run.path!=='.github/workflows/'+workflow||run.repository?.full_name!==RELEASE_REPO||run.head_repository?.full_name!==RELEASE_REPO||!Array.isArray(jobs?.jobs)||jobs.total_count!==jobs.jobs.length||jobs.jobs.length>100)throw Error('Release workflow identity or complete job evidence refused.');
   for(const name of requiredJobs){const found=jobs.jobs.filter(job=>job.name===name&&job.run_id===runId&&job.run_attempt===attempt);if(found.length!==1||found[0].status!=='completed'||found[0].conclusion!=='success'||!Number.isSafeInteger(found[0].id)||found[0].id<=0)throw Error('Required release job has not succeeded.');}
-  return {workflow:'release.yml',runId,attempt,sourceCommit,jobIds:requiredJobs.map(name=>jobs.jobs.find(j=>j.name===name).id)};
+  return {workflow,runId,attempt,sourceCommit,jobIds:requiredJobs.map(name=>jobs.jobs.find(j=>j.name===name).id)};
 }
-export async function checkReleaseEvidence(api,{sourceCommit,runId,attempt,requiredJobs}){
+export async function checkReleaseEvidence(api,{sourceCommit,runId,attempt,requiredJobs,workflow='release.yml'}){
   if(!hex(sourceCommit,40)||!Number.isSafeInteger(runId)||runId<=0||!Number.isSafeInteger(attempt)||attempt<=0)throw Error('Release evidence identity refused.');
   const run=await api.request('/actions/runs/'+runId+'/attempts/'+attempt),jobs=await api.request('/actions/runs/'+runId+'/attempts/'+attempt+'/jobs?per_page=100');
-  const result=requireReleaseRun(run,jobs,{sourceCommit,runId,attempt,requiredJobs});
+  const result=requireReleaseRun(run,jobs,{sourceCommit,runId,attempt,requiredJobs,workflow});
   const check=await api.request('/actions/workflows/check.yml/runs?branch=main&event=push&head_sha='+sourceCommit+'&per_page=1'),latest=check?.workflow_runs?.[0];
   if(!latest||latest.head_sha!==sourceCommit||latest.event!=='push'||latest.head_branch!=='main'||latest.path!=='.github/workflows/check.yml'||latest.status!=='completed'||latest.conclusion!=='success'||latest.repository?.full_name!==RELEASE_REPO||latest.head_repository?.full_name!==RELEASE_REPO)throw Error('Exact source main contracts have not succeeded.');
   return {...result,contractsRunId:latest.id};
@@ -67,10 +68,17 @@ export function requireCanary(p){
   if(p.meta.channel!=='canary'||p.meta.sourceDirty||p.meta.tag!=='v'+p.archive.manifest.version||!/^\d+\.\d+\.\d+-canary\.[1-9]\d*$/.test(p.archive.manifest.version))throw Error('Only a clean, explicitly versioned canary can be published by W4.');
 }
 export function snapshotRef(p){requireCanary(p);return 'refs/heads/codex/distribution-snapshots/'+p.meta.tag;}
+export function stableSnapshotRef(p){requireStablePublication(p);return 'refs/heads/codex/distribution-snapshots/'+p.meta.tag;}
 
 /** Uses only trusted Git plumbing and inert validated bytes in a new owned bare repository. */
 export async function uploadReleaseSnapshot(p,api,token){
-  const ref=snapshotRef(p),before=await api.request('/git/ref/'+ref.slice(5),{optional:true});
+  return uploadSnapshot(p,api,token,snapshotRef(p));
+}
+export async function uploadStableSnapshot(p,api,token){
+  return uploadSnapshot(p,api,token,stableSnapshotRef(p));
+}
+async function uploadSnapshot(p,api,token,ref){
+  const before=await api.request('/git/ref/'+ref.slice(5),{optional:true});
   if(before){if(before.object?.type!=='commit'||before.object.sha!==p.snapshot.commit)throw Error('Existing snapshot reference differs; refusing overwrite.');return {ref,commit:p.snapshot.commit,reused:true};}
   const parent=realpathSync.native(tmpdir()),root=realpathSync.native(mkdtempSync(join(parent,'dsh-release-snapshot-'))),env={};
   for(const [key,value] of Object.entries(process.env))if(['path','systemroot','windir','temp','tmp','lang','lc_all'].includes(key.toLowerCase()))env[key]=value;
@@ -102,16 +110,22 @@ function validateRecord(r){
 export {validateRecord as validateCanaryRecord};
 export function distributionFeed(previous,record){
   if(!previous)previous={schemaVersion:1,canary:[],stable:[]};
-  if(Object.keys(previous).sort().join(',')!=='canary,schemaVersion,stable'||previous.schemaVersion!==1||!Array.isArray(previous.canary)||previous.canary.length>100||!Array.isArray(previous.stable)||previous.stable.length)throw Error('Distribution ledger shape or unsupported stable state refused.');
+  if(Object.keys(previous).sort().join(',')!=='canary,schemaVersion,stable'||previous.schemaVersion!==1||!Array.isArray(previous.canary)||previous.canary.length>100||!Array.isArray(previous.stable)||previous.stable.length>100)throw Error('Distribution ledger shape refused.');
   const records=[...previous.canary];for(const r of records)validateRecord(r);if(new Set(records.map(r=>r.version)).size!==records.length)throw Error('Duplicate distribution versions refused.');
-  if(record){validateRecord(record);const existing=records.find(r=>r.version===record.version);if(existing&&!isDeepStrictEqual(existing,record))throw Error('Published version identity differs; refusing replacement.');if(!existing)records.push(record);}
+  const stable=[...previous.stable];for(const r of stable)validateStableRecord(r);if(new Set(stable.map(r=>r.version)).size!==stable.length)throw Error('Duplicate stable versions refused.');
+  if(record){const target=record.runtimeEvidence?.workflow==='promote.yml'?stable:records;if(target===stable)validateStableRecord(record);else validateRecord(record);const existing=target.find(r=>r.version===record.version);if(existing&&!isDeepStrictEqual(existing,record))throw Error('Published version identity differs; refusing replacement.');if(!existing)target.push(record);}
   if(records.length>100)throw Error('Distribution ledger is full; review retention explicitly.');
   records.sort((a,b)=>b.publishTimestamp-a.publishTimestamp||a.version.localeCompare(b.version,'en'));
-  const state={schemaVersion:1,canary:records,stable:[]},base={format:1,title:{en:'DSH-zhen',zh:'DSH-zhen 创作插件'},plugins:[]};
+  if(stable.length>100)throw Error('Stable ledger is full; review retention explicitly.');stable.sort((a,b)=>b.publishTimestamp-a.publishTimestamp||a.version.localeCompare(b.version,'en'));
+  for(const r of stable)if(!records.some(c=>isDeepStrictEqual(candidateForRecord(c),r.promotion.candidate)))throw Error('Stable feed requires the retained exact canary record.');
+  const state={schemaVersion:1,canary:records,stable},base={format:1,title:{en:'DSH-zhen',zh:'DSH-zhen 创作插件'},plugins:[]};
   const index=structuredClone(base);if(records.length)index.plugins=[{name:'dsh-zhen',title:{en:'DSH-zhen',zh:'DSH-zhen 创作空间'},versions:records.map(r=>({version:r.version,publishTimestamp:r.publishTimestamp,source:{type:'git',url:DISTRIBUTION_REPOSITORY,commit:r.snapshotCommit,path:'package'},engines:{dsh:r.upstream.version}}))}];
-  const compat={schemaVersion:1,stable:[],canary:records.map(r=>({tag:r.tag,version:r.version,state:'verified-canary',snapshotCommit:r.snapshotCommit,archiveSha256:r.archiveSha256,payloadSha256:r.payloadSha256,sourceCommit:r.sourceCommit,declaredRuntimeVersions:[r.upstream.version],upstreamCommit:r.upstream.commit,runtimeEvidence:r.runtimeEvidence}))};
-  return new Map([['state.json',releaseJson(state)],['market/index.json',releaseJson(base)],['channels/canary/market/index.json',releaseJson(index)],['compat.json',releaseJson(compat)],['index.html',Buffer.from('<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>DSH-zhen</title><body><h1>DSH-zhen 分发索引</h1><p>非官方社区修改版，与 DeepSeek 无隶属关系。</p><p><a href="market/index.json">稳定版索引</a> · <a href="channels/canary/market/index.json">Canary 索引</a> · <a href="compat.json">兼容信息</a></p><p>Canary 供测试使用；稳定版需经过独立晋升。</p></body></html>\n')]]);
+  const stableIndex=structuredClone(base);if(stable.length)stableIndex.plugins=[{...index.plugins[0],versions:stable.map(r=>({version:r.version,publishTimestamp:r.publishTimestamp,source:{type:'git',url:DISTRIBUTION_REPOSITORY,commit:r.snapshotCommit,path:'package'},engines:{dsh:r.upstream.version}}))}];
+  const project=(r,state)=>({tag:r.tag,version:r.version,state,snapshotCommit:r.snapshotCommit,archiveSha256:r.archiveSha256,payloadSha256:r.payloadSha256,sourceCommit:r.sourceCommit,declaredRuntimeVersions:[r.upstream.version],upstreamCommit:r.upstream.commit,runtimeEvidence:r.runtimeEvidence});
+  const compat={schemaVersion:1,stable:stable.map(r=>({...project(r,'verified-stable'),promotion:r.promotion})),canary:records.map(r=>project(r,'verified-canary'))};
+  return new Map([['state.json',releaseJson(state)],['market/index.json',releaseJson(stableIndex)],['channels/canary/market/index.json',releaseJson(index)],['compat.json',releaseJson(compat)],['index.html',Buffer.from('<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>DSH-zhen</title><body><h1>DSH-zhen 分发索引</h1><p>非官方社区修改版，与 DeepSeek 无隶属关系。</p><p><a href="market/index.json">稳定版索引</a> · <a href="channels/canary/market/index.json">Canary 索引</a> · <a href="compat.json">兼容信息</a></p><p>Canary 供测试使用；稳定版需经过独立晋升。</p></body></html>\n')]]);
 }
+function candidateForRecord(record){const{runtimeEvidence,...identity}=record;return identity;}
 export async function readDistributionFeed(api,commit){
   if(!hex(commit,40))throw Error('Feed commit refused.');
   const tree=await api.request('/git/trees/'+commit+'?recursive=1'),allowed=distributionFeed(null).keys(),names=new Set(allowed);
@@ -127,7 +141,7 @@ export async function publishDistributionFeed(api,record){
   if(old&&[...files].every(([path,bytes])=>bytes.equals(old.files.get(path))))return {commit:ref.object.sha,reused:true};
   const entries=[];for(const [path,bytes] of files){const b=await api.request('/git/blobs',{method:'POST',body:{encoding:'base64',content:bytes.toString('base64')}});if(!hex(b.sha,40))throw Error('Feed blob response refused.');entries.push({path,mode:'100644',type:'blob',sha:b.sha});}
   const tree=await api.request('/git/trees',{method:'POST',body:{tree:entries}});if(!hex(tree.sha,40))throw Error('Feed tree response refused.');
-  const commit=await api.request('/git/commits',{method:'POST',body:{message:'Publish verified DSH-zhen canary '+record.tag,tree:tree.sha,parents:ref?[ref.object.sha]:[]}});if(!hex(commit.sha,40))throw Error('Feed commit response refused.');
+  const commit=await api.request('/git/commits',{method:'POST',body:{message:'Publish verified DSH-zhen '+(record.runtimeEvidence.workflow==='promote.yml'?'stable ':'canary ')+record.tag,tree:tree.sha,parents:ref?[ref.object.sha]:[]}});if(!hex(commit.sha,40))throw Error('Feed commit response refused.');
   if(ref)await api.request('/git/refs/'+FEED_REF,{method:'PATCH',body:{sha:commit.sha,force:false}});else await api.request('/git/refs',{method:'POST',body:{ref:'refs/'+FEED_REF,sha:commit.sha}});
   const after=await api.request('/git/ref/'+FEED_REF);if(after.object?.sha!==commit.sha)throw Error('Distribution reference readback differs.');await readDistributionFeed(api,commit.sha);return {commit:commit.sha,reused:false};
 }

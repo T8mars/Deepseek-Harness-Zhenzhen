@@ -4,6 +4,7 @@ import {tmpdir} from 'node:os';import {join,dirname,resolve,relative,isAbsolute}
 import {pathToFileURL} from 'node:url';
 import {readReleaseArchive} from '../scripts/release-archive.mjs';
 import {canonicalPackageText} from '../scripts/package-stage.mjs';
+import {readLaunchArtifact} from '../scripts/launch-artifact.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 
 test('C76: actual canary and stable builds differ only in manifest version, and installed status reads each real version', {timeout:180000},t=>{
@@ -26,7 +27,7 @@ test('C76: actual canary and stable builds differ only in manifest version, and 
   for(const version of ['0.1.0-canary.1','0.1.0']){
     writeFileSync(join(pkg,'package.json'),JSON.stringify({...manifest,version},null,2)+'\n');
     run(process.execPath,[join(workspace,'scripts/build.mjs')]);run(process.execPath,[join(workspace,'scripts/pack.mjs')]);
-    const artifact=JSON.parse(readFileSync(join(root,'.runtime/package-artifact.json'))),file=join(root,'.runtime/packages',artifact.file),archive=readReleaseArchive(readFileSync(file));assert.equal(archive.manifest.version,version);assert.equal(archive.sha256,artifact.sha256);assert.equal(Object.hasOwn(JSON.parse(archive.files.get('catalog/runtime.json')),'zhen'),false);built.push({version,file,archive});
+    const artifact=JSON.parse(readFileSync(join(root,'.runtime/package-artifact.json'))),file=join(root,'.runtime/packages',artifact.file),archive=readReleaseArchive(readFileSync(file));assert.equal(archive.manifest.version,version);assert.equal(archive.sha256,artifact.sha256);assert.equal(readLaunchArtifact(root,JSON.parse(readFileSync(join(pkg,'package.json')))).digest,archive.sha256);assert.equal(Object.hasOwn(JSON.parse(archive.files.get('catalog/runtime.json')),'zhen'),false);built.push({version,file,archive});
   }
   assert.notEqual(built[0].archive.sha256,built[1].archive.sha256);assert.equal(built[0].archive.payloadSha256,built[1].archive.payloadSha256);assert.deepEqual([...built[0].archive.files.keys()].sort(),[...built[1].archive.files.keys()].sort());
   for(const [path,bytes]of built[0].archive.files)if(path!=='package.json'){assert.ok(bytes.equals(built[1].archive.files.get(path)),'Version changed another payload file: '+path);assert.equal(built[0].archive.modes.get(path),built[1].archive.modes.get(path));}
@@ -43,5 +44,5 @@ test('C76: actual canary and stable builds differ only in manifest version, and 
     const result=call(['plugin','--profile','example','exec',process.execPath,'--input-type=module','-e',program]),line=result.split(/\r?\n/).find(x=>x.startsWith('EXAMPLE_STATUS='));assert.ok(line);const status=JSON.parse(line.slice(15));assert.equal(status.version,b.version);assert.equal(status.credentialConfigured,false);assert.equal(status.provider,'seedance');assert.equal(status.model,'deepseek/deepseek-v4.1-flash');
     call(['plugin','--profile','example','remove','dsh-zhen']);
   }
-  t.diagnostic(JSON.stringify({contract:'C76',packageFiles:built[0].archive.files.size,canaryArchiveSha256:built[0].archive.sha256,stableArchiveSha256:built[1].archive.sha256,payloadSha256:built[0].archive.payloadSha256,otherFilesByteIdentical:true,actualInstalledStatusVersions:built.map(x=>x.version),providerCredentialValuesRead:false,modelRequests:0}));
+  t.diagnostic(JSON.stringify({contract:'C76',packageFiles:built[0].archive.files.size,canaryArchiveSha256:built[0].archive.sha256,stableArchiveSha256:built[1].archive.sha256,payloadSha256:built[0].archive.payloadSha256,otherFilesByteIdentical:true,launcherArtifactVerifiedForBothVersions:true,actualInstalledStatusVersions:built.map(x=>x.version),providerCredentialValuesRead:false,modelRequests:0}));
 });

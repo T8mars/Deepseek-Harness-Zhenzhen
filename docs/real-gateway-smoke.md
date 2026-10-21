@@ -62,5 +62,5 @@ node scripts/real-gateway-smoke.mjs --local --id EXAMPLE_REPLACE_WITH_UNIQUE_LOW
 
 完整七日采集器已实现，按晋升任务服务器时间读取全部相关状态/首次attempt、
 原始ZIP与源码摘要，结束前复读历史；只有连续七个完整UTC日且当日无回归才可通过。
-达到历史1000条/候选100份/归档64MiB界限时明确拒绝截断。promote工作流、上游ack
-和稳定发布器尚未接完；测试中的七日是EXAMPLE，不是真实已收费或已稳定观察。
+达到历史1000条/候选100份/归档64MiB界限时明确拒绝截断。0074已接promote工作流、上游ack校验
+和稳定发布器，首次适用性审阅及真实发布仍待验；测试中的七日是EXAMPLE，不是真实已收费或已稳定观察。

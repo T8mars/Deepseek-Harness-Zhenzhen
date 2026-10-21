@@ -3,10 +3,10 @@ import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { resolve, join, delimiter } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseDocument } from 'yaml';
-import { createHash } from 'node:crypto';
 import { redactLauncherLine } from './log-output.mjs';
 import { acquireRuntimeLease, assertRuntimeLease } from './runtime-lifecycle.mjs';
 import { selectDefaultArt } from './launch-art.mjs';
+import { readLaunchArtifact } from './launch-artifact.mjs';
 
 export async function launch(preparedLease, flags = process.argv.slice(2)) {
 if (flags.some(value => !['--check', '--no-open'].includes(value))) throw new Error('Usage: npm start -- [--check] [--no-open]');
@@ -15,11 +15,7 @@ const runtime = resolve(root, '.runtime');
 const home = join(runtime, 'dsh-home');
 const cli = resolve(root, 'node_modules/@deepseek-ai/dsh/lib/bin.js');
 const manifest = JSON.parse(readFileSync(resolve(root, 'packages/dsh-zhen/package.json'), 'utf8'));
-const artifactPath = join(runtime, 'package-artifact.json');
-if (!existsSync(artifactPath)) throw new Error('Build and run npm run pack:bundle first.');
-const artifact = JSON.parse(readFileSync(artifactPath, 'utf8'));
-if (!/^dsh-zhen-[\d.]+-[a-f0-9]{16}\.tgz$/.test(artifact.file)) throw new Error('Invalid bundle artifact filename.');
-const archive = join(runtime, 'packages', artifact.file);
+const {artifact,archivePath:archive,digest}=readLaunchArtifact(root,manifest);
 const marker = join(runtime, 'installed.json');
 const env = { ...process.env, DSH_HOME: home };
 const art = selectDefaultArt(root, env); delete env.DSH_ZHEN_ART_ROOT; delete env.DSH_ZHEN_ART_DIGEST; Object.assign(env, art.environment);
@@ -30,9 +26,6 @@ function run(args) {
   if (result.status !== 0) throw new Error(`DSH ${args[0]} failed: ${redactLauncherLine((result.stdout + '\n' + result.stderr).slice(-5000))}`);
   return result.stdout;
 }
-if (!existsSync(archive)) throw new Error('Build and run npm run pack:bundle first.');
-const digest = createHash('sha256').update(readFileSync(archive)).digest('hex');
-if (digest !== artifact.sha256) throw new Error('Bundle artifact digest does not match.');
 const lease = preparedLease === undefined ? await acquireRuntimeLease(runtime) : await assertRuntimeLease(preparedLease, runtime);
 try {
 const installed = existsSync(marker) ? JSON.parse(readFileSync(marker, 'utf8')) : undefined;

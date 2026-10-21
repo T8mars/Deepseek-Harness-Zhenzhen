@@ -1,0 +1,191 @@
+name: Preview or promote DSH-zhen stable
+run-name: Stable promotion · ${{ inputs.canary_tag || 'preview' }}
+on:
+  workflow_dispatch:
+    inputs:
+      canary_tag:
+        description: 'Fixed published canary; blank previews the newest verified canary'
+        type: string
+        required: false
+        default: ''
+      publish:
+        description: 'Publish stable only after complete review, seven-day and install gates'
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: dsh-zhen-distribution
+  cancel-in-progress: false
+env:
+  DSH_PUBLISH_STABLE: ${{ inputs.publish }}
+  DSH_PROMOTE_CANARY: ${{ inputs.canary_tag }}
+jobs:
+  build:
+    if: github.repository == 'T8mars/Deepseek-Harness-Zhenzhen' && github.ref == 'refs/heads/main'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      ready: ${{ steps.prepare.outputs.ready }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '22.19.0'
+          cache: npm
+      - run: node scripts/check-private.mjs
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run check
+      - run: npm run pack:bundle
+      - run: npm run smoke:install
+      - name: Capture shipped SDK profile
+        run: node scripts/promotion-input.mjs capture-profile
+      - id: prepare
+        name: Prepare stable promotion
+        run: node scripts/promotion-input.mjs prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - if: steps.prepare.outputs.ready == 'true'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: promotion-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .runtime/release-input/*
+            .runtime/promotion-input/*
+          if-no-files-found: error
+          retention-days: 90
+      - if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: promotion-preview-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/evidence/promotion-preview.json
+          if-no-files-found: ignore
+          retention-days: 14
+  snapshot:
+    needs: build
+    if: inputs.publish && needs.build.outputs.ready == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '22.19.0'
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: promotion-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime
+      - name: Recheck original raw evidence and upload inert stable snapshot
+        run: node scripts/publish-promotion.mjs snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+  verify:
+    needs: [build, snapshot]
+    if: inputs.publish && needs.build.outputs.ready == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '22.19.0'
+          cache: npm
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: promotion-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run build
+      - run: npm run pack:bundle
+      - id: stage
+        run: node scripts/release-input.mjs hydrate
+      - name: Install exact stable Git snapshot and restore TEMP baseline
+        run: node scripts/smoke-install.mjs --git-stage "$env:RELEASE_STAGE"
+        env:
+          RELEASE_STAGE: ${{ steps.stage.outputs.stage }}
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: promotion-install-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime/evidence/git-bundle-smoke.json
+          if-no-files-found: error
+          retention-days: 90
+  finalize:
+    needs: [build, snapshot, verify]
+    if: inputs.publish && needs.build.outputs.ready == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    outputs:
+      feed_commit: ${{ steps.publish.outputs.feed_commit }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '22.19.0'
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: promotion-input-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .runtime
+      - id: publish
+        name: Recheck proof, publish immutable stable assets, then retain both channel histories
+        run: node scripts/publish-promotion.mjs finalize
+        env:
+          GH_TOKEN: ${{ github.token }}
+  site:
+    needs: finalize
+    if: vars.DISTRIBUTION_PAGES_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '22.19.0'
+      - run: node scripts/publish-release.mjs export-feed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DSH_FEED_COMMIT: ${{ needs.finalize.outputs.feed_commit }}
+      - uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        with:
+          path: .runtime/pages
+  pages:
+    needs: site
+    if: vars.DISTRIBUTION_PAGES_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

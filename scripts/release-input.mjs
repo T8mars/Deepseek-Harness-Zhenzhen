@@ -31,9 +31,9 @@ export function readReleaseInput(workspace=process.cwd()){
   const lock=load('UPSTREAM.lock.json');
   return validateReleaseInput(meta,ordinary(root,meta.archiveFile,8*1024*1024),{sourceCommit:git(['rev-parse','HEAD']),timestamp:Number(git(['show','-s','--format=%ct','HEAD'])),upstream:{version:lock.dsh.version,commit:lock.dsh.commit},manifest:load('packages/dsh-zhen/package.json')});
 }
-export function releaseOutput(name,value){
+export function releaseOutput(name,value,env=process.env){
   if(!/^[a-z_]+$/.test(name)||!/^[0-9a-zA-Z./-]+$/.test(String(value)))throw Error('Release output refused.');
-  if(process.env.GITHUB_OUTPUT)appendFileSync(process.env.GITHUB_OUTPUT,name+'='+value+'\n');
+  if(env.GITHUB_OUTPUT)appendFileSync(env.GITHUB_OUTPUT,name+'='+value+'\n');
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   const [command,...args]=process.argv.slice(2);
