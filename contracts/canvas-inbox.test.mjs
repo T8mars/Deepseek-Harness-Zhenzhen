@@ -36,7 +36,7 @@ test('C28: published final-result event and real MCP stdio hand off the exact na
     const configFile = join(process.env.DSH_HOME, 'dsh-zhen/canvas.json'), saved = readFileSync(configFile, 'utf8');
     const stopRace = ctx.on('tools/post-execute', async (exec, _result, next) => { if (exec.name === 'mcp__t8canvas__canvas_plan') writeFileSync(configFile, JSON.stringify({ ...config, instance: 'EXAMPLE_CHANGED' })); return next(); });
     await run('EXAMPLE_CONNECTION_CHANGED'); assert.equal(service.canvasCandidates().length, 0); stopRace(); writeFileSync(configFile, saved);
-    assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')).length, 10); assert.equal(keys, 0);
+    assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')).length, 11); assert.equal(keys, 0);
   } finally {
     await ctx.fiber.dispose(); if (previousHome === undefined) delete process.env.DSH_HOME; else process.env.DSH_HOME = previousHome;
     if (previousAuth === undefined) delete process.env.ZCANVAS_AUTH_STORE; else process.env.ZCANVAS_AUTH_STORE = previousAuth;

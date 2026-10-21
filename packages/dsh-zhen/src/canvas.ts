@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module';
+import {readCanvasActiveContext} from './canvas-active-context.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { request as httpRequest } from 'node:http';
 import { lstatSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
@@ -34,7 +35,7 @@ export interface CanvasWorkflowRuntime {
     deleteApproval(instanceId: string, approvalId: string): unknown;
   };
 }
-export type CanvasOperation = 'status' | 'capabilities' | 'workspaces' | 'models' | 'capability-graph' | 'capability-tools' | 'task' | 'creator-session';
+export type CanvasOperation = 'status' | 'capabilities' | 'workspaces' | 'active-context' | 'models' | 'capability-graph' | 'capability-tools' | 'task' | 'creator-session';
 const loadedCliDigests = new Map<string, string>();
 // These public CLI fetch hooks only send loopback GET/POST JSON. A fresh Agent
 // avoids even borrowing an idle socket left in a shared fetch pool. Preserve the
@@ -202,7 +203,8 @@ export class CanvasBridge {
       return (await client.requestAgentControl(selected, '/api/agent-control/v1/status')).data;
     }
     const { client, instance, accessToken } = await this.paired();
-    const paths: Record<Exclude<CanvasOperation, 'status'>, string> = {
+    if(operation==='active-context'){const context=await readCanvasActiveContext({client,instance,accessToken});this.load();return context;}
+    const paths: Record<Exclude<CanvasOperation, 'status'|'active-context'>, string> = {
       capabilities: '/capabilities', workspaces: '/workspaces', models: '/models', 'capability-graph': '/capability-graph', 'capability-tools': '/capability-tools',
       task: '/run-intents/', 'creator-session': '/creator-sessions/',
     };

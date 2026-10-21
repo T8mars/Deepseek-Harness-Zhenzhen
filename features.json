@@ -267,6 +267,11 @@
       "id": "initial-sdk-applicability-review",
       "status": "implemented",
       "verification": "All42 pinned guide texts and Git blobs were read and checked against owned source; individual technical decisions and a separate baseline/profile C6 record are present. Actual public CLI fresh-TEMP template matches190 facts. Seven C85 tests exercise actual Node PTC nested RAG/canonical metadata and pause/revoke refusal, native PiAi missing/saved/unset catalog, native stored-over-environment fallback via Owner Remote and production client handlers. A fresh Git fixture with all43 real records removes only initial-review missing status, while an absent published Canary still blocks. OS sandbox enforcement, actual Session persistence, browser/new installed UI, real seven days/stable release and future SDK migration are not certified. Final full563/563 and154-file package pass, including actual C63 legacy checkout pack and C76 real canary/stable CLI installs with equal non-manifest payload. New archive differs from currently installed0071; application was not replaced/restarted. Exact current CI/default preview remain separately checked."
+    },
+    {
+      "id": "canvas-active-context",
+      "status": "in-progress",
+      "verification": "Decision0077 adds a metadata-only native active-context adapter, eleventh read/planning MCP tool, same-binding Owner context/directory read and four actual target panels. C86 21, related Canvas67 and complete584/584 pass with157-file archive; actual C63 legacy-checkout packing and C76 dual-version build/install/launcher boundaries preserve complete payload checks. Instance/time/readiness validation, paired read-only scope, exact revision/project identity, named ambiguity and late manual/API-switch replies pass. No native writes, trust promotion, real model requests, user-app replacement or browser/window acceptance. Exact current CI and installed UI remain separately verified."
     }
   ]
 }

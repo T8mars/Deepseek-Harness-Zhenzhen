@@ -17,6 +17,9 @@ export { ragPresentationSchema } from './rag-schema.ts';
 import { skillId, digestSchema, marketItemSchema, skillPackageSchema, skillFeedSnapshotSchema, skillAutoPolicySchema } from './market-schema.ts';
 import type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } from './market-schema.ts';
 import type { CanvasConnection } from './canvas.ts';
+import {canvasActiveTargetsSchema} from './canvas-active-schema.ts';
+import type {CanvasActiveTargets} from './canvas-active-schema.ts';
+export {ACTIVE_CONTEXT_MAX_AGE_MS,ACTIVE_CONTEXT_FUTURE_SKEW_MS,activeContextFresh} from './canvas-active-schema.ts';
 export {canvasEntity,canvasPlanResultSchema} from './canvas-contract.ts';
 import { canvasDiscoverySchema } from './canvas-discovery-schema.ts';
 import type { CanvasDiscovery } from './canvas-discovery-schema.ts';
@@ -140,6 +143,7 @@ export interface ZhenRemote {
   canvasTools(): Promise<RemoteResult<CanvasToolCatalog | null>>;
   canvasWorkflowSnapshot(): Promise<RemoteResult<CanvasWorkflowView | null>>;
   canvasWorkspaces(): Promise<RemoteResult<CanvasWorkspaces>>;
+  canvasActiveTargets():Promise<RemoteResult<CanvasActiveTargets>>;
   canvasWorkflowModels(input:CanvasModelsQuery):Promise<RemoteResult<CanvasModels>>;
   canvasWorkflowAssets(input:CanvasAssetsQuery):Promise<RemoteResult<CanvasAssets>>;
   canvasWorkflowPreview(input: CanvasWorkflowInput): Promise<RemoteResult<CanvasWorkflowView>>;
@@ -287,6 +291,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/canvasTools': method('canvasTools', canvasToolCatalogSchema.nullable(), 'Read and cross-check the existing versioned Canvas planning catalog.'),
   'zhen/canvasWorkflowSnapshot': method('canvasWorkflowSnapshot', canvasWorkflowSchema.nullable(), 'Read non-secret native workflow application progress.'),
   'zhen/canvasWorkspaces': method('canvasWorkspaces', canvasWorkspacesSchema, 'List native Canvas targets for explicit UI planning.'),
+  'zhen/canvasActiveTargets':method('canvasActiveTargets',canvasActiveTargetsSchema,'Owner read only: current native window metadata and available targets under the same reviewed connection/session. Never changes workspace, trust or approval.'),
   'zhen/canvasWorkflowModels':method('canvasWorkflowModels',canvasModelsSchema,'Read scoped public native models/readiness for explicit UI selection without settings or credentials.',[['input',canvasModelsQuery]]),
   'zhen/canvasWorkflowAssets':method('canvasWorkflowAssets',canvasAssetsSchema,'Read scoped public native reference metadata without media URLs or file contents.',[['input',canvasAssetsQuery]]),
   'zhen/canvasWorkflowPreview': method('canvasWorkflowPreview', canvasWorkflowSchema, 'Prepare a native creative plan without writes or Provider calls.', [['input', canvasWorkflowInput]]),

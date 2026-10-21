@@ -1745,6 +1745,20 @@
       "packageFiles": 154,
       "localPackageSha256": "0d0272d07702e30c0f31ae9f5ad0ba35d6e9a498ebb822a2be7242e925d9e6cf",
       "reinstallOrRestartPerformed": false
+    },
+    "canvasActiveContext": {
+      "decision": "0077",
+      "schema": "t8-agent-active-context-v1",
+      "route": "/api/agent-control/v1/active-context",
+      "mcpTool": "canvas_active_context",
+      "readOnly": true,
+      "maxAgeMs": 30000,
+      "maxCandidates": 8,
+      "verification": "Decision0077 adds a metadata-only native active-context adapter, eleventh read/planning MCP tool, same-binding Owner context/directory read and four actual target panels. C86 21, related Canvas67 and complete584/584 pass with157-file archive; actual C63 legacy-checkout packing and C76 dual-version build/install/launcher boundaries preserve complete payload checks. Instance/time/readiness validation, paired read-only scope, exact revision/project identity, named ambiguity and late manual/API-switch replies pass. No native writes, trust promotion, real model requests, user-app replacement or browser/window acceptance. Exact current CI and installed UI remain separately verified.",
+      "localTests": 584,
+      "localPassed": 584,
+      "packageFiles": 157,
+      "localPackageSha256": "1a0d0406fca72a6b0690890e041663dcfda9e942f535492e8d31e5f74c26e3e8"
     }
   }
 }

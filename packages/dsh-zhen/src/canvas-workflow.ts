@@ -14,6 +14,9 @@ import {canvasAssetView,canvasAssetsView,canvasAssetKey,nativeAttachmentDigest} 
 import { nativeCreativePlanSchema, nativePlanView } from './canvas-native-plan.ts';
 import type { NativeCreativePlan } from './canvas-native-plan.ts';
 import type { CanvasInboxEntry } from './canvas-inbox.ts';
+import {canvasActiveTargetsSchema} from './canvas-active-schema.ts';
+import type {CanvasActiveTargets} from './canvas-active-schema.ts';
+import {readCanvasActiveContext,parseCanvasActiveContext} from './canvas-active-context.ts';
 
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
 const storedSchema = z.object({ schemaVersion: z.literal(1), config: z.object({ root: z.string().max(4096), digest, instance: z.string().max(128) }).strict(), instanceId: canvasInstance, origin: z.string().max(200), sessionId: z.uuid(), operationId: z.uuid(), view: canvasWorkflowSchema }).strict();
@@ -109,13 +112,21 @@ export class CanvasWorkflow {
     // Adopt the exact native plan; do not issue another planning POST.
     return this.stage(plan, config, runtime);
   }); }
-  workspaces(): Promise<CanvasWorkspaces> { return this.serial(async () => {
-    const { config, runtime } = await this.binding();
+  private async readWorkspaces(config:CanvasConfig,runtime:CanvasWorkflowRuntime):Promise<CanvasWorkspaces>{
+    this.currentSession(config,runtime);
     const data = (await runtime.client.requestAgentControl(runtime.instance, '/api/agent-control/v1/workspaces', { accessToken: runtime.accessToken })).data;
-    this.current(config);
+    this.currentSession(config,runtime);
     const parsed = z.object({ canvases: z.array(z.object({ id: canvasEntity, projectId: canvasEntity, name: z.string().max(240), revision: z.number().int().positive() })).max(500),total:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),truncated:z.boolean().optional() }).parse(data);
     return canvasWorkspacesSchema.parse(parsed);
-  }); }
+  }
+  workspaces(): Promise<CanvasWorkspaces> { return this.serial(async () => {const {config,runtime}=await this.binding();return this.readWorkspaces(config,runtime);}); }
+  activeTargets():Promise<CanvasActiveTargets>{return this.serial(async()=>{
+    const {config,runtime}=await this.binding();this.currentSession(config,runtime);
+    const context=await readCanvasActiveContext(runtime);this.currentSession(config,runtime);
+    const workspaces=await this.readWorkspaces(config,runtime);this.currentSession(config,runtime);
+    // Directory reads cannot turn an old window reply into current metadata.
+    return canvasActiveTargetsSchema.parse({context:parseCanvasActiveContext(context,runtime.instance.instanceId),workspaces});
+  });}
   preview(input: CanvasWorkflowInput): Promise<CanvasWorkflowView> { return this.serial(async () => {
     const request = canvasWorkflowInput.parse(input); this.available();
     const { config, runtime } = await this.binding();

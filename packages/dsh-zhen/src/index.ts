@@ -31,6 +31,7 @@ import { dirname, resolve } from 'node:path';
 import * as mcpClient from '@deepseek-ai/dsh-mcp-client';
 import { CanvasBridge, inspectCanvasCli, safeCanvasError } from './canvas.ts';
 import type { CanvasConfig, CanvasConnection } from './canvas.ts';
+import type {CanvasActiveTargets} from './canvas-active-schema.ts';
 import { CanvasError } from './canvas.ts';
 import { discoverCanvasInstalls } from './canvas-discovery.ts';
 import { canvasGuidance } from './canvas-guidance.ts';
@@ -83,6 +84,7 @@ import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-sc
 export type { Wallet } from './gateway.ts';
 export type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } from './market-schema.ts';
 export type { CanvasConnection } from './canvas.ts';
+export type {CanvasActiveContext,CanvasActiveTargets} from './canvas-active-schema.ts';
 export type {CanvasConnectionCheck,CanvasSetupDiscovery} from './canvas-setup-schema.ts';
 export type { CanvasDiscovery, CanvasInstallCandidate } from './canvas-discovery-schema.ts';
 export type { CanvasPairingView } from './canvas-pairing-schema.ts';
@@ -445,6 +447,8 @@ export default class ZhenService extends TypertRemoteService {
   canvasWorkflowSnapshot(): Promise<CanvasWorkflowView | null> { return this.workflowOperation(() => this.workflows().snapshot()); }
   @Remote
   canvasWorkspaces(): Promise<CanvasWorkspaces> { return this.workflowOperation(() => this.workflows().workspaces()); }
+  @Remote
+  canvasActiveTargets():Promise<CanvasActiveTargets>{return this.workflowOperation(()=>this.workflows().activeTargets());}
   @Remote
   canvasWorkflowModels(input:CanvasModelsQuery):Promise<CanvasModels>{return this.workflowOperation(()=>this.workflows().models(input));}
   @Remote

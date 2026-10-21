@@ -28,7 +28,7 @@ test('C29: published Host/Remote and MCP keep human execution approval separate 
     assert.equal((await service.canvasRunSnapshot()).phase, 'unknown'); const recovered = await service.canvasRunRefresh(quote.quoteId); assert.equal(recovered.phase, 'tracking');
     assert.deepEqual(TYPERT_REMOTE.methods['zhen/canvasRunRefresh'].result.create().parse(recovered), recovered);
     await assert.rejects(service.canvasRunSubmit(quote.quoteId)); assert.equal(f.runState.completePosts, 2); assert.equal(f.runState.writes, 1);
-    const tools = ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')); assert.equal(tools.length, 10); assert.ok(tools.every(tool => !/apply|approve|submit|execute|pair/.test(tool.name)));
+    const tools = ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')); assert.equal(tools.length, 11); assert.ok(tools.every(tool => !/apply|approve|submit|execute|pair/.test(tool.name)));
     const result = await ctx.tools.execute({ callId: 'EXAMPLE_QUERY_NATIVE_INTENT', name: 'mcp__t8canvas__canvas_task_status', arguments: { id: recovered.intent.id, projectId: recovered.projectId, canvasId: recovered.canvasId }, signal: new AbortController().signal });
     assert.equal(result.isError, false); assert.equal(result.value.structuredContent.id, recovered.intent.id);
     const wrong = await ctx.tools.execute({ callId: 'EXAMPLE_WRONG_CANVAS', name: 'mcp__t8canvas__canvas_task_status', arguments: { id: recovered.intent.id, projectId: recovered.projectId, canvasId: 'EXAMPLE_OTHER_CANVAS' }, signal: new AbortController().signal }); assert.equal(wrong.isError, true);

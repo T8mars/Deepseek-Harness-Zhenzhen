@@ -20,7 +20,7 @@ test('MCP initialization/listing has no canvas side effects; status preserves co
     await server.connect(left); await client.connect(right);
     const tools = (await client.listTools()).tools;
     assert.equal(calls, 0);
-    assert.equal(tools.length, 10);
+    assert.equal(tools.length, 11);
     assert.ok(tools.every(tool => tool.annotations.readOnlyHint && !tool.annotations.destructiveHint));
     assert.ok(!tools.some(tool => /submit|create|retry|approve|generate/.test(tool.name)));
     const result = await client.callTool({ name: 'canvas_status', arguments: {} });
@@ -76,7 +76,7 @@ test('actual stdio server initializes and lists tools before any CLI is loaded',
   const client = new Client({ name: 'EXAMPLE_ONLY_TEST', version: '1.0.0' });
   try {
     await client.connect(transport);
-    assert.equal((await client.listTools()).tools.length, 10);
+    assert.equal((await client.listTools()).tools.length, 11);
     const result = await client.callTool({ name: 'canvas_status', arguments: {} });
     assert.equal(result.isError, true);
     assert.ok(!JSON.stringify(result).includes('EXAMPLE_ONLY_NONEXISTENT_CLI'));

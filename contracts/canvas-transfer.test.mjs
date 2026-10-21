@@ -34,7 +34,7 @@ test('C32: published Gateway owner and MCP keep saved-media transfer explicit, s
     f.windowApproveTransfer(); assert.equal((await call('canvasTransferComplete', { id: preview.id })).phase, 'available');
     await call('canvasTransferPlacement', { id: preview.id }); await call('canvasTransferApprove', { id: preview.id, confirmed: true }); f.windowApproveTransfer(); assert.equal((await call('canvasTransferComplete', { id: preview.id })).phase, 'applied');
     const status = await ctx.tools.execute({ callId: 'EXAMPLE_TRANSFER_STATUS', name: 'mcp__t8canvas__canvas_status', arguments: {}, signal: lifetime.signal }); assert.equal(status.isError, false);
-    const tools = ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')); assert.equal(tools.length, 10); assert.ok(tools.every(tool => !/transfer|approve|complete|import|place|submit/.test(tool.name)));
+    const tools = ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')); assert.equal(tools.length, 11); assert.ok(tools.every(tool => !/transfer|approve|complete|import|place|submit/.test(tool.name)));
     assert.equal(f.transferState.importWrites, 1); assert.equal(f.transferState.placeWrites, 1); assert.equal(keys, 0);
     await call('gatewayMediaForget', { id: f.receipt.id }); await assert.rejects(call('canvasTransferPreview', { input }), error => error.details?.reason === 'TRANSFER_RECEIPT_MISSING');
   } finally { lifetime.abort(); await ctx.fiber.dispose(); if (previousHome === undefined) delete process.env.DSH_HOME; else process.env.DSH_HOME = previousHome; if (previousAuth === undefined) delete process.env.ZCANVAS_AUTH_STORE; else process.env.ZCANVAS_AUTH_STORE = previousAuth; await f.dispose(); }

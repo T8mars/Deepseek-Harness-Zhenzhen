@@ -37,7 +37,7 @@ test('C10: Host connection RPC mounts the bundled MCP and disconnect removes its
     const status = await service.connectCanvas(cli, '');
     assert.equal(status.connected, true);
     assert.deepEqual(status.compat, { fixture: 'EXAMPLE_ONLY' });
-    assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')).length, 10);
+    assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')).length, 11);
     await service.disconnectCanvas();
     assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')).length, 0);
     assert.ok(ctx.tools.schemas().some(tool => tool.name === 'zhen_capabilities'));
@@ -58,7 +58,7 @@ test('C10: the published DSH MCP client registers and disposes the real stdio se
       args: [resolve('packages/dsh-zhen/lib/canvas-server.js'), '--cli-root', resolve('EXAMPLE_ONLY_NONEXISTENT_CLI'), '--digest', '0'.repeat(64)],
       env: {}, cwd: process.cwd(), toolCallTimeoutMs: 30000, failOnStartupError: true, maxInstructionBytes: 4096, reconnect: { enabled: false } }));
     const tools = ctx.tools.schemas();
-    assert.equal(tools.length, 10);
+    assert.equal(tools.length, 11);
     assert.ok(tools.every(tool => tool.name.startsWith('mcp__examplecanvas__canvas_')));
     await mounted.dispose();
     assert.equal(ctx.tools.schemas().length, 0);

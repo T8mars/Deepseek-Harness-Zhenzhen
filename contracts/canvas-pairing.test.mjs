@@ -29,7 +29,7 @@ test('C25: actual published Host/Remote uses original auth/client/store contract
     assert.equal((await service.canvasPairingComplete()).state, 'pending'); f.approve(['canvas:read', 'asset:read']);
     const paired = await service.canvasPairingComplete(); assert.deepEqual(shape.parse(paired), paired); assert.equal(paired.state, 'paired');
     const tools = ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__'));
-    assert.equal(tools.length, 10); assert.ok(tools.every(tool => !/pair|auth|approve/.test(tool.name)));
+    assert.equal(tools.length, 11); assert.ok(tools.every(tool => !/pair|auth|approve/.test(tool.name)));
     assert.equal(keys, 0); assert.ok(f.state.requests.every(request => request.path.startsWith('/api/agent-control/v1/pairings') || ['/api/agent-control/v1/session', '/api/agent-control/v1/status'].includes(request.path)));
     await service.disconnectCanvas(); await assert.rejects(service.canvasPairingSnapshot(), error => error.details?.reason === 'CANVAS_NOT_CONFIGURED');
   } finally { await ctx.fiber.dispose(); if (previous === undefined) delete process.env.DSH_HOME; else process.env.DSH_HOME = previous; await f.dispose(); }

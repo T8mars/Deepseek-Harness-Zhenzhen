@@ -29,7 +29,7 @@ test('C27: published Host/Remote explicit workflow review reuses native session/
     assert.deepEqual(TYPERT_REMOTE.methods['zhen/canvasWorkflowComplete'].result.create().parse(result), result);
     await assert.rejects(service.canvasWorkflowComplete(plan.id), error => error.details?.reason === 'WORKFLOW_NOT_PENDING');
     const tools = ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__'));
-    assert.equal(tools.length, 10); assert.ok(tools.every(tool => !/apply|approve|complete|pair|auth|execute/.test(tool.name))); assert.equal(keys, 0);
+    assert.equal(tools.length, 11); assert.ok(tools.every(tool => !/apply|approve|complete|pair|auth|execute/.test(tool.name))); assert.equal(keys, 0);
   } finally { await ctx.fiber.dispose(); if (previous === undefined) delete process.env.DSH_HOME; else process.env.DSH_HOME = previous; await f.dispose(); }
 });
 test('C27: published codecs preserve read-only pairing default and opt-in structural scope without run execution', () => {

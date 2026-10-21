@@ -4,6 +4,8 @@ import type { CanvasWorkflowInput, CanvasWorkflowView, CanvasWorkspaces, CanvasC
 import {CanvasModelOptions} from './CanvasModelOptions.tsx';
 import {CanvasReferences} from './CanvasReferences.tsx';
 import {canvasTargetKey,selectedCanvasTarget,refreshedCanvasTarget} from './canvas-target.ts';
+import {ActiveCanvasTargets,activeCanvasTarget,activeCanvasUnavailable} from './ActiveCanvasTargets.tsx';
+import type {CanvasActiveTargets as ActiveTargets} from 'dsh-zhen';
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
 function unwrap<T>(result: RemoteResult<T>): T { if (!result.ok) throw result.error; return result.value; }
 const phaseLabels: Record<CanvasWorkflowView['phase'], string> = { preview: '待你核对', requesting: '正在送往画布', pending: '等待画布窗口批准', applying: '正在核对应用结果', applied: '已写入画布，尚未启动生成', denied: '画布已拒绝', unknown: '结果尚未确认，请在画布检查；本项不会重发', expired: '方案或窗口审批已过期' };
@@ -16,7 +18,8 @@ export function CanvasWorkflowPanel({ api, online }: { api: ZhenRemote; online: 
   const [references,setReferences]=useState<CanvasAsset[]>([]);
   const [candidates, setCandidates] = useState<CanvasCandidateView[]>([]);
   const generation = useRef(0), field = useId();
-  useEffect(() => { let active = true; const version = ++generation.current; setBusy(false); setConfirmed(false);setTargets({canvases:[]});setTarget('');setReferences([]);setModelChoices({});
+  const [activeTargets,setActiveTargets]=useState<ActiveTargets>();const targetEpoch=useRef(0);
+  useEffect(() => { let active = true; const version = ++generation.current;targetEpoch.current++;setActiveTargets(undefined); setBusy(false); setConfirmed(false);setTargets({canvases:[]});setTarget('');setReferences([]);setModelChoices({});
     api.canvasWorkflowSnapshot().then(result => { if (active && generation.current === version) setView(unwrap(result)); }).catch(() => { if (active && generation.current === version) setNotice('方案进度尚未读到，可刷新进度。'); });
     return () => { active = false; generation.current++; };
   }, [api, online]);
@@ -47,10 +50,15 @@ export function CanvasWorkflowPanel({ api, online }: { api: ZhenRemote; online: 
           <button type="button" className="zhen-link" disabled={busy} onClick={() => void action(async () => { const version = generation.current; unwrap(await api.canvasCandidateRemove(candidate.id)); if (generation.current === version) setCandidates(items => items.filter(item => item.id !== candidate.id)); })}>移出列表</button></div>
       </article>)}
     </details>
-    <button type="button" className="zhen-secondary" disabled={busy || !online || active} onClick={() => void action(async () => { const version = generation.current; const result = unwrap(await api.canvasWorkspaces()); if (generation.current === version) { setTargets(result); setTarget(previous=>refreshedCanvasTarget(result,previous));setReferences([]);setModelChoices({});setConfirmed(false); setDirty(true); } })}>读取可用画布</button>
+    <ActiveCanvasTargets report={activeTargets} disabled={busy||!online||active} onRead={()=>void action(async()=>{
+      const version=generation.current,epoch=++targetEpoch.current;setActiveTargets(undefined);setTarget('');setReferences([]);setModelChoices({});setConfirmed(false);setDirty(true);
+      const result=unwrap(await api.canvasActiveTargets());if(generation.current!==version||targetEpoch.current!==epoch)return;
+      setActiveTargets(result);setTargets(result.workspaces);const selected=activeCanvasTarget(result);setTarget(selected?canvasTargetKey(selected):'');
+    })} onChoose={windowId=>{if(busy||!online||active||!activeTargets)return;targetEpoch.current++;const selected=activeCanvasTarget(activeTargets,windowId);setTarget(selected?canvasTargetKey(selected):'');setActiveTargets(undefined);setReferences([]);setModelChoices({});setConfirmed(false);setDirty(true);if(!selected)setNotice(activeCanvasUnavailable);}}/>
+    <button type="button" className="zhen-secondary" disabled={busy || !online || active} onClick={() => {targetEpoch.current++;setActiveTargets(undefined);void action(async () => { const version = generation.current; const result = unwrap(await api.canvasWorkspaces()); if (generation.current === version) { setTargets(result); setTarget(previous=>refreshedCanvasTarget(result,previous));setReferences([]);setModelChoices({});setConfirmed(false); setDirty(true); } });}}>读取可用画布</button>
     <form onSubmit={event => { event.preventDefault(); const selected = selectedTarget; if (selected) void action(async () => { const version = generation.current; unwrap(await api.canvasWorkflowPreview({ projectId: selected.projectId, canvasId: selected.id, kind, prompt,references:references.map(asset=>({assetId:asset.id,contentRevision:asset.contentRevision,contentHash:asset.contentHash!})),modelChoices,profile,candidates:candidatesCount,...(ratio?{ratio}:{}),...(duration?{duration:Number(duration)}:{}) })); if (generation.current === version) setDirty(false); }); }}>
       <label className="zhen-label" htmlFor={`${field}-target`}>目标画布</label>
-      <select id={`${field}-target`} className="zhen-input" disabled={busy || active} value={target} onChange={event => { setTarget(event.currentTarget.value);setReferences([]);setModelChoices({}); setDirty(true); setConfirmed(false); }}><option value="">读取列表后按名称选择画布</option>{targets.canvases.map(item => <option key={canvasTargetKey(item)} value={canvasTargetKey(item)}>{item.name} · 修订 {item.revision}</option>)}</select>
+      <select id={`${field}-target`} className="zhen-input" disabled={busy || active} value={target} onChange={event => {targetEpoch.current++;setActiveTargets(undefined); setTarget(event.currentTarget.value);setReferences([]);setModelChoices({}); setDirty(true); setConfirmed(false); }}><option value="">读取列表后按名称选择画布</option>{targets.canvases.map(item => <option key={canvasTargetKey(item)} value={canvasTargetKey(item)}>{item.name} · 修订 {item.revision}</option>)}</select>
       {targets.canvases.length>1&&<p className="zhen-muted">请选择这次使用的画布；列表顺序不代表当前窗口。</p>}
       <label className="zhen-label" htmlFor={`${field}-kind`}>创作类型</label>
       <select id={`${field}-kind`} className="zhen-input" value={kind} disabled={busy || active} onChange={event => { const nextKind=event.currentTarget.value as CanvasWorkflowInput['kind'];setKind(nextKind as CanvasWorkflowInput['kind']);if(!['image','edit-image','video','edit-video'].includes(nextKind))setCandidatesCount(1);setReferences(previous=>previous.filter(asset=>['image','edit-image'].includes(nextKind)?asset.kind==='image':nextKind==='audio'?asset.kind==='audio':nextKind==='edit-video'));setModelChoices({});setRatio(undefined);setDuration(''); setDirty(true); setConfirmed(false); }}><option value="image">图片</option><option value="edit-image">图片编辑 / 参考图</option><option value="video">视频</option><option value="edit-video">视频编辑 / 参考</option><option value="audio">音频 / 音乐</option><option value="script">剧本</option><option value="story">Story 分镜</option></select>

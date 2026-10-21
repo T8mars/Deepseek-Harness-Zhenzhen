@@ -37,7 +37,7 @@ test('C26: native conditional commit rejects replacement during protection after
     await assert.rejects(service.canvasPairingComplete(), error => error.details?.reason === 'PAIRING_PROGRESS_CHANGED');
     assert.ok(foreign); assert.equal(f.originalStore.loadPending(f.state.descriptor.instanceId, f.state.options).pairingId, foreign.pairingId);
     assert.equal(f.originalStore.loadSession(f.state.descriptor.instanceId, f.state.options), null); assert.equal(keys, 0);
-    assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')).length, 10);
+    assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')).length, 11);
   } finally { Date.now = originalNow; await ctx.fiber.dispose(); if (previousHome === undefined) delete process.env.DSH_HOME; else process.env.DSH_HOME = previousHome; await f.dispose(); }
 });
 

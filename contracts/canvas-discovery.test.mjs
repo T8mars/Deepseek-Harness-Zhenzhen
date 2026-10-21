@@ -35,7 +35,7 @@ test('C24: actual published Host discovery is inert; reviewed digest gates mount
     writeFileSync(join(f.root, 'src/agentClient.cjs'), "exports.selectInstance=async()=>{throw Error('EXAMPLE_NO_INSTANCE');};exports.requestAgentControl=async()=>{throw Error('EXAMPLE_NO_HTTP');};");
     const reviewed = service.canvasDiscover().candidates[0];
     const status = await service.connectCanvas(reviewed.root, '', reviewed.digest); assert.equal(status.code, 'APP_NOT_RUNNING');
-    assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')).length, 10);
+    assert.equal(ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')).length, 11);
     const saved = readFileSync(state, 'utf8'); assert.equal(JSON.parse(saved).digest, reviewed.digest);
     writeFileSync(join(f.root, 'src/agentClient.cjs'), "throw Error('EXAMPLE_LATER_CODE_MUST_NOT_EXECUTE');");
     await assert.rejects(service.connectCanvas(reviewed.root, '', reviewed.digest), error => error.details?.reason === 'CLI_CHANGED');
