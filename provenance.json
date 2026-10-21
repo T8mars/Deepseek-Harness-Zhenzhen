@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "70e50177dcbccb3d056e36aeafb8d83dbf41dafa",
+  "archiveSha256": "ded8a86a6e20d7bb8e7ce478d02daad0b5f1d1cd5fc668f5736b13f703ea1909",
+  "payloadSha256": "3b86de3a31e27a7db20db092082e6b5e611bd88710878a48ec1f8d20c7009eb4",
+  "packageName": "dsh-zhen",
+  "packageVersion": "0.1.0"
+}

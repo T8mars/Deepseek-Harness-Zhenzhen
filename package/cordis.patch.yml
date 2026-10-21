@@ -1,0 +1,185 @@
+# Source: deepseek-ai/deepseek-harness dsh-v0.2.1-rc.2,
+# packages/bundle/base/cordis.patch.yml and packages/bundle/web-app/cordis.patch.yml.
+# Each config below is a COMPLETE replacement of that row's config.
+- id: agent-default-model
+  config:
+    provider: seedance
+    model: deepseek/deepseek-v4.1-flash
+
+# Upstream llm-pi-ai row has no config. This is the entire provider declaration.
+# Image inputs follow the reviewed explicit docs declarations; C37 verifies the public attachment wire.
+# Reasoning/stream-usage switches and live image quality remain separately unverified.
+- id: llm-pi-ai
+  config:
+    providers:
+      seedance:
+        displayName: Seedance
+        api: openai-completions
+        baseURL: https://api.seedance.nz/v1
+        apiKeyEnv: SEEDANCE_API_KEY
+        # Seedance llms.txt chat contract uses max_tokens; generic pi-ai detection
+        # otherwise chooses max_completion_tokens for this custom provider route.
+        compat:
+          maxTokensField: max_tokens
+        # Source: Seedance llms.txt SHA256 cd7d81ab06320a5d653a64e7413ca3834523fc7881b7b2bbf5077d2d878245e5.
+        # C37: 15 explicitly documented image routes; other routes retain text-only declarations.
+        # Unknown capacities use a 262144 request budget.
+        # maxTokens 4096 is the default response budget, not a verified gateway maximum.
+        models:
+          - id: deepseek/deepseek-v4.1-flash
+            name: DeepSeek V4.1 Flash
+            contextWindow: 262144
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: deepseek/deepseek-v4-flash-vision-exp
+            name: DeepSeek Vision Exp
+            contextWindow: 1048576
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: glm/glm-5.3-flash
+            name: GLM 5.3 Flash
+            contextWindow: 262144
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: glm-5.3
+            name: GLM 5.3
+            contextWindow: 1048576
+            maxTokens: 4096
+            input:
+              - text
+          - id: qwen/qwen3.8-omni-flash
+            name: Qwen 3.8 Omni Flash
+            contextWindow: 1000000
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: qwen/qwen3.8-flash-next
+            name: Qwen 3.8 Flash Next
+            contextWindow: 262144
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: qwen/qwen3.8-max
+            name: Qwen 3.8 Max
+            contextWindow: 1000000
+            maxTokens: 4096
+            input:
+              - text
+          - id: zhenzhen/gk-4.6
+            name: GK 4.6
+            contextWindow: 500000
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: zhenzhen/g6-astra
+            name: GPT-6 Astra
+            contextWindow: 1050000
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: zhenzhen/g6-sol
+            name: GPT-6 Sol
+            contextWindow: 1050000
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: zhenzhen/g6-luna
+            name: GPT-6 Luna
+            contextWindow: 1050000
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: zhenzhen/g5.6-sol
+            name: GPT-5.6 Sol
+            contextWindow: 262144
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: zhenzhen/g5.6-terra
+            name: GPT-5.6 Terra
+            contextWindow: 262144
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: zhenzhen/g5.6-luna
+            name: GPT-5.6 Luna
+            contextWindow: 262144
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: zhenzhen/g5.5
+            name: GPT-5.5
+            contextWindow: 262144
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: zhenzhen/gm-3.8-flash
+            name: Gemini 3.8 Flash
+            contextWindow: 262144
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: zhenzhen-op-5.5
+            name: Opus 5.5
+            contextWindow: 1000000
+            maxTokens: 4096
+            input:
+              - text
+              - image
+          - id: kimi-k3
+            name: Kimi K3
+            contextWindow: 1000000
+            maxTokens: 4096
+            input:
+              - text
+        timeoutMs: 120000
+        streamIdleTimeoutMs: 120000
+        retryPolicy:
+          mode: normal
+          maxRetries: 0
+
+- id: session-log-deepseek
+  disabled: true
+- id: plugin-package-inventory-deepseek
+  disabled: true
+- id: deepseek-llm-api-extensions
+  disabled: true
+- id: session-telemetry-otel
+  disabled: true
+- id: otel
+  disabled: true
+- id: desktop-product-telemetry
+  disabled: true
+- id: product-analytics
+  disabled: true
+- id: ui-brand-official
+  disabled: true
+- id: ui-deepseek-model-label-1017
+  disabled: true
+
+# Source: dsh-v0.2.1-rc.2 ui-settings-models/src/onboarding-config.ts.
+# Complete public Config (one field); retain Models settings without the official key prompt.
+- id: ui-settings-models
+  config:
+    credentialOnboarding: false
+
+- insert:
+    - id: dsh-zhen
+      name: dsh-zhen

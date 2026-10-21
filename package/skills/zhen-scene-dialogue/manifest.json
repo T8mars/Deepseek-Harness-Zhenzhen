@@ -1,0 +1,13 @@
+{
+  "id": "zhen-scene-dialogue",
+  "version": "1.0.0",
+  "title": "人物与对白",
+  "description": "根据人物目标和关系改写场景对白，适用于短剧、短片和双人对话。",
+  "category": "writing",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

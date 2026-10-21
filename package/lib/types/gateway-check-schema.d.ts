@@ -1,0 +1,97 @@
+import { z } from 'zod';
+export declare const GATEWAY_CHECK_POLICY: "flash-32-v1";
+export declare const GATEWAY_CHECK_MODEL: "deepseek/deepseek-v4.1-flash";
+export declare const GATEWAY_CHECK_PROMPT: "DSH-zhen connectivity check. Reply only OK.";
+export declare const gatewayCheckCodeSchema: z.ZodEnum<{
+    "": "";
+    AUTH: "AUTH";
+    RATE_LIMIT: "RATE_LIMIT";
+    UNAVAILABLE: "UNAVAILABLE";
+    MISSING_CREDENTIAL: "MISSING_CREDENTIAL";
+    TIMEOUT: "TIMEOUT";
+    SERVER: "SERVER";
+    PI_AI_ERROR: "PI_AI_ERROR";
+    NO_ADAPTER: "NO_ADAPTER";
+    CANCELLED: "CANCELLED";
+    INCOMPLETE: "INCOMPLETE";
+    RESPONSE_LIMIT: "RESPONSE_LIMIT";
+}>;
+export declare const gatewayCheckReceiptSchema: z.ZodObject<{
+    id: z.ZodUUID;
+    policy: z.ZodLiteral<"flash-32-v1">;
+    provider: z.ZodLiteral<"seedance">;
+    model: z.ZodLiteral<"deepseek/deepseek-v4.1-flash">;
+    maxTokens: z.ZodLiteral<32>;
+    createdAt: z.ZodISODateTime;
+    expiresAt: z.ZodISODateTime;
+    finishedAt: z.ZodString;
+    state: z.ZodEnum<{
+        preview: "preview";
+        expired: "expired";
+        running: "running";
+        failed: "failed";
+        cancelled: "cancelled";
+        passed: "passed";
+        incomplete: "incomplete";
+        untracked: "untracked";
+    }>;
+    code: z.ZodEnum<{
+        "": "";
+        AUTH: "AUTH";
+        RATE_LIMIT: "RATE_LIMIT";
+        UNAVAILABLE: "UNAVAILABLE";
+        MISSING_CREDENTIAL: "MISSING_CREDENTIAL";
+        TIMEOUT: "TIMEOUT";
+        SERVER: "SERVER";
+        PI_AI_ERROR: "PI_AI_ERROR";
+        NO_ADAPTER: "NO_ADAPTER";
+        CANCELLED: "CANCELLED";
+        INCOMPLETE: "INCOMPLETE";
+        RESPONSE_LIMIT: "RESPONSE_LIMIT";
+    }>;
+    textDeltas: z.ZodNumber;
+    inputTokens: z.ZodNullable<z.ZodNumber>;
+    outputTokens: z.ZodNullable<z.ZodNumber>;
+}, z.core.$strict>;
+export declare const gatewayCheckPreviewSchema: z.ZodObject<{
+    receipt: z.ZodObject<{
+        id: z.ZodUUID;
+        policy: z.ZodLiteral<"flash-32-v1">;
+        provider: z.ZodLiteral<"seedance">;
+        model: z.ZodLiteral<"deepseek/deepseek-v4.1-flash">;
+        maxTokens: z.ZodLiteral<32>;
+        createdAt: z.ZodISODateTime;
+        expiresAt: z.ZodISODateTime;
+        finishedAt: z.ZodString;
+        state: z.ZodEnum<{
+            preview: "preview";
+            expired: "expired";
+            running: "running";
+            failed: "failed";
+            cancelled: "cancelled";
+            passed: "passed";
+            incomplete: "incomplete";
+            untracked: "untracked";
+        }>;
+        code: z.ZodEnum<{
+            "": "";
+            AUTH: "AUTH";
+            RATE_LIMIT: "RATE_LIMIT";
+            UNAVAILABLE: "UNAVAILABLE";
+            MISSING_CREDENTIAL: "MISSING_CREDENTIAL";
+            TIMEOUT: "TIMEOUT";
+            SERVER: "SERVER";
+            PI_AI_ERROR: "PI_AI_ERROR";
+            NO_ADAPTER: "NO_ADAPTER";
+            CANCELLED: "CANCELLED";
+            INCOMPLETE: "INCOMPLETE";
+            RESPONSE_LIMIT: "RESPONSE_LIMIT";
+        }>;
+        textDeltas: z.ZodNumber;
+        inputTokens: z.ZodNullable<z.ZodNumber>;
+        outputTokens: z.ZodNullable<z.ZodNumber>;
+    }, z.core.$strict>;
+    prompt: z.ZodLiteral<"DSH-zhen connectivity check. Reply only OK.">;
+}, z.core.$strict>;
+export type GatewayCheckReceipt = z.infer<typeof gatewayCheckReceiptSchema>;
+export type GatewayCheckPreview = z.infer<typeof gatewayCheckPreviewSchema>;

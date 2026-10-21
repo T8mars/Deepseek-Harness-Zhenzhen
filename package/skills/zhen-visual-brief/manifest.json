@@ -1,0 +1,13 @@
+{
+  "id": "zhen-visual-brief",
+  "version": "1.0.0",
+  "title": "视觉方向板",
+  "description": "把主题和用户给定参考转为统一的视觉制作简报，包括配色、光线、构图和材质。",
+  "category": "visual",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

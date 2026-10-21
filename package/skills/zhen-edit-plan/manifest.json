@@ -1,0 +1,13 @@
+{
+  "id": "zhen-edit-plan",
+  "version": "1.0.0",
+  "title": "剪辑节奏规划",
+  "description": "将已有镜头清单或素材记录整理为剪辑方案，处理节奏、声画关系和转场。",
+  "category": "workflow",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+

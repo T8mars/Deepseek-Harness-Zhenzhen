@@ -1,0 +1,13 @@
+{
+  "id": "zhen-knowledge-writing",
+  "version": "1.0.1",
+  "title": "带出处的创作",
+  "description": "用用户选定且允许引用的资料辅助写作，保留出处并处理资料冲突。",
+  "category": "writing",
+  "host": "0.2.1-rc.2",
+  "license": "MIT",
+  "source": "bundled",
+  "dependencies": [],
+  "permissions": []
+}
+
