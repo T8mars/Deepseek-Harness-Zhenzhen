@@ -186,3 +186,6 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 
 
 0087/C98：公开LlmRuntime的普通stream与prepareCall捕获适配器后的stream仍执行当前llm/stream hook；prepared对象只能提交一次（包括已被拒绝的提交），正向对照不重用。自有服务生命周期内的授权句柄与Host启动路径是同一来源，不得在最终检查时独立重读环境默认目录来决定跳过它。cold/warm、RAG/MCP与正负对照均由实际公开SDK验证；Windows打开库改名实际拒绝，仅按OS事实记录，不伪造路径移走。
+
+
+0088/C99仅使用自有SkillMarket schema3及公开node:sqlite，不读上游私有数据。自有普通构造会推进pending，故候选先建空库再事务导入；既有对象/已知行只读校验，不再次启动。实际负例复制候选后普通构造确实晋升pending，原候选和源不改。共享验证保留完整package SHA与active/pending/skipped身份、mode/revision语义。原库存v1仍可恢复；新增输出明确仅市场DB和目录元数据已还原，其他来源和激活未做，不能泛称全应用恢复。

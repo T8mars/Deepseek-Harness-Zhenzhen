@@ -10,6 +10,7 @@ export {skillBackupRecords,writeSkillBackup,restoreSkillBackup,assertSkillResour
 export type {SkillBackupRoot,SkillBackupSelection,SkillRestoreCandidate} from './backup-skills.ts';
 export {collectSkillBackupInventory,resolveSkillFilesystem,skillInventoryBackupRecords,writeSkillInventoryBackup,restoreSkillInventoryBackup} from './backup-skill-inventory.ts';
 export type {SkillInventorySource,SkillBackupInventory} from './backup-skill-inventory.ts';
+export type {SkillInventoryRestoreCandidate} from './backup-skill-inventory.ts';
 export type {ResolvedSkillFilesystem,SkillFilesystemDefaults} from './backup-skill-inventory.ts';
 export {SkillSourceTracker} from './backup-skill-tracker.ts';
 export {hostSkillInventorySource} from './backup-host-skills.ts';

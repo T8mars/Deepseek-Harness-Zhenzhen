@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T21:47:55.004Z",
+  "checkedAt": "2026-10-21T22:15:53.962Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1926,6 +1926,24 @@
       "localPassed": 772,
       "packageFiles": 172,
       "localPackageSha256": "0e74ca0c8f65ad78701bbcb55d0d4beac9fbd8642fa6cfed99783f3d1f5788bf"
+    },
+    "skillMarketRestoreCandidate": {
+      "status": "inactive-market-database-restore-candidate",
+      "export": "dsh-zhen/backup restoreSkillInventoryBackup",
+      "targetedTests": 13,
+      "relatedTests": 71,
+      "fullRegressionPending": false,
+      "ownMarketSchema": 3,
+      "archiveSchema": "dsh-zhen-skill-inventory-v1",
+      "marketDatabaseRestored": true,
+      "otherSourceStatesRestored": false,
+      "activated": false,
+      "wholeApplicationRestore": false,
+      "verification": "C99 adds13 actual own SkillMarket and encrypted complete-inventory TEMP contracts; C99/C93/C94/C95 pass71/71. Complete archive authentication and shared strict state validation precede fresh candidate creation. The inventory restorer now creates a fixed own state/skills.sqlite, imports all retained versions, selections and update preferences transactionally, and preserves full bundled/catalog metadata in the original inventory sidecar. Only a fresh empty unsubscribed market can import; no provider/feed/listener is activated. Source read transaction and destination import share the same known own schema3 readback, while the normal constructor is not called again after import because it applies pending updates. Manual/automatic pending, verified-revision policy, disabled/paused/skipped state and personal forks remain exact; a real activation-copy negative proves the candidate stays pending. History61 beyond UI50 and bundled100/catalog199 are preserved without remote100 truncation. Validation checks full-package SHA, unique identities, references and mode/revision semantics; cancellation during batch import rolls back to empty and cancellation after final receipt removes only the fresh candidate. Source bytes and previous candidates remain, extra records/authentication failures refuse. Market state validation is shared with inventory capture; source archive schema remains v1 and own market schema remains3. New return flags explicitly leave Local/GitHub/feed state restoration, activation and wholeApplicationRestore false. Constructor initialization errors close their own handle; faulted-disk behavior is not a new live claim. No upstream/private profile/session/credential/Native changes, app reinstall/restart or model calls. Complete dependency/package-manager restoration, historical directories, other own state, global backup integration and full restore preview/activation/UI and all original scope remain incomplete. Complete regression/archive/exact CI separately required. A fresh real cross-connection probe after the first784/784 run reproduces an old live schema4 database being mislabeled schema3. Known-version checks now refuse capture/import and forward only the fixed unsupported-schema code across independently bundled own entrypoints. Source and target bytes/version stay unchanged. Final complete785 regression is required after the fix; first784 evidence is retained. Complete785/785 and173-file archive pass C63 legacy-checkout packing, C76 actual two-version build/install/launcher full-payload checks, C97 own RAG restoration, C98 fixed-origin grant gates, and C99 actual market database restoration; exact current CI is separately required.",
+      "localTests": 785,
+      "localPassed": 785,
+      "packageFiles": 173,
+      "localPackageSha256": "0179f4d5023d8e92a9ff12031f01136488efab0eccb12586238e9b1f527404d3"
     }
   }
 }

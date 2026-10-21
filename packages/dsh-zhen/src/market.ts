@@ -5,6 +5,9 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { SkillCandidate, SkillDefinition, SkillProvider } from '@deepseek-ai/dsh-skill';
 import { skillPackageSchema } from './market-schema.ts';
 import type { MarketItem, SkillPackage, SkillAutoPolicy } from './market-schema.ts';
+import {validateMarketBackupState} from './market-backup-state.ts';
+import {BackupError} from './backup-archive.ts';
+import {backupJsonString} from './backup-data.ts';
 
 export function verifySkill(input: unknown): SkillPackage {
   const item = skillPackageSchema.parse(input);
@@ -54,6 +57,8 @@ export class SkillMarket {
   private readonly catalog: Map<string, SkillPackage>;
   private readonly bundled: Map<string, SkillPackage>;
   private listeners = new Set<() => void>();
+  private backupStateRestored=false;
+  private restoringBackup=false;
 
   constructor(filename: string, catalog: SkillPackage[]) {
     this.catalog = new Map(catalog.map(input => { const item = verifySkill(input); return [item.manifest.id, item]; }));
@@ -61,6 +66,7 @@ export class SkillMarket {
     this.bundled = new Map(this.catalog);
     mkdirSync(dirname(filename), { recursive: true });
     this.db = new DatabaseSync(filename);
+    try {
     const version = this.db.prepare('PRAGMA user_version').get() as { user_version: number };
     if (version.user_version > 3) { this.db.close(); throw new Error('技能数据库版本较新，请升级应用。'); }
     this.db.exec(`PRAGMA foreign_keys=ON;
@@ -109,6 +115,7 @@ export class SkillMarket {
       }
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); this.db.close(); throw error; }
+    } catch(error) { try{this.db.close();}catch{}throw error; }
   }
   close(): void { this.listeners.clear(); this.db.close(); }
   /** A read transaction over every retained version, including records hidden
@@ -116,6 +123,11 @@ export class SkillMarket {
   backupState(): MarketBackupState {
     this.db.exec('BEGIN');
     try {
+      const state=this.readBackupState();this.db.exec('COMMIT');return state;
+    }catch(error){this.db.exec('ROLLBACK');throw error;}
+  }
+  private readBackupState():MarketBackupState{
+      if(this.db.prepare('PRAGMA user_version').get()?.user_version!==3)throw new BackupError('BACKUP_MARKET_SCHEMA_UNSUPPORTED');
       for(const table of ['versions','selections'])if((this.db.prepare('SELECT COUNT(*) AS count FROM '+table).get() as {count:number}).count>40000)throw new Error('技能备份记录过多。');
       if((this.db.prepare('SELECT COALESCE(SUM(length(CAST(package AS BLOB))),0) AS bytes FROM versions').get() as {bytes:number}).bytes>64*1024**2)throw new Error('技能备份正文过大。');
       const versions=(this.db.prepare('SELECT digest,id,version,package FROM versions ORDER BY rowid').all() as Array<{digest:string;id:string;version:string;package:string}>).map(row=>{
@@ -125,8 +137,26 @@ export class SkillMarket {
       const preferences=this.db.prepare('SELECT * FROM update_preferences WHERE id=1').get() as MarketBackupState['preferences']|undefined;
       if(!preferences)throw new Error('技能更新策略不可读取。');
       const state:MarketBackupState={schemaVersion:3,versions,selections,preferences:{...preferences},bundled:[...this.bundled.values()].map(verifySkill),catalog:[...this.catalog.values()].map(verifySkill)};
-      this.db.exec('COMMIT');return structuredClone(state);
-    }catch(error){this.db.exec('ROLLBACK');throw error;}
+      return structuredClone(state);
+  }
+  /** Only a fresh unpublished empty market may import an authenticated backup.
+   * Never reconstruct a normal market after import: its startup applies pending
+   * updates. No listener/provider/feed is notified or started by this method. */
+  async restoreBackupState(input:unknown,signal?:AbortSignal):Promise<void>{
+    signal?.throwIfAborted();if(this.db.prepare('PRAGMA user_version').get()?.user_version!==3)throw new BackupError('BACKUP_MARKET_SCHEMA_UNSUPPORTED');const state=validateMarketBackupState(input,verifySkill);
+    const emptyPreferences={id:1,enabled:0,scope:'first-party-text-v1',verified_revision:'',verified_digest:''};
+    if(this.backupStateRestored||this.restoringBackup||this.listeners.size||this.bundled.size||this.catalog.size||this.db.prepare('SELECT count(*) AS n FROM versions').get()?.n!==0||this.db.prepare('SELECT count(*) AS n FROM selections').get()?.n!==0||backupJsonString(this.db.prepare('SELECT * FROM update_preferences WHERE id=1').get())!==backupJsonString(emptyPreferences))throw new BackupError('BACKUP_MARKET_TARGET_NOT_EMPTY');
+    const version=this.db.prepare('INSERT INTO versions(digest,id,version,package) VALUES(?,?,?,?)'),selection=this.db.prepare('INSERT INTO selections(id,active,pending,enabled,pending_mode,pending_revision,auto_paused,skipped) VALUES(?,?,?,?,?,?,?,?)');
+    this.db.exec('BEGIN IMMEDIATE');this.restoringBackup=true;
+    try{
+      let count=0;for(const row of state.versions){signal?.throwIfAborted();version.run(row.key,row.package.manifest.id,row.package.manifest.version,JSON.stringify(row.package));if(++count%256===0)await new Promise<void>(resolve=>setImmediate(resolve));}
+      for(const row of state.selections){signal?.throwIfAborted();selection.run(row.id,row.active,row.pending,row.enabled,row.pending_mode,row.pending_revision,row.auto_paused,row.skipped);if(++count%256===0)await new Promise<void>(resolve=>setImmediate(resolve));}
+      const preferences=state.preferences;this.db.prepare('UPDATE update_preferences SET enabled=?,scope=?,verified_revision=?,verified_digest=? WHERE id=1').run(preferences.enabled,preferences.scope,preferences.verified_revision,preferences.verified_digest);
+      for(const item of state.bundled)this.bundled.set(item.manifest.id,item);for(const item of state.catalog)this.catalog.set(item.manifest.id,item);
+      if(backupJsonString(this.readBackupState())!==backupJsonString(state))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');
+      signal?.throwIfAborted();this.db.exec('COMMIT');this.backupStateRestored=true;
+    }catch(error){this.db.exec('ROLLBACK');this.bundled.clear();this.catalog.clear();signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_MARKET_RESTORE_FAILED');}
+    finally{this.restoringBackup=false;}
   }
   subscribe(listener: () => void): () => void { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   private changed(): void { for (const listener of this.listeners) listener(); }
