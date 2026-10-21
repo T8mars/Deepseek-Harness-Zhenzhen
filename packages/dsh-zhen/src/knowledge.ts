@@ -9,6 +9,9 @@ import {extractDocxText} from './docx-text.ts';
 import {documentFailure, documentFailureCodes} from './document-error.ts';
 import type {DocumentFailureCode} from './document-error.ts';
 import type {KnowledgeImportReport, KnowledgeImportIssue} from './knowledge-import-schema.ts';
+import {freezeKnowledge,importKnowledgeRows} from './knowledge-backup.ts';
+import type {KnowledgeBackupRow,KnowledgeBackupLease} from './knowledge-backup.ts';
+import type {BackupOptions} from './backup-archive.ts';
 
 export interface KnowledgeCollection { id: string; project: string; name: string; root: string; epoch: number; enabled: boolean; cloudProvider: string; agentEnabled: boolean; documents: number; }
 export interface KnowledgeHit { id: string; collectionId: string; collectionName: string; path: string; line: number; text: string; epoch: number; page?: number; }
@@ -118,6 +121,10 @@ export class KnowledgeStore {
     } catch (error) { this.db.exec('ROLLBACK'); this.db.close(); throw error; }
   }
   close(): void { this.importReports.clear(); this.db.close(); }
+  /** Host-only; no migration, service creation or authority changes at source. */
+  backupLease(options:BackupOptions={}):Promise<KnowledgeBackupLease>{return freezeKnowledge(this.db,options);}
+  /** Used exclusively for a new inactive candidate, never a live overwrite. */
+  restoreBackupRows(rows:AsyncIterable<KnowledgeBackupRow>,sequence:number,signal?:AbortSignal):Promise<void>{return importKnowledgeRows(this.db,rows,sequence,lexicalTerms,signal);}
   /** Local owner diagnostics only; never return stale paths after an epoch change. */
   importReport(project: string, id: string): KnowledgeImportReport | null {
     const collection = this.collection(project, id, true), report = this.importReports.get(id);

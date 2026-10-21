@@ -27,6 +27,9 @@ import type {HostSkillBackupPolicy} from './backup-host-skills.ts';
 import {skillInventoryBackupRecords} from './backup-skill-inventory.ts';
 import {BackupError} from './backup-archive.ts';
 import type {BackupOptions,BackupRecord} from './backup-archive.ts';
+import {prepareRagBackup} from './backup-rag.ts';
+import {readonlyKnowledgeSource} from './knowledge-backup.ts';
+import type {RagBackupLease,RagBackupPolicy} from './backup-rag.ts';
 import { GithubAccess } from './github-access.ts';
 import { FIRST_PARTY_REPOSITORY, githubCredentialValue } from './github-access-schema.ts';
 import type { GithubAccessInfo } from './github-access-schema.ts';
@@ -135,6 +138,7 @@ const githubCredential = credentialRef('DSH_ZHEN_GITHUB_TOKEN');
 export default class ZhenService extends TypertRemoteService {
   static inject: string[] = ['credentials'];
   private knowledgeStore?: KnowledgeStore;
+  private readonly knowledgeFile=dshHomePath('dsh-zhen','knowledge.sqlite');
   private readonly rag:ZhenRag;
   private skillMarket?: SkillMarket;
   private skillFeed?: SkillFeed;
@@ -298,7 +302,7 @@ export default class ZhenService extends TypertRemoteService {
     }), 'zhen: public web index brand'));
   }
   private knowledge(): KnowledgeStore {
-    return this.knowledgeStore ??= new KnowledgeStore(dshHomePath('dsh-zhen', 'knowledge.sqlite'));
+    return this.knowledgeStore ??= new KnowledgeStore(this.knowledgeFile);
   }
   private capabilities(): CapabilityCatalog { return this.capabilityCatalog ??= readCapabilityCatalog(); }
   private capabilityUpdates(): CapabilityMonitor { return this.capabilityMonitor ??= new CapabilityMonitor(dshHomePath('dsh-zhen', 'capabilities.json'), this.capabilities()); }
@@ -372,6 +376,11 @@ export default class ZhenService extends TypertRemoteService {
       if(!local||!github||!market||!feed)throw new BackupError('BACKUP_HOST_SERVICES_UNAVAILABLE');
       return hostSkillInventorySource(this.ctx,{local,github,market,feed},policy());
     },options);
+  }
+  /** Host-only fixed own path, with a read-only cold source when RAG is lazy. */
+  ragBackupLease(policy:()=>RagBackupPolicy,options:BackupOptions={}):Promise<RagBackupLease>{
+    const cold=!this.knowledgeStore&&existsSync(this.knowledgeFile)?readonlyKnowledgeSource(this.knowledgeFile):null;
+    return prepareRagBackup(()=>{const present=existsSync(this.knowledgeFile);if(!this.knowledgeStore&&present&&!cold)throw new BackupError('BACKUP_SOURCE_CHANGED');return {store:this.knowledgeStore??(present?cold:null),rag:this.rag,policy:policy()};},options);
   }
   @Remote
   marketFeedSnapshot(): import('./market-schema.ts').SkillFeedSnapshot { return this.feed().snapshot(); }

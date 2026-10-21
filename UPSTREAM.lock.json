@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T20:48:56.429Z",
+  "checkedAt": "2026-10-21T21:27:33.866Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1899,6 +1899,21 @@
       "localPassed": 737,
       "packageFiles": 170,
       "localPackageSha256": "ab7149829a82c4388748f1678ba1029a8c70238a22430cfb63d3a275cb58167c"
+    },
+    "ragBackupRestoreCandidate": {
+      "status": "inactive-rag-restore-candidate",
+      "export": "dsh-zhen/backup",
+      "source": "Own existing KnowledgeStore/ZhenRag; fixed-own-path readonly lazy Host adapter",
+      "targetedTests": 23,
+      "relatedTests": 44,
+      "fullRegressionPending": false,
+      "wholeApplicationRestore": false,
+      "activated": false,
+      "verification": "C97 adds23 own KnowledgeStore and actual published Cordis Host TEMP contracts; related retrieval/PDF/DOCX/import suites pass44/44. A private bounded SQLite snapshot is exported as six validated NDJSON logical tables, excluding executable archive schema and derived FTS; restore builds the known own schema and original lexical terms. Exact chunk/document IDs, PDF pages, DOCX body lines, collection/binding epochs, invalid historical grants and binding counter high water survive. Indexed originals preserve full current bytes and explicit matching/changed/missing status separately from old cache. Runtime and valid/invalid/orphan persisted backend settings remain separate staged data; no provider is registered or invoked. The retained prepareRagBackup lease checks same-handle total_changes, other-handle data_version, backend/source/policy identity and resource changes at the composed-backup barrier. The actual own Host reads its unopened fixed schema3 file through a read-only adapter without constructing/migrating the lazy store; absence is preserved and older schemas refuse. Complete authentication precedes fresh inactive candidate creation; strict row/FK/counter/digest/path/record validation, cancellation and failure cleanup preserve existing sources and candidates. Initial18-test run exposed mutable source alias and cross-entrypoint error identity issues, now fixed; a later DOCX assertion omitted the required provider and was corrected without weakening product authorization. Snapshot budget512MiB, manifest32MiB, resources40000, rows5000000/table, row1MiB; limits refuse, never truncate. Only indexed original files are included; transient import reports are explicitly excluded. Resource roots remain provenance and are not rebound, backend state is not activated, and complete application dependencies/managed-source DB restore, global component integration, preview/activation/UI and full M2/L2 remain incomplete. No real user/Native data, credentials, app reinstall/restart or model requests. Complete regression/archive/exact CI separately required. Complete760/760 and172-file archive pass C63 legacy-checkout packing, C76 actual two-version build/install/launcher full-payload checks, and C97 real own RAG restoration; exact current CI is separately required.",
+      "localTests": 760,
+      "localPassed": 760,
+      "packageFiles": 172,
+      "localPackageSha256": "fa0a64e5ef1fcfd0b7b7c354a11508c491591a696b2ffb3e3e16976e3e5d480f"
     }
   }
 }

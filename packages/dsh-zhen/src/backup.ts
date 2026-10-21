@@ -14,3 +14,5 @@ export type {ResolvedSkillFilesystem,SkillFilesystemDefaults} from './backup-ski
 export {SkillSourceTracker} from './backup-skill-tracker.ts';
 export {hostSkillInventorySource} from './backup-host-skills.ts';
 export type {ManagedSkillBackupServices,HostSkillBackupPolicy} from './backup-host-skills.ts';
+export {prepareRagBackup,ragBackupRecords,writeRagBackup,restoreRagBackup} from './backup-rag.ts';
+export type {RagBackupPolicy,RagBackupSource,RagBackupLease,RagRestoreCandidate} from './backup-rag.ts';
