@@ -23,10 +23,12 @@ import {SUPPORTED_DSH} from './compatibility.ts';
 const SCHEMA='dsh-zhen-skill-inventory-v1',MAX_STATE=64*1024**2;
 const sha=(value:string)=>createHash('sha256').update(value).digest('hex');
 type ResolvedFilesystem={providerName:string;includeDefaultRoots:boolean;dshHome:string;agentsHome:string;customSkillDirs:string[];bundledSkillDir?:string};
+export type ResolvedSkillFilesystem=ResolvedFilesystem;
+export interface SkillFilesystemDefaults {dshHome:string;agentsHome:string;bundledSkillDir?:string;cwd:string;}
 export interface SkillInventorySource {
   /** Effective settings of every Host-local filesystem skill provider. A virtual
    * filesystem requires its own backup adapter and cannot be guessed from disk. */
-  filesystem:readonly {id:string;mode:'host-local';config:FilesystemConfig;enabled?:boolean}[];
+  filesystem:readonly {id:string;mode:'host-local'|'host-local-resolved';config:FilesystemConfig;enabled?:boolean}[];
   workspaces:readonly string[];
   local:Pick<LocalSkills,'backupState'>;github:Pick<GithubSkills,'backupState'>;
   market:Pick<SkillMarket,'backupState'>;feed:Pick<SkillFeed,'backupState'>;
@@ -83,11 +85,12 @@ function deriveRoots(value:Pick<SkillBackupInventory,'filesystem'|'projects'|'lo
 }
 /** Resolve only public filesystem root settings; ambient credentials are never
  * copied into the document. Project resolution is verified against the provider. */
-export function resolveSkillFilesystem(config:FilesystemConfig={}):ResolvedFilesystem{
+export function resolveSkillFilesystem(config:FilesystemConfig={},defaults?:SkillFilesystemDefaults):ResolvedFilesystem{
   if(!config||typeof config!=='object'||![null,Object.prototype].includes(Object.getPrototypeOf(config))||Object.getOwnPropertySymbols(config).length)throw new BackupError('BACKUP_DATA_JSON_INVALID');
   const defined:Record<string,unknown>=Object.create(null);for(const [key,descriptor]of Object.entries(Object.getOwnPropertyDescriptors(config))){if(!('value'in descriptor)||!descriptor.enumerable)throw new BackupError('BACKUP_DATA_JSON_INVALID');if(descriptor.value!==undefined)Object.defineProperty(defined,key,{value:descriptor.value,enumerable:true,writable:true,configurable:true});}backupJsonString(defined);config=defined as FilesystemConfig;
-  const defaults=config.includeDefaultRoots??true,bundled=config.bundledSkillDir??(defaults?process.env.DSH_BUNDLED_SKILL_DIR:undefined);
-  return resolvedSchema.parse({providerName:config.providerName??'filesystem',includeDefaultRoots:defaults,dshHome:resolveDshHome(config.dshHome),agentsHome:resolveAgentsHome(config.agentsHome),customSkillDirs:(config.customSkillDirs??[]).map(value=>resolve(value)),...bundled!==undefined?{bundledSkillDir:resolve(bundled)}:{}});
+  if(defaults){backupJsonString(defaults);if(!isAbsolute(defaults.cwd)||!isAbsolute(defaults.dshHome)||!isAbsolute(defaults.agentsHome)||defaults.bundledSkillDir!==undefined&&!isAbsolute(defaults.bundledSkillDir))throw new BackupError('BACKUP_PATH_INVALID');}
+  const include=config.includeDefaultRoots??true,bundled=config.bundledSkillDir??(include?defaults?defaults.bundledSkillDir:process.env.DSH_BUNDLED_SKILL_DIR:undefined),absolute=(value:string)=>defaults?resolve(defaults.cwd,value):resolve(value);
+  return resolvedSchema.parse({providerName:config.providerName??'filesystem',includeDefaultRoots:include,dshHome:resolveDshHome(config.dshHome,defaults?{DSH_HOME:defaults.dshHome}:undefined),agentsHome:resolveAgentsHome(config.agentsHome,defaults?{DSH_AGENTS_HOME:defaults.agentsHome}:undefined),customSkillDirs:(config.customSkillDirs??[]).map(absolute),...bundled!==undefined?{bundledSkillDir:absolute(bundled)}:{}});
 }
 async function projectRoot(cwd:string,signal?:AbortSignal):Promise<string>{
   let current=cwd;while(true){signal?.throwIfAborted();try{await access(join(current,'.git'));return current;}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw new BackupError('BACKUP_SKILL_PROJECT_UNAVAILABLE');}const parent=dirname(current);if(parent===current)return cwd;current=parent;}
@@ -97,7 +100,7 @@ export async function collectSkillBackupInventory(source:SkillInventorySource,op
   const filesystem:SkillBackupInventory['filesystem']=[],projects:SkillBackupInventory['projects']=[],seenCwd=new Set<string>(),protectedContainers=[...source.protectedContainers],forbiddenTrees=[...source.forbiddenTrees];backupJsonString({protectedContainers,forbiddenTrees});
   for(const cwd of source.workspaces){if(!isAbsolute(cwd))throw new BackupError('BACKUP_PATH_INVALID');const absolute=resolve(cwd);if(seenCwd.has(absolute))continue;seenCwd.add(absolute);if(projects.length>=128)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');projects.push({cwd:absolute,projectRoot:await projectRoot(absolute,options.signal)});}
   for(const provider of source.filesystem){
-    if(provider.mode!=='host-local')throw new BackupError('BACKUP_SKILL_FILESYSTEM_UNSUPPORTED');const config=resolveSkillFilesystem(provider.config);filesystem.push({id:provider.id,config,...provider.enabled!==undefined?{enabled:provider.enabled}:{}});
+    if(!['host-local','host-local-resolved'].includes(provider.mode))throw new BackupError('BACKUP_SKILL_FILESYSTEM_UNSUPPORTED');if(provider.mode==='host-local-resolved')backupJsonString(provider.config);const config=provider.mode==='host-local-resolved'?resolvedSchema.parse(provider.config):resolveSkillFilesystem(provider.config);filesystem.push({id:provider.id,config,...provider.enabled!==undefined?{enabled:provider.enabled}:{}});
   }
   const local=source.local.backupState(),github=source.github.backupState(),market=source.market.backupState(),feed=source.feed.backupState();
   for(const item of local.sources){try{const stat=await lstat(item.root,{bigint:true});if(stat.isSymbolicLink()||!stat.isDirectory()||[stat.dev,stat.ino].join(':')!==item.identity)throw new BackupError('BACKUP_SKILL_SOURCE_IDENTITY_CHANGED');}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}}

@@ -174,3 +174,6 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 
 
 0083/C94：固定Loader.entries遍历条目和嵌套树；Entry.fiber.config公开定义为validated config，读取不再次执行原配置表达式。Entry.disabled getter可能执行表达式，备份不调用。实际Group的disabled不阻止自身挂载，而由子条目继承；不依据普通条目的禁用行为猜Group。Builtin字典和moduleNamespace公开导出身份用于识别别名，不调用loader.import/refresh。Cordis FiberState是ambient const enum无运行时出口，用公开声明数值与实际生命周期合同核对。LocalFileSystem公有类识别host-local，未知backend拒绝，不从方法形状猜本机。工作区/live seam专项为接口夹具，不能扩展为持久化registry/实际用户Host验收。PatchOptions.name仍是匹配守卫，不是模块替换入口。
+
+
+0084/C95：validated Fiber.config不保证保存provider构造时解析的缺省值。真实已发布filesystem启动后改环境可复现备份默认目录漂移。公开Cordis Events声明internal/config this:Fiber waterfall与internal/status(Fiber,oldValue)；观察next()后配置、在ACTIVE提交快照可保留当时默认和cwd，不修改config或读私有成员。预验证事件不能替代实际激活快照，C95真实事件/重启/依赖门/加密往返核对。自有bundle只补公开inject依赖，skills保留，根配置不改；未观察到且依赖缺省的旧活动来源拒绝，不猜。已解析模式先普通JSON安全检查再schema，不执行访问器。

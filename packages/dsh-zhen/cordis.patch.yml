@@ -183,3 +183,11 @@
 - insert:
     - id: dsh-zhen
       name: dsh-zhen
+
+# Source: dsh-v0.2.1-rc.2 base/cordis.patch.yml skill-filesystem;
+# original static inject is [skills]. Wait for our public activation observer
+# before starting this provider. Config remains the complete upstream default.
+- id: skill-filesystem
+  inject:
+    - skills
+    - zhenSkillBackupSources

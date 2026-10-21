@@ -39,7 +39,7 @@ test('C94: real Loader validated active config supplies actual provider roots wi
 });
 
 test('C94: real local filesystem service remains eligible',async t=>{
-  const f=await fixture(t);await f.ctx.plugin(LocalFileSystem,{cwd:f.root});await f.create();assert.equal(f.source().filesystem[0].mode,'host-local');
+  const f=await fixture(t);await f.ctx.plugin(LocalFileSystem,{cwd:f.root});await f.create();assert.equal(f.source().filesystem[0].mode,'host-local-resolved');
 });
 
 test('C94: arbitrary filesystem backend is refused without invoking its methods',async t=>{

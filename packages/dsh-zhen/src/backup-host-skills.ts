@@ -5,6 +5,8 @@ import {LocalFileSystem} from '@deepseek-ai/dsh-fs-local';
 import type {} from '@deepseek-ai/dsh-workspace';
 import type {} from '@deepseek-ai/dsh-working-directory';
 import type {} from '@deepseek-ai/dsh-session';
+import type {} from './backup-skill-tracker.ts';
+import {isAbsolute} from 'node:path';
 import {BackupError} from './backup-archive.ts';
 import {resolveSkillFilesystem} from './backup-skill-inventory.ts';
 import type {SkillInventorySource} from './backup-skill-inventory.ts';
@@ -35,7 +37,7 @@ function assertLiteral(value:unknown):void{
   if(Object.hasOwn(value,'__jsExpr'))throw new BackupError('BACKUP_HOST_CONFIG_UNRESOLVED');
   for(const child of Object.values(value))assertLiteral(child);
 }
-function isFilesystem(entry:Entry):boolean{
+export function isFilesystemEntry(entry:Entry):boolean{
   if(entry.options.name==='@deepseek-ai/dsh-skill-filesystem')return true;
   const name=entry.options.name,module=entry.moduleNamespace??(name.startsWith('cordis:')?Object.getOwnPropertyDescriptor(entry.loader.builtins,name.slice(7))?.value:undefined);
   return !!module&&(typeof module==='object'||typeof module==='function')&&Object.getOwnPropertyDescriptor(module,'FileSystemSkillProvider')?.value===FileSystemSkillProvider;
@@ -52,16 +54,26 @@ export function hostSkillInventorySource(ctx:Context,managed:ManagedSkillBackupS
     for(const entry of loader.entries()){
       if(++count>4096)throw new BackupError('BACKUP_HOST_ENTRY_LIMIT');
       if(entry.options.group&&entry.fiber?.state!==ACTIVE&&Array.isArray(entry.options.config)&&entry.options.config.length)throw new BackupError('BACKUP_HOST_GROUP_UNAVAILABLE');
-      if(!isFilesystem(entry))continue;
+      if(!isFilesystemEntry(entry))continue;
       if(filesystem.length>=16)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');
       const fiber=entry.fiber,active=fiber?.state===ACTIVE&&fiber.uid!==null;
       if(!active&&(!literalDisabled(entry)||fiber&&fiber.state!==DISPOSED))throw new BackupError('BACKUP_HOST_PROVIDER_UNAVAILABLE');
       const raw=active?fiber!.config:entry.options.config??{};
       // Detach only the config of this provider; do not serialize the Host tree.
-      const config=resolveSkillFilesystem(raw);if(!active)assertLiteral(raw);
+      let config;
+      if(active){
+        config=ctx.get('zhenSkillBackupSources')?.get(entry);
+        if(!config){
+          // An already running provider may have captured older process defaults.
+          // Accept only self-contained absolute settings without ambient fallback.
+          const explicit=resolveSkillFilesystem(raw);
+          if(typeof raw.dshHome!=='string'||!isAbsolute(raw.dshHome)||typeof raw.agentsHome!=='string'||!isAbsolute(raw.agentsHome)||(raw.customSkillDirs??[]).some((value:string)=>!isAbsolute(value))||(raw.bundledSkillDir!==undefined?!isAbsolute(raw.bundledSkillDir):raw.includeDefaultRoots!==false))throw new BackupError('BACKUP_HOST_DEFAULTS_UNOBSERVED');
+          config=explicit;
+        }
+      }else{config=resolveSkillFilesystem(raw);assertLiteral(raw);}
       const backend=entry.context.get('fs');
       if(backend!==undefined&&!(backend instanceof LocalFileSystem))throw new BackupError('BACKUP_SKILL_FILESYSTEM_UNSUPPORTED');
-      filesystem.push({id:entry.id,mode:'host-local',config,enabled:!!active});
+      filesystem.push({id:entry.id,mode:'host-local-resolved',config,enabled:!!active});
     }
     const declared=registry.list(),live=sessions.list();
     if(declared.length>10000||live.length>10000||policy.additionalWorkspaces&&policy.additionalWorkspaces.length>10000)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');

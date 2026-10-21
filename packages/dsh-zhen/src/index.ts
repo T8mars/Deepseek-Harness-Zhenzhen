@@ -22,6 +22,7 @@ import type {} from '@deepseek-ai/dsh-skill';
 import { SkillMarket, readBundledCatalog } from './market.ts';
 import { SkillFeed } from './skill-feed.ts';
 import {hostSkillInventorySource} from './backup-host-skills.ts';
+import {SkillSourceTracker} from './backup-skill-tracker.ts';
 import type {HostSkillBackupPolicy} from './backup-host-skills.ts';
 import {skillInventoryBackupRecords} from './backup-skill-inventory.ts';
 import {BackupError} from './backup-archive.ts';
@@ -165,6 +166,7 @@ export default class ZhenService extends TypertRemoteService {
 
   constructor(ctx: Context) {
     super(ctx, 'zhen');
+    const skillSources=new SkillSourceTracker(ctx);ctx.provide('zhenSkillBackupSources',skillSources);
     this.rag=new ZhenRag(()=>this.knowledge(),dshHomePath('dsh-zhen','rag-backend.json'));
     ctx.provide('zhenRag',this.rag);
     ctx.effect(()=>()=>this.rag.close(),'zhen: local retrieval providers');
