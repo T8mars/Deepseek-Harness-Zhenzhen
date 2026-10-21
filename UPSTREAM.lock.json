@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-21T12:17:34.493Z",
+  "checkedAt": "2026-10-21T12:43:41.079Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1790,6 +1790,23 @@
       "localPassed": 622,
       "packageFiles": 163,
       "localPackageSha256": "23d23c0bc98c097d44041138a54b6269ef4b2b3061ae1df58ceeb387975acd39"
+    },
+    "documentAuthorityGuard": {
+      "decision": "0080",
+      "formats": [
+        "docx",
+        "pdf"
+      ],
+      "fixedMessages": true,
+      "rawCallbackErrorOrCauseReturned": false,
+      "targetedTests": 6,
+      "relatedPassed": 18,
+      "fullRegressionPending": false,
+      "verification": "C90 executes both production decoder wrappers with deterministic synthetic child timing. Before the fix four queued/immediate-reply cases fail and two final-close cases pass; six pass after fixed authority normalization. Existing real DOCX/PDF child cases plus C90 pass18/18. Dev50 actual main CI39600300348 failed621/622 in C51 and is retained, not rerun or reported green. New complete regression/archive/exact CI remain required. No permission, parser budget, process-close, data, Native or model changes. Complete628/628 and163-file archive pass C63/C76 full payload and actual two-version install/launcher boundaries. Previous dev50 CI failure is retained; this exact commit CI remains separately required.",
+      "localTests": 628,
+      "localPassed": 628,
+      "packageFiles": 163,
+      "localPackageSha256": "bd3d3ac9b6a4bcaee38b6557faa410fe999af82397d6cd61b37781d17efbb3d7"
     }
   }
 }

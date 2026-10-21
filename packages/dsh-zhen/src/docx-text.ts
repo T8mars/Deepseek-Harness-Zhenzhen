@@ -1,4 +1,4 @@
-import {documentFailure} from './document-error.ts';
+import {documentFailure,assertDocumentAuthority} from './document-error.ts';
 import {spawn} from 'node:child_process';import {fileURLToPath} from 'node:url';import {DOCX_LIMITS} from './docx-parse.ts';
 export {DOCX_LIMITS} from './docx-parse.ts';
 let tail=Promise.resolve(),pending=0;
@@ -10,13 +10,14 @@ function decoded(value:unknown):string {
 /** Fixed local child, binary IPC only. The archive inflater has its own bounded
  * output; heapMiB is an additional V8 limit, not an OS memory guarantee. */
 export async function extractDocxText(input:Uint8Array,assertCurrent:()=>void=()=>{},timeoutMs:number=DOCX_LIMITS.timeoutMs):Promise<string>{
+ const current=()=>assertDocumentAuthority('Word',assertCurrent);
  if(!Number.isInteger(timeoutMs)||timeoutMs<1||timeoutMs>DOCX_LIMITS.timeoutMs)throw Error('Word 处理时限无效。');if(input.byteLength>DOCX_LIMITS.inputBytes||input.byteLength<4||Buffer.from(input.buffer,input.byteOffset,4).readUInt32LE()!==0x04034b50)throw documentFailure('DOCUMENT_INVALID','不是受支持的 DOCX，或文件超出 2 MiB。');if(pending>=DOCX_LIMITS.pending)throw documentFailure('DECODER_BUSY','Word 解析正在处理其他资料，请稍后重新导入。');
  const bytes=Buffer.from(input);pending++;const previous=tail;let release!:()=>void;tail=new Promise<void>(done=>{release=done;});
- try{await previous;assertCurrent();return await new Promise<string>((resolve,reject)=>{
+ try{await previous;current();return await new Promise<string>((resolve,reject)=>{
   const env:NodeJS.ProcessEnv={};for(const key of Object.keys(process.env))if(['systemroot','windir','temp','tmp','lang','lc_all'].includes(key.toLowerCase()))env[key]=process.env[key];
   const child=spawn(process.execPath,[`--max-old-space-size=${DOCX_LIMITS.heapMiB}`,fileURLToPath(new URL('./docx-text-worker.js',import.meta.url))],{env,windowsHide:true,serialization:'advanced',stdio:['ignore','ignore','ignore','ipc']});let result:string|undefined,failure:Error|undefined;
-  const fail=(error:Error)=>{failure??=error;child.kill();},deadline=setTimeout(()=>fail(documentFailure('DECODE_TIMEOUT','Word 处理超时，未导入该文件。')),timeoutMs),authority=setInterval(()=>{try{assertCurrent();}catch{fail(Error('资料权限已变化，Word 导入已停止。'));}},50);
-  child.once('message',message=>{try{assertCurrent();result=decoded(message);}catch(error){fail(error instanceof Error?error:Error('Word 提取失败。'));}});child.once('error',()=>{failure??=documentFailure('DOCUMENT_INVALID','Word 解析进程无法启动。');});
-  child.once('close',code=>{clearTimeout(deadline);clearInterval(authority);if(!failure&&code===0&&result!==undefined){try{assertCurrent();resolve(result);return;}catch{failure=Error('资料权限已变化，Word 导入已停止。');}}reject(failure??documentFailure('DOCUMENT_INVALID','Word 文档无法读取，未导入。'));});child.send({bytes},error=>{if(error)fail(Error('Word 数据无法交给本机解析进程。'));});
+  const fail=(error:Error)=>{failure??=error;child.kill();},deadline=setTimeout(()=>fail(documentFailure('DECODE_TIMEOUT','Word 处理超时，未导入该文件。')),timeoutMs),authority=setInterval(()=>{try{current();}catch{fail(Error('资料权限已变化，Word 导入已停止。'));}},50);
+  child.once('message',message=>{try{current();result=decoded(message);}catch(error){fail(error instanceof Error?error:Error('Word 提取失败。'));}});child.once('error',()=>{failure??=documentFailure('DOCUMENT_INVALID','Word 解析进程无法启动。');});
+  child.once('close',code=>{clearTimeout(deadline);clearInterval(authority);if(!failure&&code===0&&result!==undefined){try{current();resolve(result);return;}catch{failure=Error('资料权限已变化，Word 导入已停止。');}}reject(failure??documentFailure('DOCUMENT_INVALID','Word 文档无法读取，未导入。'));});child.send({bytes},error=>{if(error)fail(Error('Word 数据无法交给本机解析进程。'));});
  });}finally{pending--;release();}
 }

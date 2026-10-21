@@ -284,6 +284,12 @@
       "liveVerified": false,
       "fullM2Complete": false,
       "verification": "C88 twelve archive and C89 thirteen actual published SDK TEMP contracts pass: encrypted streaming/authentication before restore, fork cut and informational event preservation, paged reads, owned live-session flush, source-revision/service replacement refusal, exact normalized image/file identity and candidate cleanup. No raw session/profile copying or credential-store read. Profile/machine patch/user skills/resources/RAG/UI/activation and full M2/L2 remain incomplete; complete regression/archive/exact CI are verified separately. After the first621/621 run, a real published SessionStore/JSONL interleaving deterministically reproduced late buffered events escaping disk-only revision checks. A final flush plus public live-sequence check rejects the exact red scenario; C89 now includes the25th archive/session test. Final full regression and current CI remain separately required. Final622/622 and163-file package pass C63 legacy-checkout packing and C76 actual two-version builds/installation/launcher boundaries with complete payload checks. Exact current CI remains separate."
+    },
+    {
+      "id": "document-authority-errors",
+      "status": "in-progress",
+      "liveVerified": false,
+      "verification": "C90 executes both production decoder wrappers with deterministic synthetic child timing. Before the fix four queued/immediate-reply cases fail and two final-close cases pass; six pass after fixed authority normalization. Existing real DOCX/PDF child cases plus C90 pass18/18. Dev50 actual main CI39600300348 failed621/622 in C51 and is retained, not rerun or reported green. New complete regression/archive/exact CI remain required. No permission, parser budget, process-close, data, Native or model changes. Complete628/628 and163-file archive pass C63/C76 full payload and actual two-version install/launcher boundaries. Previous dev50 CI failure is retained; this exact commit CI remains separately required."
     }
   ]
 }
