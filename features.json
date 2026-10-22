@@ -359,6 +359,12 @@
       "status": "implemented-inactive-candidate",
       "fullM2Complete": false,
       "verification": "Complete857/857, new24/related77 and179-file archive pass C63/C76 exact payload, C96 public CLI, C97 RAG, C98 home gates, C99 market/schema, C100 sources, C101 packages/Host and C102 composed profiles/packages/current framework. No package manager, module or hook runs during restore; CLI boot is a separate EXAMPLE fixture. Original PM/other state/unified restore remain incomplete; exact current CI separate."
+    },
+    {
+      "id": "host-data-root-binding",
+      "status": "implemented",
+      "fullM2Complete": false,
+      "verification": "Complete871/871, new14/related78 and179-file archive pass C63/C76 exact payload, C96 public CLI, C97 RAG, C98 home gates, C99 market/schema, C100 sources, C101 packages/Host and C102 composed profiles/packages/current framework. No package manager, module or hook runs during restore; CLI boot is a separate EXAMPLE fixture. Original PM/other state/unified restore remain incomplete; exact current CI separate. C103 verifies all19 own paths keep one startup root through env/cwd changes."
     }
   ]
 }

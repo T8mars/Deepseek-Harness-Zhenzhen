@@ -197,3 +197,8 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 ## 0091 · 实体组合后的公开CLI与Node链接
 
 C102核对公开initProfile/writeProfileManifest、createRuntimeResolution和官方CLI。标准node_modules链接及候选link依赖保留alias和同名多版本；恢复时没有PM、包入口/生命周期/包本地hook。实际CLI由EXAMPLE TEMP夹具显式启动，源包隔离后核对恢复模块、nested依赖、覆盖顺序及当前Cordis实例；候选自身不自动运行。安装层包只在公开解析表名字/版本与当前SDK一致时重绑现有安装层，归档副本保留出处，不混入已加载Host。原PM文件和真实用户Host不在此证明范围。
+
+
+## 0092 · Host启动时的数据根归属
+
+公开dsh-home-paths.dshHomePath每次调用按当前env/cwd解析绝对目录。自有服务在初始化时保存一个root，后续自有路径从它派生；不改SDK的全局解析器或环境。C103实际Host用带不同记录的另一个home验证冷/热读取、空/已有数据库、技能配置、损坏的自有画布进度仍拒绝、断开只写原DSH locator；相对home在cwd切换后保持启动归属。此证据不等于用户实例升级、Native配对/审批或完整应用恢复。

@@ -142,8 +142,10 @@ const githubCredential = credentialRef('DSH_ZHEN_GITHUB_TOKEN');
 export default class ZhenService extends TypertRemoteService {
   static inject: string[] = ['credentials'];
   private knowledgeStore?: KnowledgeStore;
-  private readonly knowledgeFile=dshHomePath('dsh-zhen','knowledge.sqlite');
-  private readonly mcpHome=dshHomePath('dsh-zhen','mcp');
+  // One Host keeps its startup data root even if another plugin changes env/cwd.
+  private readonly zhenHome=dshHomePath('dsh-zhen');
+  private readonly knowledgeFile=join(this.zhenHome,'knowledge.sqlite');
+  private readonly mcpHome=join(this.zhenHome,'mcp');
   private readonly rag:ZhenRag;
   private skillMarket?: SkillMarket;
   private skillFeed?: SkillFeed;
@@ -176,7 +178,7 @@ export default class ZhenService extends TypertRemoteService {
   constructor(ctx: Context) {
     super(ctx, 'zhen');
     const skillSources=new SkillSourceTracker(ctx);ctx.provide('zhenSkillBackupSources',skillSources);
-    this.rag=new ZhenRag(()=>this.knowledge(),dshHomePath('dsh-zhen','rag-backend.json'));
+    this.rag=new ZhenRag(()=>this.knowledge(),join(this.zhenHome,'rag-backend.json'));
     ctx.provide('zhenRag',this.rag);
     ctx.effect(()=>()=>this.rag.close(),'zhen: local retrieval providers');
     ctx.effect(() => () => { this.knowledgeStore?.close(); }, 'zhen: local knowledge');
@@ -217,7 +219,7 @@ export default class ZhenService extends TypertRemoteService {
       try { this.canvasInbox.observe(capture, this.canvasConfig(), execution.arguments, result.value); } catch { /* No raw result or user content is logged. */ }
     });
     ctx.effect(() => {
-      if (existsSync(dshHomePath('dsh-zhen', 'gateway-tasks.sqlite'))) this.tasks();
+      if (existsSync(join(this.zhenHome,'gateway-tasks.sqlite'))) this.tasks();
       const interval = setInterval(() => { void this.mediaTasks?.automatic().catch(() => {}); }, 5000); interval.unref();
       return () => clearInterval(interval);
     }, 'zhen: explicitly enabled task tracking');
@@ -311,7 +313,7 @@ export default class ZhenService extends TypertRemoteService {
     return this.knowledgeStore ??= new KnowledgeStore(this.knowledgeFile);
   }
   private capabilities(): CapabilityCatalog { return this.capabilityCatalog ??= readCapabilityCatalog(); }
-  private capabilityUpdates(): CapabilityMonitor { return this.capabilityMonitor ??= new CapabilityMonitor(dshHomePath('dsh-zhen', 'capabilities.json'), this.capabilities()); }
+  private capabilityUpdates(): CapabilityMonitor { return this.capabilityMonitor ??= new CapabilityMonitor(join(this.zhenHome,'capabilities.json'), this.capabilities()); }
   @Remote
   gatewayCatalog(): CapabilityCatalog { return structuredClone(this.capabilities()); }
   @Remote
@@ -367,8 +369,8 @@ export default class ZhenService extends TypertRemoteService {
   setKnowledgeAgentAccess(project: string, collectionId: string, enabled: boolean): void { this.knowledge().setAgentAccess(project, collectionId, enabled); }
   private market(): SkillMarket {
     if (!this.skillMarket) {
-      this.skillMarket = new SkillMarket(dshHomePath('dsh-zhen', 'skills.sqlite'), readBundledCatalog());
-      this.skillFeed = new SkillFeed(dshHomePath('dsh-zhen', 'skills-feed.json'), this.skillMarket, fetch, this.githubAccess());
+      this.skillMarket = new SkillMarket(join(this.zhenHome,'skills.sqlite'), readBundledCatalog());
+      this.skillFeed = new SkillFeed(join(this.zhenHome,'skills-feed.json'), this.skillMarket, fetch, this.githubAccess());
     }
     return this.skillMarket;
   }
@@ -407,7 +409,7 @@ export default class ZhenService extends TypertRemoteService {
   marketPauseAuto(id: string, paused: boolean): void { this.feed().pauseAutoUpdate(id, paused); }
   private updates(): UpdateMonitor {
     const baseline = { ...JSON.parse(readFileSync(new URL('../catalog/runtime.json', import.meta.url), 'utf8')), zhen: ownBundleVersion() } as UpdateBaseline;
-    return this.updateMonitor ??= new UpdateMonitor(dshHomePath('dsh-zhen', 'updates.json'), baseline, fetch, this.githubAccess());
+    return this.updateMonitor ??= new UpdateMonitor(join(this.zhenHome,'updates.json'), baseline, fetch, this.githubAccess());
   }
   private githubAccess(): GithubAccess {
     return this.githubReader ??= new GithubAccess(async () => {
@@ -440,14 +442,14 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   updatesAutomatic(enabled: boolean): void { this.updates().setAutomatic(enabled); }
   private canvasConfig(): CanvasConfig | undefined {
-    const file = dshHomePath('dsh-zhen', 'canvas.json');
+    const file = join(this.zhenHome,'canvas.json');
     if (!existsSync(file)) return undefined;
     const value: unknown = JSON.parse(readFileSync(file, 'utf8'));
     if (!value || typeof value !== 'object' || !('root' in value) || typeof value.root !== 'string' || !('digest' in value) || typeof value.digest !== 'string' || !/^[a-f0-9]{64}$/.test(value.digest) || !('instance' in value) || typeof value.instance !== 'string') return undefined;
     return { root: value.root, digest: value.digest, instance: value.instance };
   }
   private saveCanvasConfig(config?: CanvasConfig): void {
-    const file = dshHomePath('dsh-zhen', 'canvas.json');
+    const file = join(this.zhenHome,'canvas.json');
     mkdirSync(dirname(file), { recursive: true });
     const temporary = file + '.tmp';
     writeFileSync(temporary, JSON.stringify(config ?? {}) + '\n', { mode: 0o600 });
@@ -465,7 +467,7 @@ export default class ZhenService extends TypertRemoteService {
     if(!current||current.root!==config.root||current.digest!==config.digest||current.instance!==config.instance)return {...result,state:'error',code:'CONNECTION_CHANGED',message:'连接已被其他窗口更改，请点击“重新检测”，确认当前画布。',instances:[]};
     return result;
   }
-  private pairings(): CanvasPairing { return this.canvasPairing ??= new CanvasPairing(dshHomePath('dsh-zhen', 'canvas-pairing.json'), () => this.canvasConfig()); }
+  private pairings(): CanvasPairing { return this.canvasPairing ??= new CanvasPairing(join(this.zhenHome,'canvas-pairing.json'), () => this.canvasConfig()); }
   private async pairingOperation(work: () => Promise<CanvasPairingView>): Promise<CanvasPairingView> {
     try { return await work(); }
     catch (error) { const safe = safeCanvasError(error); throw new RemoteError('zhen/refused', safe.message, { reason: safe.code }); }
@@ -476,7 +478,7 @@ export default class ZhenService extends TypertRemoteService {
   canvasPairingBegin(handoff = false, writable = false, runnable = false, assetTransfer = false): Promise<CanvasPairingView> { return this.pairingOperation(() => this.pairings().begin(handoff, writable, runnable, assetTransfer)); }
   @Remote
   canvasPairingComplete(): Promise<CanvasPairingView> { return this.pairingOperation(() => this.pairings().complete()); }
-  private workflows(): CanvasWorkflow { return this.canvasWorkflow ??= new CanvasWorkflow(dshHomePath('dsh-zhen', 'canvas-workflow.json'), () => this.canvasConfig()); }
+  private workflows(): CanvasWorkflow { return this.canvasWorkflow ??= new CanvasWorkflow(join(this.zhenHome,'canvas-workflow.json'), () => this.canvasConfig()); }
   private async workflowOperation<T>(run: () => T | Promise<T>): Promise<T> {
     try { return await run(); } catch (error) { const safe = safeCanvasError(error); throw new RemoteError('zhen/refused', safe.message, { reason: safe.code }); }
   }
@@ -506,7 +508,7 @@ export default class ZhenService extends TypertRemoteService {
   canvasWorkflowApprove(id: string, confirmation: boolean): Promise<CanvasWorkflowView> { return this.workflowOperation(() => this.workflows().approve(id, confirmation)); }
   @Remote
   canvasWorkflowComplete(id: string): Promise<CanvasWorkflowView> { return this.workflowOperation(() => this.workflows().complete(id)); }
-  private runs(): CanvasRuns { return this.canvasRuns ??= new CanvasRuns(dshHomePath('dsh-zhen', 'canvas-run.json'), () => this.canvasConfig()); }
+  private runs(): CanvasRuns { return this.canvasRuns ??= new CanvasRuns(join(this.zhenHome,'canvas-run.json'), () => this.canvasConfig()); }
   @Remote
   canvasRunSnapshot(): Promise<CanvasRunView | null> { return this.workflowOperation(() => this.runs().snapshot()); }
   @Remote
@@ -532,7 +534,7 @@ export default class ZhenService extends TypertRemoteService {
   canvasTaskDetail(reference: CanvasTaskReference): Promise<CanvasTaskDetail> { return this.workflowOperation(() => this.nativeTasks().detail(reference)); }
   @Remote
   canvasTargetTaskDetail(reference: CanvasTaskReference,expectedConnection:string): Promise<CanvasTaskDetail> { return this.workflowOperation(() => this.nativeTasks().detail(reference,expectedConnection)); }
-  private transfers(): CanvasTransfer { return this.canvasTransfer ??= new CanvasTransfer(dshHomePath('dsh-zhen', 'canvas-transfer.json'), () => this.canvasConfig(), id => this.media().receipt(id)); }
+  private transfers(): CanvasTransfer { return this.canvasTransfer ??= new CanvasTransfer(join(this.zhenHome,'canvas-transfer.json'), () => this.canvasConfig(), id => this.media().receipt(id)); }
   @Remote
   canvasTransferSnapshot(): Promise<CanvasTransferView | null> { return this.workflowOperation(() => this.transfers().snapshot()); }
   @Remote
@@ -594,8 +596,8 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   async disconnectCanvas(): Promise<void> { await this.mountCanvas?.(); this.saveCanvasConfig(); }
 
-  private localSkills(): LocalSkills { return this.localSkillSources ??= new LocalSkills(dshHomePath('dsh-zhen', 'local-skills.json')); }
-  private githubSkills(): GithubSkills { return this.githubSkillSources ??= new GithubSkills(dshHomePath('dsh-zhen', 'github-skills')); }
+  private localSkills(): LocalSkills { return this.localSkillSources ??= new LocalSkills(join(this.zhenHome,'local-skills.json')); }
+  private githubSkills(): GithubSkills { return this.githubSkillSources ??= new GithubSkills(join(this.zhenHome,'github-skills')); }
   private async githubOperation<T>(work: () => T | Promise<T>): Promise<T> {
     try { return await work(); }
     catch (error) { throw new RemoteError('zhen/refused', error instanceof GithubSkillError ? error.message : 'GitHub 操作暂不可用或已取消，请检查仓库是否公开及请求是否限频。', { reason: 'GITHUB_SKILL_REFUSED' }); }
@@ -718,7 +720,7 @@ export default class ZhenService extends TypertRemoteService {
   }
 
   private checks(): GatewayChecks {
-    return this.gatewayChecks ??= new GatewayChecks(dshHomePath('dsh-zhen', 'gateway-checks.sqlite'), async signal => {
+    return this.gatewayChecks ??= new GatewayChecks(join(this.zhenHome,'gateway-checks.sqlite'), async signal => {
       if (!this.ctx.llm) throw new Error('聊天服务尚未就绪。');
       return this.ctx.llm.prepareCall({ provider: 'seedance', model: GATEWAY_CHECK_MODEL, maxTokens: 32 }, signal);
     });
@@ -766,7 +768,7 @@ export default class ZhenService extends TypertRemoteService {
     this.mediaExports?.invalidate();
   }
 
-  private tasks(): GatewayTasks { return this.mediaTasks ??= new GatewayTasks(dshHomePath('dsh-zhen', 'gateway-tasks.sqlite'), async () => (await this.ctx.credentials.resolve(seedanceCredential))?.value); }
+  private tasks(): GatewayTasks { return this.mediaTasks ??= new GatewayTasks(join(this.zhenHome,'gateway-tasks.sqlite'), async () => (await this.ctx.credentials.resolve(seedanceCredential))?.value); }
   private async taskOperation<T>(run: () => T | Promise<T>): Promise<T> {
     try { return await run(); }
     catch (error) { throw new RemoteError('zhen/refused', error instanceof GatewayTaskError && error.code === 'BUSY' ? '正在查询其他任务，请稍后刷新。' : '任务记录暂时不可用，请检查编号和协议。', { reason: error instanceof GatewayTaskError ? error.code : 'UNAVAILABLE' }); }
@@ -782,7 +784,7 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   gatewayTaskRemove(id: string): Promise<void> { return this.taskOperation(() => { this.mediaExports?.revokeTask(id); this.tasks().remove(id); }); }
 
-  private media(): GatewayMedia { return this.mediaExports ??= new GatewayMedia(dshHomePath('dsh-zhen', 'media-exports'), id => this.tasks().mediaSources(id), id => this.tasks().list().some(item => item.id === id && item.status === 'succeeded')); }
+  private media(): GatewayMedia { return this.mediaExports ??= new GatewayMedia(join(this.zhenHome,'media-exports'), id => this.tasks().mediaSources(id), id => this.tasks().list().some(item => item.id === id && item.status === 'succeeded')); }
   private async mediaOperation<T>(run: () => T | Promise<T>): Promise<T> {
     try { return await run(); }
     catch (error) {
