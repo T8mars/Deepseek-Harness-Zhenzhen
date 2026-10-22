@@ -31,7 +31,14 @@ import { SkillFeed } from './skill-feed.ts';
 import {hostSkillInventorySource} from './backup-host-skills.ts';
 import {SkillSourceTracker} from './backup-skill-tracker.ts';
 import type {HostSkillBackupPolicy} from './backup-host-skills.ts';
-import {skillInventoryBackupRecords} from './backup-skill-inventory.ts';
+import {prepareSkillInventoryBackup} from './backup-skill-inventory.ts';
+import type {SkillInventoryBackupLease} from './backup-skill-inventory.ts';
+import {prepareSessionBackup} from './backup-sessions.ts';
+import type {SessionBackupLease} from './backup-sessions.ts';
+import {sessionLogExportDeps} from '@deepseek-ai/dsh-session-log-export';
+import {workspaceDomainSpec} from '@deepseek-ai/dsh-workspace';
+import {prepareWorkspaceBackup} from './backup-workspaces.ts';
+import type {WorkspaceBackupLease} from './backup-workspaces.ts';
 import {BackupError} from './backup-archive.ts';
 import type {BackupOptions,BackupRecord} from './backup-archive.ts';
 import {prepareRagBackup} from './backup-rag.ts';
@@ -393,12 +400,41 @@ export default class ZhenService extends TypertRemoteService {
   /** Host-only stream for the composed backup. Not a browser Remote: source
    * paths, backup passwords and archive bytes stay on the Host. Never construct
    * a managed service here, since its startup may activate a pending update. */
-  skillBackupRecords(policy:()=>HostSkillBackupPolicy,options:BackupOptions={}):AsyncGenerator<BackupRecord>{
-    return skillInventoryBackupRecords(()=>{
+  skillBackupLease(policy:()=>HostSkillBackupPolicy,options:BackupOptions={}):Promise<SkillInventoryBackupLease>{
+    const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value,owner=original(this);
+    return prepareSkillInventoryBackup(()=>{
+      if(original(this.ctx.get('zhen'))!==owner)throw new BackupError('BACKUP_SOURCE_CHANGED');
       const local=this.localSkillSources,github=this.githubSkillSources,market=this.skillMarket,feed=this.skillFeed;
       if(!local||!github||!market||!feed)throw new BackupError('BACKUP_HOST_SERVICES_UNAVAILABLE');
       return hostSkillInventorySource(this.ctx,{local,github,market,feed},policy());
     },options);
+  }
+  async* skillBackupRecords(policy:()=>HostSkillBackupPolicy,options:BackupOptions={}):AsyncGenerator<BackupRecord>{
+    const lease=await this.skillBackupLease(policy,options);try{yield*lease.records();}finally{lease.close();}
+  }
+  /** Public logical service reads only; never initialize missing services. */
+  sessionBackupLease(options:BackupOptions={}):Promise<SessionBackupLease>{
+    const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value,owner=original(this);
+    return prepareSessionBackup(()=>{
+      if(original(this.ctx.get('zhen'))!==owner)throw new BackupError('BACKUP_SOURCE_CHANGED');
+      const deps=sessionLogExportDeps(this.ctx);
+      if(!deps.sessionPersistence||!deps.sessionQuery||!deps.attachments)throw new BackupError('BACKUP_HOST_SERVICES_UNAVAILABLE');
+      return{sessionPersistence:deps.sessionPersistence,sessionQuery:deps.sessionQuery,attachments:deps.attachments,sessions:deps.sessions};
+    },options);
+  }
+  /** Observe the complete existing public domain, not its filtered UI list.
+   * Closing this lease only removes our listener; it never closes that domain. */
+  async workspaceBackupLease(options:BackupOptions={}):Promise<WorkspaceBackupLease>{
+    const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value,owner=original(this);let revision=0,detached=false;
+    const detach=this.ctx.on('domain/changed',change=>{if(change.domain===workspaceDomainSpec.name)revision++;}),stop=()=>{if(!detached){detached=true;detach();}};
+    try{
+      const lease=await prepareWorkspaceBackup(()=>{
+        if(original(this.ctx.get('zhen'))!==owner)throw new BackupError('BACKUP_SOURCE_CHANGED');
+        const facility=this.ctx.get('storageDomain');
+        return{facility:original(facility) as object|undefined,domain:facility?.get(workspaceDomainSpec.name),revision};
+      },options);
+      return{...lease,close(){try{lease.close();}finally{stop();}}};
+    }catch(error){stop();throw error;}
   }
   /** Host-only fixed own path, with a read-only cold source when RAG is lazy. */
   ragBackupLease(policy:()=>RagBackupPolicy,options:BackupOptions={}):Promise<RagBackupLease>{

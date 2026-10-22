@@ -219,3 +219,10 @@ C104仅读自有固定schema与Node公开SQLite/fs接口。Host owner比较沿�
 公开DirectoryPicker.capability返回稳定的native/browse判别对象，缺失/未知能力不发起选择。Native pick(signal)可不服从取消；公开BrowsePicker.list提供Host绝对path/home/crumbs/entries及布尔truncated，不能把未知完整性默认false。C107真实公开服务/Owner和TEMP BrowsePicker核对，派发前及返回前再次比较提供者身份；超时仍保留未结束槽位，防止重复窗口/资源失控。客户端不借workspace专用流程创建目录或工作区，不拼接远端路径，选择不等于父动作授权。C108为真实生产处理器/SSR证明而非浏览器或系统窗口。C109真实AgentLoop验证MCP返回错误后的同一导航工具；三次真实Flash使用EXAMPLE状态，不涉及真实Native实例。无上游协议/源码改动。
 
 0095焦点负例要求按钮提交为启用后再focus；React effect仅在相同API/作用域且未禁用时回焦。C108使用显式提交状态替身验证顺序，仍不是DOM/系统窗口验收。package.json采用统一JSON格式，使两版本测试的stable归档与正式pack逐字节相同；没有只比较内部载荷而忽略manifest。
+
+
+## 0096 · 组合末尾来源与公开工作区域
+
+C110核对SessionPersistence.identity通过Context包装保持稳定，公开list/stat revision及SessionStore.flush/seq在流后仍可用于总容器检查；原生sessionLogExportDeps/sessionLogZipEntries提供逻辑日志与附件，不读私有布局。查询/附件/会话提供者取公开symbols.original作身份；实际Host卸载拒绝旧lease。附件必须核内容寻址摘要，未知元数据或数据流异常不透传。技能保留完整库存、源提供者及既有skillResourceRevision，跨组件再验证资源和策略；不构造缺失管理器。
+
+C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/changed；get只取已开域，undefined不表示磁盘无数据。实际Host事件计数、完整已开库存、SDK schema及Storage/JSON/Domain独立候选经真实TEMP核对。顺序、default、归档、置顶、initialized与两种pending均保留，不用filtered registry.list。pending嵌套schema由已发布两个分支派生为strict，合同核两分支数量及create/delete，不静默丢字段。恢复只写新的公共SDK域，不启动WorkspaceRegistry或执行pending。来源目录/冷域/当前用户数据及全应用恢复不在该候选证明范围；没有读取SDK私有字段、修改SDK/上游/画布或调用模型。

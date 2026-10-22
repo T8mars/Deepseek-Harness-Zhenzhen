@@ -102,3 +102,16 @@ test('C94: unloading or disabling an entry after the manifest refuses final arch
   const records=(async function*(){for await(const record of service.skillBackupRecords(()=>f.policy)){yield record;if(record.metadata.kind==='skill-inventory'){await entry.update({disabled:true});await f.ctx.loader.await();}}})();
   await assert.rejects(writeBackupArchive(archive,password,records),error=>error.code==='BACKUP_SOURCE_CHANGED');assert.equal(existsSync(archive),false);
 });
+
+test('C110-host: the actual Host retains a complete skill source until an outer final check',async t=>{
+ const f=await fixture(t);f.ctx.provide('credentials',{});const entry=await f.create();await f.ctx.plugin(ZhenService);const service=f.ctx.get('zhen');service.marketFeedSnapshot();const lease=await service.skillBackupLease(()=>f.policy);
+ try{for await(const item of lease.records())for await(const _bytes of item.data){}await lease.assertCurrent();await entry.update({disabled:true});await f.ctx.loader.await();await assert.rejects(lease.assertCurrent(),{code:'BACKUP_SOURCE_CHANGED'});}finally{lease.close();}
+});
+test('C110-host: retained Host methods refuse missing services without creating skill or session stores',async t=>{
+ const f=await fixture(t,{skills:false});f.ctx.provide('credentials',{});await f.ctx.plugin(ZhenService);const service=f.ctx.get('zhen');await assert.rejects(service.skillBackupLease(()=>f.policy),{code:'BACKUP_HOST_SERVICES_UNAVAILABLE'});await assert.rejects(service.sessionBackupLease(),{code:'BACKUP_HOST_SERVICES_UNAVAILABLE'});assert.equal(existsSync(join(f.home,'dsh-zhen','skills.sqlite')),false);assert.equal(existsSync(join(f.home,'sessions')),false);
+});
+test('C110-host: the retained skill source belongs to the original Host even when provider data is unchanged',async t=>{
+ const f=await fixture(t);f.ctx.provide('credentials',{});await f.create();const host=await f.ctx.plugin(ZhenService),service=f.ctx.get('zhen');service.marketFeedSnapshot();const lease=await service.skillBackupLease(()=>f.policy);
+ try{for await(const item of lease.records())for await(const _bytes of item.data){}await host.dispose();await assert.rejects(lease.assertCurrent(),{code:'BACKUP_SOURCE_CHANGED'});}finally{lease.close();}
+ console.log(JSON.stringify({contract:'C110-host',actualOwnHostRetainedSkills:true,coldServicesNotInitialized:true,sourceOwnershipProtected:true,providerRootsAndEntryChangesProtected:true,nativeWrites:0,modelRequests:0}));
+});

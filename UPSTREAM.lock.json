@@ -2088,6 +2088,33 @@
       "localPassed": 971,
       "packageFiles": 188,
       "localPackageSha256": "2a942d97ea9ea70ea95843114d657cb9147df3dd7e9c29ebb9fa82aa7662b01c"
+    },
+    "retainedBackupAndWorkspaces": {
+      "decision": "0096-retained-backup-and-workspaces",
+      "sessionLease": "prepareSessionBackup",
+      "skillLease": "prepareSkillInventoryBackup",
+      "workspaceLease": "prepareWorkspaceBackup",
+      "workspaceSchema": "dsh-zhen-workspaces-v1",
+      "sdk": "0.2.1-rc.2",
+      "hostOnly": true,
+      "sourceDirectoriesIncluded": false,
+      "coldWorkspaceUnavailable": true,
+      "maxWorkspaces": 10000,
+      "maxSessionRefs": 100000,
+      "maxWorkspaceDocumentBytes": 33554432,
+      "targetedTests": 49,
+      "relatedPassed": 106,
+      "fullRegressionPending": false,
+      "activated": false,
+      "wholeApplicationRestore": false,
+      "modelRequests": 0,
+      "nativeRequests": 0,
+      "nativeWrites": 0,
+      "verification": "Complete1020/1020, new49/related106 and189-file archive pass. C110 verifies retained public session/attachment and complete own skill sources, actual Host ownership, late changes, fixed errors and attachment digests. C111 verifies the full open public workspace domain, original order/archive/pins/create-delete pending and actual SDK inactive candidate restoration; actual Host event tracking and cold refusal pass. Existing C63/C76/C96-C109 proofs pass. Cold workspace data, unified restore/path mapping/activation UI and original scope remain incomplete; live user Host stays0093. No user data, Native or model calls. Exact current CI separate.",
+      "localTests": 1020,
+      "localPassed": 1020,
+      "packageFiles": 189,
+      "localPackageSha256": "ded58d59506c3db688c0d533cb998ddff101eb9a8af53ac72fc25e8cfa7d0833"
     }
   }
 }

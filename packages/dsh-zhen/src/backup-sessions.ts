@@ -1,4 +1,4 @@
-import {Context} from '@deepseek-ai/cordis';
+import {Context,symbols} from '@deepseek-ai/cordis';
 import Sessions,{SessionLogOffset} from '@deepseek-ai/dsh-session';
 import type {SessionEvent,SessionHeader} from '@deepseek-ai/dsh-session';
 import {assertContiguous,assertVersion,materializeCreateHeader,validateStoredEvents} from '@deepseek-ai/dsh-session-persistence';
@@ -50,54 +50,78 @@ async function sessionText(deps:SessionLogExportReady,header:SessionHeader,signa
   }finally{await handle.close();}
 }
 
-/** Public logical reads only. The final revision barrier runs before archive publication. */
-export async function* sessionBackupRecords(resolve:()=>SessionLogExportReady,options:BackupOptions={}):AsyncGenerator<BackupRecord>{
-  const deps=resolve(),identity=deps.sessionPersistence.identity;
-  const sameSource=()=>{options.signal?.throwIfAborted();if(resolve().sessionPersistence.identity!==identity)throw new BackupError('BACKUP_SOURCE_CHANGED');};
+/** Retain until every component has passed its final source check. No source
+ * files, private persistence layout, or credential store is opened directly. */
+export interface SessionBackupLease {records():AsyncGenerator<BackupRecord>;assertCurrent():Promise<void>;close():void;}
+export async function prepareSessionBackup(resolve:()=>SessionLogExportReady,options:BackupOptions={}):Promise<SessionBackupLease>{
+  const controller=new AbortController(),signal=options.signal?AbortSignal.any([options.signal,controller.signal]):controller.signal;
+  options={...options,signal,...options.limits?{limits:{...options.limits}}:{}};
+  let closed=false,used=false;
+  const check=()=>{if(closed)throw new BackupError('BACKUP_SESSION_LEASE_CLOSED');signal.throwIfAborted();};
+  const fail=(error:unknown):never=>{check();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_SESSION_READ_FAILED');};
+  const read=async<T>(operation:()=>T|Promise<T>):Promise<T>=>{try{check();return await operation();}catch(error){return fail(error);}};
+  const deps=await read(resolve);
+  const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value;
+  const {identity,owners}=await read(()=>({identity:deps.sessionPersistence.identity,owners:[deps.sessionQuery,deps.attachments,deps.sessions].map(original)}));
+  const sameSource=()=>{check();let current:SessionLogExportReady;try{current=resolve();if(current.sessionPersistence.identity!==identity||[current.sessionQuery,current.attachments,current.sessions].some((value,index)=>original(value)!==owners[index]))throw new BackupError('BACKUP_SOURCE_CHANGED');}catch(error){fail(error);}};
   const flush=async()=>{
     if(deps.sessions)for(const session of deps.sessions.list()){
-      options.signal?.throwIfAborted();if(!await deps.sessions.flush(session))throw new BackupError('BACKUP_LIVE_FLUSH_UNAVAILABLE');
+      sameSource();if(!await deps.sessions.flush(session))throw new BackupError('BACKUP_LIVE_FLUSH_UNAVAILABLE');
     }
     await deps.sessionPersistence.flush();sameSource();
   };
-  await flush();
-  const liveSequences=new Map(deps.sessions?.list().map(session=>[session.id,session.seq])??[]);
-  const snapshots=await deps.sessionPersistence.list({signal:options.signal});
+  try{await flush();}catch(error){return fail(error);}
+  const liveSequences=await read(()=>new Map(deps.sessions?.list().map(session=>[session.id,session.seq])??[]));
+  const snapshots=await read(()=>deps.sessionPersistence.list({signal}));
+  sameSource();
   if(snapshots.length>MAX_SESSIONS)throw new BackupError('BACKUP_SESSION_COUNT_LIMIT');
   const revisions=new Map(snapshots.map(value=>[value.header.id,value.revision]));
   if(revisions.size!==snapshots.length)throw new BackupError('BACKUP_SESSION_ID_CONFLICT');
   if(deps.sessions?.list().some(session=>!revisions.has(session.id)))throw new BackupError('BACKUP_LIVE_SESSION_UNPERSISTED');
-  yield record({kind:'manifest',scope:SCOPE,sessions:snapshots.length,credentialStoresIncluded:false},Buffer.alloc(0));
-  const attachments=new Map<string,Ref>();
-  for(const snapshot of snapshots){
-    sameSource();if(snapshot.formatStatus==='migration-required')throw new BackupError('BACKUP_SESSION_MIGRATION_REQUIRED');
-    const saved=await sessionText(deps,snapshot.header,options.signal);
-    yield record({kind:'session',header:saved.header,inheritedEventCount:saved.inheritedEventCount,eventCount:saved.eventCount},Buffer.from(saved.text));
-    let observed:Ref|undefined,logs=0;
-    const reader={...deps,attachments:observedAttachments(deps.attachments,ref=>{observed=ref;})};
-    for await(const entry of sessionLogZipEntries(reader,saved.text,saved.header.id,false,options.signal)){
-      sameSource();
-      if('content'in entry){if(++logs!==1||entry.content!==saved.text)throw new BackupError('BACKUP_EXPORT_CONTRACT_CHANGED');continue;}
-      const ref=observed;observed=undefined;if(!ref)throw new BackupError('BACKUP_EXPORT_CONTRACT_CHANGED');
-      const key=refKey(ref),previous=attachments.get(key);
-      if(previous){assertSameReference(previous,ref);continue;}
-      if(attachments.size>=MAX_ATTACHMENTS)throw new BackupError('BACKUP_ATTACHMENT_COUNT_LIMIT');
-      attachments.set(key,ref);
-      if(ref.kind==='image'){
-        imageSchema.parse(ref.ref);if(!('data'in entry)||entry.data.length!==ref.ref.bytes)throw new BackupError('BACKUP_EXPORT_CONTRACT_CHANGED');
-        yield record({kind:'image',ref:ref.ref},entry.data);
-      }else{
-        fileSchema.parse(ref.ref);if(!('chunks'in entry))throw new BackupError('BACKUP_EXPORT_CONTRACT_CHANGED');
-        yield {metadata:{kind:'file',ref:ref.ref},size:ref.ref.bytes,data:entry.chunks};
+  const assertCurrent=async()=>{try{
+    sameSource();await flush();const final=await deps.sessionPersistence.list({signal});sameSource();
+    if(final.length!==revisions.size||final.some(value=>revisions.get(value.header.id)!==value.revision)||deps.sessions?.list().some(session=>!revisions.has(session.id)||liveSequences.get(session.id)!==session.seq))throw new BackupError('BACKUP_SOURCE_CHANGED');
+  }catch(error){fail(error);}};
+  return {assertCurrent,close(){if(!closed){closed=true;controller.abort();}},async*records(){
+    check();if(used)throw new BackupError('BACKUP_SESSION_STREAM_USED');used=true;
+    try{
+      await assertCurrent();
+      yield record({kind:'manifest',scope:SCOPE,sessions:snapshots.length,credentialStoresIncluded:false},Buffer.alloc(0));
+      const attachments=new Map<string,Ref>();
+      for(const snapshot of snapshots){
+        sameSource();if(snapshot.formatStatus==='migration-required')throw new BackupError('BACKUP_SESSION_MIGRATION_REQUIRED');
+        const saved=await sessionText(deps,snapshot.header,signal);
+        yield record({kind:'session',header:saved.header,inheritedEventCount:saved.inheritedEventCount,eventCount:saved.eventCount},Buffer.from(saved.text));
+        let observed:Ref|undefined,logs=0;
+        const reader={...deps,attachments:observedAttachments(deps.attachments,ref=>{observed=ref;})};
+        for await(const entry of sessionLogZipEntries(reader,saved.text,saved.header.id,false,signal)){
+          sameSource();
+          if('content'in entry){if(++logs!==1||entry.content!==saved.text)throw new BackupError('BACKUP_EXPORT_CONTRACT_CHANGED');continue;}
+          const ref=observed;observed=undefined;if(!ref)throw new BackupError('BACKUP_EXPORT_CONTRACT_CHANGED');
+          const key=refKey(ref),previous=attachments.get(key);
+          if(previous){assertSameReference(previous,ref);continue;}
+          if(attachments.size>=MAX_ATTACHMENTS)throw new BackupError('BACKUP_ATTACHMENT_COUNT_LIMIT');
+          attachments.set(key,ref);
+          if(ref.kind==='image'){
+            imageSchema.parse(ref.ref);if(!('data'in entry)||entry.data.length!==ref.ref.bytes)throw new BackupError('BACKUP_EXPORT_CONTRACT_CHANGED');
+            if('sha256:'+createHash('sha256').update(entry.data).digest('hex')!==ref.ref.attachmentId)throw new BackupError('BACKUP_ATTACHMENT_DIGEST_MISMATCH');
+            yield record({kind:'image',ref:ref.ref},entry.data);
+          }else{
+            fileSchema.parse(ref.ref);if(!('chunks'in entry))throw new BackupError('BACKUP_EXPORT_CONTRACT_CHANGED');
+            const data=(async function*(){try{const hash=createHash('sha256');for await(const bytes of entry.chunks){sameSource();hash.update(bytes);yield bytes;}sameSource();if('sha256:'+hash.digest('hex')!==ref.ref.attachmentId)throw new BackupError('BACKUP_ATTACHMENT_DIGEST_MISMATCH');}catch(error){fail(error);}})();
+            yield {metadata:{kind:'file',ref:ref.ref},size:ref.ref.bytes,data};
+          }
+        }
+        if(logs!==1)throw new BackupError('BACKUP_EXPORT_CONTRACT_CHANGED');
+        sameSource();const after=await deps.sessionPersistence.stat(snapshot.header.id,{signal});
+        if(after?.revision!==snapshot.revision)throw new BackupError('BACKUP_SOURCE_CHANGED');
       }
-    }
-    if(logs!==1)throw new BackupError('BACKUP_EXPORT_CONTRACT_CHANGED');
-    sameSource();const after=await deps.sessionPersistence.stat(snapshot.header.id,{signal:options.signal});
-    if(after?.revision!==snapshot.revision)throw new BackupError('BACKUP_SOURCE_CHANGED');
-  }
-  await flush();const final=await deps.sessionPersistence.list({signal:options.signal});
-  if(final.length!==revisions.size||final.some(value=>revisions.get(value.header.id)!==value.revision)||deps.sessions?.list().some(session=>!revisions.has(session.id)||liveSequences.get(session.id)!==session.seq))throw new BackupError('BACKUP_SOURCE_CHANGED');
-  sameSource();
+      await assertCurrent();
+    }catch(error){fail(error);}
+  }};
+}
+export async function* sessionBackupRecords(resolve:()=>SessionLogExportReady,options:BackupOptions={}):AsyncGenerator<BackupRecord>{
+  const lease=await prepareSessionBackup(resolve,options);try{yield*lease.records();}finally{lease.close();}
 }
 export async function writeSessionBackup(destination:string,password:string,resolve:()=>SessionLogExportReady,options:BackupOptions={}):Promise<BackupReceipt>{
   return writeBackupArchive(destination,password,sessionBackupRecords(resolve,options),options);

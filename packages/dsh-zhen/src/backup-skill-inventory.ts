@@ -1,4 +1,5 @@
 import {createHash} from 'node:crypto';
+import {symbols} from '@deepseek-ai/cordis';
 import {access,lstat,realpath,rm,writeFile,mkdir,open} from 'node:fs/promises';
 import {dirname,isAbsolute,join,resolve,posix,win32,relative} from 'node:path';
 import {resolveDshHome,resolveAgentsHome} from '@deepseek-ai/dsh-home-paths';
@@ -7,7 +8,7 @@ import {z} from 'zod';
 import {BackupError,openBackupArchive,writeBackupArchive} from './backup-archive.ts';
 import type {BackupRecord,BackupOptions,BackupReceipt} from './backup-archive.ts';
 import {backupJsonString,parseBackupJson} from './backup-data.ts';
-import {skillBackupRecords,restoreAuthenticatedSkillRecords} from './backup-skills.ts';
+import {skillBackupRecords,skillResourceRevision,restoreAuthenticatedSkillRecords} from './backup-skills.ts';
 import type {SkillBackupRoot,SkillBackupSelection,SkillRestoreCandidate} from './backup-skills.ts';
 import type {LocalSkills} from './local-skills.ts';
 import type {GithubSkills} from './github-skills.ts';
@@ -108,14 +109,35 @@ export async function collectSkillBackupInventory(source:SkillInventorySource,op
   if(Buffer.byteLength(backupJsonString(document))>MAX_STATE)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');
   return {document,selection:{roots:document.roots,protectedContainers:[...protectedContainers,...filesystem.flatMap(row=>[row.config.dshHome,row.config.agentsHome]),...projects.map(row=>row.projectRoot)],forbiddenTrees}};
 }
+export interface SkillInventoryBackupLease {document:SkillBackupInventory;records():AsyncGenerator<BackupRecord>;assertCurrent():Promise<void>;close():void;}
+export async function prepareSkillInventoryBackup(resolveSource:()=>SkillInventorySource,options:BackupOptions={}):Promise<SkillInventoryBackupLease>{
+  const controller=new AbortController(),signal=options.signal?AbortSignal.any([options.signal,controller.signal]):controller.signal;
+  options={...options,signal,...options.limits?{limits:{...options.limits}}:{}};
+  let closed=false,used=false;
+  const check=()=>{if(closed)throw new BackupError('BACKUP_SKILL_LEASE_CLOSED');signal.throwIfAborted();};
+  const fail=(error:unknown):never=>{check();if(error instanceof BackupError)throw error;if(error instanceof Error&&error.name==='BackupError'&&(error as Error&{code?:unknown}).code==='BACKUP_MARKET_SCHEMA_UNSUPPORTED')throw new BackupError('BACKUP_MARKET_SCHEMA_UNSUPPORTED');throw new BackupError('BACKUP_SKILL_INVENTORY_READ_FAILED');};
+  const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value;
+  const capture=async()=>{try{check();const value=resolveSource(),source={...value},owners=[source.local,source.github,source.market,source.feed].map(original);return {...await collectSkillBackupInventory(source,options),owners};}catch(error){return fail(error);}};
+  const initial=await capture(),document=backupJsonString(initial.document),selection=backupJsonString(initial.selection),bytes=Buffer.from(document);
+  const resolveSelection=async()=>{const current=await capture();if(backupJsonString(current.document)!==document||backupJsonString(current.selection)!==selection||current.owners.some((value,index)=>value!==initial.owners[index]))throw new BackupError('BACKUP_SOURCE_CHANGED');return current.selection;};
+  let revision:string;try{revision=await skillResourceRevision(initial.selection,new Map(),options);await resolveSelection();}catch(error){return fail(error);}
+  const assertCurrent=async()=>{try{check();const selected=await resolveSelection();if(await skillResourceRevision(selected,new Map(),options)!==revision)throw new BackupError('BACKUP_SOURCE_CHANGED');await resolveSelection();}catch(error){fail(error);}};
+  return {document:structuredClone(initial.document),assertCurrent,close(){if(!closed){closed=true;controller.abort();}},async*records(){
+    check();if(used)throw new BackupError('BACKUP_SKILL_STREAM_USED');used=true;
+    try{
+      const selected=await resolveSelection();
+      if(await skillResourceRevision(selected,new Map(),options)!==revision)throw new BackupError('BACKUP_SOURCE_CHANGED');
+      yield {metadata:{kind:'skill-inventory',schema:SCHEMA},size:bytes.length,data:(async function*(){check();yield bytes;})()};
+      for await(const item of skillBackupRecords(()=>selected,options)){
+        const data=(async function*(){try{check();for await(const bytes of item.data){check();yield bytes;}check();}catch(error){fail(error);}})();
+        yield {...item,data};
+      }
+      await resolveSelection();
+    }catch(error){fail(error);}
+  }};
+}
 export async function* skillInventoryBackupRecords(resolveSource:()=>SkillInventorySource,options:BackupOptions={}):AsyncGenerator<BackupRecord>{
-  const capture=async()=>{try{return await collectSkillBackupInventory(resolveSource(),options);}catch(error){options.signal?.throwIfAborted();if(error instanceof BackupError)throw error;if(error instanceof Error&&error.name==='BackupError'&&(error as Error&{code?:unknown}).code==='BACKUP_MARKET_SCHEMA_UNSUPPORTED')throw new BackupError('BACKUP_MARKET_SCHEMA_UNSUPPORTED');throw new BackupError('BACKUP_SKILL_INVENTORY_READ_FAILED');}};
-  const initial=await capture(),bytes=Buffer.from(backupJsonString(initial.document));
-  yield {metadata:{kind:'skill-inventory',schema:SCHEMA},size:bytes.length,data:(async function*(){yield bytes;})()};
-  const resolveSelection=async()=>{const current=await capture();if(backupJsonString(current.document)!==backupJsonString(initial.document)||backupJsonString(current.selection)!==backupJsonString(initial.selection))throw new BackupError('BACKUP_SOURCE_CHANGED');return current.selection;};
-  // Root membership and managed-state changes are checked around the complete
-  // resource stream, including providers whose visible catalog has not changed.
-  const selection=await resolveSelection();yield* skillBackupRecords(()=>selection,options);await resolveSelection();
+  const lease=await prepareSkillInventoryBackup(resolveSource,options);try{yield*lease.records();}finally{lease.close();}
 }
 export async function writeSkillInventoryBackup(destination:string,password:string,source:()=>SkillInventorySource,options:BackupOptions={}):Promise<BackupReceipt>{return writeBackupArchive(destination,password,skillInventoryBackupRecords(source,options),options);}
 export interface SkillInventoryRestoreCandidate extends SkillRestoreCandidate{

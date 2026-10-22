@@ -1,6 +1,18 @@
 # 加密备份与还原
 
-当前提供 Host 库入口 `dsh-zhen/backup`，范围是公开持久化服务中的会话及其引用的本地附件。它是完整备份工作的基础，**尚不包含 profile、机器配置、用户技能、RAG 或界面入口，不能作为完整 M2/L2 还原验收**。
+当前提供 Host 库入口 `dsh-zhen/backup`，已有会话/附件、公开配置、软件包、完整技能库存、RAG、部分自有记录和已打开工作区域的备份与独立恢复候选。它们尚未装配为一键备份、统一预览、路径回绑和候选激活界面，**不能作为完整 M2/L2 还原验收**。
+
+| 已有 Host 入口 | 范围 | 当前限制 |
+| --- | --- | --- |
+| writeSessionBackup / restoreSessionBackup | 全部公开存储会话、分叉和引用附件 | 不恢复 Agent 执行；候选未激活 |
+| writeProfileBackup / restoreProfileBackup | 公开 profile 清单、机器 patch、配置覆盖及兼容记录 | 原凭据不含；Desktop 仍需专用入口；不启用候选 |
+| writeProfilePackageBackup / restoreProfilePackageBackup | 配置与完整已选软件包资源、公开依赖路由及离线装配 | 不运行包管理器、脚本或旧 SDK；原工具专有 PM 文件未捕获 |
+| writeSkillInventoryBackup / restoreSkillInventoryBackup | 全部声明根、被遮盖/禁用定义、保留版本、个人副本和管理状态 | 本地/GitHub/feed 候选保留；不自动启用或下载 |
+| writeRagBackup / restoreRagBackup | 自有逻辑表、FTS 重建、引用身份与已选来源资源 | 路径与授权仍需整体回绑、审阅 |
+| writeOwnedStateBackup / restoreOwnedStateBackup | 自有 checks/tasks/media 和已选导出文件 | 不包含其余 MCP/画布/更新等自有状态；旧记录不授权执行 |
+| writeWorkspaceBackup / restoreWorkspaceBackup | 已打开公开域的全部记录、顺序、归档、置顶及待变更 | 冷域明确不可用；只含目录引用，不含这些目录的项目文件 |
+
+这些是组合备份的组件，不是同一份完整应用归档。恢复均生成独立、未启用的候选；组件成功不能证明全应用已经恢复或当前用户资料已经通过灾难恢复验收。
 
 ## 已实现的会话范围
 
@@ -9,6 +21,17 @@
 - 使用已发布 `sessionLogZipEntries` 收集规范事件中的附件，引用仍由原 SDK 判定。任意插件数据里的同名字段不被猜成附件或文件路径。
 - 通过本地附件服务读写文件；规范化图片使用公开 `commitPreparedImageFile` 和读取验证保留原始身份，不重新压缩、不改写事件中的引用。当前明确支持已发布本地后端的 `sha256:` 身份。
 - 备份前后执行持久化屏障，比较同一实例的全部会话集合、不透明 revision 和活动会话的公开事件序号；事件仍在缓冲区也会拒绝。源内容变化、服务被替换或活动会话尚无持久化所有者时拒绝发布，不静默遗漏。
+- 附件按引用 SHA-256 核对实际图像和文件流字节；读取失败不把内部路径或底层异常消息作为可展示错误。
+
+## 组合末尾的来源检查
+
+prepareSessionBackup、prepareSkillInventoryBackup 和 prepareWorkspaceBackup 返回 Host-only 的 records()、assertCurrent()、close()。流只能消费一次，关闭可重复调用；关闭不改变原数据，也不关闭原工作区域。
+
+组合方需要保留所有来源，在最后一个组件写完后再次执行全部 assertCurrent()，再发布总归档，最后统一关闭。仅消费完某一组件的流并不能代表之后的数据仍未变化。配置、包、RAG 和自有记录已有对应保留检查入口；统一装配仍在开发。
+
+实际 ZhenService 提供 sessionBackupLease、skillBackupLease、workspaceBackupLease 等 Host 方法，未暴露成模型工具或原始浏览器 Remote。缺少服务时拒绝，不为备份初始化管理器。工作区域通过公开 domain/changed 和身份检查识别写后恢复、提供者替换及 Host 卸载；找不到已开域时不能将其视为空数据。
+
+工作区候选保留创建/删除中的待变更，且不启动 WorkspaceRegistry 完成它。未排序记录、缺失记录和 pin/archive 冲突保留并标记需要审阅，不默默修复。
 
 ## 加密与文件行为
 
@@ -47,4 +70,6 @@ const candidate=await restoreSessionBackup(
 
 C88 验证流式加密、随机性、错误密码、损坏、预算、不覆盖、取消、元数据约束及临时快照生命周期。C89 使用固定已发布 SDK 和全新系统 TEMP，验证分支继承、257 个事件分页、活动持久化屏障、未知可忽略事件、图片与文件身份、缩放前尺寸、源变化拒绝，以及缺失附件/重复 ID/未知必需事件后的清理。
 
-profile 的全部配置层、机器 patch、被同名技能遮蔽的用户技能及完整资源、依赖清单、RAG、预览、备份管理、候选激活和完整 L2 验收继续开发。仅恢复上述会话候选不等于完成这些项目，也不等于验证现有用户资料的灾难恢复。
+配置/软件包、技能、RAG 和部分自有状态的独立候选已实现，各自证据见对应决策；C110/C111 增加保留到组合末尾的来源检查及公开工作区域候选。所有这些测试都只使用 EXAMPLE TEMP 资料。
+
+冷工作区域、其余 MCP 程序/数据/维护档案与授权、DSH 自有画布计划/提交/回执和更新/美术引用等状态、统一总归档、跨组件路径及身份回绑、预览、管理与激活界面和完整 L2 验收继续开发。画布原生仓库、安装、配置或运行目录不由本 Agent 修改；所需原生变更仅通过交接文档处理。普通升级不应拿候选替换正在运行的用户服务。

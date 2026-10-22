@@ -385,6 +385,12 @@
       "liveVerified": true,
       "liveVerificationScope": "Actual Flash and AgentLoop with EXAMPLE APP_NOT_RUNNING status, then actual client parser; no real Native instance.",
       "verification": "Complete971/971, new36/related64 and188-file archive pass. C107 verifies actual public Host/Owner and BrowsePicker; C108 verifies production chooser/parent handlers and stale-result protection; C109 verifies actual AgentLoop reported-error guidance. Real Flash3 with EXAMPLE status then one help call accepted by client parser, no shell/Native calls. Existing C63/C76/C96-C106 proofs pass. Browser/native dialog and real creation, unified restore and original scope remain incomplete; live user Host stays0093. Exact current CI separate."
+    },
+    {
+      "id": "retained-backup-and-workspaces",
+      "status": "implemented-host-only-inactive-candidate",
+      "wholeApplicationRestore": false,
+      "verification": "Complete1020/1020, new49/related106 and189-file archive pass. C110 verifies retained public session/attachment and complete own skill sources, actual Host ownership, late changes, fixed errors and attachment digests. C111 verifies the full open public workspace domain, original order/archive/pins/create-delete pending and actual SDK inactive candidate restoration; actual Host event tracking and cold refusal pass. Existing C63/C76/C96-C109 proofs pass. Cold workspace data, unified restore/path mapping/activation UI and original scope remain incomplete; live user Host stays0093. No user data, Native or model calls. Exact current CI separate."
     }
   ]
 }
