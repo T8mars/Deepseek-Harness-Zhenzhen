@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T14:37:59.225Z",
+  "checkedAt": "2026-10-22T15:14:07.204Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -301,6 +301,16 @@
         "browserRenderingVerified": false,
         "userHostUpdated": false,
         "verification": "Complete1158/1158,new1/related25 and204-file code archive pass. C63/C76 exact stable payload and other canary bytes identical; package bytes unchanged from dev74. Actual public CLI install/uninstall and worker hashes pass. Built-in image_gen produced two matching dark variants of existing authorized local portraits; original light bytes/pack retained,1254x1254 RGBA each<2MiB. Actual published Gateway/client matches four hashes and six slots across159 chunks,maxJSON61670; credentials/network/browser-storage0. Separate5-file ZIP exact/private/secret audit passes. C133 prefers available v2,retains v1 and explicit pinned selection,refuses invalid newer pack. Current exact CI/browser/live Host pending; no upstream/Native changes,Seedance verification0,image_gen creation2. Whole original scope incomplete."
+      },
+      "latestLocalRuntime": {
+        "sourceCheckpoint": "v0.1.0-dev.75",
+        "installedPayloadFiles": 204,
+        "payloadSha256": "9e7b382eb9db523d4bd57cd41e4b6369e4623209f5e37e6f1c2bb3b00019ef7c",
+        "configuredPackDigest": "b0a77b9a9ffee35b827ea5077f28d37d77bdf429b868e7f93d896427c7a43ad2",
+        "publicSettingsHashPreserved": true,
+        "ownKnowledgeMetadataPreserved": true,
+        "personalBrowserStorageWritten": false,
+        "browserRenderingVerified": false
       }
     },
     "canvasSavedMedia": {
@@ -2195,6 +2205,17 @@
       "wholeApplicationRestore": false,
       "activated": false,
       "verification": "Complete1157/1157,new11/related147 and204-file archive pass. C63/C76 exact stable payload and other canary bytes identical; actual public CLI install/uninstall and worker hashes pass. C128 actual encrypted skill restore and managed service readback preserve every market row/personal version, local identity, GitHub retained release/active/pending/latest and update/disabled preferences; actual published filesystem reads all six roles with example origins unavailable and project scope preserved. C129 actual new-home ZhenService/published Owner/SkillRegistry across two starts retains pending without mounting or downloading, credentials0. C130 actual composition and public CLI dump preserve whole config, C131 unselected skills avoid old roots, C132 captured alias identity maps without module execution. Exact CI,project cwd binding,review release,activation/fullL2/browser/native pending; user Host unchanged,Native/model0."
+    },
+    "canvasInstalledMcpDiagnosis": {
+      "sourceCheckpoint": "v0.1.0-dev.75",
+      "actualInstalledStdio": true,
+      "tools": 11,
+      "code": "CLI_CHANGED",
+      "state": "needs-review",
+      "trustChanged": false,
+      "nativeBusinessRequests": 0,
+      "nativePairingRequests": 0,
+      "nativeWrites": 0
     }
   }
 }

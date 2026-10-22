@@ -1,5 +1,7 @@
 # 给画布 Agent 的 DSH 接入交接
 
+> 0105已实际换装DSH；安装的11工具MCP诊断为CLI_CHANGED/待审阅，无新增必须画布修改项。见[接入现状](canvas-agent-active-context-dsh-status.md)。
+
 > DSH接入进展：[活动定位接入状态](canvas-agent-active-context-dsh-status.md)。原生交接已落实，DSH专项21项/画布相关67项通过；真实窗口另验，本次不要求画布再次改版。
 
 > 最新：[最新更新复核](canvas-agent-v3.4.1-review.md)。GitHub已正式发布3.4.1，本机安装及运行仍为3.4.0；此前活动定位交接已落实，原生限定15/15通过，配套CLI精确握手成功。DSH仍停在旧CLI信任，DSH自行接入新接口；本次没有新增必须画布修改的代码项。

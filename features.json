@@ -446,7 +446,9 @@
       "status": "implemented-local-art-pack",
       "liveVerified": false,
       "publicRastersPublished": false,
-      "verification": "Complete1158/1158,new1/related25 and204-file code archive pass. C63/C76 exact stable payload and other canary bytes identical; package bytes unchanged from dev74. Actual public CLI install/uninstall and worker hashes pass. Built-in image_gen produced two matching dark variants of existing authorized local portraits; original light bytes/pack retained,1254x1254 RGBA each<2MiB. Actual published Gateway/client matches four hashes and six slots across159 chunks,maxJSON61670; credentials/network/browser-storage0. Separate5-file ZIP exact/private/secret audit passes. C133 prefers available v2,retains v1 and explicit pinned selection,refuses invalid newer pack. Current exact CI/browser/live Host pending; no upstream/Native changes,Seedance verification0,image_gen creation2. Whole original scope incomplete."
+      "verification": "Complete1158/1158,new1/related25 and204-file code archive pass. C63/C76 exact stable payload and other canary bytes identical; package bytes unchanged from dev74. Actual public CLI install/uninstall and worker hashes pass. Built-in image_gen produced two matching dark variants of existing authorized local portraits; original light bytes/pack retained,1254x1254 RGBA each<2MiB. Actual published Gateway/client matches four hashes and six slots across159 chunks,maxJSON61670; credentials/network/browser-storage0. Separate5-file ZIP exact/private/secret audit passes. C133 prefers available v2,retains v1 and explicit pinned selection,refuses invalid newer pack. Current exact CI/browser/live Host pending; no upstream/Native changes,Seedance verification0,image_gen creation2. Whole original scope incomplete.",
+      "runtimeInstalled": true,
+      "runtimeVerificationScope": "0105 actual public CLI update and204 installed-file hashes,configured pack selection and preserved settings/own data metadata; actual browser remains unverified."
     }
   ]
 }
