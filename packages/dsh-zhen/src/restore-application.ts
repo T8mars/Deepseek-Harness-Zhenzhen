@@ -19,12 +19,15 @@ import type {RagRestoreCandidate} from './backup-rag.ts';
 import {prepareRestoredSkills} from './restore-skills.ts';
 import type {SkillApplicationReceipt} from './restore-skills.ts';
 import type {SkillInventoryRestoreCandidate} from './backup-skill-inventory.ts';
+import {prepareRestoredSessions} from './restore-sessions.ts';
+import type {SessionDirectoryBinding,SessionApplicationReceipt} from './restore-sessions.ts';
+import type {SessionRestoreCandidate} from './backup-sessions.ts';
 
-export interface ApplicationRestoreOptions {installAnchor:string;}
-export interface ApplicationRestoreParts {knowledge?:RagRestoreCandidate;skills?:SkillInventoryRestoreCandidate;}
+export interface ApplicationRestoreOptions {installAnchor:string;sessionDirectories?:readonly SessionDirectoryBinding[];}
+export interface ApplicationRestoreParts {knowledge?:RagRestoreCandidate;skills?:SkillInventoryRestoreCandidate;sessions?:SessionRestoreCandidate;}
 export interface ApplicationRestoreProfile {
   name:string;originName:string;overlay:string|null;
-  bindings:Array<{id:string;module:string;role:'sessions'|'attachmentsHome'|'workspaceStorage';target:string}>;
+  bindings:Array<{id:string;module:string;role:'sessions'|'attachmentsHome'|'workspaceStorage'|'workingDirectory';target:string}>;
   paused:Array<{id:string;module:string}>;
   reasons:string[];
   launch:{args:string[];env:{DSH_HOME:string;DSH_AGENTS_HOME:string;DSH_TELEMETRY_DISABLED:'1'};cwd:string}|null;
@@ -34,6 +37,7 @@ export interface ApplicationRestoreRecipe {
   records:Array<{kind:'checks'|'tasks'|'media';rows:number;destination:string;paused:number}>;
   knowledge:KnowledgeApplicationReceipt|null;
   skills:SkillApplicationReceipt|null;
+  sessions:SessionApplicationReceipt|null;
   profiles:ApplicationRestoreProfile[];reviewRequired:true;activated:false;readyForActivation:false;wholeApplicationRestore:false;
 }
 const MAX_FILE=8*1024**2,MAX_TOTAL=64*1024**2;
@@ -92,7 +96,7 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
   const scope=new Map(parsed.data.components.map(row=>[row.kind,row])),sessions=scope.get('sessions'),workspaces=scope.get('workspaces');
   const targets={sessions:location(sessions,'sessions')??join(home,'sessions'),attachmentsHome:location(sessions,'attachmentsHome')??home,workspaceStorage:location(workspaces,'workspaceStorage')??join(home,'storages')};
   for(const path of Object.values(targets))await owned(root,path,'directory',true);
-  const recipe:ApplicationRestoreRecipe={schema:'dsh-zhen-application-restore-v1',sdkVersion:SUPPORTED_DSH,home,agentsHome,records:[],knowledge:null,skills:null,profiles:[],reviewRequired:true,activated:false,readyForActivation:false,wholeApplicationRestore:false};
+  const recipe:ApplicationRestoreRecipe={schema:'dsh-zhen-application-restore-v1',sdkVersion:SUPPORTED_DSH,home,agentsHome,records:[],knowledge:null,skills:null,sessions:null,profiles:[],reviewRequired:true,activated:false,readyForActivation:false,wholeApplicationRestore:false};
   const ownSource=location(scope.get('records'),'ownData'),dataRoot=join(home,'dsh-zhen');let ownsData=false;
   try{
     if(ownSource||parts.knowledge||parts.skills){await mkdir(dataRoot,{mode:0o700});ownsData=true;}
@@ -102,10 +106,13 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
         try{db.exec('PRAGMA trusted_schema=OFF;');if(db.prepare('PRAGMA user_version').get()?.user_version!==1)fail('BACKUP_OWN_STATE_SCHEMA_UNSUPPORTED');const version=db.prepare('PRAGMA data_version').get()?.data_version,rows=Number(db.prepare('SELECT COUNT(*) AS total FROM '+descriptor.table).get()?.total);await backup(db,destination,{rate:256,progress:()=>signal?.throwIfAborted()});if(db.prepare('PRAGMA data_version').get()?.data_version!==version||identity(await lstat(source,{bigint:true}))!==identity(before))fail('BACKUP_SOURCE_CHANGED');const copied=new DatabaseSync(destination,{readOnly:true,allowExtension:false,enableDoubleQuotedStringLiterals:false});try{copied.exec('PRAGMA trusted_schema=OFF;');if(copied.prepare('PRAGMA user_version').get()?.user_version!==1||Number(copied.prepare('SELECT COUNT(*) AS total FROM '+descriptor.table).get()?.total)!==rows||copied.prepare('PRAGMA quick_check').get()?.quick_check!=='ok')fail('BACKUP_APPLICATION_COPY_INVALID');}finally{copied.close();}const paused=descriptor.kind==='tasks'?pauseTracking(destination):0;recipe.records.push({kind:descriptor.kind,rows,destination,paused});}finally{db.close();}
       }
     }
+    if(options.sessionDirectories?.length&&!parts.sessions)fail('BACKUP_SESSION_APPLICATION_INPUT_INVALID');
+    if(parts.sessions){const selected=scope.get('sessions');if(!selected?.details||parts.sessions.root!==selected.root||location(selected,'sessions')!==join(parts.sessions.root,'sessions')||location(selected,'attachmentsHome')!==parts.sessions.root)fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.sessions=await prepareRestoredSessions(root,home,parts.sessions,options.sessionDirectories,{signal});targets.sessions=recipe.sessions.sessionsRoot;targets.attachmentsHome=recipe.sessions.attachmentsHome;}
     if(parts.knowledge){const knowledge=scope.get('knowledge');if(!knowledge?.details||parts.knowledge.root!==knowledge.root||parts.knowledge.database!==(location(knowledge,'knowledgeDatabase')??null)||parts.knowledge.backendState!==location(knowledge,'knowledgeBackend'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.knowledge=await prepareRestoredKnowledge(root,home,parts.knowledge,{signal});}
     if(parts.skills){const skills=scope.get('skills');if(!skills?.details||parts.skills.root!==skills.root||parts.skills.market.database!==location(skills,'skillMarket')||parts.skills.managed.local.file!==location(skills,'skillLocalState'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.skills=await prepareRestoredSkills(root,home,parts.skills,{signal});}
     const cwd=join(home,'recovered-workspace');await mkdir(cwd,{mode:0o700});let outputBytes=0;
     for(const profile of environment.profiles){signal?.throwIfAborted();const row:ApplicationRestoreProfile={name:profile.name,originName:profile.originName,overlay:null,bindings:[],paused:[],reasons:['PERMISSIONS_REVIEW_REQUIRED','PROJECT_FILES_NOT_INCLUDED'],launch:null};recipe.profiles.push(row);
+      if(scope.has('sessions')&&!recipe.sessions)row.reasons.push('SESSION_HOME_REBIND_PENDING');if(recipe.sessions?.unmappedSessions)row.reasons.push('SESSION_DIRECTORIES_REVIEW_REQUIRED');
       if(!scope.has('sessions'))row.reasons.push('SESSIONS_NOT_SELECTED');if(!scope.has('workspaces'))row.reasons.push('WORKSPACES_NOT_SELECTED');if(scope.has('knowledge'))row.reasons.push(...recipe.knowledge?['KNOWLEDGE_PROJECT_REVIEW_REQUIRED','KNOWLEDGE_BACKEND_REVIEW_REQUIRED']:['KNOWLEDGE_HOME_REBIND_PENDING']);if(scope.has('skills'))row.reasons.push(...recipe.skills?['SKILL_SOURCES_REVIEW_REQUIRED','SKILL_PROJECTS_REVIEW_REQUIRED']:['SKILL_HOME_REBIND_PENDING']);
       if(!profile.launchable||profile.dependencyIssues){row.reasons.push('PROFILE_NOT_LAUNCHABLE');continue;}
       try{
@@ -117,6 +124,7 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
             if(role==='sessions'){config.root=targets.sessions;config.compression=JsonlConfig({root:targets.sessions}).compression;}else if(role==='attachmentsHome')config.dshHome=targets.attachmentsHome;else config.root=targets.workspaceStorage;
             patches.push({id:item.id,name:item.name,config});row.bindings.push({id:item.id,module:item.name,role,target:targets[role]});
           }
+          if(item.name==='@deepseek-ai/dsh-working-directory'){if(item.group||item.config!==undefined&&!object(item.config)||object(item.config)&&Object.hasOwn(item.config,'__jsExpr'))fail('BACKUP_APPLICATION_CONFIG_REVIEW');patches.push({id:item.id,name:item.name,config:{...structuredClone(item.config??{}),defaultDirectory:cwd}});row.bindings.push({id:item.id,module:item.name,role:'workingDirectory',target:cwd});}
           if(item.name==='@deepseek-ai/dsh-skill-filesystem'||recipe.skills?.filesystems.some(fs=>fs.id===item.id)){
             if(item.group||item.config!==undefined&&!object(item.config)||object(item.config)&&Object.hasOwn(item.config,'__jsExpr'))fail('BACKUP_APPLICATION_CONFIG_REVIEW');
             const config=structuredClone(item.config??{}) as Record<string,unknown>,matches=recipe.skills?.filesystems.filter(fs=>fs.id===item.id)??[],fallback=recipe.skills?.filesystems.filter(fs=>fs.config.providerName===(config.providerName??'filesystem'))??[],selected=matches.length===1?matches[0]:fallback.length===1?fallback[0]:null;
@@ -129,5 +137,5 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
       }catch(error){signal?.throwIfAborted();row.bindings=[];row.paused=[];row.overlay=null;row.launch=null;row.reasons.push(error instanceof BackupError?error.code:'BACKUP_APPLICATION_PROFILE_UNAVAILABLE');}
     }
     signal?.throwIfAborted();await writeFile(join(root,'dsh-zhen-application-restore.json'),backupJsonString(recipe)+'\n',{flag:'wx',mode:0o600});return recipe;
-  }catch(error){if(ownsData){await owned(root,dataRoot,'directory');await rm(dataRoot,{recursive:true,force:true,maxRetries:3,retryDelay:100});}signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_APPLICATION_PREPARE_FAILED');}
+  }catch(error){if(recipe.sessions){await owned(root,recipe.sessions.root,'directory');await rm(recipe.sessions.root,{recursive:true,force:true,maxRetries:3,retryDelay:100});}if(ownsData){await owned(root,dataRoot,'directory');await rm(dataRoot,{recursive:true,force:true,maxRetries:3,retryDelay:100});}signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_APPLICATION_PREPARE_FAILED');}
 }

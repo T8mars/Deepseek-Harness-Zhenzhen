@@ -449,6 +449,15 @@
       "verification": "Complete1158/1158,new1/related25 and204-file code archive pass. C63/C76 exact stable payload and other canary bytes identical; package bytes unchanged from dev74. Actual public CLI install/uninstall and worker hashes pass. Built-in image_gen produced two matching dark variants of existing authorized local portraits; original light bytes/pack retained,1254x1254 RGBA each<2MiB. Actual published Gateway/client matches four hashes and six slots across159 chunks,maxJSON61670; credentials/network/browser-storage0. Separate5-file ZIP exact/private/secret audit passes. C133 prefers available v2,retains v1 and explicit pinned selection,refuses invalid newer pack. Current exact CI/browser/live Host pending; no upstream/Native changes,Seedance verification0,image_gen creation2. Whole original scope incomplete.",
       "runtimeInstalled": true,
       "runtimeVerificationScope": "0105 actual public CLI update and204 installed-file hashes,configured pack selection and preserved settings/own data metadata; actual browser remains unverified."
+    },
+    {
+      "id": "restored-session-projects",
+      "status": "implemented-inactive-host-mapping",
+      "liveVerified": false,
+      "wholeApplicationRestore": false,
+      "verification": "New13/existing24 related37/37 and clean typecheck pass. C134 actual published SDK logical session/attachment copy preserves source,immutable headers,original events,fork cut and target project bytes; directory identity drift,cancellation and303-event pagination checked. C135 actual published CLI after example origins unavailable reads mapped project file,session and attachment; whole config preserved. Controlled loader/probe disposal changes only new profile config to exact effective entries plus probe disabled; original components unchanged and used-candidate baseline invalidated. Complete1171/1171 and205-file archive pass. C63/C76 stable payload matches local,other version payloads byte-identical; actual public CLI install/uninstall and worker hashes pass. Current exact CI pending. Host-only explicit mapping; review UI,unified project bindings,permissions,activation/fullL2 pending; same tested archive installed after prior Host exit; settings and own metadata preserved,browser unverified,Native/model0.",
+      "runtimeInstalled": true,
+      "runtimeVerificationScope": "Actual normal startup and205 installed-file hashes; settings and own metadata preserved; actual browser/project use unverified."
     }
   ]
 }

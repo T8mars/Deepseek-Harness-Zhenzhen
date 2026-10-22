@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T15:14:07.204Z",
+  "checkedAt": "2026-10-22T15:57:32.056Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2216,6 +2216,14 @@
       "nativeBusinessRequests": 0,
       "nativePairingRequests": 0,
       "nativeWrites": 0
+    },
+    "sessionApplicationCopy": {
+      "schemaVersion": 1,
+      "status": "implemented-inactive-host-mapping",
+      "verification": "New13/existing24 related37/37 and clean typecheck pass. C134 actual published SDK logical session/attachment copy preserves source,immutable headers,original events,fork cut and target project bytes; directory identity drift,cancellation and303-event pagination checked. C135 actual published CLI after example origins unavailable reads mapped project file,session and attachment; whole config preserved. Controlled loader/probe disposal changes only new profile config to exact effective entries plus probe disabled; original components unchanged and used-candidate baseline invalidated. Complete1171/1171 and205-file archive pass. C63/C76 stable payload matches local,other version payloads byte-identical; actual public CLI install/uninstall and worker hashes pass. Current exact CI pending. Host-only explicit mapping; review UI,unified project bindings,permissions,activation/fullL2 pending; same tested archive installed after prior Host exit; settings and own metadata preserved,browser unverified,Native/model0.",
+      "wholeApplicationRestore": false,
+      "runtimeInstalled": true,
+      "runtimeVerificationScope": "Actual normal startup and205 installed-file hashes; settings and own metadata preserved; actual browser/project use unverified."
     }
   }
 }

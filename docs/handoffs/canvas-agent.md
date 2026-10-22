@@ -1,5 +1,7 @@
 # 给画布 Agent 的 DSH 接入交接
 
+> 0106续接已正常重启DSH并核对205安装文件；11工具MCP仍为CLI_CHANGED/待审阅，无新增必须画布修改项。见[接入现状](canvas-agent-active-context-dsh-status.md)。
+
 > 0105已实际换装DSH；安装的11工具MCP诊断为CLI_CHANGED/待审阅，无新增必须画布修改项。见[接入现状](canvas-agent-active-context-dsh-status.md)。
 
 > DSH接入进展：[活动定位接入状态](canvas-agent-active-context-dsh-status.md)。原生交接已落实，DSH专项21项/画布相关67项通过；真实窗口另验，本次不要求画布再次改版。

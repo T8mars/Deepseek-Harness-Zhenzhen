@@ -141,9 +141,17 @@ export interface SessionRestoreCandidate {scope:typeof SCOPE;root:string;session
 export async function restoreSessionBackup(source:string,password:string,parentDirectory:string,options:BackupOptions={}):Promise<SessionRestoreCandidate>{
   if(!isAbsolute(parentDirectory))throw new BackupError('BACKUP_PATH_INVALID');
   const parent=await realpath(parentDirectory),archive=await openBackupArchive(source,password,options);
+  try{return await restoreVerifiedSessionRecords(archive.records(),parent,options);}finally{await archive.close();}
+}
+
+/** Internal logical copy seam. Archive callers authenticate first; application
+ * assembly supplies records captured through the current public SDK. */
+export async function restoreVerifiedSessionRecords(input:AsyncGenerator<BackupRecord>,parentDirectory:string,options:BackupOptions={}):Promise<SessionRestoreCandidate>{
+  if(!isAbsolute(parentDirectory))throw new BackupError('BACKUP_PATH_INVALID');
+  const parent=await realpath(parentDirectory);
   let root:string|undefined,ctx:Context|undefined,complete=false;
   try{
-    const input=archive.records(),first=await input.next();if(first.done||first.value.size!==0)throw new BackupError('BACKUP_MANIFEST_INVALID');
+    const first=await input.next();if(first.done||first.value.size!==0)throw new BackupError('BACKUP_MANIFEST_INVALID');
     const manifest=manifestSchema.parse(first.value.metadata);
     root=await realpath(await mkdtemp(join(parent,'dsh-zhen-session-restore-')));ctx=new Context();
     await ctx.plugin(Sessions);await ctx.plugin(Jsonl,{root:join(root,'sessions')});await ctx.plugin(LocalAttachments,{dshHome:root});
@@ -192,7 +200,7 @@ export async function restoreSessionBackup(source:string,password:string,parentD
     complete=true;return result;
   }finally{
     try{await ctx?.fiber.dispose();}finally{
-      try{await archive.close();}finally{if(root&&!complete){const actual=await realpath(root),part=relative(parent,actual);if(!part||isAbsolute(part)||part.startsWith('..')||/[\\/]/.test(part)||!part.startsWith('dsh-zhen-session-restore-'))throw new BackupError('BACKUP_TEMP_BOUNDARY');await rm(actual,{recursive:true,force:true,maxRetries:3,retryDelay:100});}}
+      try{await input.return(undefined);}catch(error){complete=false;throw error;}finally{if(root&&!complete){const actual=await realpath(root),part=relative(parent,actual);if(!part||isAbsolute(part)||part.startsWith('..')||/[\\/]/.test(part)||!part.startsWith('dsh-zhen-session-restore-'))throw new BackupError('BACKUP_TEMP_BOUNDARY');await rm(actual,{recursive:true,force:true,maxRetries:3,retryDelay:100});}}
     }
   }
 }

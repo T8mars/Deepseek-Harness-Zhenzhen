@@ -259,3 +259,7 @@ C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/ch
 ## C128–C132：恢复应用技能来源
 
 固定已发布 SkillFilesystem 按 home/skills、项目 .dsh/skills 与 .agents/skills 以及明确 custom/bundled 目录解析。恢复资源根是独立映射，不能推定其父目录；C128用候选内目录入口，经真实提供者在示例原目录移走后读回六类来源，多个提供者及工作目录保留同一项目范围。市场、本地、GitHub、feed均为本项目服务的显式审阅模式，正常启动行为不改；C129经实际ZhenService/Owner/SkillRegistry两次启动核原状态和零挂载。C130实际公开CLI配置输出核整行覆盖，C131不选技能使用空新根，C132按已捕获条目ID处理别名而不执行模块。没有新增Remote或工具，也不读取SDK私有格式。未验证目录链接的任意文件系统支持、生产watcher、Git祖先变体或完整环境激活。
+
+## C134–C135：应用会话副本与公开目录事件
+
+固定 SDK 的持久化 open/read/append/flush、逻辑导出和附件服务构成独立复制；继承切分与全部历史保留。显式已有项目目录通过标准 `working-directory/change` 事件关联，仅写新副本，不改不可变 header 或手写会话磁盘格式。C134验证真实 WorkingDirectory 投影、附件、分支、跨页末尾、目录身份变化和取消清理。C135以真实发布 CLI 在原示例来源移走后读回当前目录与项目文件；配置整行覆盖保留其他字段。受控探针销毁令公开 loader 保存实际组合配置并标记探针 disabled，逐文件差异与精确配置均核实，原组件不改，已使用候选原基线明确失效。没有据此声称候选可无修改启动或已经具备完整应用恢复、目录审阅UI、权限和真实创作验收。

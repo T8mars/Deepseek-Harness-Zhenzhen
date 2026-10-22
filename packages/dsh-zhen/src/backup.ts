@@ -56,3 +56,6 @@ export {prepareRestoredKnowledge} from './restore-knowledge.ts';
 export type {KnowledgeApplicationReceipt} from './restore-knowledge.ts';
 export {prepareRestoredSkills,readRestoredSkillReview} from './restore-skills.ts';
 export type {SkillApplicationReceipt,RestoredSkillReview} from './restore-skills.ts';
+
+export {prepareRestoredSessions} from './restore-sessions.ts';
+export type {SessionDirectoryBinding,SessionApplicationReceipt} from './restore-sessions.ts';
