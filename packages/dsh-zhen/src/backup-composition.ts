@@ -9,13 +9,17 @@ import type {BackupOptions,BackupRecord,BackupReceipt} from './backup-archive.ts
 import {backupComponentSchema,backupLimitations} from './backup-center-schema.ts';
 import type {BackupComponent} from './backup-center-schema.ts';
 import {SUPPORTED_DSH} from './compatibility.ts';
+import {sealRecoveryCandidate} from './recovery-candidate.ts';
+import type {RecoveryBaseline} from './recovery-candidate.ts';
+import {recoverySummarySchema} from './recovery-schema.ts';
+import type {RecoverySummary} from './recovery-schema.ts';
 
 const SCHEMA='dsh-zhen-selected-backup-v1',MAX_CHUNK=4*1024**2;
 export interface BackupComponentLease {records():AsyncGenerator<BackupRecord>;assertCurrent():Promise<void>;close():void|Promise<void>;}
 export interface BackupComponentAdapter {
   available?:boolean;
   prepare(password:string,options:BackupOptions):Promise<BackupComponentLease>;
-  restore(source:string,password:string,parent:string,options:BackupOptions):Promise<{root:string}>;
+  restore(source:string,password:string,parent:string,options:BackupOptions):Promise<{root:string;summary?:RecoverySummary}>;
 }
 export type BackupAdapters=Partial<Record<BackupComponent,BackupComponentAdapter>>;
 type Progress=(phase:'preparing'|'capturing'|'verifying'|'restoring',component:BackupComponent|null,completed:number,total:number)=>void;
@@ -47,7 +51,7 @@ export async function writeComposedBackup(destination:string,password:string,sel
 }
 /** Entire outer authentication and record structure precede any restore adapter.
  * Only a new owned candidate is written. It never activates providers or tasks. */
-export async function restoreComposedBackup(source:string,password:string,parent:string,adapters:BackupAdapters,options:BackupOptions={},progress:Progress=()=>{}):Promise<{root:string;components:BackupComponent[];activated:false;wholeApplicationRestore:false}>{
+export async function restoreComposedBackup(source:string,password:string,parent:string,adapters:BackupAdapters,options:BackupOptions={},progress:Progress=()=>{}):Promise<{root:string;components:BackupComponent[];verification:RecoveryBaseline;activated:false;wholeApplicationRestore:false}>{
   if(!isAbsolute(parent))throw new BackupError('BACKUP_PATH_INVALID');const base=await realpath(tmpdir()),target=await realpath(parent),archive=await openBackupArchive(source,password,options);let temporary:string|undefined,candidate:string|undefined,complete=false;
   try{
     const records=archive.records(),first=await records.next();if(first.done||JSON.stringify(first.value.metadata)!==JSON.stringify({kind:'composition',schema:SCHEMA})||first.value.size>16384)invalid();
@@ -63,8 +67,8 @@ export async function restoreComposedBackup(source:string,password:string,parent
     // Check every nested envelope before asking any domain to create a candidate.
     for(const file of files){const sealed=await openBackupArchive(file,password,options);try{for await(const record of sealed.records())for await(const _part of record.data){options.signal?.throwIfAborted();}}finally{await sealed.close();}}
     candidate=await realpath(await mkdtemp(join(target,'dsh-zhen-recovery-')));const restored=[];
-    for(let i=0;i<selected.length;i++){progress('restoring',selected[i],i,selected.length);const item=await adapters[selected[i]]!.restore(files[i],password,candidate,options),part=relative(candidate,await realpath(item.root));if(!part||isAbsolute(part)||part.startsWith('..'))throw new BackupError('BACKUP_TEMP_BOUNDARY');restored.push({kind:selected[i],root:item.root});options.signal?.throwIfAborted();}
+    for(let i=0;i<selected.length;i++){progress('restoring',selected[i],i,selected.length);const item=await adapters[selected[i]]!.restore(files[i],password,candidate,options),part=relative(candidate,await realpath(item.root));if(!part||isAbsolute(part)||part.startsWith('..'))throw new BackupError('BACKUP_TEMP_BOUNDARY');const summary=recoverySummarySchema.safeParse(item.summary??{kind:selected[i],counts:{},warnings:['COMPONENT_DETAILS_UNAVAILABLE']});if(!summary.success||summary.data.kind!==selected[i])throw new BackupError('BACKUP_CANDIDATE_SUMMARY_INVALID');restored.push({kind:selected[i],root:item.root,summary:summary.data});options.signal?.throwIfAborted();}
     const result={root:candidate,components:selected,activated:false as const,wholeApplicationRestore:false as const};
-    await writeFile(join(candidate,'dsh-zhen-recovery.json'),JSON.stringify({...result,schema:SCHEMA,credentialStoresIncluded:false,limitations:manifest.limitations,restored})+'\n',{flag:'wx',mode:0o600});options.signal?.throwIfAborted();complete=true;return result;
+    await writeFile(join(candidate,'dsh-zhen-recovery.json'),JSON.stringify({...result,schema:SCHEMA,credentialStoresIncluded:false,limitations:manifest.limitations,restored})+'\n',{flag:'wx',mode:0o600});progress('verifying',null,selected.length,selected.length);const verification=await sealRecoveryCandidate(candidate,restored.map(row=>row.summary),options);options.signal?.throwIfAborted();complete=true;return {...result,verification};
   }finally{try{await archive.close();}finally{try{if(temporary)await removeBackupCandidate(base,temporary,'dsh-zhen-composed-input-');}finally{if(candidate&&!complete)await removeBackupCandidate(target,candidate,'dsh-zhen-recovery-');}}}
 }

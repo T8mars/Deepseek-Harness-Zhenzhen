@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T07:43:58.552Z",
+  "checkedAt": "2026-10-22T08:36:26.235Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2123,6 +2123,14 @@
       "wholeApplicationRestore": false,
       "activated": false,
       "verification": "Complete1045/1045, new25/related114 and193-file archive pass. C63/C76 independently rebuild the same payload. C112 encrypted composition and retained barriers; C113 actual Owner Gateway with bounded EXAMPLE public profile/package resolution, sessions and own RAG/records; C114 production handlers/SSR. Exact CI, real UI/full installation performance and activation remain pending. Native/model0; active user Host unchanged."
+    },
+    "recoveryCandidatePreview": {
+      "schemaVersion": 1,
+      "components": 6,
+      "persistentCatalog": false,
+      "activated": false,
+      "wholeApplicationRestore": false,
+      "verification": "Complete1069/1069, new24/related92 and197-file archive pass. C63/C76 independently rebuild the same payload. C115 actual candidate bytes and link text; C116 actual Owner profile/session/warm RAG/records, original source preserved, bounded verification/cancellation; actual full skill/workspace summaries. C117 production recovery preview handlers and stale result guards. Exact CI, real UI/full installation performance and activation remain pending. Native/model0; active user Host unchanged."
     }
   }
 }

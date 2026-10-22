@@ -1,0 +1,15 @@
+import type {ProfilePackageRestoreCandidate} from './backup-profile-packages.ts';
+import type {SessionRestoreCandidate} from './backup-sessions.ts';
+import type {SkillInventoryRestoreCandidate} from './backup-skill-inventory.ts';
+import type {RagRestoreCandidate} from './backup-rag.ts';
+import type {OwnedStateRestoreCandidate} from './backup-owned.ts';
+import type {WorkspaceRestoreCandidate} from './backup-workspaces.ts';
+import type {RecoverySummary} from './recovery-schema.ts';
+
+function output<T extends {root:string}>(candidate:T,summary:RecoverySummary):T&{summary:RecoverySummary}{return{...candidate,summary};}
+export const summarizeEnvironment=(candidate:ProfilePackageRestoreCandidate)=>output(candidate,{kind:'environment',counts:{profiles:candidate.profiles.profiles.length,packages:candidate.packages.packages.length},warnings:[...candidate.issues.length?['PACKAGE_UNAVAILABLE' as const]:[],...candidate.profiles.profiles.some(row=>!row.launch)?['PROFILE_REVIEW_REQUIRED' as const]:[],'PATH_REBINDING_REQUIRED','PERMISSIONS_REVIEW_REQUIRED']});
+export const summarizeSessions=(candidate:SessionRestoreCandidate)=>output(candidate,{kind:'sessions',counts:{sessions:candidate.sessions,images:candidate.images,files:candidate.files},warnings:['PATH_REBINDING_REQUIRED']});
+export const summarizeSkills=(candidate:SkillInventoryRestoreCandidate)=>output(candidate,{kind:'skills',counts:{skillRoots:candidate.roots.length,skillVersions:candidate.inventory.market.versions.length,files:candidate.files,missing:candidate.roots.filter(row=>!row.present).length},warnings:[...candidate.roots.some(row=>!row.present)?['SOURCE_MISSING' as const]:[],'PATH_REBINDING_REQUIRED','PERMISSIONS_REVIEW_REQUIRED']});
+export const summarizeKnowledge=(candidate:RagRestoreCandidate)=>output(candidate,{kind:'knowledge',counts:{collections:candidate.collections.length,...candidate.resources},warnings:[...candidate.resources.changed?['SOURCE_CHANGED' as const]:[],...candidate.resources.missing?['SOURCE_MISSING' as const]:[],'PATH_REBINDING_REQUIRED','PERMISSIONS_REVIEW_REQUIRED']});
+export const summarizeRecords=(candidate:OwnedStateRestoreCandidate)=>output(candidate,{kind:'records',counts:{records:candidate.document.stores.checks.rows.length+candidate.document.stores.tasks.rows.length,media:candidate.document.stores.media.rows.length,files:candidate.media.filter(row=>row.state==='present'||row.state==='changed').length,missing:candidate.media.filter(row=>row.state==='missing').length},warnings:[...candidate.media.some(row=>row.state==='excluded')?['MEDIA_EXCLUDED' as const]:[],...candidate.media.some(row=>row.state==='changed')?['SOURCE_CHANGED' as const]:[],...candidate.media.some(row=>row.state==='missing')?['SOURCE_MISSING' as const]:[],'PATH_REBINDING_REQUIRED','PERMISSIONS_REVIEW_REQUIRED']});
+export const summarizeWorkspaces=(candidate:WorkspaceRestoreCandidate)=>output(candidate,{kind:'workspaces',counts:{workspaces:candidate.workspaces},warnings:[...candidate.reviewReasons.length?['WORKSPACE_REVIEW_REQUIRED' as const]:[],'PATH_REBINDING_REQUIRED']});

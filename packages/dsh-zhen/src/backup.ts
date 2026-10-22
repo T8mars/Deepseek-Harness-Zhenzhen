@@ -2,6 +2,11 @@ export {BackupError,DEFAULT_BACKUP_LIMITS,openBackupArchive,writeBackupArchive} 
 export {writeComposedBackup,restoreComposedBackup} from './backup-composition.ts';
 export type {BackupComponentLease,BackupComponentAdapter,BackupAdapters} from './backup-composition.ts';
 export {BackupCenter} from './backup-center.ts';
+export {sealRecoveryCandidate,verifyRecoveryCandidate} from './recovery-candidate.ts';
+export type {RecoveryBaseline} from './recovery-candidate.ts';
+export {recoveryPreviewSchema,recoverySummarySchema,recoveryFactLabels,recoveryWarningLabels} from './recovery-schema.ts';
+export type {RecoveryPreview,RecoverySummary} from './recovery-schema.ts';
+export {summarizeEnvironment,summarizeSessions,summarizeSkills,summarizeKnowledge,summarizeRecords,summarizeWorkspaces} from './recovery-summary.ts';
 export {backupInfoSchema,backupJobSchema,backupCreateSchema,backupRestoreSchema,backupFilesSchema,backupComponentSchema,backupLabels,backupLimitations} from './backup-center-schema.ts';
 export type {BackupLimits,BackupOptions,BackupReceipt,BackupRecord,OpenBackupArchive} from './backup-archive.ts';
 export {prepareSessionBackup,sessionBackupRecords,writeSessionBackup,restoreSessionBackup} from './backup-sessions.ts';

@@ -1,3 +1,4 @@
+import {summarizeSkills} from '../packages/dsh-zhen/lib/backup.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,readFile,writeFile,readdir,realpath,rm,rename,copyFile} from 'node:fs/promises';
@@ -69,7 +70,7 @@ test('C93: the nearest Git marker file selects a nested project without reading 
 
 test('C93: backup includes retained market versions beyond the UI history limit and keeps their order',async t=>{
   const f=await fixture(t);for(let i=1;i<=55;i++){const item=release('2.0.'+i);f.market.offerRemoteCatalog([item]);f.market.select(item.manifest.id,item.manifest.digest,item.manifest.version);}
-  assert.equal(f.market.versions(f.initial.manifest.id).length,50);const {document}=await collectSkillBackupInventory(f.source),retained=document.market.versions.filter(row=>row.package.manifest.id===f.initial.manifest.id);assert.equal(retained.length,57);assert.equal(retained[0].package.manifest.version,'1.0.0');assert.equal(retained.at(-1).package.manifest.version,'2.0.55');
+  assert.equal(f.market.versions(f.initial.manifest.id).length,50);const {document}=await collectSkillBackupInventory(f.source),retained=document.market.versions.filter(row=>row.package.manifest.id===f.initial.manifest.id);assert.equal(retained.length,57);assert.equal(retained[0].package.manifest.version,'1.0.0');assert.equal(retained.at(-1).package.manifest.version,'2.0.55');await writeSkillInventoryBackup(f.path,password,()=>f.source);const restored=await restoreSkillInventoryBackup(f.path,password,f.parent),details=summarizeSkills(restored).summary;assert.equal(details.counts.skillVersions,document.market.versions.length);assert.ok(details.counts.skillVersions>=57);assert.ok(details.warnings.includes('PERMISSIONS_REVIEW_REQUIRED'));
 });
 
 test('C93: bundled and remote candidate union larger than one feed is preserved',async t=>{

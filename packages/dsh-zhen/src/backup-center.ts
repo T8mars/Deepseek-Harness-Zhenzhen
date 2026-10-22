@@ -6,8 +6,11 @@ import {writeComposedBackup,restoreComposedBackup} from './backup-composition.ts
 import type {BackupAdapters} from './backup-composition.ts';
 import {backupComponentSchema,backupCreateSchema,backupRestoreSchema,backupLimitations} from './backup-center-schema.ts';
 import type {BackupCreate,BackupRestore,BackupInfo,BackupFiles,BackupJob} from './backup-center-schema.ts';
+import {verifyRecoveryCandidate} from './recovery-candidate.ts';
+import type {RecoveryBaseline} from './recovery-candidate.ts';
+import type {RecoveryPreview} from './recovery-schema.ts';
 
-type Work={view:BackupJob;controller:AbortController;done:Promise<void>};
+type Work={view:BackupJob;controller:AbortController;done:Promise<void>;candidate?:RecoveryBaseline;inspection?:{controller:AbortController;promise:Promise<RecoveryPreview>};};
 const running=(view:BackupJob)=>!['succeeded','failed','cancelled'].includes(view.phase);
 /** Owner-facing local jobs only. No Agent tool, credential access, execution,
  * network request, raw error text, password storage or automatic activation. */
@@ -17,8 +20,13 @@ export class BackupCenter {
   constructor(private readonly folder:string,private readonly adapters:()=>BackupAdapters){}
   info():BackupInfo{const available=this.adapters();return{folder:this.folder,components:backupComponentSchema.options.map(id=>({id,available:!!available[id]&&available[id]!.available!==false})),limitations:[...backupLimitations],jobs:[...this.jobs.values()].map(job=>structuredClone(job.view))};}
   status(id:string):BackupJob{const job=this.jobs.get(id);if(!job)throw new BackupError('BACKUP_JOB_NOT_FOUND');return structuredClone(job.view);}
-  cancel(id:string):void{const job=this.jobs.get(id);if(!job)throw new BackupError('BACKUP_JOB_NOT_FOUND');if(running(job.view))job.controller.abort();}
-  async close():Promise<void>{this.closed=true;for(const job of this.jobs.values())if(running(job.view))job.controller.abort();await Promise.allSettled([...this.jobs.values()].map(job=>job.done));}
+  cancel(id:string):void{const job=this.jobs.get(id);if(!job)throw new BackupError('BACKUP_JOB_NOT_FOUND');if(running(job.view))job.controller.abort();job.inspection?.controller.abort();}
+  async close():Promise<void>{this.closed=true;const pending:Promise<unknown>[]=[];for(const job of this.jobs.values()){job.controller.abort();pending.push(job.done);if(job.inspection){job.inspection.controller.abort();pending.push(job.inspection.promise);}}await Promise.allSettled(pending);}
+  candidateSnapshot(id:string):RecoveryPreview{const job=this.jobs.get(id);if(!job)throw new BackupError('BACKUP_JOB_NOT_FOUND');if(job.view.phase!=='succeeded'||!job.candidate)throw new BackupError('BACKUP_CANDIDATE_NOT_READY');const value=job.candidate;return{root:value.root,createdAt:value.createdAt,checkedAt:null,integrity:'at-creation',files:value.files,bytes:value.bytes,links:value.links,components:structuredClone(value.components),activated:false,readyForActivation:false,wholeApplicationRestore:false};}
+  async candidateVerify(id:string):Promise<RecoveryPreview>{
+    if(this.closed)throw new BackupError('BACKUP_CENTER_CLOSED');this.candidateSnapshot(id);const job=this.jobs.get(id)!;if(!job.inspection){if([...this.jobs.values()].some(row=>running(row.view)||row.inspection))throw new BackupError('BACKUP_BUSY');const controller=new AbortController();job.inspection={controller,promise:verifyRecoveryCandidate(job.candidate!,{signal:controller.signal})};}const current=job.inspection;
+    try{return structuredClone(await current.promise);}catch{if(current.controller.signal.aborted)throw new BackupError('BACKUP_CANDIDATE_CANCELLED');throw new BackupError('BACKUP_CANDIDATE_READ_FAILED');}finally{if(job.inspection===current)job.inspection=undefined;}
+  }
   async files(folder:string):Promise<BackupFiles>{
     if(!isAbsolute(folder))throw new BackupError('BACKUP_PATH_INVALID');let actual:string;
     try{actual=await realpath(folder);}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT'&&folder===this.folder)return{folder,files:[],truncated:false};throw new BackupError('BACKUP_FOLDER_UNAVAILABLE');}
@@ -32,10 +40,10 @@ export class BackupCenter {
   });}
   startRestore(input:BackupRestore):BackupJob{const request=backupRestoreSchema.parse(input);return this.start(request.id,'restore',[],async(job,adapters,progress)=>{
     if(!isAbsolute(request.folder)||!isAbsolute(request.target))throw new BackupError('BACKUP_PATH_INVALID');const source=join(await realpath(request.folder),request.name),target=await realpath(request.target);
-    const candidate=await restoreComposedBackup(source,request.password,target,adapters,{signal:job.controller.signal},progress);job.view.output=candidate.root;job.view.components=candidate.components;
+    const candidate=await restoreComposedBackup(source,request.password,target,adapters,{signal:job.controller.signal},progress);job.view.output=candidate.root;job.view.components=candidate.components;job.candidate=candidate.verification;
   });}
   private start(id:string,operation:BackupJob['operation'],components:BackupJob['components'],run:(job:Work,adapters:BackupAdapters,progress:(phase:'preparing'|'capturing'|'verifying'|'restoring',component:BackupJob['component'],completed:number,total:number)=>void)=>Promise<void>):BackupJob{
-    if(this.closed)throw new BackupError('BACKUP_CENTER_CLOSED');if(this.jobs.has(id))throw new BackupError('BACKUP_REQUEST_REPLAY');if([...this.jobs.values()].some(job=>running(job.view)))throw new BackupError('BACKUP_BUSY');
+    if(this.closed)throw new BackupError('BACKUP_CENTER_CLOSED');if(this.jobs.has(id))throw new BackupError('BACKUP_REQUEST_REPLAY');if([...this.jobs.values()].some(job=>running(job.view)||job.inspection))throw new BackupError('BACKUP_BUSY');
     while(this.jobs.size>=16)this.jobs.delete(this.jobs.keys().next().value!);
     const adapters=this.adapters(),job:Work={view:{id,operation,phase:'preparing',component:null,completed:0,total:components.length,components:[...components],output:null,bytes:null,sha256:null,error:null,activated:false,wholeApplicationRestore:false},controller:new AbortController(),done:Promise.resolve()};this.jobs.set(id,job);
     const progress=(phase:'preparing'|'capturing'|'verifying'|'restoring',component:BackupJob['component'],completed:number,total:number)=>{job.view.phase=phase;job.view.component=component;job.view.completed=completed;job.view.total=total;};

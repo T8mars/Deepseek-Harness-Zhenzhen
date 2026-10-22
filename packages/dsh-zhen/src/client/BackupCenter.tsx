@@ -4,6 +4,7 @@ import type {ZhenRemote,BackupInfo,BackupFiles,BackupJob,BackupComponent} from '
 import {backupLabels,backupInfoSchema,backupFilesSchema,backupJobSchema} from 'dsh-zhen/remote';
 import {DirectoryChooser} from './DirectoryChooser.tsx';
 import {useRemoteAction} from './useRemoteAction.ts';
+import {RecoveryPreview} from './RecoveryPreview.tsx';
 
 const unwrap=<T,>(value:RemoteResult<T>):T=>{if(!value.ok)throw value.error;return value.value;};
 const terminal=(job:BackupJob)=>['succeeded','failed','cancelled'].includes(job.phase);
@@ -20,8 +21,8 @@ export function backupErrorMessage(code:string|null):string{
 }
 /** No archive bytes, session contents, password persistence or Agent tool path. */
 export function BackupCenter({api}:{api:ZhenRemote}):React.ReactElement{
-  const[info,setInfo]=useState<BackupInfo>(),[folder,setFolder]=useState(''),[target,setTarget]=useState(''),[password,setPassword]=useState(''),[repeat,setRepeat]=useState(''),[components,setComponents]=useState<BackupComponent[]>([]),[listing,setListing]=useState<{folder:string;value:BackupFiles}>(),[selected,setSelected]=useState(''),[job,setJob]=useState<BackupJob>(),[pending,setPending]=useState<string>();
-  const scope=useRemoteAction(api,'本机备份服务暂时不可用，请重新检测。'),active=!!job&&!terminal(job),locked=scope.busy||active,folderRef=useRef(folder);folderRef.current=folder;
+  const[info,setInfo]=useState<BackupInfo>(),[folder,setFolder]=useState(''),[target,setTarget]=useState(''),[password,setPassword]=useState(''),[repeat,setRepeat]=useState(''),[components,setComponents]=useState<BackupComponent[]>([]),[listing,setListing]=useState<{folder:string;value:BackupFiles}>(),[selected,setSelected]=useState(''),[job,setJob]=useState<BackupJob>(),[pending,setPending]=useState<string>(),[recoveryBusy,setRecoveryBusy]=useState(false);
+  const scope=useRemoteAction(api,'本机备份服务暂时不可用，请重新检测。'),active=!!job&&!terminal(job),locked=scope.busy||active||recoveryBusy,folderRef=useRef(folder);folderRef.current=folder;
   useEffect(()=>{setInfo(undefined);setListing(undefined);setSelected('');setJob(undefined);setPending(undefined);setPassword('');setRepeat('');let alive=true;void api.backupInfo().then(result=>{const value=backupInfoSchema.parse(unwrap(result));if(!alive)return;setInfo(value);setFolder(value.folder);setTarget('');setComponents(value.components.filter(row=>row.available).map(row=>row.id));setJob(value.jobs.find(row=>!terminal(row))??value.jobs.at(-1));}).catch(()=>{if(alive)scope.setNotice('备份服务暂时不可用，请重新检测。');});return()=>{alive=false;};},[api]);
   useEffect(()=>{if(!job||terminal(job))return;let stopped=false,inFlight=false;const id=job.id;async function refresh(){if(inFlight||stopped)return;inFlight=true;try{const next=backupJobSchema.parse(unwrap(await api.backupStatus(id)));if(!stopped){setJob(next);if(terminal(next)){setPassword('');setRepeat('');}}}catch{if(!stopped){stopped=true;scope.setNotice('进度暂时无法读取。任务可能仍在原连接运行，请点击重新检测；不会自动重试创建。');}}finally{inFlight=false;}}const timer=setInterval(()=>void refresh(),1000);void refresh();return()=>{stopped=true;clearInterval(timer);};},[api,job?.id,job?.phase]);
   async function refreshInfo():Promise<void>{await scope.run(async current=>{const value=backupInfoSchema.parse(unwrap(await api.backupInfo()));if(!current())return;setInfo(value);setComponents(previous=>previous.filter(id=>value.components.some(row=>row.id===id&&row.available)));setJob(value.jobs.find(row=>!terminal(row))??value.jobs.at(-1));setPending(undefined);if(!folderRef.current)setFolder(value.folder);});}
@@ -54,6 +55,7 @@ export function BackupCenter({api}:{api:ZhenRemote}):React.ReactElement{
       <button type="button" className="zhen-secondary" disabled={locked||!!pending||!list||!selected||!target||!validPassword} onClick={()=>void start('restore')}>校验并生成恢复候选</button>
     </section>
     {job&&<section className="zhen-card" aria-label="备份任务"><p role="status">{job.operation==='backup'?'备份':'恢复'}：{phases[job.phase]}{job.component?' · '+backupLabels[job.component]:''}（{job.completed}/{job.total}）</p>{job.output&&<><p>{job.operation==='backup'?'文件已保存至：':'候选已生成，尚未激活：'}</p><p className="zhen-source-path">{job.output}</p></>}{job.error&&<p role="status">{backupErrorMessage(job.error)} <span className="zhen-muted">{job.error}</span></p>}{active&&<button type="button" className="zhen-secondary" disabled={scope.busy} onClick={()=>void scope.run(async()=>{unwrap(await api.backupCancel(job.id));})}>取消此任务</button>}</section>}
+    {job?.operation==='restore'&&job.phase==='succeeded'&&<RecoveryPreview key={job.id} api={api} job={job} onBusyChange={setRecoveryBusy}/>}
     {pending&&<div role="status"><p>请求编号：{pending}</p><button type="button" className="zhen-secondary" disabled={scope.busy} onClick={()=>void scope.run(async current=>{try{const value=backupJobSchema.parse(unwrap(await api.backupStatus(pending)));if(current()){setJob(value);setPending(undefined);}}catch{if(current())scope.setNotice('原任务状态仍不明确，请先检查文件列表或重新检测。');}})}>检查原任务</button></div>}
     {scope.notice&&<p role="status">{scope.notice}</p>}
   </div>;

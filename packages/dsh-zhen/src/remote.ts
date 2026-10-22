@@ -1,5 +1,9 @@
 /** Hand-authored contribution using the published protocol factory; no upstream types are modified. */
 import { z } from 'zod';
+import {recoveryPreviewSchema} from './recovery-schema.ts';
+import type {RecoveryPreview} from './recovery-schema.ts';
+export {recoveryPreviewSchema,recoveryFactLabels,recoveryWarningLabels} from './recovery-schema.ts';
+export type {RecoveryPreview,RecoverySummary} from './recovery-schema.ts';
 import {backupInfoSchema,backupFilesSchema,backupCreateSchema,backupRestoreSchema,backupJobSchema,backupFolderSchema} from './backup-center-schema.ts';
 import type {BackupInfo,BackupFiles,BackupCreate,BackupRestore,BackupJob} from './backup-center-schema.ts';
 export {backupLabels,backupLimitations,backupInfoSchema,backupFilesSchema,backupJobSchema} from './backup-center-schema.ts';
@@ -76,6 +80,8 @@ import { gatewayMediaTicketSchema, gatewayMediaReceiptSchema } from './gateway-m
 import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-schema.ts';
 
 export interface ZhenRemote {
+  backupCandidateSnapshot(id:string):Promise<RemoteResult<RecoveryPreview>>;
+  backupCandidateVerify(id:string):Promise<RemoteResult<RecoveryPreview>>;
   backupInfo():Promise<RemoteResult<BackupInfo>>;
   backupFiles(folder:string):Promise<RemoteResult<BackupFiles>>;
   backupCreate(request:BackupCreate):Promise<RemoteResult<BackupJob>>;
@@ -244,6 +250,8 @@ function method(name: string, schema: z.ZodType, description: string, inputs: Ar
     sourceLocation: { file: 'packages/dsh-zhen/src/remote.ts', line: 1, column: 1 } };
 }
 export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', methods: {
+  'zhen/backupCandidateSnapshot':method('backupCandidateSnapshot',recoveryPreviewSchema,'Owner UI: inspect creation-time counts and review issues of the original inactive recovery job; no file reads or activation.',[['id',z.uuid()]]),
+  'zhen/backupCandidateVerify':method('backupCandidateVerify',recoveryPreviewSchema,'Owner UI: compare owned candidate files and link text with the original retained baseline; no arbitrary path, external link reads or activation.',[['id',z.uuid()]]),
   'zhen/backupInfo':method('backupInfo',backupInfoSchema,'Owner UI: describe supported local backup coverage; never initializes a missing source.'),
   'zhen/backupFiles':method('backupFiles',backupFilesSchema,'Owner UI: list a bounded set of local encrypted backup files.',[['folder',backupFolderSchema]]),
   'zhen/backupCreate':method('backupCreate',backupJobSchema,'Owner UI: create an encrypted snapshot of explicitly selected components; never includes credential stores.',[['request',backupCreateSchema]]),
