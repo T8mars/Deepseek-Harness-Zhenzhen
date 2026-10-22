@@ -23,7 +23,7 @@ export class SkillFeed {
   private status: SkillFeedSnapshot = { source: SOURCE, automatic: true, checkedAt: '', revision: '', state: 'idle', count: 0, message: '内置技能可离线使用；远端目录尚未检查。' };
   private catalog: SkillPackage[] = [];
   private pending?: Promise<SkillFeedSnapshot>;
-  constructor(private readonly filename: string, private readonly market: SkillMarket, private readonly fetcher: typeof fetch = fetch, private readonly github?: GithubAccess,options?:{candidateState:ReturnType<SkillFeed['backupState']>}) {
+  constructor(private readonly filename: string, private readonly market: SkillMarket, private readonly fetcher: typeof fetch = fetch, private readonly github?: GithubAccess,private readonly options?:{candidateState:ReturnType<SkillFeed['backupState']>;reviewOnly?:boolean}) {
     if(options){const live=cacheSchema.parse({status:options.candidateState.status,catalog:options.candidateState.catalog});if(live.status.count!==live.catalog.length)throw Error('Invalid restored feed.');this.status=structuredClone(live.status);this.catalog=structuredClone(live.catalog);return;}
     if (!existsSync(filename)) return;
     try {
@@ -46,6 +46,7 @@ export class SkillFeed {
     catch { this.status = { ...this.status, state: 'error', message: '目录已校验，但自动安排未完成，当前技能保留。可重新检查或手动选择。' }; }
   }
   snapshot(): SkillFeedSnapshot { return { ...this.status }; }
+  private writable():void{if(this.options?.reviewOnly)throw new Error('恢复的技能仍待审阅，请先完成恢复检查。');}
   /** Capture the running Host's exact offline candidates; never fetch or stage. */
   backupState(): {status:SkillFeedSnapshot;catalog:SkillPackage[];persisted:{present:boolean;cache?:{status:SkillFeedSnapshot;catalog:SkillPackage[]}}} {
     if(this.pending)throw new Error('技能目录检查进行中，请稍后备份。');
@@ -54,6 +55,7 @@ export class SkillFeed {
     return structuredClone({status:this.status,catalog:this.catalog,persisted:{present,...cache?{cache}:{}}});
   }
   private save(status: SkillFeedSnapshot, catalog = this.catalog): void {
+    this.writable();
     const content = JSON.stringify({ status, catalog }) + '\n';
     if (Buffer.byteLength(content) > MAX_BYTES) throw new Error('Skill cache limit.');
     mkdirSync(dirname(this.filename), { recursive: true });
@@ -63,14 +65,17 @@ export class SkillFeed {
   }
   setAutomatic(enabled: boolean): void { this.save({ ...this.status, automatic: enabled }); }
   setAutoUpdates(enabled: boolean): void {
+    this.writable();
     this.market.setAutoUpdates(enabled);
     if (enabled && this.status.revision) this.market.stageAutomaticUpdates(this.catalog, this.status.revision);
   }
   pauseAutoUpdate(id: string, paused: boolean): void {
+    this.writable();
     this.market.pauseAutoUpdate(id, paused);
     if (!paused && this.status.revision) this.market.stageAutomaticUpdates(this.catalog, this.status.revision);
   }
   async check(signal?: AbortSignal): Promise<SkillFeedSnapshot> {
+    this.writable();
     if (this.pending) return this.pending;
     const promise = (async () => {
       let source: GithubReadSession | undefined;
@@ -96,6 +101,7 @@ export class SkillFeed {
     try { return await promise; } finally { if (this.pending === promise) this.pending = undefined; }
   }
   async automaticCheck(signal?: AbortSignal): Promise<void> {
+    if(this.options?.reviewOnly)return;
     if (this.status.automatic && (!this.status.checkedAt || Date.now() - Date.parse(this.status.checkedAt) > 24 * 3600 * 1000)) await this.check(signal);
   }
 }

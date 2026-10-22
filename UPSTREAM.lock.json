@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T12:52:16.512Z",
+  "checkedAt": "2026-10-22T14:06:35.632Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2172,6 +2172,18 @@
       "wholeApplicationRestore": false,
       "activated": false,
       "verification": "Complete1146/1146,new10/related64 and203-file archive pass. C63/C76 exact stable payload and other canary bytes identical; actual public CLI install/uninstall and worker hashes pass. C125 actual encrypted Rag restore/logical import/FTS preserves rows,chunk IDs,history grants and sequence; new application root/epoch and disabled agent access, original sources preserved. C126 actual new-home ZhenService/published Owner Gateway reads collections and FTS with backend paused, credentials0. C127 warm/cold env+knowledge without records retains genuinely absent databases. Exact CI/browser/activation/fullL2/skill-home pending; Native/model0,user Host unchanged."
+    },
+    "restoredApplicationSkills": {
+      "schemaVersion": 1,
+      "publishedSdk": "0.2.1-rc.2",
+      "layoutAndCatalogFormatsChanged": false,
+      "originalSelectionsPreserved": true,
+      "automaticPreferencesPreserved": true,
+      "automaticallyDownloads": false,
+      "automaticallyExecutesPrograms": false,
+      "wholeApplicationRestore": false,
+      "activated": false,
+      "verification": "Complete1157/1157,new11/related147 and204-file archive pass. C63/C76 exact stable payload and other canary bytes identical; actual public CLI install/uninstall and worker hashes pass. C128 actual encrypted skill restore and managed service readback preserve every market row/personal version, local identity, GitHub retained release/active/pending/latest and update/disabled preferences; actual published filesystem reads all six roles with example origins unavailable and project scope preserved. C129 actual new-home ZhenService/published Owner/SkillRegistry across two starts retains pending without mounting or downloading, credentials0. C130 actual composition and public CLI dump preserve whole config, C131 unselected skills avoid old roots, C132 captured alias identity maps without module execution. Exact CI,project cwd binding,review release,activation/fullL2/browser/native pending; user Host unchanged,Native/model0."
     }
   }
 }

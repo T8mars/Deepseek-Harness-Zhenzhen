@@ -254,3 +254,8 @@ C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/ch
 ## C125–C127：恢复应用知识目录
 
 全部操作为本项目自有schema3和逻辑行接口。只读知识组件快照后，经既有导入重建FTS；映射从真实恢复返回值传递，不变更布局/索引格式、不读取SDK私有格式。C125保留全部非collection逻辑表与历史grants，增加collection epoch并关闭agent_enabled，不把原项目统一猜成新目录；原库和组件不改。C126在新home挂实际ZhenService及固定SDK Owner Gateway，读回真实集合/搜索与暂停后端。C127涵盖不含records范围的warm/cold知识组合，不伪造冷数据库。未证明完整环境启动、激活、浏览器、Native或任意规模。
+
+
+## C128–C132：恢复应用技能来源
+
+固定已发布 SkillFilesystem 按 home/skills、项目 .dsh/skills 与 .agents/skills 以及明确 custom/bundled 目录解析。恢复资源根是独立映射，不能推定其父目录；C128用候选内目录入口，经真实提供者在示例原目录移走后读回六类来源，多个提供者及工作目录保留同一项目范围。市场、本地、GitHub、feed均为本项目服务的显式审阅模式，正常启动行为不改；C129经实际ZhenService/Owner/SkillRegistry两次启动核原状态和零挂载。C130实际公开CLI配置输出核整行覆盖，C131不选技能使用空新根，C132按已捕获条目ID处理别名而不执行模块。没有新增Remote或工具，也不读取SDK私有格式。未验证目录链接的任意文件系统支持、生产watcher、Git祖先变体或完整环境激活。

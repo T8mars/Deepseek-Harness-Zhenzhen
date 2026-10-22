@@ -25,6 +25,7 @@ import {githubProjectionAnchor,restoreManagedSkills} from './backup-managed-skil
 import type {ManagedSkillRestore} from './backup-managed-skills.ts';
 
 const LEGACY_SCHEMA='dsh-zhen-skill-inventory-v1',SCHEMA='dsh-zhen-skill-inventory-v2',MAX_STATE=64*1024**2;
+export {validate as validateSkillBackupInventory};
 const sha=(value:string)=>createHash('sha256').update(value).digest('hex');
 type ResolvedFilesystem={providerName:string;includeDefaultRoots:boolean;dshHome:string;agentsHome:string;customSkillDirs:string[];bundledSkillDir?:string};
 export type ResolvedSkillFilesystem=ResolvedFilesystem;

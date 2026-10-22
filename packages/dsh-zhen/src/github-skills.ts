@@ -63,11 +63,11 @@ export class GithubSkills {
   private closed = false;
   private readonly lifetime = new AbortController();
   private downloading?: AbortController;
-  constructor(root: string, private readonly fetcher: typeof fetch = fetch,options:{candidate?:boolean}={}) {
+  constructor(root: string, private readonly fetcher: typeof fetch = fetch,private readonly options:{candidate?:boolean;reviewOnly?:boolean}={}) {
     mkdirSync(root, { recursive: true }); this.root = realpathSync.native(root);
     const initial=lstatSync(this.root,{bigint:true});this.rootIdentity=initial.dev+':'+initial.ino;
     this.reload();
-    if(options.candidate)return;
+    if(options.candidate||options.reviewOnly)return;
     let changed = false;
     for (const source of this.sources) if (source.pending) {
       try { this.verify(source.id, source.pending); if (source.enabled) source.active = source.pending; }
@@ -96,6 +96,7 @@ export class GithubSkills {
     this.sources = sources; this.serialized = text;
   }
   private save(sources: GithubSkillSource[]): void {
+    this.writable();
     const file = this.stateFile, current = existsSync(file) ? readFileSync(file, 'utf8') : '';
     if (current !== this.serialized) throw new GithubSkillError('技能配置已被其他 Host 修改，请刷新后重试。');
     const text = JSON.stringify(githubSkillStateSchema.parse({ schemaVersion: 1, sources })) + '\n';
@@ -103,6 +104,7 @@ export class GithubSkills {
     writeFileSync(this.owned(file + '.tmp'), text, { mode: 0o600 }); renameSync(this.owned(file + '.tmp'), file); this.serialized = text; this.sources = sources;
   }
   subscribe(listener: () => void): () => void { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
+  private writable():void{if(this.options.reviewOnly)throw new GithubSkillError('恢复的技能仍待审阅，请先完成恢复检查。');}
   private changed(): void { if (!this.closed) for (const listener of this.listeners) listener(); }
   private releaseRoot(id: string, digest: string): string {
     if (!/^[a-f0-9]{64}$/.test(id) || !/^[a-f0-9]{64}$/.test(digest)) throw new GithubSkillError('技能版本标识无效。');
@@ -189,6 +191,7 @@ export class GithubSkills {
     if (total !== size) throw new GithubSkillError('技能文件大小不匹配。'); return Buffer.concat(parts);
   }
   async download(input: GithubSkillSpec, signal?: AbortSignal): Promise<GithubSkillPreview> {
+    this.writable();
     if (this.busy || this.closed) throw new GithubSkillError('已有技能下载进行中。'); this.busy = true;
     const controller = this.downloading = new AbortController();
     const abort = AbortSignal.any([...(signal ? [signal] : []), this.lifetime.signal, controller.signal]);
@@ -263,6 +266,7 @@ export class GithubSkills {
     } finally { try { if (existsSync(stage)) rmSync(this.owned(stage), { recursive: true, force: true }); } finally { this.busy = false; if (this.downloading === controller) this.downloading = undefined; } }
   }
   approve(id: string, digest: string, confirmation: string): void {
+    this.writable();
     if (confirmation !== GITHUB_SKILL_POLICY) throw new GithubSkillError('请先审阅来源及完整资源清单。');
     this.reload(); const release = this.verify(id, digest), old = this.sources.find(item => item.id === id), running = this.mounted.get(id) ?? '', activate = !running || running === digest;
     const source: GithubSkillSource = old ? { ...old, enabled: true, pending: activate ? '' : digest, active: activate ? digest : old.active } : { id, spec: release.spec, enabled: true, automatic: true, active: digest, pending: '', latest: digest, checkedAt: new Date().toISOString(), state: 'checked', policy: GITHUB_SKILL_POLICY };
@@ -274,6 +278,7 @@ export class GithubSkills {
   cancelDownload(): void { this.downloading?.abort(); }
   automatic(id: string, enabled: boolean): void { this.reload(); this.save(this.sources.map(item => item.id === id ? { ...item, automatic: enabled } : item)); }
   async check(id: string, signal?: AbortSignal): Promise<void> {
+    this.writable();
     this.reload(); const source = this.sources.find(item => item.id === id); if (!source) throw new GithubSkillError('技能来源不存在。');
     let preview: GithubSkillPreview | undefined;
     try { preview = await this.download(source.spec, signal); } catch { if (signal?.aborted || this.closed) return; }
@@ -281,10 +286,12 @@ export class GithubSkills {
     this.save(this.sources.map(item => item.id === id ? { ...item, latest: preview?.release.digest ?? item.latest, checkedAt: new Date().toISOString(), state: preview ? 'checked' : 'unavailable' } : item));
   }
   async automaticCheck(signal?: AbortSignal): Promise<void> {
+    if(this.options.reviewOnly)return;
     if (this.busy || this.closed) return;
     for (const source of this.list()) if (source.enabled && source.automatic && (!source.checkedAt || Date.now() - Date.parse(source.checkedAt) > 86400000)) { if (signal?.aborted || this.closed) return; await this.check(source.id, signal); }
   }
   deleteRelease(id: string, digest: string): void {
+    this.writable();
     this.reload(); if (this.busy) throw new GithubSkillError('请等待当前下载结束。');
     const source = this.sources.find(item => item.id === id); if (source?.active === digest || source?.pending === digest || this.mounted.get(id) === digest) throw new GithubSkillError('不能移除当前或待启用版本。');
     this.release(id, digest); const path = this.releaseRoot(id, digest); rmSync(this.owned(path), { recursive: true, force: true });

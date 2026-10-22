@@ -54,3 +54,5 @@ export type {ApplicationRestoreOptions,ApplicationRestoreProfile,ApplicationRest
 export type {ComposedRestoreOptions} from './backup-composition.ts';
 export {prepareRestoredKnowledge} from './restore-knowledge.ts';
 export type {KnowledgeApplicationReceipt} from './restore-knowledge.ts';
+export {prepareRestoredSkills,readRestoredSkillReview} from './restore-skills.ts';
+export type {SkillApplicationReceipt,RestoredSkillReview} from './restore-skills.ts';

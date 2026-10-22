@@ -3,6 +3,7 @@ import type { Context } from '@deepseek-ai/cordis';
 import {symbols} from '@deepseek-ai/cordis';
 import {BackupCenter} from './backup-center.ts';
 import {summarizeEnvironment,summarizeSessions,summarizeSkills,summarizeKnowledge,summarizeRecords,summarizeWorkspaces} from './recovery-summary.ts';
+import {readRestoredSkillReview} from './restore-skills.ts';
 import type {RecoveryPreview,RecoveryCatalogView} from './recovery-schema.ts';
 import {prepareProfilePackageBackup,restoreProfilePackageBackup} from './backup-profile-packages.ts';
 import {restoreSessionBackup} from './backup-sessions.ts';
@@ -174,6 +175,7 @@ export default class ZhenService extends TypertRemoteService {
   private knowledgeStore?: KnowledgeStore;
   // One Host keeps its startup data root even if another plugin changes env/cwd.
   private readonly zhenHome=dshHomePath('dsh-zhen');
+  private readonly restoredSkills=readRestoredSkillReview(this.zhenHome);
   private readonly agentsHome=resolveAgentsHome();
   private readonly knowledgeFile=join(this.zhenHome,'knowledge.sqlite');
   private readonly mcpHome=join(this.zhenHome,'mcp');
@@ -268,10 +270,10 @@ export default class ZhenService extends TypertRemoteService {
       const controller = new AbortController();
       const check = () => {
         void this.updates().automaticCheck(controller.signal).catch(() => {});
-        void this.feed().automaticCheck(controller.signal).catch(() => {});
+        if(!this.restoredSkills)void this.feed().automaticCheck(controller.signal).catch(() => {});
         void this.mcps().automaticCheck(controller.signal).catch(() => {});
         void this.capabilityUpdates().automaticCheck(controller.signal).catch(() => {});
-        void this.githubSkills().automaticCheck(controller.signal).catch(() => {});
+        if(!this.restoredSkills)void this.githubSkills().automaticCheck(controller.signal).catch(() => {});
       };
       const start = setTimeout(check, 30000); start.unref();
       const interval = setInterval(check, 3600000); interval.unref();
@@ -409,8 +411,8 @@ export default class ZhenService extends TypertRemoteService {
   setKnowledgeAgentAccess(project: string, collectionId: string, enabled: boolean): void { this.knowledge().setAgentAccess(project, collectionId, enabled); }
   private market(): SkillMarket {
     if (!this.skillMarket) {
-      this.skillMarket = new SkillMarket(join(this.zhenHome,'skills.sqlite'), readBundledCatalog());
-      this.skillFeed = new SkillFeed(join(this.zhenHome,'skills-feed.json'), this.skillMarket, fetch, this.githubAccess());
+      this.skillMarket = new SkillMarket(join(this.zhenHome,'skills.sqlite'), this.restoredSkills?[]:readBundledCatalog(),this.restoredSkills?{candidateState:this.restoredSkills.market}:undefined);
+      this.skillFeed = new SkillFeed(join(this.zhenHome,'skills-feed.json'), this.skillMarket, fetch, this.githubAccess(),this.restoredSkills?{candidateState:this.restoredSkills.feed,reviewOnly:true}:undefined);
     }
     return this.skillMarket;
   }
@@ -724,8 +726,8 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   async disconnectCanvas(): Promise<void> { await this.mountCanvas?.(); this.saveCanvasConfig(); }
 
-  private localSkills(): LocalSkills { return this.localSkillSources ??= new LocalSkills(join(this.zhenHome,'local-skills.json')); }
-  private githubSkills(): GithubSkills { return this.githubSkillSources ??= new GithubSkills(join(this.zhenHome,'github-skills')); }
+  private localSkills(): LocalSkills { return this.localSkillSources ??= new LocalSkills(join(this.zhenHome,'local-skills.json'),1000,{reviewOnly:!!this.restoredSkills}); }
+  private githubSkills(): GithubSkills { return this.githubSkillSources ??= new GithubSkills(join(this.zhenHome,'github-skills'),fetch,{reviewOnly:!!this.restoredSkills}); }
   private async githubOperation<T>(work: () => T | Promise<T>): Promise<T> {
     try { return await work(); }
     catch (error) { throw new RemoteError('zhen/refused', error instanceof GithubSkillError ? error.message : 'GitHub 操作暂不可用或已取消，请检查仓库是否公开及请求是否限频。', { reason: 'GITHUB_SKILL_REFUSED' }); }

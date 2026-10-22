@@ -16,9 +16,12 @@ import type {RecoveryComponentLayout} from './recovery-layout-schema.ts';
 import {prepareRestoredKnowledge} from './restore-knowledge.ts';
 import type {KnowledgeApplicationReceipt} from './restore-knowledge.ts';
 import type {RagRestoreCandidate} from './backup-rag.ts';
+import {prepareRestoredSkills} from './restore-skills.ts';
+import type {SkillApplicationReceipt} from './restore-skills.ts';
+import type {SkillInventoryRestoreCandidate} from './backup-skill-inventory.ts';
 
 export interface ApplicationRestoreOptions {installAnchor:string;}
-export interface ApplicationRestoreParts {knowledge?:RagRestoreCandidate;}
+export interface ApplicationRestoreParts {knowledge?:RagRestoreCandidate;skills?:SkillInventoryRestoreCandidate;}
 export interface ApplicationRestoreProfile {
   name:string;originName:string;overlay:string|null;
   bindings:Array<{id:string;module:string;role:'sessions'|'attachmentsHome'|'workspaceStorage';target:string}>;
@@ -30,6 +33,7 @@ export interface ApplicationRestoreRecipe {
   schema:'dsh-zhen-application-restore-v1';sdkVersion:string;home:string;agentsHome:string;
   records:Array<{kind:'checks'|'tasks'|'media';rows:number;destination:string;paused:number}>;
   knowledge:KnowledgeApplicationReceipt|null;
+  skills:SkillApplicationReceipt|null;
   profiles:ApplicationRestoreProfile[];reviewRequired:true;activated:false;readyForActivation:false;wholeApplicationRestore:false;
 }
 const MAX_FILE=8*1024**2,MAX_TOTAL=64*1024**2;
@@ -88,10 +92,10 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
   const scope=new Map(parsed.data.components.map(row=>[row.kind,row])),sessions=scope.get('sessions'),workspaces=scope.get('workspaces');
   const targets={sessions:location(sessions,'sessions')??join(home,'sessions'),attachmentsHome:location(sessions,'attachmentsHome')??home,workspaceStorage:location(workspaces,'workspaceStorage')??join(home,'storages')};
   for(const path of Object.values(targets))await owned(root,path,'directory',true);
-  const recipe:ApplicationRestoreRecipe={schema:'dsh-zhen-application-restore-v1',sdkVersion:SUPPORTED_DSH,home,agentsHome,records:[],knowledge:null,profiles:[],reviewRequired:true,activated:false,readyForActivation:false,wholeApplicationRestore:false};
+  const recipe:ApplicationRestoreRecipe={schema:'dsh-zhen-application-restore-v1',sdkVersion:SUPPORTED_DSH,home,agentsHome,records:[],knowledge:null,skills:null,profiles:[],reviewRequired:true,activated:false,readyForActivation:false,wholeApplicationRestore:false};
   const ownSource=location(scope.get('records'),'ownData'),dataRoot=join(home,'dsh-zhen');let ownsData=false;
   try{
-    if(ownSource||parts.knowledge){await mkdir(dataRoot,{mode:0o700});ownsData=true;}
+    if(ownSource||parts.knowledge||parts.skills){await mkdir(dataRoot,{mode:0o700});ownsData=true;}
     if(ownSource){await owned(root,ownSource,'directory');let copied=0;
       for(const descriptor of OWNED_STORES){signal?.throwIfAborted();const source=join(ownSource,...descriptor.file),destination=join(dataRoot,...descriptor.file);let before:BigIntStats;try{await owned(root,source,'file');before=await lstat(source,{bigint:true});}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')continue;throw error;}if((copied+=Number(before.size))>DEFAULT_BACKUP_LIMITS.archiveBytes)fail('BACKUP_APPLICATION_LIMIT');
         await mkdir(dirname(destination),{recursive:true,mode:0o700});const exclusive=await open(destination,'wx',0o600);await exclusive.close();const db=new DatabaseSync(source,{readOnly:true,allowExtension:false,enableDoubleQuotedStringLiterals:false});
@@ -99,9 +103,10 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
       }
     }
     if(parts.knowledge){const knowledge=scope.get('knowledge');if(!knowledge?.details||parts.knowledge.root!==knowledge.root||parts.knowledge.database!==(location(knowledge,'knowledgeDatabase')??null)||parts.knowledge.backendState!==location(knowledge,'knowledgeBackend'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.knowledge=await prepareRestoredKnowledge(root,home,parts.knowledge,{signal});}
+    if(parts.skills){const skills=scope.get('skills');if(!skills?.details||parts.skills.root!==skills.root||parts.skills.market.database!==location(skills,'skillMarket')||parts.skills.managed.local.file!==location(skills,'skillLocalState'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.skills=await prepareRestoredSkills(root,home,parts.skills,{signal});}
     const cwd=join(home,'recovered-workspace');await mkdir(cwd,{mode:0o700});let outputBytes=0;
     for(const profile of environment.profiles){signal?.throwIfAborted();const row:ApplicationRestoreProfile={name:profile.name,originName:profile.originName,overlay:null,bindings:[],paused:[],reasons:['PERMISSIONS_REVIEW_REQUIRED','PROJECT_FILES_NOT_INCLUDED'],launch:null};recipe.profiles.push(row);
-      if(!scope.has('sessions'))row.reasons.push('SESSIONS_NOT_SELECTED');if(!scope.has('workspaces'))row.reasons.push('WORKSPACES_NOT_SELECTED');if(scope.has('knowledge'))row.reasons.push(...recipe.knowledge?['KNOWLEDGE_PROJECT_REVIEW_REQUIRED','KNOWLEDGE_BACKEND_REVIEW_REQUIRED']:['KNOWLEDGE_HOME_REBIND_PENDING']);if(scope.has('skills'))row.reasons.push('SKILL_HOME_REBIND_PENDING');
+      if(!scope.has('sessions'))row.reasons.push('SESSIONS_NOT_SELECTED');if(!scope.has('workspaces'))row.reasons.push('WORKSPACES_NOT_SELECTED');if(scope.has('knowledge'))row.reasons.push(...recipe.knowledge?['KNOWLEDGE_PROJECT_REVIEW_REQUIRED','KNOWLEDGE_BACKEND_REVIEW_REQUIRED']:['KNOWLEDGE_HOME_REBIND_PENDING']);if(scope.has('skills'))row.reasons.push(...recipe.skills?['SKILL_SOURCES_REVIEW_REQUIRED','SKILL_PROJECTS_REVIEW_REQUIRED']:['SKILL_HOME_REBIND_PENDING']);
       if(!profile.launchable||profile.dependencyIssues){row.reasons.push('PROFILE_NOT_LAUNCHABLE');continue;}
       try{
         if(!/^[A-Za-z0-9_-]{1,255}$/.test(profile.name))fail();await owned(root,profile.directory,'directory');await owned(root,profile.overlay,'file');const manifest=await parsedFile(root,join(profile.directory,'package.json'),()=>readProfileManifest('dsh-zhen restore',profile.directory)),bundles=manifest.dsh?.profile?.bundles;if(!Array.isArray(bundles))fail();const layers:PatchOptions[][]=[];
@@ -111,6 +116,11 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
             if(item.disabled)row.reasons.push('PROVIDER_DISABLED_'+role.toUpperCase());
             if(role==='sessions'){config.root=targets.sessions;config.compression=JsonlConfig({root:targets.sessions}).compression;}else if(role==='attachmentsHome')config.dshHome=targets.attachmentsHome;else config.root=targets.workspaceStorage;
             patches.push({id:item.id,name:item.name,config});row.bindings.push({id:item.id,module:item.name,role,target:targets[role]});
+          }
+          if(item.name==='@deepseek-ai/dsh-skill-filesystem'||recipe.skills?.filesystems.some(fs=>fs.id===item.id)){
+            if(item.group||item.config!==undefined&&!object(item.config)||object(item.config)&&Object.hasOwn(item.config,'__jsExpr'))fail('BACKUP_APPLICATION_CONFIG_REVIEW');
+            const config=structuredClone(item.config??{}) as Record<string,unknown>,matches=recipe.skills?.filesystems.filter(fs=>fs.id===item.id)??[],fallback=recipe.skills?.filesystems.filter(fs=>fs.config.providerName===(config.providerName??'filesystem'))??[],selected=matches.length===1?matches[0]:fallback.length===1?fallback[0]:null;
+            patches.push({id:item.id,name:item.name,config:{...config,...selected?.config??{includeDefaultRoots:false,dshHome:home,agentsHome,customSkillDirs:[],bundledSkillDir:''}},disabled:true});if(!selected)row.reasons.push(scope.has('skills')?'SKILL_FILESYSTEM_MAPPING_REVIEW':'SKILLS_NOT_SELECTED');row.paused.push({id:item.id,module:item.name});
           }
           if(paused.has(item.name)||reporting.has(item.name)||item.name===officialBrand){patches.push({id:item.id,name:item.name,disabled:true});row.paused.push({id:item.id,module:item.name});}
         }

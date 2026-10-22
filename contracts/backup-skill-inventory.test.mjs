@@ -24,23 +24,8 @@ const base=readBundledCatalog()[0];
 function release(version,id=base.manifest.id){const description='EXAMPLE backup test',content=`---\nname: ${id}\ndescription: ${JSON.stringify(description)}\n---\nEXAMPLE_RELEASE_${version}\n`;return {manifest:{...base.manifest,id,description,version,digest:sha(content)},content};}
 async function put(path,bytes){await mkdir(dirname(path),{recursive:true});await writeFile(path,bytes);}
 async function removeOwned(root,path){const actual=await realpath(path),part=relative(root,actual);assert.ok(part&&!isAbsolute(part)&&!part.startsWith('..'));await rm(actual,{recursive:true,force:true,maxRetries:3,retryDelay:100});}
-async function fixture(t){
-  const temp=await realpath(tmpdir()),root=await realpath(await mkdtemp(join(temp,'dsh-inventory-EXAMPLE-'))),parent=join(root,'candidates'),project=join(root,'project'),cwd=join(project,'src','nested'),a=join(root,'local-a'),b=join(root,'local-b'),native=join(root,'EXAMPLE-protected'),home=join(root,'home'),agents=join(root,'agents'),custom=join(root,'custom'),bundled=join(root,'bundled');
-  for(const path of [parent,cwd,a,b,native,home,agents,custom,bundled])await mkdir(path,{recursive:true});await mkdir(join(project,'.git'));await put(join(native,'EXAMPLE_DO_NOT_READ.db'),'EXAMPLE_PROTECTED');
-  const sdkRoots=[join(project,'.dsh','skills'),join(project,'.agents','skills'),custom,join(home,'skills'),join(agents,'skills'),bundled];
-  for(const [index,path]of sdkRoots.entries())await put(join(path,'sample','SKILL.md'),skill('example-sdk-'+index));
-  await put(join(a,'same','SKILL.md'),skill('example-local-shared'));await put(join(b,'same','SKILL.md'),skill('example-local-shared','EXAMPLE_DISABLED'));
-  await put(join(a,'same','scripts','EXAMPLE.mjs'),'throw new Error("EXAMPLE_MUST_NOT_RUN");');await put(join(a,'EXAMPLE_SHARED.bin'),Buffer.from([4,0,8,255]));
-  const local=new LocalSkills(join(root,'local-state.json'),1000000);
-  for(const path of [a,b]){const preview=await local.preview(path,'library');await local.connect(path,'library',preview.digest,LOCAL_SKILL_POLICY);}local.disable(local.backupState().sources[1].id);
-  const git=githubSkillFixture(root),github=new GithubSkills(join(root,'github'),git.fetcher);
-  const first=(await github.download(git.spec)).release;github.approve(first.sourceId,first.digest,GITHUB_SKILL_POLICY);git.setHead(git.second);const second=(await github.download(git.spec)).release;github.approve(second.sourceId,second.digest,GITHUB_SKILL_POLICY);
-  const initial=release('1.0.0'),next=release('1.1.0'),marketFile=join(root,'market.sqlite'),market=new SkillMarket(marketFile,[initial]);market.select(initial.manifest.id,initial.manifest.digest);market.offerRemoteCatalog([next]);market.select(next.manifest.id,next.manifest.digest,next.manifest.version);const personal=market.fork(initial.manifest.id,initial.manifest.digest,'EXAMPLE_PRIVATE_PERSONAL');
-  const feedFile=join(root,'feed.json'),feed=new SkillFeed(feedFile,market,async()=>{throw new Error('EXAMPLE_NO_NETWORK');});feed.setAutomatic(false);
-  const source={filesystem:[{id:'EXAMPLE-filesystem',mode:'host-local',config:{providerName:'EXAMPLE-filesystem',dshHome:home,agentsHome:agents,customSkillDirs:[custom],bundledSkillDir:bundled,watch:false}}],workspaces:[cwd,cwd],local,github,market,feed,protectedContainers:[root],forbiddenTrees:[native]};
-  t.after(async()=>{local.close();github.close();market.close();const part=relative(temp,await realpath(root));assert.ok(part&&!isAbsolute(part)&&!part.startsWith('..')&&!/[\\/]/.test(part)&&part.startsWith('dsh-inventory-EXAMPLE-'));await rm(root,{recursive:true,force:true,maxRetries:3,retryDelay:100});});
-  return {root,parent,project,cwd,a,b,native,home,agents,custom,bundled,sdkRoots,local,github,git,market,marketFile,feed,feedFile,source,initial,next,first,second,personal,path:join(root,'EXAMPLE.encrypted')};
-}
+import {inventoryFixture as fixture} from './fixtures/skill-inventory.mjs';
+
 async function rows(path){const reader=await openBackupArchive(path,password),result=[];try{for await(const record of reader.records()){const parts=[];for await(const bytes of record.data)parts.push(bytes);result.push({metadata:record.metadata,bytes:Buffer.concat(parts)});}return result;}finally{await reader.close();}}
 async function* records(items){for(const row of items)yield {metadata:row.metadata,size:row.bytes.length,data:(async function*(){yield row.bytes;})()};}
 async function forged(f,change,label){const items=await rows(f.path),document=JSON.parse(items[0].bytes);change(document,items);items[0].bytes=Buffer.from(JSON.stringify(document));const path=join(f.root,'EXAMPLE_'+label);await writeBackupArchive(path,password,records(items));return path;}

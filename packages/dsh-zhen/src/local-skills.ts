@@ -25,7 +25,7 @@ export class LocalSkills {
   private readonly watches = new Map<string, () => void>();
   private closed = false;
   private generation = 0;
-  constructor(private readonly file: string, private readonly pollMs = 1000) { this.reload(); }
+  constructor(private readonly file: string, private readonly pollMs = 1000,private readonly options:{reviewOnly?:boolean}={}) { this.reload(); }
   private reload(): void {
     const text = existsSync(this.file) ? (() => { if (statSync(this.file).size > 131072) throw new Error('本地技能配置过大。'); return readFileSync(this.file, 'utf8'); })() : '';
     if (text === this.serialized) return;
@@ -34,6 +34,7 @@ export class LocalSkills {
     this.sources = records; this.serialized = text; this.generation++;
   }
   private save(records: LocalSkillRecord[]): void {
+    if(this.options.reviewOnly)throw new Error('恢复的技能仍待审阅，请先完成恢复检查。');
     const disk = existsSync(this.file) ? readFileSync(this.file, 'utf8') : '';
     if (disk !== this.serialized) throw new Error('本地技能配置已被其他 Host 修改，请刷新后重试。');
     const text = JSON.stringify(localSkillStateSchema.parse({ schemaVersion: 1, sources: records })) + '\n';
@@ -164,6 +165,7 @@ export class LocalSkills {
   provider(): SkillProvider {
     return { name: 'dsh-zhen-local-skills',
       list: async options => {
+        options.signal?.throwIfAborted();if(this.options.reviewOnly)return [];
         options.signal?.throwIfAborted(); const views = await this.collect(); options.signal?.throwIfAborted();
         if (!views) return { candidates: [], complete: false };
         return views.flatMap(view => view.entries.filter(entry => !entry.shadowed).map(entry => ({ name: entry.name, description: entry.description, provider: 'dsh-zhen-local-skills', source: 'custom', rank: 350,
@@ -171,6 +173,7 @@ export class LocalSkills {
           invocation: { modelInvocable: entry.modelInvocable, userInvocable: entry.userInvocable }, locator: { sourceId: view.source.id, directory: entry.directory, digest: entry.digest } })));
       },
       get: async (candidate, options) => {
+        options.signal?.throwIfAborted();if(this.options.reviewOnly)return undefined;
         options.signal?.throwIfAborted(); this.reload(); const generation = this.generation;
         const locator = candidate.locator as { sourceId?: string; directory?: string; digest?: string };
         const source = this.sources.find(item => item.id === locator?.sourceId && item.enabled);

@@ -1,5 +1,5 @@
 import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import type { SkillCandidate, SkillDefinition, SkillProvider } from '@deepseek-ai/dsh-skill';
@@ -59,15 +59,19 @@ export class SkillMarket {
   private listeners = new Set<() => void>();
   private backupStateRestored=false;
   private restoringBackup=false;
+  private readonly reviewOnly:boolean;
 
-  constructor(filename: string, catalog: SkillPackage[]) {
-    this.catalog = new Map(catalog.map(input => { const item = verifySkill(input); return [item.manifest.id, item]; }));
-    if (this.catalog.size !== catalog.length) throw new Error('技能目录存在重复标识。');
-    this.bundled = new Map(this.catalog);
+  constructor(filename: string, catalog: SkillPackage[],options?:{candidateState:MarketBackupState}) {
+    const restored=options?validateMarketBackupState(options.candidateState,verifySkill):undefined;this.reviewOnly=!!restored;
+    if(restored&&(!existsSync(filename)||catalog.length))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');
+    this.catalog = new Map((restored?.catalog??catalog).map(input => { const item = verifySkill(input); return [item.manifest.id, item]; }));
+    if (this.catalog.size !== (restored?.catalog??catalog).length) throw new Error('技能目录存在重复标识。');
+    this.bundled = new Map((restored?.bundled??catalog).map(input=>{const item=verifySkill(input);return[item.manifest.id,item];}));
     mkdirSync(dirname(filename), { recursive: true });
-    this.db = new DatabaseSync(filename);
+    this.db = new DatabaseSync(filename,{readOnly:this.reviewOnly});
     try {
     const version = this.db.prepare('PRAGMA user_version').get() as { user_version: number };
+    if(restored){if(backupJsonString(this.readBackupState())!==backupJsonString(restored))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');return;}
     if (version.user_version > 3) { this.db.close(); throw new Error('技能数据库版本较新，请升级应用。'); }
     this.db.exec(`PRAGMA foreign_keys=ON;
       CREATE TABLE IF NOT EXISTS versions (digest TEXT PRIMARY KEY, id TEXT NOT NULL, version TEXT NOT NULL, package TEXT NOT NULL, UNIQUE(id,version));
@@ -118,6 +122,7 @@ export class SkillMarket {
     } catch(error) { try{this.db.close();}catch{}throw error; }
   }
   close(): void { this.listeners.clear(); this.db.close(); }
+  private writable():void{if(this.reviewOnly)throw new Error('恢复的技能仍待审阅，请先完成恢复检查。');}
   /** A read transaction over every retained version, including records hidden
    * by UI history limits. No startup activation or update staging occurs. */
   backupState(): MarketBackupState {
@@ -143,6 +148,7 @@ export class SkillMarket {
    * Never reconstruct a normal market after import: its startup applies pending
    * updates. No listener/provider/feed is notified or started by this method. */
   async restoreBackupState(input:unknown,signal?:AbortSignal):Promise<void>{
+    this.writable();
     signal?.throwIfAborted();if(this.db.prepare('PRAGMA user_version').get()?.user_version!==3)throw new BackupError('BACKUP_MARKET_SCHEMA_UNSUPPORTED');const state=validateMarketBackupState(input,verifySkill);
     const emptyPreferences={id:1,enabled:0,scope:'first-party-text-v1',verified_revision:'',verified_digest:''};
     if(this.backupStateRestored||this.restoringBackup||this.listeners.size||this.bundled.size||this.catalog.size||this.db.prepare('SELECT count(*) AS n FROM versions').get()?.n!==0||this.db.prepare('SELECT count(*) AS n FROM selections').get()?.n!==0||backupJsonString(this.db.prepare('SELECT * FROM update_preferences WHERE id=1').get())!==backupJsonString(emptyPreferences))throw new BackupError('BACKUP_MARKET_TARGET_NOT_EMPTY');
@@ -165,6 +171,7 @@ export class SkillMarket {
   /** Internal receipt for bytes actually fetched through the fixed source.
    * This is local provenance bookkeeping, not a publisher signature. */
   recordVerifiedFeed(inputs: SkillPackage[], revision: string): void {
+    this.writable();
     const items = this.validateRemoteCatalog(inputs);
     if (!/^[a-f0-9]{40}$/.test(revision)) throw new Error('更新来源提交无效。');
     this.db.prepare('UPDATE update_preferences SET verified_revision=?, verified_digest=? WHERE id=1').run(revision, createHash('sha256').update(JSON.stringify(items)).digest('hex'));
@@ -179,6 +186,7 @@ export class SkillMarket {
     return { source: 'https://github.com/T8mars/Deepseek-Harness-Zhenzhen', enabled: this.automaticEnabled(), pendingAutomatic: count };
   }
   setAutoUpdates(enabled: boolean): void {
+    this.writable();
     if (typeof enabled !== 'boolean') throw new Error('请选择明确的技能更新策略。');
     this.db.exec('BEGIN IMMEDIATE');
     try {
@@ -188,6 +196,7 @@ export class SkillMarket {
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
   }
   pauseAutoUpdate(id: string, paused: boolean): void {
+    this.writable();
     const selected = this.selected(id), item = selected?.active ? this.stored(selected.active) : undefined;
     if (typeof paused !== 'boolean' || !item || item.manifest.source !== 'bundled' || !id.startsWith('zhen-')) throw new Error('只有已安装的发布源技能可以设置自动更新策略。');
     this.db.prepare("UPDATE selections SET auto_paused=?, pending=CASE WHEN ?=1 AND pending_mode='automatic' THEN '' ELSE pending END, pending_revision=CASE WHEN ?=1 AND pending_mode='automatic' THEN '' ELSE pending_revision END, pending_mode=CASE WHEN ?=1 AND pending_mode='automatic' THEN '' ELSE pending_mode END WHERE id=?").run(paused ? 1 : 0, paused ? 1 : 0, paused ? 1 : 0, paused ? 1 : 0, id);
@@ -195,6 +204,7 @@ export class SkillMarket {
   /** Only the fixed, fully validated text feed can schedule this path. A user's
    * source policy replaces per-release confirmation, never tool authorization. */
   stageAutomaticUpdates(inputs: SkillPackage[], revision: string): number {
+    this.writable();
     const items = this.validateRemoteCatalog(inputs);
     if (!/^[a-f0-9]{40}$/.test(revision)) throw new Error('自动更新缺少固定来源提交。');
     if (!this.automaticEnabled() || !this.hasVerifiedFeed(items, revision)) return 0;
@@ -250,6 +260,7 @@ export class SkillMarket {
     return items;
   }
   offerRemoteCatalog(inputs: SkillPackage[]): void {
+    this.writable();
     const items = this.validateRemoteCatalog(inputs);
     const next = new Map(this.bundled);
     for (const item of items) next.set(item.manifest.id, item);
@@ -293,6 +304,7 @@ export class SkillMarket {
     return verifySkill(item);
   }
   select(id: string, digest: string, version = ''): void {
+    this.writable();
     const item = this.preview(id, digest, version);
     const key = this.save(item);
     const selected = this.selected(id);
@@ -306,14 +318,16 @@ export class SkillMarket {
     this.changed();
   }
   disable(id: string): void {
+    this.writable();
     this.db.prepare("UPDATE selections SET enabled=0, pending='', pending_mode='', pending_revision='' WHERE id=?").run(id);
     this.changed();
   }
-  cancelPending(id: string): void { this.db.prepare("UPDATE selections SET skipped=CASE WHEN pending<>'' THEN pending ELSE skipped END, pending='', pending_mode='', pending_revision='' WHERE id=?").run(id); this.changed(); }
+  cancelPending(id: string): void { this.writable();this.db.prepare("UPDATE selections SET skipped=CASE WHEN pending<>'' THEN pending ELSE skipped END, pending='', pending_mode='', pending_revision='' WHERE id=?").run(id); this.changed(); }
   versions(id: string): SkillPackage[] {
     return (this.db.prepare('SELECT package FROM versions WHERE id=? ORDER BY rowid DESC LIMIT 50').all(id) as { package: string }[]).map(row => verifySkill(JSON.parse(row.package)));
   }
   fork(id: string, digest: string, body: string, version = ''): string {
+    this.writable();
     const source = this.preview(id, digest, version);
     const name = `my-${id.slice(0, 40)}-${randomUUID().replaceAll('-', '').slice(0, 8)}`;
     const description = source.manifest.description;
@@ -332,6 +346,7 @@ export class SkillMarket {
     return { name: 'dsh-zhen-market',
       list: async options => {
         options.signal?.throwIfAborted();
+        if(this.reviewOnly)return [];
         return (this.db.prepare("SELECT * FROM selections WHERE enabled=1 AND active<>''").all() as Selection[]).map(selected => {
           const item = this.stored(selected.active)!;
           return { ...summary(item), rank: item.manifest.source === 'personal' ? 390 : 600, locator: { id: selected.id, digest: selected.active } } satisfies SkillCandidate;
@@ -339,6 +354,7 @@ export class SkillMarket {
       },
       get: async (candidate, options): Promise<SkillDefinition | undefined> => {
         options.signal?.throwIfAborted();
+        if(this.reviewOnly)return undefined;
         const locator = candidate.locator as { id?: string; digest?: string } | undefined;
         if (!locator || locator.id !== candidate.name || typeof locator.digest !== 'string') return undefined;
         const selected = this.selected(candidate.name);
