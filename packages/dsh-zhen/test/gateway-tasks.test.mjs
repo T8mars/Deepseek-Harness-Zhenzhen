@@ -48,6 +48,35 @@ test('query transports use eight exact authenticated GET endpoints without redir
   await assert.rejects(readGatewayTask(spec, 'EXAMPLE_TEST_ONLY_KEY', async () => interrupted), error => error.code === 'NETWORK' && !error.message.includes('PRIVATE'));
 });
 
+test('C141: a generic numeric database row id is distinct from the exact public task identity', () => {
+  for (const protocol of ['legacy-video', 'image', 'audio', 'three-d', 'music']) {
+    const body = exampleTask(protocol, {record:{id:12345,task_id:exampleTaskId}});
+    const observed = parseGatewayTask({protocol,taskId:exampleTaskId},body);
+    assert.equal(observed.status,'succeeded');assert.ok(observed.resultCount>0);
+    assert.equal(JSON.stringify(observed).includes('12345'),false);
+  }
+});
+
+test('C141: numeric-row compatibility never replaces or weakens the public identity check', () => {
+  for (const record of [
+    {id:12345,task_id:'task_EXAMPLE_OTHER'}, {id:12345,task_id:undefined},
+    {id:12345,task_id:12345}, {id:-1,task_id:exampleTaskId},
+    {id:1.5,task_id:exampleTaskId}, {id:Number.MAX_SAFE_INTEGER+1,task_id:exampleTaskId},
+    {id:null,task_id:exampleTaskId}, {id:'task_EXAMPLE_OTHER',task_id:exampleTaskId},
+  ]) assert.throws(()=>parseGatewayTask(spec,exampleTask('image',{record})),{code:'RESPONSE'});
+  for(const protocol of ['video','midjourney','minimax-v2'])assert.throws(()=>parseGatewayTask({protocol,taskId:exampleTaskId},exampleTask(protocol,{record:{id:12345,task_id:exampleTaskId}})),{code:'RESPONSE'});
+  assert.equal(parseGatewayTask(spec,exampleTask('image',{record:{id:exampleTaskId,task_id:exampleTaskId}})).status,'succeeded');
+});
+
+test('C141: terminal billed amounts retain safe custom display units without conversion or unsafe labels', () => {
+  for(const currency of ['CNY','USD','CUSTOM','EXAMPLE积分','EXAMPLE credits','¥']){
+    const value=parseGatewayTask(spec,exampleTask('image',{record:{usage:{amount:1.23456789,currency}}}));
+    assert.deepEqual(value.usage,{amount:1.23456789,currency});
+    assert.equal(parseGatewayTask(spec,exampleTask('image',{record:{status:'IN_PROGRESS',usage:{amount:1.23456789,currency}}})).usage,null);
+  }
+  for(const currency of ['',' EXAMPLE','EXAMPLE ','EXAMPLE\nUNIT','EXAMPLE\u202eUNIT','https://EXAMPLE.invalid','sk-EXAMPLE','EXAMPLE<script>','EXAMPLE'.repeat(8)])assert.equal(parseGatewayTask(spec,exampleTask('image',{record:{usage:{amount:1.23456789,currency}}})).usage,null);
+});
+
 test('mismatched identities, envelopes, invalid UTF8 and oversized responses fail closed; progress never implies completion', async () => {
   assert.throws(() => parseGatewayTask(spec, exampleTask('image', { id: 'task_EXAMPLE_DIFFERENT' })));
   assert.throws(() => parseGatewayTask(spec, { code: 401, data: exampleTask('image').data }));

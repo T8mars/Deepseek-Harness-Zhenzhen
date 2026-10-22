@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T22:01:22.122Z",
+  "checkedAt": "2026-10-22T22:42:45.709Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2232,6 +2232,37 @@
       "verification": "New20/related119 pass; build and clean types pass. C136 actual public session-header project pagination,source baseline before/after,only20 groups/counts per page,no session IDs/messages or old project reads. C137 actual published Owner Gateway rejects anonymous and busy,shares same read,resolves project session mappings on Host,and seals an independent fresh restoration; original candidate/header/project bytes preserved. C138 production handlers cover chooser,pagination,stale source/target/replies,confirmation/form link,definite refusal and separate restore password. Immutable base schema kept for C121 dev70 reader. Complete1191/1191 and208-file archive pass; C63/C76 stable payload matches local,other version payloads byte-identical; actual public CLI install/uninstall and worker hashes pass. Current exact CI pending. Workspace/RAG/skill binding,permissions,activation/fullL2/browser pending; same tested208-file archive installed with preserved settings and scoped own metadata; browser unverified,Native/model0.",
       "runtimeInstalled": true,
       "runtimeVerificationScope": "Actual normal public CLI replacement,208 installed-file hashes,preserved settings/own Canvas hashes/own RAG metadata; actual browser and real user restore unverified."
+    },
+    "restoredApplicationWorkspaces": {
+      "schemaVersion": 1,
+      "publishedSdk": "0.2.1-rc.2",
+      "completeLogicalInventory": true,
+      "pathsRebound": false,
+      "registryEnabled": false,
+      "pendingMutationsExecuted": false,
+      "wholeApplicationRestore": false,
+      "activated": false,
+      "verification": "New9/related81,build and clean types pass. C139 actual published Storage/Domain/JSON logical copy preserves all workspace identities,paths,session order,pins,archives,unlisted records and both pending forms; original component unchanged,new copy writes and separate Node reopen pass. C124 actual public CLI reads application inventory with retained workspace component also unavailable. C140 actual published Registry validates immutable header cwd while original directory exists; normal cwd events do not rebind membership. Complete1204/1204 and209-file archive pass; stable payload matches local and other canary payload bytes identical; public CLI install/uninstall and worker hashes pass. Exact CI pending. Registry paused,paths not rebound; unified projects,permissions,activation/fullL2/browser pending. Same tested209-file package installed with preserved public settings and scoped owned metadata;browser unverified,Native/model0 for these contracts.",
+      "runtimeInstalled": true,
+      "runtimeVerificationScope": "Actual normal public CLI replacement;209 installed payload files match the verified archive;public settings and scoped owned metadata preserved. Browser,restore activation and Native creation unverified."
+    },
+    "gatewayDevelopmentCheck0108": {
+      "model": "deepseek/deepseek-v4.1-flash",
+      "requests": 1,
+      "httpStatus": 200,
+      "maxTokens": 512,
+      "expectedTextMatched": true,
+      "imageModel": "qwen-image-3.0-t2i",
+      "imageSubmits": 1,
+      "imageOutcome": "production-query-download-settlement-passed",
+      "imageResubmits": 0,
+      "imageDimensions": [
+        1024,
+        1024
+      ],
+      "imageBytes": 339041,
+      "customDisplayUnitPreserved": true,
+      "nativeRequests": 0
     }
   }
 }

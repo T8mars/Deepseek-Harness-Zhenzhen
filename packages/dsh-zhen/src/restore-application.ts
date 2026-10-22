@@ -22,9 +22,12 @@ import type {SkillInventoryRestoreCandidate} from './backup-skill-inventory.ts';
 import {prepareRestoredSessions} from './restore-sessions.ts';
 import type {SessionDirectoryBinding,SessionApplicationReceipt} from './restore-sessions.ts';
 import type {SessionRestoreCandidate} from './backup-sessions.ts';
+import {prepareRestoredWorkspaces} from './restore-workspaces.ts';
+import type {WorkspaceApplicationReceipt} from './restore-workspaces.ts';
+import type {WorkspaceRestoreCandidate} from './backup-workspaces.ts';
 
 export interface ApplicationRestoreOptions {installAnchor:string;sessionDirectories?:readonly SessionDirectoryBinding[];}
-export interface ApplicationRestoreParts {knowledge?:RagRestoreCandidate;skills?:SkillInventoryRestoreCandidate;sessions?:SessionRestoreCandidate;}
+export interface ApplicationRestoreParts {knowledge?:RagRestoreCandidate;skills?:SkillInventoryRestoreCandidate;sessions?:SessionRestoreCandidate;workspaces?:WorkspaceRestoreCandidate;}
 export interface ApplicationRestoreProfile {
   name:string;originName:string;overlay:string|null;
   bindings:Array<{id:string;module:string;role:'sessions'|'attachmentsHome'|'workspaceStorage'|'workingDirectory';target:string}>;
@@ -38,6 +41,7 @@ export interface ApplicationRestoreRecipe {
   knowledge:KnowledgeApplicationReceipt|null;
   skills:SkillApplicationReceipt|null;
   sessions:SessionApplicationReceipt|null;
+  workspaces:WorkspaceApplicationReceipt|null;
   profiles:ApplicationRestoreProfile[];reviewRequired:true;activated:false;readyForActivation:false;wholeApplicationRestore:false;
 }
 const MAX_FILE=8*1024**2,MAX_TOTAL=64*1024**2;
@@ -96,7 +100,7 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
   const scope=new Map(parsed.data.components.map(row=>[row.kind,row])),sessions=scope.get('sessions'),workspaces=scope.get('workspaces');
   const targets={sessions:location(sessions,'sessions')??join(home,'sessions'),attachmentsHome:location(sessions,'attachmentsHome')??home,workspaceStorage:location(workspaces,'workspaceStorage')??join(home,'storages')};
   for(const path of Object.values(targets))await owned(root,path,'directory',true);
-  const recipe:ApplicationRestoreRecipe={schema:'dsh-zhen-application-restore-v1',sdkVersion:SUPPORTED_DSH,home,agentsHome,records:[],knowledge:null,skills:null,sessions:null,profiles:[],reviewRequired:true,activated:false,readyForActivation:false,wholeApplicationRestore:false};
+  const recipe:ApplicationRestoreRecipe={schema:'dsh-zhen-application-restore-v1',sdkVersion:SUPPORTED_DSH,home,agentsHome,records:[],knowledge:null,skills:null,sessions:null,workspaces:null,profiles:[],reviewRequired:true,activated:false,readyForActivation:false,wholeApplicationRestore:false};
   const ownSource=location(scope.get('records'),'ownData'),dataRoot=join(home,'dsh-zhen');let ownsData=false;
   try{
     if(ownSource||parts.knowledge||parts.skills){await mkdir(dataRoot,{mode:0o700});ownsData=true;}
@@ -108,6 +112,7 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
     }
     if(options.sessionDirectories?.length&&!parts.sessions)fail('BACKUP_SESSION_APPLICATION_INPUT_INVALID');
     if(parts.sessions){const selected=scope.get('sessions');if(!selected?.details||parts.sessions.root!==selected.root||location(selected,'sessions')!==join(parts.sessions.root,'sessions')||location(selected,'attachmentsHome')!==parts.sessions.root)fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.sessions=await prepareRestoredSessions(root,home,parts.sessions,options.sessionDirectories,{signal});targets.sessions=recipe.sessions.sessionsRoot;targets.attachmentsHome=recipe.sessions.attachmentsHome;}
+    if(parts.workspaces){if(!workspaces?.details||parts.workspaces.root!==workspaces.root||parts.workspaces.storageRoot!==location(workspaces,'workspaceStorage'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.workspaces=await prepareRestoredWorkspaces(root,home,parts.workspaces,{signal});targets.workspaceStorage=recipe.workspaces.storageRoot;}
     if(parts.knowledge){const knowledge=scope.get('knowledge');if(!knowledge?.details||parts.knowledge.root!==knowledge.root||parts.knowledge.database!==(location(knowledge,'knowledgeDatabase')??null)||parts.knowledge.backendState!==location(knowledge,'knowledgeBackend'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.knowledge=await prepareRestoredKnowledge(root,home,parts.knowledge,{signal});}
     if(parts.skills){const skills=scope.get('skills');if(!skills?.details||parts.skills.root!==skills.root||parts.skills.market.database!==location(skills,'skillMarket')||parts.skills.managed.local.file!==location(skills,'skillLocalState'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.skills=await prepareRestoredSkills(root,home,parts.skills,{signal});}
     const cwd=join(home,'recovered-workspace');await mkdir(cwd,{mode:0o700});let outputBytes=0;
@@ -137,5 +142,5 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
       }catch(error){signal?.throwIfAborted();row.bindings=[];row.paused=[];row.overlay=null;row.launch=null;row.reasons.push(error instanceof BackupError?error.code:'BACKUP_APPLICATION_PROFILE_UNAVAILABLE');}
     }
     signal?.throwIfAborted();await writeFile(join(root,'dsh-zhen-application-restore.json'),backupJsonString(recipe)+'\n',{flag:'wx',mode:0o600});return recipe;
-  }catch(error){if(recipe.sessions){await owned(root,recipe.sessions.root,'directory');await rm(recipe.sessions.root,{recursive:true,force:true,maxRetries:3,retryDelay:100});}if(ownsData){await owned(root,dataRoot,'directory');await rm(dataRoot,{recursive:true,force:true,maxRetries:3,retryDelay:100});}signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_APPLICATION_PREPARE_FAILED');}
+  }catch(error){if(recipe.workspaces){await owned(root,recipe.workspaces.root,'directory');await rm(recipe.workspaces.root,{recursive:true,force:true,maxRetries:3,retryDelay:100});}if(recipe.sessions){await owned(root,recipe.sessions.root,'directory');await rm(recipe.sessions.root,{recursive:true,force:true,maxRetries:3,retryDelay:100});}if(ownsData){await owned(root,dataRoot,'directory');await rm(dataRoot,{recursive:true,force:true,maxRetries:3,retryDelay:100});}signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_APPLICATION_PREPARE_FAILED');}
 }

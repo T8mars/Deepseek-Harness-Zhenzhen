@@ -2,7 +2,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import {openOwnedDatabase} from './owned-store-source.ts';
 import type {OwnedDatabaseSource} from './owned-store-source.ts';
 import { randomUUID } from 'node:crypto';
-import { gatewayTaskSpecSchema, gatewayTaskRecordSchema, gatewayTaskObservationSchema } from './gateway-task-schema.ts';
+import { gatewayTaskSpecSchema, gatewayTaskRecordSchema, gatewayTaskObservationSchema, gatewayCurrencySchema } from './gateway-task-schema.ts';
 import type { GatewayTaskSpec, GatewayTaskProtocol, GatewayTaskCode, GatewayTaskObservation, GatewayTaskRecord } from './gateway-task-schema.ts';
 
 export class GatewayTaskError extends Error {
@@ -22,13 +22,19 @@ export function parseGatewayTask(spec: GatewayTaskSpec, input: unknown, collect?
   if (body.code !== undefined && !['success', 'SUCCESS', 0, 1, 200].includes(body.code as string | number)) throw new GatewayTaskError('RESPONSE');
   const record = spec.protocol === 'minimax-v2' ? object(body.task) : ['video', 'midjourney'].includes(spec.protocol) ? body : object(body.data);
   if (!record) throw new GatewayTaskError('RESPONSE');
-  const ids = [record.id, record.task_id].filter(value => value !== undefined);
+  // Generic TaskDto responses may carry an internal numeric row id alongside
+  // the public task_id. The real image endpoint returns this shape (C141).
+  // Accept that row id only in the generic envelope and only with the exact
+  // requested public identity. String ids still have to agree with each other.
+  const internalRowId = ['legacy-video', 'image', 'audio', 'three-d', 'music'].includes(spec.protocol)
+    && Number.isSafeInteger(record.id) && Number(record.id) >= 0 && record.task_id === spec.taskId;
+  const ids = [internalRowId ? undefined : record.id, record.task_id].filter(value => value !== undefined);
   if (!ids.length || ids.some(value => value !== spec.taskId) || typeof record.status !== 'string') throw new GatewayTaskError('RESPONSE');
   const status = states[record.status] ?? 'unknown';
   const rawProgress = typeof record.progress === 'string' && /^\d{1,3}(?:\.\d+)?%?$/.test(record.progress) ? Number(record.progress.replace(/%$/, '')) : record.progress;
   const progress = typeof rawProgress === 'number' && Number.isFinite(rawProgress) && rawProgress >= 0 && rawProgress <= 100 ? rawProgress : null;
   const rawUsage = object(record.usage);
-  const usage = terminal(status) && rawUsage && typeof rawUsage.amount === 'number' && Number.isFinite(rawUsage.amount) && rawUsage.amount >= 0 && typeof rawUsage.currency === 'string' && /^[A-Z]{3,8}$/.test(rawUsage.currency)
+  const usage = terminal(status) && rawUsage && typeof rawUsage.amount === 'number' && Number.isFinite(rawUsage.amount) && rawUsage.amount >= 0 && typeof rawUsage.currency === 'string' && gatewayCurrencySchema.safeParse(rawUsage.currency).success
     ? { amount: rawUsage.amount, currency: rawUsage.currency } : null;
   const urls = new Set<string>();
   function url(value: unknown): void {

@@ -43,6 +43,18 @@ async function environment(work, handler) {
   }
 }
 
+test('C141: actual published Host and Remote accept a generic TaskDto numeric row id with matching public task_id', async () => {
+  await environment(async ({host,requests})=>{
+    const h=await host(),item=await h.service.gatewayTaskAdd({protocol:'image',taskId:exampleTaskId}),result=await h.service.gatewayTaskRefresh(item.id);
+    assert.equal(result.status,'succeeded');assert.equal(result.code,'');assert.equal(result.resultCount,2);
+    assert.deepEqual(result.usage,{amount:1.23456789,currency:'EXAMPLE积分'});
+    assert.deepEqual(TYPERT_REMOTE.methods['zhen/gatewayTaskRefresh'].result.create().parse(result),result);
+    assert.equal(requests.length,1);assert.equal(requests[0].method,'GET');
+    const encoded=JSON.stringify(result);for(const text of ['12345','PRIVATE','https://','EXAMPLE_SIGNATURE'])assert.equal(encoded.includes(text),false);
+    console.log(JSON.stringify({contract:'C141',actualPublishedHostAndRemote:true,numericRowIdNotPublicIdentity:true,exactTaskIdStillRequired:true,customUnitAndBilledAmountPreserved:true,readOnlyQueries:true,internalRowIdAndSignedUrlsNotReturned:true,nativeRequests:0,modelRequests:0}));
+  },({response})=>{response.setHeader('Content-Type','application/json');response.end(JSON.stringify(exampleTask('image',{record:{id:12345,task_id:exampleTaskId,usage:{amount:1.23456789,currency:'EXAMPLE积分'}}})));});
+});
+
 test('C22: published Host/Remote queries eight independent documented routes through a real isolated HTTP transport without returning provider material', async () => {
   await environment(async ({ host, requests }) => {
     const h = await host(); assert.deepEqual(await h.service.gatewayTaskList(), []); assert.equal(h.reads(), 0);

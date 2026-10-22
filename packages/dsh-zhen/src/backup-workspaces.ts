@@ -84,12 +84,19 @@ function reviewReasons(value:WorkspaceBackupDocument):string[]{
  * directories, session sources, current registry, grants, scripts or Agents. */
 export async function restoreWorkspaceBackup(source:string,password:string,parent:string,options:BackupOptions={}):Promise<WorkspaceRestoreCandidate>{
   if(!isAbsolute(parent))throw new BackupError('BACKUP_PATH_INVALID');
-  const directory=await realpath(parent),archive=await openBackupArchive(source,password,options);let root:string|undefined,ctx:Context|undefined,complete=false;
+  const archive=await openBackupArchive(source,password,options);
+  try{return await restoreVerifiedWorkspaceRecords(archive.records(),parent,options);}finally{await archive.close();}
+}
+/** Internal logical writer shared by authenticated archive restore and a fresh
+ * application copy. All records are validated before any target is created. */
+export async function restoreVerifiedWorkspaceRecords(records:AsyncGenerator<BackupRecord>,parent:string,options:BackupOptions={}):Promise<WorkspaceRestoreCandidate>{
+  if(!isAbsolute(parent))throw new BackupError('BACKUP_PATH_INVALID');
+  const directory=await realpath(parent);let root:string|undefined,ctx:Context|undefined,complete=false;
   try{
-    const records=archive.records(),first=await records.next();
+    const first=await records.next();
     if(first.done||first.value.metadata.kind!=='workspace-inventory'||first.value.metadata.schema!==SCHEMA||Object.keys(first.value.metadata).length!==2||first.value.size>MAX_BYTES)throw new BackupError('BACKUP_WORKSPACE_MANIFEST_INVALID');
     const parts:Uint8Array[]=[];let size=0;for await(const bytes of first.value.data){options.signal?.throwIfAborted();size+=bytes.length;if(size>MAX_BYTES)throw new BackupError('BACKUP_WORKSPACE_LIMIT');parts.push(bytes);}
-    const document=validate(parseBackupJson(Buffer.concat(parts,size)));if(!(await records.next()).done)throw new BackupError('BACKUP_WORKSPACE_TRAILING_RECORDS');options.signal?.throwIfAborted();
+    if(size!==first.value.size)throw new BackupError('BACKUP_WORKSPACE_MANIFEST_INVALID');const document=validate(parseBackupJson(Buffer.concat(parts,size)));if(!(await records.next()).done)throw new BackupError('BACKUP_WORKSPACE_TRAILING_RECORDS');options.signal?.throwIfAborted();
     root=await realpath(await mkdtemp(join(directory,'dsh-zhen-workspaces-restore-')));ctx=new Context();const storageRoot=join(root,'storage');
     await ctx.plugin(Storage);await ctx.plugin(Json,{root:storageRoot});await ctx.plugin(Domain,{backend:'json'});const domain=await ctx.storage.domain.open(workspaceDomainSpec),table=domain.table('workspaces');
     for(const row of document.workspaces){options.signal?.throwIfAborted();await table.put(row.id,row.record);}
@@ -100,5 +107,5 @@ export async function restoreWorkspaceBackup(source:string,password:string,paren
     const metadata=join(root,'dsh-zhen-workspaces-restore.json'),result:WorkspaceRestoreCandidate={schema:SCHEMA,root,storageRoot,metadata,workspaces:document.workspaces.length,reviewReasons:reviewReasons(document),activated:false,readyForActivation:false,wholeApplicationRestore:false};
     await writeFile(metadata,backupJsonString({document,candidate:result})+'\n',{flag:'wx',mode:0o600});options.signal?.throwIfAborted();complete=true;return result;
   }catch(error){options.signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_WORKSPACE_RESTORE_FAILED');}
-  finally{try{await ctx?.fiber.dispose();await archive.close();}finally{if(root&&!complete){const actual=await realpath(root),part=relative(directory,actual);if(!part||isAbsolute(part)||part.startsWith('..')||/[\\/]/.test(part)||!part.startsWith('dsh-zhen-workspaces-restore-'))throw new BackupError('BACKUP_TEMP_BOUNDARY');await rm(actual,{recursive:true,force:true,maxRetries:3,retryDelay:100});}}}
+  finally{try{await ctx?.fiber.dispose();await records.return(undefined);}finally{if(root&&!complete){const actual=await realpath(root),part=relative(directory,actual);if(!part||isAbsolute(part)||part.startsWith('..')||/[\\/]/.test(part)||!part.startsWith('dsh-zhen-workspaces-restore-'))throw new BackupError('BACKUP_TEMP_BOUNDARY');await rm(actual,{recursive:true,force:true,maxRetries:3,retryDelay:100});}}}
 }

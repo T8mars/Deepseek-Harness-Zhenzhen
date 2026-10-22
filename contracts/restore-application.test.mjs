@@ -109,9 +109,12 @@ test('C124: real restored public CLI reads sessions, attachment bytes, workspace
   assert.equal((await verifyRecoveryCandidate(candidate.verification)).integrity,'unchanged');
   const layout=JSON.parse(await readFile(join(candidate.root,'dsh-zhen-recovery-layout.json'),'utf8'));
   const retainedRecords=layout.components.find(row=>row.kind==='records').locations.find(row=>row.role==='ownData').path;
+  const retainedWorkspaces=layout.components.find(row=>row.kind==='workspaces').root,workspaceBaseline=await fileDigests(retainedWorkspaces);
+  assert.ok(recipe.workspaces);assert.equal(profile.bindings.find(row=>row.role==='workspaceStorage').target,recipe.workspaces.storageRoot);assert.notEqual(recipe.workspaces.storageRoot,join(retainedWorkspaces,'storage'));assert.equal(recipe.workspaces.registryEnabled,false);
   assert.deepEqual(taskRows(join(retainedRecords,'gateway-tasks.sqlite')),originalTaskRows);assert.deepEqual(taskRows(f.tasksFile),originalTaskRows);
   await f.dispose();
   for(const path of[f.home,f.sourcePackage,f.workspace]){const actual=await realpath(path),part=relative(f.root,actual);assert.ok(part&&!isAbsolute(part)&&!part.startsWith('..')&&!/[\\/]/.test(part)&&part.startsWith('EXAMPLE_'));await rename(actual,path+'.EXAMPLE_OFFLINE');}
+  assert.deepEqual(await fileDigests(retainedWorkspaces),workspaceBaseline);const workspacePart=relative(f.root,await realpath(retainedWorkspaces));assert.ok(workspacePart&&!isAbsolute(workspacePart)&&!workspacePart.startsWith('..'));await rename(retainedWorkspaces,retainedWorkspaces+'.EXAMPLE_OFFLINE');
   const dumpRun=await runCli(profile,f.root,['--dump-config']),dump=parseDocument(dumpRun.output);assert.equal(dump.errors.length,0);assert.equal(existsSync(dumpRun.receipt),false);
   const entries=dump.toJS();assert.ok(Array.isArray(entries),'EXAMPLE dump '+dumpRun.output.slice(-2000));
   const flat=rows=>rows.flatMap(row=>[row,...row.group&&Array.isArray(row.config)?flat(row.config):[]]);const rows=flat(entries);
@@ -122,6 +125,7 @@ test('C124: real restored public CLI reads sessions, attachment bytes, workspace
   assert.deepEqual(actual.headers,[f.header]);assert.deepEqual(actual.events,f.events);assert.equal(actual.attachmentSha,sha(f.bytes));assert.deepEqual(actual.workspaces,[['EXAMPLE_WORKSPACE',f.record]]);assert.deepEqual(actual.global,f.global);assert.equal(actual.scheduleAbsent,true);assert.equal(actual.workspaceRegistryAbsent,true);
   assert.deepEqual(actual.tasks,originalTaskRows.map(row=>({...row,record:{...row.record,tracking:false,querying:false}})));assert.equal(actual.home,recipe.home);assert.equal(actual.cwd,profile.launch.cwd);assert.equal(actual.config.EXAMPLE,'preserved');assert.ok(actual.module.includes('EXAMPLE-probe.mjs'));
   for(const path of[f.home,f.sourcePackage,f.workspace])assert.equal(existsSync(path),false);assert.equal(f.requests(),0);
+  assert.equal(existsSync(retainedWorkspaces),false);assert.deepEqual(await fileDigests(retainedWorkspaces+'.EXAMPLE_OFFLINE'),workspaceBaseline);
   // The generated application recipe is part of the sealed candidate too.
   await writeFile(join(candidate.root,'dsh-zhen-application-restore.json'),'EXAMPLE_CHANGED_RECIPE');
   assert.equal((await verifyRecoveryCandidate(candidate.verification)).integrity,'changed');

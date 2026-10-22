@@ -4,10 +4,13 @@ export const gatewayTaskProtocolSchema = z.enum(['video', 'legacy-video', 'image
 export const gatewayTaskIdSchema = z.string().min(1).max(160).regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/).refine(value => !/^sk[-_]/i.test(value), '请输入任务编号，不要输入 API 令牌。');
 export const gatewayTaskSpecSchema = z.object({ protocol: gatewayTaskProtocolSchema, taskId: gatewayTaskIdSchema }).strict();
 export const gatewayTaskCodeSchema = z.enum(['', 'AUTH', 'NOT_FOUND', 'MISSING_CREDENTIAL', 'RATE_LIMIT', 'SERVER', 'NETWORK', 'RESPONSE', 'CANCELLED', 'CONFIG_CHANGED', 'UNAVAILABLE', 'UNRECOGNIZED_STATUS', 'BUSY']);
+// Wallets may use a custom display unit, including a one-character label.
+// This is a plain display label, never an ISO conversion or executable string.
+export const gatewayCurrencySchema = z.string().min(1).max(32).regex(/^[\p{L}\p{N} €$£¥￥₩₽₹₿]+$/u).refine(value => value.trim() === value);
 export const gatewayTaskObservationSchema = z.object({
   status: z.enum(['unknown', 'queued', 'running', 'succeeded', 'failed', 'cancelled']),
   progress: z.number().finite().min(0).max(100).nullable(), resultCount: z.number().int().min(0).max(100),
-  usage: z.object({ amount: z.number().finite().nonnegative(), currency: z.string().regex(/^[A-Z]{3,8}$/) }).strict().nullable(),
+  usage: z.object({ amount: z.number().finite().nonnegative(), currency: gatewayCurrencySchema }).strict().nullable(),
 }).strict();
 export const gatewayTaskRecordSchema = gatewayTaskObservationSchema.extend({
   id: z.uuid(), protocol: gatewayTaskProtocolSchema, taskId: gatewayTaskIdSchema,
