@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T01:46:01.734Z",
+  "checkedAt": "2026-10-22T03:13:26.286Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2020,6 +2020,29 @@
       "localPassed": 871,
       "packageFiles": 179,
       "localPackageSha256": "cbca535b9b3baff35138c5680c4e8fc9e446558dca3796f3e6a8b9723642fa0f"
+    },
+    "ownedStateBackup": {
+      "schema": "dsh-zhen-owned-state-v1",
+      "decision": "0093-owned-state-backup",
+      "hostOnly": true,
+      "stores": [
+        "checks",
+        "tasks",
+        "media"
+      ],
+      "maxRows": 100000,
+      "maxMetadataBytes": 67108864,
+      "chunkBytes": 4194304,
+      "targetedTests": 53,
+      "relatedPassed": 91,
+      "fullRegressionPending": false,
+      "activated": false,
+      "wholeApplicationRestore": false,
+      "verification": "Complete924/924, new53/related91 and182-file archive pass. C104 verifies complete own checks/tasks/media rows, real restored resources with originals absent, retained source guards and actual warm store identity. Existing C63/C76/C96-C103 proofs also pass. Candidate is inactive; no user Host replacement/restart, Native writes or model calls. Other state/unified restore/UI and full original scope remain incomplete; exact current CI separate.",
+      "localTests": 924,
+      "localPassed": 924,
+      "packageFiles": 182,
+      "localPackageSha256": "62f4fe34e23142af361d3605c00c558c975f43cee0d70d4863bc0420350bb506"
     }
   }
 }

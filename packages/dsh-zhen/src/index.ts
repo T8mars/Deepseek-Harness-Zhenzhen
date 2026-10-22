@@ -1,4 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis';
+import {symbols} from '@deepseek-ai/cordis';
 import { credentialRef } from '@deepseek-ai/dsh-credentials';
 import { credentialSource } from './client/credential-source.ts';
 import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
@@ -7,7 +8,9 @@ import { DefaultArt } from './default-art.ts';
 import type { DefaultArtInfo, DefaultArtChunkRequest, DefaultArtChunk } from './default-art-schema.ts';
 import type { Wallet } from './gateway.ts';
 import type {} from './remote.ts';
-import { dshHomePath } from '@deepseek-ai/dsh-home-paths';
+import { dshHomePath,resolveAgentsHome } from '@deepseek-ai/dsh-home-paths';
+import {prepareOwnedStateBackup} from './backup-owned.ts';
+import type {OwnedStateBackupPolicy,OwnedStateBackupLease} from './backup-owned.ts';
 import { KnowledgeStore } from './knowledge.ts';
 import {ZhenRag} from './rag-service.ts';
 import type {RagBackendStatus} from './rag-backend-schema.ts';
@@ -144,6 +147,7 @@ export default class ZhenService extends TypertRemoteService {
   private knowledgeStore?: KnowledgeStore;
   // One Host keeps its startup data root even if another plugin changes env/cwd.
   private readonly zhenHome=dshHomePath('dsh-zhen');
+  private readonly agentsHome=resolveAgentsHome();
   private readonly knowledgeFile=join(this.zhenHome,'knowledge.sqlite');
   private readonly mcpHome=join(this.zhenHome,'mcp');
   private readonly rag:ZhenRag;
@@ -394,6 +398,11 @@ export default class ZhenService extends TypertRemoteService {
    * pinned application home even if ambient DSH_HOME changes after startup. */
   packageBackupLease(policy:()=>HostPackageBackupPolicy,options:BackupOptions={}):Promise<PackageBackupLease>{
     return preparePackageBackup(()=>{const selected=policy();return hostPackageBackupSource(this.ctx,{...selected,protectedContainers:[...selected.protectedContainers,dirname(dirname(this.knowledgeFile))]});},options);
+  }
+  /** Host-only own-state lease; never initialize lazy stores or read credentials. */
+  ownedStateBackupLease(policy:()=>OwnedStateBackupPolicy,options:BackupOptions={}):Promise<OwnedStateBackupLease>{
+    const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value,owner=original(this);
+    return prepareOwnedStateBackup(()=>{if(original(this.ctx.get('zhen'))!==owner)throw new BackupError('BACKUP_SOURCE_CHANGED');const selected=policy(),activeFiles={checks:this.gatewayChecks?.backupSourceIdentity(),tasks:this.mediaTasks?.backupSourceIdentity(),media:this.mediaExports?.backupSourceIdentity()};return{...selected,root:this.zhenHome,owner:owner as object,activeFiles,forbiddenTrees:[...selected.forbiddenTrees,dirname(this.zhenHome),this.agentsHome]};},options);
   }
   @Remote
   marketFeedSnapshot(): import('./market-schema.ts').SkillFeedSnapshot { return this.feed().snapshot(); }

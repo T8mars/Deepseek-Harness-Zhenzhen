@@ -1,6 +1,6 @@
-import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import type { DatabaseSync } from 'node:sqlite';
+import {openOwnedDatabase} from './owned-store-source.ts';
+import type {OwnedDatabaseSource} from './owned-store-source.ts';
 import { randomUUID } from 'node:crypto';
 import { gatewayTaskSpecSchema, gatewayTaskRecordSchema, gatewayTaskObservationSchema } from './gateway-task-schema.ts';
 import type { GatewayTaskSpec, GatewayTaskProtocol, GatewayTaskCode, GatewayTaskObservation, GatewayTaskRecord } from './gateway-task-schema.ts';
@@ -76,17 +76,18 @@ type ResolveKey = () => Promise<string | undefined>;
  */
 export class GatewayTasks {
   private readonly db: DatabaseSync;
+  private readonly backupSource:OwnedDatabaseSource|null;
   private active?: { id: string; controller: AbortController; promise: Promise<GatewayTaskRecord> };
   private closed = false;
   private generation = 0;
   private readonly media = new Map<string, { sources: string[]; expires: number }>();
   constructor(file: string, private readonly resolveKey: ResolveKey, private readonly fetcher: typeof fetch = fetch, private readonly now = Date.now) {
-    if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
-    this.db = new DatabaseSync(file); this.db.exec('PRAGMA busy_timeout=3000');
+    const opened=openOwnedDatabase(file);this.db=opened.db;this.backupSource=opened.source;this.db.exec('PRAGMA busy_timeout=3000');
     const version = Number(this.db.prepare('PRAGMA user_version').get()?.user_version ?? 0);
     if (version > 1) { this.db.close(); throw new GatewayTaskError('UNAVAILABLE'); }
     this.db.exec('CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY,protocol TEXT NOT NULL,task_id TEXT NOT NULL,record TEXT NOT NULL,UNIQUE(protocol,task_id)); PRAGMA user_version=1;');
   }
+  backupSourceIdentity():OwnedDatabaseSource|null{return this.backupSource?{...this.backupSource}:null;}
   private get(id: string): GatewayTaskRecord {
     if (!/^[a-f0-9-]{36}$/.test(id) || this.closed) throw new GatewayTaskError('UNAVAILABLE');
     const row = this.db.prepare('SELECT record FROM tasks WHERE id=?').get(id);

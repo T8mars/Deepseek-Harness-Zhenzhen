@@ -1,6 +1,6 @@
-import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import type { DatabaseSync } from 'node:sqlite';
+import {openOwnedDatabase} from './owned-store-source.ts';
+import type {OwnedDatabaseSource} from './owned-store-source.ts';
 import { randomUUID } from 'node:crypto';
 import type { PreparedLlmCall } from '@deepseek-ai/dsh-llm';
 import { GATEWAY_CHECK_POLICY, GATEWAY_CHECK_MODEL, GATEWAY_CHECK_PROMPT, gatewayCheckCodeSchema, gatewayCheckReceiptSchema } from './gateway-check-schema.ts';
@@ -16,6 +16,7 @@ type Pending = { prepared: PreparedLlmCall; expires: number };
  */
 export class GatewayChecks {
   private readonly db: DatabaseSync;
+  private readonly backupSource:OwnedDatabaseSource|null;
   private readonly owner = randomUUID();
   private readonly pending = new Map<string, Pending>();
   private readonly active = new Map<string, { controller: AbortController; task: Promise<GatewayCheckReceipt> }>();
@@ -23,12 +24,12 @@ export class GatewayChecks {
   private preparing = false;
   private closing = false;
   constructor(file: string, private readonly prepare: Prepare, private readonly now = Date.now) {
-    if (file !== ':memory:') mkdirSync(dirname(file), { recursive: true });
-    this.db = new DatabaseSync(file);
+    const opened=openOwnedDatabase(file);this.db=opened.db;this.backupSource=opened.source;
     const version = Number(this.db.prepare('PRAGMA user_version').get()?.user_version ?? 0);
     if (version > 1) { this.db.close(); throw new Error('请升级应用后再读取连接检查记录。'); }
     this.db.exec('CREATE TABLE IF NOT EXISTS checks(id TEXT PRIMARY KEY,owner TEXT NOT NULL,created INTEGER NOT NULL,state TEXT NOT NULL,receipt TEXT NOT NULL); PRAGMA user_version=1;');
   }
+  backupSourceIdentity():OwnedDatabaseSource|null{return this.backupSource?{...this.backupSource}:null;}
   private save(receipt: GatewayCheckReceipt, insert = false): void {
     const text = JSON.stringify(gatewayCheckReceiptSchema.parse(receipt));
     if (insert) this.db.prepare('INSERT INTO checks VALUES(?,?,?,?,?)').run(receipt.id, this.owner, this.now(), receipt.state, text);

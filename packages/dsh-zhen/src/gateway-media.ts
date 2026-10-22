@@ -1,4 +1,6 @@
-import { DatabaseSync } from 'node:sqlite';
+import type { DatabaseSync } from 'node:sqlite';
+import {openOwnedDatabase} from './owned-store-source.ts';
+import type {OwnedDatabaseSource} from './owned-store-source.ts';
 import { mkdirSync, realpathSync, lstatSync, statSync, existsSync, readdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { copyFile, open } from 'node:fs/promises';
 import { constants } from 'node:fs';
@@ -20,6 +22,7 @@ export class GatewayMedia {
   private readonly root: string;
   private readonly rootIdentity: string;
   private readonly db: DatabaseSync;
+  private readonly backupSource:OwnedDatabaseSource|null;
   private readonly tickets = new Map<string, Ticket>();
   private readonly completed = new Map<string, GatewayMediaReceipt>();
   private active?: { id: string; folder: string; controller: AbortController; promise: Promise<GatewayMediaReceipt> };
@@ -27,11 +30,12 @@ export class GatewayMedia {
   private closed = false;
   constructor(root: string, private readonly sources: (id: string) => Promise<string[]>, private readonly taskExists: (id: string) => boolean, private readonly now = Date.now) {
     mkdirSync(root, { recursive: true }); this.root = realpathSync.native(root); this.rootIdentity = identity(this.root);
-    this.db = new DatabaseSync(this.owned(join(this.root, 'receipts.sqlite'))); this.db.exec('PRAGMA busy_timeout=3000');
+    const opened=openOwnedDatabase(this.owned(join(this.root,'receipts.sqlite')));this.db=opened.db;this.backupSource=opened.source;this.db.exec('PRAGMA busy_timeout=3000');
     const version = Number(this.db.prepare('PRAGMA user_version').get()?.user_version ?? 0);
     if (version > 1) { this.db.close(); throw new GatewayMediaError('UNAVAILABLE'); }
     this.db.exec('CREATE TABLE IF NOT EXISTS receipts(id TEXT PRIMARY KEY,receipt TEXT NOT NULL); PRAGMA user_version=1;');
   }
+  backupSourceIdentity():OwnedDatabaseSource|null{return this.backupSource?{...this.backupSource}:null;}
   private owned(path: string): string {
     const target = resolve(path);
     if (!inside(this.root, target) || lstatSync(this.root).isSymbolicLink() || identity(this.root) !== this.rootIdentity) throw new GatewayMediaError('FILE');

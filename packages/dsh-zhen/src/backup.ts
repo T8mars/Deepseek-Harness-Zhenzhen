@@ -27,3 +27,6 @@ export {publicPackageResolution} from './backup-package-graph.ts';
 export type {PortablePackageResolution} from './backup-package-graph.ts';
 export {hostPackageBackupSource} from './backup-host-packages.ts';
 export type {HostPackageBackupPolicy} from './backup-host-packages.ts';
+export {prepareOwnedStateBackup,ownedStateBackupRecords,writeOwnedStateBackup,restoreOwnedStateBackup} from './backup-owned.ts';
+export type {OwnedStateBackupPolicy,OwnedStateBackupSource,OwnedStateBackupLease,OwnedStateRestoreCandidate} from './backup-owned.ts';
+export type {OwnedStateDocument} from './backup-owned-schema.ts';

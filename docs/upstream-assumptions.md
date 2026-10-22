@@ -202,3 +202,8 @@ C102核对公开initProfile/writeProfileManifest、createRuntimeResolution和官
 ## 0092 · Host启动时的数据根归属
 
 公开dsh-home-paths.dshHomePath每次调用按当前env/cwd解析绝对目录。自有服务在初始化时保存一个root，后续自有路径从它派生；不改SDK的全局解析器或环境。C103实际Host用带不同记录的另一个home验证冷/热读取、空/已有数据库、技能配置、损坏的自有画布进度仍拒绝、断开只写原DSH locator；相对home在cwd切换后保持启动归属。此证据不等于用户实例升级、Native配对/审批或完整应用恢复。
+
+
+## 0093 · 自有SQLite完整库存及公开服务身份
+
+C104仅读自有固定schema与Node公开SQLite/fs接口。Host owner比较沿用Cordis公开symbols.original；替换测试采用实际plugin dispose/reload，不跨fiber直接覆盖provider。公开resolveAgentsHome在Host启动时记录为受保护来源，不随后来的环境变化。自有三个存储的实际打开文件身份由本项目自己的方法提供，不检查SDK私有字段；只读保留连接跨transaction检查data_version，以捕获WAL写后恢复。新候选保留旧审批owner而不授权执行，原件路径重映射后由实际交接校验读取。没有读取用户/Native库、凭据或上游持久化布局。
