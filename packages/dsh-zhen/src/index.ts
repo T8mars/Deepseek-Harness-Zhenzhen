@@ -209,7 +209,7 @@ export default class ZhenService extends TypertRemoteService {
   constructor(ctx: Context) {
     super(ctx, 'zhen');
     this.backupProfile=ctx.get('profileContext');
-    this.backupCenter=new BackupCenter(join(this.zhenHome,'backups'),()=>this.backupAdapters(),{catalogFile:join(this.zhenHome,'recovery-candidates.sqlite')});
+    this.backupCenter=new BackupCenter(join(this.zhenHome,'backups'),()=>this.backupAdapters(),{catalogFile:join(this.zhenHome,'recovery-candidates.sqlite'),application:this.backupProfile?{installAnchor:this.backupProfile.installAnchor}:undefined});
     ctx.effect(()=>()=>this.backupCenter.close(),'zhen: local backup jobs');
     this.directoryChoices=new DirectoryChoices(()=>{const service=ctx.get('directoryPicker');return service?{owner:(service as unknown as {[key:symbol]:object|undefined})[symbols.original]??service,capability:service.capability()}:undefined;});
     ctx.effect(()=>()=>this.directoryChoices.close(),'zhen: directory choice lifetime');

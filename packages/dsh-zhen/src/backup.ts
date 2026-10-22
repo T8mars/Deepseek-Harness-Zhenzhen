@@ -48,3 +48,7 @@ export type {WorkspaceBackupSource,WorkspaceBackupDocument,WorkspaceBackupLease,
 export {writeRecoveryLayout,inspectRecoveryLayout} from './recovery-layout.ts';
 export {recoveryLayoutSchema,recoveryPlanSchema,recoveryComponentLayoutSchema,recoveryLocationLabels,recoveryPlanReasonLabels} from './recovery-layout-schema.ts';
 export type {RecoveryComponentLayout,RecoveryPlan,RecoveryLocationRole} from './recovery-layout-schema.ts';
+
+export {prepareRestoredApplication} from './restore-application.ts';
+export type {ApplicationRestoreOptions,ApplicationRestoreProfile,ApplicationRestoreRecipe} from './restore-application.ts';
+export type {ComposedRestoreOptions} from './backup-composition.ts';

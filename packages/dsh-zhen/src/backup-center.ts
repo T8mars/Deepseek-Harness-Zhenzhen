@@ -14,6 +14,7 @@ import {RecoveryCatalog,recoveryCursor,encodeRecoveryCursor,assertRecoveryReceip
 import type {RecoveryCatalogRecord} from './recovery-catalog.ts';
 import {inspectRecoveryLayout} from './recovery-layout.ts';
 import type {RecoveryPlan} from './recovery-layout-schema.ts';
+import type {ApplicationRestoreOptions} from './restore-application.ts';
 
 type Work={view:BackupJob;controller:AbortController;done:Promise<void>;candidate?:RecoveryBaseline;};
 const running=(view:BackupJob)=>!['succeeded','failed','cancelled'].includes(view.phase);
@@ -22,12 +23,13 @@ const running=(view:BackupJob)=>!['succeeded','failed','cancelled'].includes(vie
 export class BackupCenter {
   private readonly jobs=new Map<string,Work>();
   private closed=false;
+  private readonly application?:ApplicationRestoreOptions;
   private readonly catalog?:RecoveryCatalog;
   private inspection?:{id:string;controller:AbortController;promise:Promise<RecoveryPreview>};
   private planInspection?:{id:string;controller:AbortController;promise:Promise<RecoveryPlan>};
   private registrations=0;
   private registrationId?:string;
-  constructor(private readonly folder:string,private readonly adapters:()=>BackupAdapters,options:{catalogFile?:string}={}){if(options.catalogFile)this.catalog=new RecoveryCatalog(options.catalogFile);}
+  constructor(private readonly folder:string,private readonly adapters:()=>BackupAdapters,options:{catalogFile?:string;application?:ApplicationRestoreOptions}={}){this.application=options.application?{...options.application}:undefined;if(options.catalogFile)this.catalog=new RecoveryCatalog(options.catalogFile);}
   info():BackupInfo{const available=this.adapters();return{folder:this.folder,components:backupComponentSchema.options.map(id=>({id,available:!!available[id]&&available[id]!.available!==false})),limitations:[...backupLimitations],jobs:[...this.jobs.values()].map(job=>structuredClone(job.view))};}
   status(id:string):BackupJob{const job=this.jobs.get(id);if(!job)throw new BackupError('BACKUP_JOB_NOT_FOUND');return structuredClone(job.view);}
   cancel(id:string):void{const job=this.jobs.get(id);if(!job&&this.inspection?.id!==id&&this.planInspection?.id!==id&&!this.catalog?.get(id))throw new BackupError('BACKUP_JOB_NOT_FOUND');if(job&&running(job.view))job.controller.abort();if(this.inspection?.id===id)this.inspection.controller.abort();if(this.planInspection?.id===id)this.planInspection.controller.abort();}
@@ -73,7 +75,7 @@ export class BackupCenter {
   startRestore(input:BackupRestore):BackupJob{const request=backupRestoreSchema.parse(input);return this.start(request.id,'restore',[],async(job,adapters,progress)=>{
     this.catalog?.get(request.id);
     if(!isAbsolute(request.folder)||!isAbsolute(request.target))throw new BackupError('BACKUP_PATH_INVALID');const source=join(await realpath(request.folder),request.name),target=await realpath(request.target);
-    const candidate=await restoreComposedBackup(source,request.password,target,adapters,{signal:job.controller.signal},progress);job.view.output=candidate.root;job.view.components=candidate.components;job.candidate=candidate.verification;
+    const candidate=await restoreComposedBackup(source,request.password,target,adapters,{signal:job.controller.signal,application:this.application},progress);job.view.output=candidate.root;job.view.components=candidate.components;job.candidate=candidate.verification;
     try{this.catalog?.put({id:request.id,baseline:candidate.verification});}catch{throw new BackupError('BACKUP_CANDIDATE_CATALOG_FAILED');}
   });}
   private start(id:string,operation:BackupJob['operation'],components:BackupJob['components'],run:(job:Work,adapters:BackupAdapters,progress:(phase:'preparing'|'capturing'|'verifying'|'restoring',component:BackupJob['component'],completed:number,total:number)=>void)=>Promise<void>):BackupJob{

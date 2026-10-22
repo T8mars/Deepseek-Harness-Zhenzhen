@@ -244,3 +244,8 @@ C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/ch
 ## C121–C123：类型化恢复布局与准备检查
 
 布局来自已有各恢复模块的返回值，而非SDK私有目录猜测。会话使用既有JSONL配置root，附件只记录公开服务dshHome；工作区使用实际公开Storage/Domain恢复root。C122真实Owner组合核配置、会话、暖RAG、自有记录四范围，另外实际技能库存与工作区写入布局通过。C121用公开initProfile生成128个配置档，直接编译固定dev70原索引读取器并核依赖源码字节，接受新候选的原schema1基线；不改变目录角色或旧schema以求通过。布局读取前后身份/字节核对中间复核整份候选，拒绝改写、超限与逃逸，不执行归档代码。C123仅生产处理器/SSR，不证明窗口或全应用激活。
+
+
+## C124：候选应用公开提供者回绑
+
+固定SDK公开 readProfileManifest/resolveBundleDir/bundlePatchPaths/loadOptionalPatches/composeEntries 只用于有界读取与离线组合；不用会改写清单的 loadProfileDirectory。重复ID拒绝，整行config覆盖保留其他字段，JSONL压缩参数与真实恢复写入默认一致。C124受控官方CLI在原示例home/包/工作目录移走后，以当前安装SDK提供者读回逻辑会话、附件字节和Storage/Domain库存；探针显式使用当前已发布工作区schema，不证明整个639包环境可移植。旧workspace pending原样保留但禁用注册器，schedule、上报和官方美术按模块身份禁用；候选own任务副本tracking/querying暂停，原组件记录保留。不修改SDK会话格式、配置私有文件、Native或活动用户home；完整应用激活仍未实现。

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T11:11:51.425703+00:00",
+  "checkedAt": "2026-10-22T12:14:47.383Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2150,7 +2150,17 @@
       "automaticallyExecutesPrograms": false,
       "wholeApplicationRestore": false,
       "activated": false,
-      "verification": "Complete1125/1125, new25/related133 and201-file archive pass. C63/C76 exact payload rebuild. C121 actual six-role filesystem layout,128 public SDK profiles, fixed dev70 catalog reader, whole baseline and identity checks, cancellation and separate Node restart. C122 actual Owner environment/session/warm RAG/records; real skill and workspace layout writers separately pass. C123 production handlers/SSR and stale results. Exact CI and real UI/unified activation pending. Native/model0; active dev70 Host unchanged."
+      "verification": "Complete1125/1125, new25/related133 and201-file archive pass. C63/C76 exact payload rebuild. C121 actual six-role filesystem layout,128 public SDK profiles, fixed dev70 catalog reader, whole baseline and identity checks, cancellation and separate Node restart. C122 actual Owner environment/session/warm RAG/records; real skill and workspace layout writers separately pass. C123 production handlers/SSR and stale results. Exact CI and real UI/unified activation pending. Native/model0; active dev70 Host unchanged. Exact0100 CI39770141449 attempt1 verified1125 tests and201 files, same archive SHA and public CLI install/uninstall."
+    },
+    "restoredApplicationBindings": {
+      "schemaVersion": 1,
+      "publishedSdk": "0.2.1-rc.2",
+      "configurationEvaluated": false,
+      "automaticallyExecutesPrograms": false,
+      "taskTrackingPaused": true,
+      "wholeApplicationRestore": false,
+      "activated": false,
+      "verification": "Complete1136/1136,new11/related127 and202-file archive pass. C63/C76 exact stable payload rebuild and other canary bytes identical. C124 actual controlled public CLI boot after example source home/package/workspace removal reads canonical sessions/events, attachment hash, public workspace inventory/pending and all example own task IDs/rows with tracking paused. Nested/disabled/group, expression/duplicate ID/package escape, cancellation and source preservation pass. Probe explicitly anchors current published workspace schema; not full639-package portability, browser, user activation or whole application recovery. Knowledge/skills and other state pending. Native/model0; active dev70 Host unchanged."
     }
   }
 }
