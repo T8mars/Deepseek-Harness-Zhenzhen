@@ -1,0 +1,20 @@
+import {z} from 'zod';
+
+export const backupComponentSchema=z.enum(['environment','sessions','skills','knowledge','records','workspaces']);
+export type BackupComponent=z.infer<typeof backupComponentSchema>;
+export const backupLabels:Record<BackupComponent,string>={environment:'应用配置与插件',sessions:'会话与附件',skills:'技能与市场状态',knowledge:'本地知识库',records:'生成记录与作品索引',workspaces:'工作区列表与顺序'};
+export const backupLimitations=['MCP 程序、数据与维护档案','画布连接、审批与提交回执','更新偏好与角色素材引用','所选范围之外的项目文件与作品原件'] as const;
+const path=z.string().min(1).max(4096),name=z.string().min(1).max(255).regex(/^dsh-zhen-[A-Za-z0-9.-]+\.dshzbackup$/);
+const selection=z.array(backupComponentSchema).min(1).max(6).refine(rows=>new Set(rows).size===rows.length);
+const password=z.string().min(12).max(1024).refine(value=>new TextEncoder().encode(value).length<=1024);
+export const backupCreateSchema=z.object({id:z.uuid(),folder:path,password,components:selection}).strict();
+export const backupRestoreSchema=z.object({id:z.uuid(),folder:path,name,password,target:path}).strict();
+export type BackupCreate=z.infer<typeof backupCreateSchema>;
+export type BackupRestore=z.infer<typeof backupRestoreSchema>;
+export const backupJobSchema=z.object({id:z.uuid(),operation:z.enum(['backup','restore']),phase:z.enum(['preparing','capturing','verifying','restoring','succeeded','failed','cancelled']),component:backupComponentSchema.nullable(),completed:z.number().int().min(0).max(6),total:z.number().int().min(0).max(6),components:z.array(backupComponentSchema).max(6),output:path.nullable(),bytes:z.number().int().nonnegative().nullable(),sha256:z.string().regex(/^[a-f0-9]{64}$/).nullable(),error:z.string().regex(/^BACKUP_[A-Z_]+$/).nullable(),activated:z.literal(false),wholeApplicationRestore:z.literal(false)}).strict();
+export type BackupJob=z.infer<typeof backupJobSchema>;
+export const backupInfoSchema=z.object({folder:path,components:z.array(z.object({id:backupComponentSchema,available:z.boolean()}).strict()).length(6),limitations:z.array(z.string()).max(16),jobs:z.array(backupJobSchema).max(16)}).strict();
+export type BackupInfo=z.infer<typeof backupInfoSchema>;
+export const backupFilesSchema=z.object({folder:path,files:z.array(z.object({name,bytes:z.number().int().nonnegative(),modified:z.number().finite()}).strict()).max(100),truncated:z.boolean()}).strict();
+export type BackupFiles=z.infer<typeof backupFilesSchema>;
+export const backupFolderSchema=path;

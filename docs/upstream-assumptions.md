@@ -226,3 +226,7 @@ C104仅读自有固定schema与Node公开SQLite/fs接口。Host owner比较沿�
 C110核对SessionPersistence.identity通过Context包装保持稳定，公开list/stat revision及SessionStore.flush/seq在流后仍可用于总容器检查；原生sessionLogExportDeps/sessionLogZipEntries提供逻辑日志与附件，不读私有布局。查询/附件/会话提供者取公开symbols.original作身份；实际Host卸载拒绝旧lease。附件必须核内容寻址摘要，未知元数据或数据流异常不透传。技能保留完整库存、源提供者及既有skillResourceRevision，跨组件再验证资源和策略；不构造缺失管理器。
 
 C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/changed；get只取已开域，undefined不表示磁盘无数据。实际Host事件计数、完整已开库存、SDK schema及Storage/JSON/Domain独立候选经真实TEMP核对。顺序、default、归档、置顶、initialized与两种pending均保留，不用filtered registry.list。pending嵌套schema由已发布两个分支派生为strict，合同核两分支数量及create/delete，不静默丢字段。恢复只写新的公共SDK域，不启动WorkspaceRegistry或执行pending。来源目录/冷域/当前用户数据及全应用恢复不在该候选证明范围；没有读取SDK私有字段、修改SDK/上游/画布或调用模型。
+
+## C112–C114：所选范围备份中心
+
+只经公开 profileContext/PluginPackages、持久化 header.cwd、既有导出和 StorageDomain 接口装配；不猜 profile/会话私有布局或初始化缺失服务。C113 通过真实发布 Gateway/Owner 验证公开 profile 上下文及有限 EXAMPLE 解析表、会话和自有数据；完整用户安装、恢复激活和窗口验收未由该测试证明。C112 保留全部来源至总末尾、严格认证分块及整个新候选清理；C114 为实际组件处理器/SSR，并非浏览器验收。

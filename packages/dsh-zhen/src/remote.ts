@@ -1,5 +1,9 @@
 /** Hand-authored contribution using the published protocol factory; no upstream types are modified. */
 import { z } from 'zod';
+import {backupInfoSchema,backupFilesSchema,backupCreateSchema,backupRestoreSchema,backupJobSchema,backupFolderSchema} from './backup-center-schema.ts';
+import type {BackupInfo,BackupFiles,BackupCreate,BackupRestore,BackupJob} from './backup-center-schema.ts';
+export {backupLabels,backupLimitations,backupInfoSchema,backupFilesSchema,backupJobSchema} from './backup-center-schema.ts';
+export type {BackupInfo,BackupFiles,BackupCreate,BackupRestore,BackupJob,BackupComponent} from './backup-center-schema.ts';
 import {directoryChoiceInfoSchema,directoryChoiceRequestSchema,directoryChoiceBrowseRequestSchema,directoryChoiceResultSchema,directoryChoiceBrowseResultSchema} from './directory-choice-schema.ts';
 import type {DirectoryChoiceInfo,DirectoryChoiceRequest,DirectoryChoiceBrowseRequest,DirectoryChoiceResult,DirectoryChoiceBrowseResult} from './directory-choice-schema.ts';
 export type {DirectoryChoiceInfo,DirectoryChoiceListing} from './directory-choice-schema.ts';
@@ -72,6 +76,12 @@ import { gatewayMediaTicketSchema, gatewayMediaReceiptSchema } from './gateway-m
 import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-schema.ts';
 
 export interface ZhenRemote {
+  backupInfo():Promise<RemoteResult<BackupInfo>>;
+  backupFiles(folder:string):Promise<RemoteResult<BackupFiles>>;
+  backupCreate(request:BackupCreate):Promise<RemoteResult<BackupJob>>;
+  backupRestore(request:BackupRestore):Promise<RemoteResult<BackupJob>>;
+  backupStatus(id:string):Promise<RemoteResult<BackupJob>>;
+  backupCancel(id:string):Promise<RemoteResult<void>>;
   directoryPickerInfo():Promise<RemoteResult<DirectoryChoiceInfo>>;
   directoryPickerNative(request:DirectoryChoiceRequest):Promise<RemoteResult<DirectoryChoiceResult>>;
   directoryPickerBrowse(request:DirectoryChoiceBrowseRequest):Promise<RemoteResult<DirectoryChoiceBrowseResult>>;
@@ -234,6 +244,12 @@ function method(name: string, schema: z.ZodType, description: string, inputs: Ar
     sourceLocation: { file: 'packages/dsh-zhen/src/remote.ts', line: 1, column: 1 } };
 }
 export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', methods: {
+  'zhen/backupInfo':method('backupInfo',backupInfoSchema,'Owner UI: describe supported local backup coverage; never initializes a missing source.'),
+  'zhen/backupFiles':method('backupFiles',backupFilesSchema,'Owner UI: list a bounded set of local encrypted backup files.',[['folder',backupFolderSchema]]),
+  'zhen/backupCreate':method('backupCreate',backupJobSchema,'Owner UI: create an encrypted snapshot of explicitly selected components; never includes credential stores.',[['request',backupCreateSchema]]),
+  'zhen/backupRestore':method('backupRestore',backupJobSchema,'Owner UI: authenticate a local backup and build an inactive recovery candidate; no activation or execution.',[['request',backupRestoreSchema]]),
+  'zhen/backupStatus':method('backupStatus',backupJobSchema,'Owner UI: read progress of the original local backup job without retrying it.',[['id',z.uuid()]]),
+  'zhen/backupCancel':method('backupCancel',z.void(),'Owner UI: cancel the original local backup job and clean incomplete owned candidates.',[['id',z.uuid()]]),
   'zhen/directoryPickerInfo':method('directoryPickerInfo',directoryChoiceInfoSchema,'Owner UI only: describe the public Host directory-picker capability without opening a dialog or reading files.'),
   'zhen/directoryPickerNative':method('directoryPickerNative',directoryChoiceResultSchema,'Owner UI only: explicitly open one Host directory chooser. Selection does not grant access or start another action.',[['request',directoryChoiceRequestSchema]]),
   'zhen/directoryPickerBrowse':method('directoryPickerBrowse',directoryChoiceBrowseResultSchema,'Owner UI only: browse one bounded directory level through the public Host picker. No file reads or workspace creation.',[['request',directoryChoiceBrowseRequestSchema]]),

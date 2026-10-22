@@ -1,10 +1,14 @@
 export {BackupError,DEFAULT_BACKUP_LIMITS,openBackupArchive,writeBackupArchive} from './backup-archive.ts';
+export {writeComposedBackup,restoreComposedBackup} from './backup-composition.ts';
+export type {BackupComponentLease,BackupComponentAdapter,BackupAdapters} from './backup-composition.ts';
+export {BackupCenter} from './backup-center.ts';
+export {backupInfoSchema,backupJobSchema,backupCreateSchema,backupRestoreSchema,backupFilesSchema,backupComponentSchema,backupLabels,backupLimitations} from './backup-center-schema.ts';
 export type {BackupLimits,BackupOptions,BackupReceipt,BackupRecord,OpenBackupArchive} from './backup-archive.ts';
 export {prepareSessionBackup,sessionBackupRecords,writeSessionBackup,restoreSessionBackup} from './backup-sessions.ts';
 export type {SessionBackupLease,SessionRestoreCandidate} from './backup-sessions.ts';
 export {prepareProfileBackup,profileBackupRecords,writeProfileBackup,readProfileBackup} from './backup-profiles.ts';
 export type {ProfileBackupSource,ProfileBackupDocument,ProfileBackupLease} from './backup-profiles.ts';
-export {writeProfilePackageBackup,restoreProfilePackageBackup} from './backup-profile-packages.ts';
+export {prepareProfilePackageBackup,writeProfilePackageBackup,restoreProfilePackageBackup} from './backup-profile-packages.ts';
 export type {ProfilePackageBackupSource,ProfilePackageRestoreOptions,ProfilePackageRestoreCandidate,ProfilePackageBinding,ProfilePackageIssue} from './backup-profile-packages.ts';
 export {restoreProfileBackup} from './backup-profile-restore.ts';
 export type {ProfileRestoreCandidate,RestoredProfile} from './backup-profile-restore.ts';

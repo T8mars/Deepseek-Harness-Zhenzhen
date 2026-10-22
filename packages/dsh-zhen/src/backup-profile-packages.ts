@@ -3,6 +3,7 @@ import {createReadStream} from 'node:fs';
 import {lstat,mkdtemp,mkdir,readFile,writeFile,realpath,rm,open,readdir,readlink,unlink,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,relative,isAbsolute} from 'node:path';
+import {pathToFileURL} from 'node:url';
 import {createRuntimeResolution,writeProfileManifest,readProfileManifest,PROFILES_DIR} from '@deepseek-ai/dsh-app-boot';
 import type {ProfileManifest} from '@deepseek-ai/dsh-app-boot';
 import {BackupError,openBackupArchive,writeBackupArchive,DEFAULT_BACKUP_LIMITS} from './backup-archive.ts';
@@ -22,7 +23,7 @@ import {SUPPORTED_DSH} from './compatibility.ts';
 const SCHEMA='dsh-zhen-profile-packages-v1',FIELDS=['dependencies','devDependencies','optionalDependencies','peerDependencies'] as const;
 type Field=typeof FIELDS[number];
 type DependencyManifest=ProfileManifest&Partial<Record<Field,Record<string,string>>>;
-export interface ProfilePackageBackupSource {profiles:()=>ProfileBackupSource;packages:()=>PackageBackupSource;}
+export interface ProfilePackageBackupSource {profiles:()=>ProfileBackupSource;packages:()=>PackageBackupSource;includeProfileDependencies?:boolean;}
 export interface ProfilePackageRestoreOptions extends BackupOptions {
   /** Trusted Host-selected published SDK. Never a Remote/tool argument. */
   installAnchor:string;
@@ -40,23 +41,31 @@ async function removeOwned(parent:string,root:string,prefix:string):Promise<void
 async function digest(file:string,signal?:AbortSignal):Promise<string>{const result=createHash('sha256');for await(const bytes of createReadStream(file,{signal})){signal?.throwIfAborted();result.update(bytes);}return result.digest('hex');}
 /** Nested components remain encrypted at rest. The outer authenticated record
  * order binds their complete bytes and both retained source leases. */
-export async function writeProfilePackageBackup(destination:string,password:string,source:ProfilePackageBackupSource,options:BackupOptions={}):Promise<BackupReceipt>{
+export interface ProfilePackageBackupLease {records():AsyncGenerator<BackupRecord>;assertCurrent():Promise<void>;close():Promise<void>;}
+export async function prepareProfilePackageBackup(password:string,source:ProfilePackageBackupSource,options:BackupOptions={}):Promise<ProfilePackageBackupLease>{
   const profile=await prepareProfileBackup(source.profiles,options);let packages:Awaited<ReturnType<typeof preparePackageBackup>>|undefined,root:string|undefined;
-  const base=await realpath(tmpdir());
+  const base=await realpath(tmpdir());let retained=false,closed=false,used=false;
+  const close=async()=>{if(closed)return;closed=true;try{profile.close();await packages?.close();}finally{if(root)await removeOwned(base,root,'dsh-zhen-component-backup-');}};
   try{
-    packages=await preparePackageBackup(source.packages,options);root=await realpath(await mkdtemp(join(base,'dsh-zhen-component-backup-')));
+    const seeds=source.includeProfileDependencies?profile.document.profiles.flatMap((item,index)=>FIELDS.flatMap(field=>Object.keys((item.manifest as DependencyManifest)[field]??{}).map(name=>({key:hash(index+':'+field+':'+name),name,parentURL:pathToFileURL(join(profile.document.originHome,PROFILES_DIR,item.name,'package.json')).href,scope:'profile' as const})))):[];
+    packages=await preparePackageBackup(()=>{const selected=source.packages();return {...selected,seeds:[...selected.seeds,...seeds]};},options);root=await realpath(await mkdtemp(join(base,'dsh-zhen-component-backup-')));
     const files=[join(root,'profiles.encrypted'),join(root,'packages.encrypted')];
     const receipts=[await writeBackupArchive(files[0],password,profile.records(),options),await writeBackupArchive(files[1],password,packages.records(),options)];
     const chunkBytes=Math.min(4*1024**2,options.limits?.recordBytes??DEFAULT_BACKUP_LIMITS.recordBytes),header=Buffer.from(json({schema:SCHEMA,sdkVersion:SUPPORTED_DSH,chunkBytes,components:receipts.map((row,index)=>({kind:index===0?'profiles':'packages',sha256:row.sha256,bytes:row.bytes}))}));
     const packageLease=packages;
+    const assertCurrent=async()=>{if(closed)throw new BackupError('BACKUP_READER_CLOSED');await profile.assertCurrent();await packageLease.assertCurrent();};
     async function* records():AsyncGenerator<BackupRecord>{
       await profile.assertCurrent();await packageLease.assertCurrent();
       yield {metadata:{kind:'profile-packages',schema:SCHEMA},size:header.length,data:(async function*(){yield header;})()};
       for(let i=0;i<files.length;i++)for(let offset=0;offset<receipts[i].bytes;offset+=chunkBytes){options.signal?.throwIfAborted();const size=Math.min(chunkBytes,receipts[i].bytes-offset);yield {metadata:{kind:i===0?'profiles':'packages',sha256:receipts[i].sha256,offset},size,data:createReadStream(files[i],{start:offset,end:offset+size-1,signal:options.signal})};}
       await profile.assertCurrent();await packageLease.assertCurrent();
     }
-    return await writeBackupArchive(destination,password,records(),options);
-  }finally{profile.close();packages?.close();if(root)await removeOwned(base,root,'dsh-zhen-component-backup-');}
+    retained=true;return {assertCurrent,close,async*records(){if(closed||used)throw new BackupError('BACKUP_READER_CLOSED');used=true;yield*records();}};
+  }finally{if(!retained)await close();}
+}
+export async function writeProfilePackageBackup(destination:string,password:string,source:ProfilePackageBackupSource,options:BackupOptions={}):Promise<BackupReceipt>{
+  const lease=await prepareProfilePackageBackup(password,source,options);
+  try{return await writeBackupArchive(destination,password,lease.records(),options);}finally{await lease.close();}
 }
 function object(value:unknown):value is Record<string,unknown>{return !!value&&typeof value==='object'&&!Array.isArray(value);}
 function exact(value:unknown,keys:string[]):value is Record<string,unknown>{return object(value)&&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));}

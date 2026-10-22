@@ -391,6 +391,13 @@
       "status": "implemented-host-only-inactive-candidate",
       "wholeApplicationRestore": false,
       "verification": "Complete1020/1020, new49/related106 and189-file archive pass. C110 verifies retained public session/attachment and complete own skill sources, actual Host ownership, late changes, fixed errors and attachment digests. C111 verifies the full open public workspace domain, original order/archive/pins/create-delete pending and actual SDK inactive candidate restoration; actual Host event tracking and cold refusal pass. Existing C63/C76/C96-C109 proofs pass. Cold workspace data, unified restore/path mapping/activation UI and original scope remain incomplete; live user Host stays0093. No user data, Native or model calls. Exact current CI separate."
+    },
+    {
+      "id": "selected-backup-center",
+      "status": "implemented-inactive-recovery-ui",
+      "liveVerified": false,
+      "wholeApplicationRestore": false,
+      "verification": "Complete1045/1045, new25/related114 and193-file archive pass. C63/C76 independently rebuild the same payload. C112 encrypted composition and retained barriers; C113 actual Owner Gateway with bounded EXAMPLE public profile/package resolution, sessions and own RAG/records; C114 production handlers/SSR. Exact CI, real UI/full installation performance and activation remain pending. Native/model0; active user Host unchanged."
     }
   ]
 }

@@ -1,4 +1,4 @@
-export type WorkspaceSection='home'|'settings'|'knowledge'|'market'|'connections'|'updates'|'art'|'tasks';
+export type WorkspaceSection='home'|'settings'|'knowledge'|'market'|'connections'|'updates'|'art'|'tasks'|'backup';
 export interface WorkspaceNavigation{
   current():WorkspaceSection;
   open(section:WorkspaceSection):void;

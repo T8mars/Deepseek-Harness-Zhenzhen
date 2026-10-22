@@ -1,5 +1,15 @@
 import type { Context } from '@deepseek-ai/cordis';
 import {symbols} from '@deepseek-ai/cordis';
+import {BackupCenter} from './backup-center.ts';
+import {prepareProfilePackageBackup,restoreProfilePackageBackup} from './backup-profile-packages.ts';
+import {restoreSessionBackup} from './backup-sessions.ts';
+import {restoreSkillInventoryBackup} from './backup-skill-inventory.ts';
+import {restoreRagBackup} from './backup-rag.ts';
+import {restoreOwnedStateBackup} from './backup-owned.ts';
+import {restoreWorkspaceBackup} from './backup-workspaces.ts';
+import type {BackupAdapters} from './backup-composition.ts';
+import type {BackupCreate,BackupRestore,BackupInfo,BackupFiles,BackupJob} from './backup-center-schema.ts';
+import type {ProfileContext} from '@deepseek-ai/dsh-app-boot';
 import {createCanvasHelpTool} from './canvas-help-tool.ts';
 import type {} from '@deepseek-ai/dsh-host-directory-picker';
 import {DirectoryChoices,DirectoryChoiceError} from './directory-choice.ts';
@@ -154,6 +164,8 @@ const githubCredential = credentialRef('DSH_ZHEN_GITHUB_TOKEN');
 
 /** Creator workspace Host operations, guarded by DSH's authenticated Remote access. */
 export default class ZhenService extends TypertRemoteService {
+  private readonly backupCenter:BackupCenter;
+  private readonly backupProfile:ProfileContext|undefined;
   private readonly directoryChoices:DirectoryChoices;
   static inject: string[] = ['credentials'];
   private knowledgeStore?: KnowledgeStore;
@@ -193,6 +205,9 @@ export default class ZhenService extends TypertRemoteService {
 
   constructor(ctx: Context) {
     super(ctx, 'zhen');
+    this.backupProfile=ctx.get('profileContext');
+    this.backupCenter=new BackupCenter(join(this.zhenHome,'backups'),()=>this.backupAdapters());
+    ctx.effect(()=>()=>this.backupCenter.close(),'zhen: local backup jobs');
     this.directoryChoices=new DirectoryChoices(()=>{const service=ctx.get('directoryPicker');return service?{owner:(service as unknown as {[key:symbol]:object|undefined})[symbols.original]??service,capability:service.capability()}:undefined;});
     ctx.effect(()=>()=>this.directoryChoices.close(),'zhen: directory choice lifetime');
     ctx.inject(['directoryPicker'],inner=>{this.directoryChoices.invalidate();inner.effect(()=>()=>this.directoryChoices.invalidate(),'zhen: directory provider lifetime');});
@@ -397,6 +412,38 @@ export default class ZhenService extends TypertRemoteService {
     return this.skillMarket;
   }
   private feed(): SkillFeed { this.market(); return this.skillFeed!; }
+  private backupAdapters():BackupAdapters{
+    const profile=this.backupProfile,home=dirname(this.zhenHome),policy={protectedContainers:[home,this.agentsHome],forbiddenTrees:[] as string[]};
+    const profileSource=()=>{if(!profile||this.ctx.get('profileContext')!==profile)throw new BackupError('BACKUP_HOST_PROFILE_UNAVAILABLE');return {home:profile.home,installAnchor:profile.installAnchor,active:profile};};
+    const deps=sessionLogExportDeps(this.ctx),facility=this.ctx.get('storageDomain');
+    return {
+      environment:{available:!!profile&&!!this.ctx.get('pluginPackages'),prepare:(password,options)=>prepareProfilePackageBackup(password,{profiles:profileSource,packages:()=>hostPackageBackupSource(this.ctx,policy),includeProfileDependencies:true},options),restore:(file,password,parent,options)=>restoreProfilePackageBackup(file,password,parent,{...options,installAnchor:profileSource().installAnchor})},
+      sessions:{available:!!deps.sessionPersistence&&!!deps.sessionQuery&&!!deps.attachments,prepare:(_password,options)=>this.sessionBackupLease(options),restore:restoreSessionBackup},
+      skills:{available:!!this.localSkillSources&&!!this.githubSkillSources&&!!this.skillMarket&&!!this.skillFeed&&!!deps.sessionPersistence,prepare:async(_password,options)=>{
+        // Complete persistent headers include historical working directories.
+        const persistence=this.ctx.get('sessionPersistence');if(!persistence)throw new BackupError('BACKUP_HOST_SERVICES_UNAVAILABLE');const snapshots=await persistence.list({signal:options.signal}),revisions=new Map(snapshots.map(row=>[row.header.id,row.revision]));
+        const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value,owner=original(persistence);
+        const assertHeaders=async()=>{try{if(original(this.ctx.get('sessionPersistence'))!==owner)throw new BackupError('BACKUP_SOURCE_CHANGED');const current=await persistence.list({signal:options.signal});if(current.length!==revisions.size||current.some(row=>row.revision!==revisions.get(row.header.id)))throw new BackupError('BACKUP_SOURCE_CHANGED');}catch(error){options.signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_SESSION_READ_FAILED');}};
+        const workspaces=[...new Set(snapshots.map(row=>row.header.cwd).filter((value):value is string=>value!==undefined))],lease=await this.skillBackupLease(()=>({...policy,additionalWorkspaces:workspaces}),options);
+        return {...lease,assertCurrent:async()=>{await assertHeaders();await lease.assertCurrent();},async*records(){await assertHeaders();yield*lease.records();await assertHeaders();}};
+      },restore:restoreSkillInventoryBackup},
+      knowledge:{prepare:(_password,options)=>this.ragBackupLease(()=>policy,options),restore:restoreRagBackup},
+      records:{prepare:(_password,options)=>this.ownedStateBackupLease(()=>({mediaRoots:[],forbiddenTrees:[]}),options),restore:restoreOwnedStateBackup},
+      workspaces:{available:!!facility?.get(workspaceDomainSpec.name),prepare:(_password,options)=>this.workspaceBackupLease(options),restore:restoreWorkspaceBackup},
+    };
+  }
+  @Remote
+  backupInfo():BackupInfo{return this.backupCenter.info();}
+  @Remote
+  backupFiles(folder:string):Promise<BackupFiles>{return this.backupCenter.files(folder);}
+  @Remote
+  backupCreate(request:BackupCreate):BackupJob{return this.backupCenter.startBackup(request);}
+  @Remote
+  backupRestore(request:BackupRestore):BackupJob{return this.backupCenter.startRestore(request);}
+  @Remote
+  backupStatus(id:string):BackupJob{return this.backupCenter.status(id);}
+  @Remote
+  backupCancel(id:string):void{this.backupCenter.cancel(id);}
   /** Host-only stream for the composed backup. Not a browser Remote: source
    * paths, backup passwords and archive bytes stay on the Host. Never construct
    * a managed service here, since its startup may activate a pending update. */

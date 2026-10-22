@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T04:01:09.906Z",
+  "checkedAt": "2026-10-22T07:43:58.552Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2115,6 +2115,14 @@
       "localPassed": 1020,
       "packageFiles": 189,
       "localPackageSha256": "ded58d59506c3db688c0d533cb998ddff101eb9a8af53ac72fc25e8cfa7d0833"
+    },
+    "selectedBackupCenter": {
+      "schemaVersion": 1,
+      "components": 6,
+      "credentialStoresIncluded": false,
+      "wholeApplicationRestore": false,
+      "activated": false,
+      "verification": "Complete1045/1045, new25/related114 and193-file archive pass. C63/C76 independently rebuild the same payload. C112 encrypted composition and retained barriers; C113 actual Owner Gateway with bounded EXAMPLE public profile/package resolution, sessions and own RAG/records; C114 production handlers/SSR. Exact CI, real UI/full installation performance and activation remain pending. Native/model0; active user Host unchanged."
     }
   }
 }
