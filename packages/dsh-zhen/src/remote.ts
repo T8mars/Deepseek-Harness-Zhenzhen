@@ -1,4 +1,9 @@
 import {recoveryPlanSchema} from './recovery-layout-schema.ts';
+import {recoveryProjectCursorSchema,recoveryProjectsSchema,projectAwareRestoreSchema} from './recovery-project-schema.ts';
+import type {RecoveryProjects,ProjectAwareRestore as BackupRestore} from './recovery-project-schema.ts';
+export {recoveryProjectsSchema} from './recovery-project-schema.ts';
+export type {RecoveryProjects,RecoveryProjectSelection} from './recovery-project-schema.ts';
+export type {ProjectAwareRestore as BackupRestore} from './recovery-project-schema.ts';
 import type {RecoveryPlan} from './recovery-layout-schema.ts';
 export {recoveryPlanSchema,recoveryLocationLabels,recoveryPlanReasonLabels} from './recovery-layout-schema.ts';
 export type {RecoveryPlan} from './recovery-layout-schema.ts';
@@ -8,10 +13,10 @@ import {recoveryPreviewSchema,recoveryCatalogSchema} from './recovery-schema.ts'
 import type {RecoveryPreview,RecoveryCatalogView} from './recovery-schema.ts';
 export {recoveryPreviewSchema,recoveryCatalogSchema,recoveryFactLabels,recoveryWarningLabels} from './recovery-schema.ts';
 export type {RecoveryPreview,RecoverySummary,RecoveryCatalogView} from './recovery-schema.ts';
-import {backupInfoSchema,backupFilesSchema,backupCreateSchema,backupRestoreSchema,backupJobSchema,backupFolderSchema} from './backup-center-schema.ts';
-import type {BackupInfo,BackupFiles,BackupCreate,BackupRestore,BackupJob} from './backup-center-schema.ts';
+import {backupInfoSchema,backupFilesSchema,backupCreateSchema,backupJobSchema,backupFolderSchema} from './backup-center-schema.ts';
+import type {BackupInfo,BackupFiles,BackupCreate,BackupJob} from './backup-center-schema.ts';
 export {backupLabels,backupLimitations,backupInfoSchema,backupFilesSchema,backupJobSchema} from './backup-center-schema.ts';
-export type {BackupInfo,BackupFiles,BackupCreate,BackupRestore,BackupJob,BackupComponent} from './backup-center-schema.ts';
+export type {BackupInfo,BackupFiles,BackupCreate,BackupJob,BackupComponent} from './backup-center-schema.ts';
 import {directoryChoiceInfoSchema,directoryChoiceRequestSchema,directoryChoiceBrowseRequestSchema,directoryChoiceResultSchema,directoryChoiceBrowseResultSchema} from './directory-choice-schema.ts';
 import type {DirectoryChoiceInfo,DirectoryChoiceRequest,DirectoryChoiceBrowseRequest,DirectoryChoiceResult,DirectoryChoiceBrowseResult} from './directory-choice-schema.ts';
 export type {DirectoryChoiceInfo,DirectoryChoiceListing} from './directory-choice-schema.ts';
@@ -85,6 +90,7 @@ import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-sc
 
 export interface ZhenRemote {
   backupCandidatePlan(id:string):Promise<RemoteResult<RecoveryPlan>>;
+  backupCandidateProjects(id:string,cursor:string):Promise<RemoteResult<RecoveryProjects>>;
   backupCandidateList(cursor:string):Promise<RemoteResult<RecoveryCatalogView>>;
   backupCandidateForget(id:string):Promise<RemoteResult<void>>;
   backupCandidateRegister(id:string):Promise<RemoteResult<BackupJob>>;
@@ -259,6 +265,7 @@ function method(name: string, schema: z.ZodType, description: string, inputs: Ar
 }
 export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', methods: {
   'zhen/backupCandidatePlan':method('backupCandidatePlan',recoveryPlanSchema,'Owner UI: verify original candidate bytes and inspect typed restored locations; no execution, rebinding or activation.',[['id',z.uuid()]]),
+  'zhen/backupCandidateProjects':method('backupCandidateProjects',recoveryProjectsSchema,'Owner UI: verify the original candidate and page only original project directories and counts; no session content, original project reads or activation.',[['id',z.uuid()],['cursor',recoveryProjectCursorSchema]]),
   'zhen/backupCandidateList':method('backupCandidateList',recoveryCatalogSchema,'Owner UI: page durable candidate records plus current in-memory candidates; no candidate file content or activation.',[['cursor',z.string().max(256)]]),
   'zhen/backupCandidateForget':method('backupCandidateForget',z.void(),'Owner UI: remove only the selected candidate record; preserve candidate directories and backup files.',[['id',z.uuid()]]),
   'zhen/backupCandidateRegister':method('backupCandidateRegister',backupJobSchema,'Owner UI: recheck the original candidate and retry saving its local record without repeating restoration.',[['id',z.uuid()]]),
@@ -267,7 +274,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/backupInfo':method('backupInfo',backupInfoSchema,'Owner UI: describe supported local backup coverage; never initializes a missing source.'),
   'zhen/backupFiles':method('backupFiles',backupFilesSchema,'Owner UI: list a bounded set of local encrypted backup files.',[['folder',backupFolderSchema]]),
   'zhen/backupCreate':method('backupCreate',backupJobSchema,'Owner UI: create an encrypted snapshot of explicitly selected components; never includes credential stores.',[['request',backupCreateSchema]]),
-  'zhen/backupRestore':method('backupRestore',backupJobSchema,'Owner UI: authenticate a local backup and build an inactive recovery candidate; no activation or execution.',[['request',backupRestoreSchema]]),
+  'zhen/backupRestore':method('backupRestore',backupJobSchema,'Owner UI: authenticate a local backup and build an inactive recovery candidate; no activation or execution.',[['request',projectAwareRestoreSchema]]),
   'zhen/backupStatus':method('backupStatus',backupJobSchema,'Owner UI: read progress of the original local backup job without retrying it.',[['id',z.uuid()]]),
   'zhen/backupCancel':method('backupCancel',z.void(),'Owner UI: cancel the original local backup job and clean incomplete owned candidates.',[['id',z.uuid()]]),
   'zhen/directoryPickerInfo':method('directoryPickerInfo',directoryChoiceInfoSchema,'Owner UI only: describe the public Host directory-picker capability without opening a dialog or reading files.'),

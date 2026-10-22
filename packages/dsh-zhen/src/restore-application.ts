@@ -79,7 +79,7 @@ function pauseTracking(path:string):number{
 /** Builds inert whole-row overlays in a NEW, not-yet-sealed composition. It
  * never imports restored modules, evaluates expressions, or starts a profile. */
 export async function prepareRestoredApplication(root:string,layouts:RecoveryComponentLayout[],options:ApplicationRestoreOptions,signal?:AbortSignal,parts:ApplicationRestoreParts={}):Promise<ApplicationRestoreRecipe|null>{
-  const parsed=recoveryLayoutSchema.safeParse({schema:'dsh-zhen-recovery-layout-v1',components:layouts});if(!parsed.success)fail();const environment=parsed.data.components.find(row=>row.kind==='environment'&&row.details);if(!environment)return null;
+  const parsed=recoveryLayoutSchema.safeParse({schema:'dsh-zhen-recovery-layout-v1',components:layouts});if(!parsed.success)fail();const environment=parsed.data.components.find(row=>row.kind==='environment'&&row.details);if(!environment){if(options.sessionDirectories?.length)fail('BACKUP_PROJECT_ENVIRONMENT_REQUIRED');return null;}
   const home=location(environment,'home'),agentsHome=location(environment,'agents');if(!home||!agentsHome)fail();await owned(root,home,'directory');await owned(root,agentsHome,'directory');
   const readBudget={bytes:0};
   async function read(owner:string,path:string):Promise<Buffer>{

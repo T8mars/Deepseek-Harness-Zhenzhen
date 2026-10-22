@@ -10,6 +10,9 @@ export {summarizeEnvironment,summarizeSessions,summarizeSkills,summarizeKnowledg
 export {RecoveryCatalog,recoveryCursor,encodeRecoveryCursor,assertRecoveryReceipt} from './recovery-catalog.ts';
 export type {RecoveryCatalogRecord,RecoveryCursor} from './recovery-catalog.ts';
 export {recoveryCatalogSchema} from './recovery-schema.ts';
+export {inspectRecoveryProjects,resolveRecoveryProjectBindings} from './recovery-projects.ts';
+export {recoveryProjectsSchema,recoveryProjectSelectionSchema,recoveryProjectCursorSchema,projectAwareRestoreSchema} from './recovery-project-schema.ts';
+export type {RecoveryProjects,RecoveryProjectSelection,ProjectAwareRestore} from './recovery-project-schema.ts';
 export {backupInfoSchema,backupJobSchema,backupCreateSchema,backupRestoreSchema,backupFilesSchema,backupComponentSchema,backupLabels,backupLimitations} from './backup-center-schema.ts';
 export type {BackupLimits,BackupOptions,BackupReceipt,BackupRecord,OpenBackupArchive} from './backup-archive.ts';
 export {prepareSessionBackup,sessionBackupRecords,writeSessionBackup,restoreSessionBackup} from './backup-sessions.ts';

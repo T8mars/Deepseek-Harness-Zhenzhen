@@ -1,4 +1,5 @@
 import type {RecoveryPlan} from './recovery-layout-schema.ts';
+import type {RecoveryProjects,ProjectAwareRestore} from './recovery-project-schema.ts';
 import type { Context } from '@deepseek-ai/cordis';
 import {symbols} from '@deepseek-ai/cordis';
 import {BackupCenter} from './backup-center.ts';
@@ -12,7 +13,7 @@ import {restoreRagBackup} from './backup-rag.ts';
 import {restoreOwnedStateBackup} from './backup-owned.ts';
 import {restoreWorkspaceBackup} from './backup-workspaces.ts';
 import type {BackupAdapters} from './backup-composition.ts';
-import type {BackupCreate,BackupRestore,BackupInfo,BackupFiles,BackupJob} from './backup-center-schema.ts';
+import type {BackupCreate,BackupInfo,BackupFiles,BackupJob} from './backup-center-schema.ts';
 import type {ProfileContext} from '@deepseek-ai/dsh-app-boot';
 import {createCanvasHelpTool} from './canvas-help-tool.ts';
 import type {} from '@deepseek-ai/dsh-host-directory-picker';
@@ -444,8 +445,8 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   backupCreate(request:BackupCreate):BackupJob{return this.backupRequest(()=>this.backupCenter.startBackup(request));}
   @Remote
-  backupRestore(request:BackupRestore):BackupJob{return this.backupRequest(()=>this.backupCenter.startRestore(request));}
-  private backupRequest(run:()=>BackupJob):BackupJob{try{return run();}catch(error){if(error instanceof BackupError&&error.code==='BACKUP_BUSY')throw new RemoteError('zhen/refused','已有备份、恢复或候选校验正在进行。',{reason:'BACKUP_BUSY'});throw error;}}
+  backupRestore(request:ProjectAwareRestore):BackupJob{return this.backupRequest(()=>this.backupCenter.startRestore(request));}
+  private backupRequest(run:()=>BackupJob):BackupJob{try{return run();}catch(error){if(error instanceof BackupError&&/^BACKUP_[A-Z_]{1,64}$/.test(error.code))throw new RemoteError('zhen/refused',error.code==='BACKUP_BUSY'?'已有备份、恢复或候选校验正在进行。':'本次请求未启动新任务，请查看原任务或原候选记录。',{reason:error.code});throw error;}}
   @Remote
   backupStatus(id:string):BackupJob{return this.backupCenter.status(id);}
   @Remote
@@ -456,6 +457,8 @@ export default class ZhenService extends TypertRemoteService {
   backupCandidateVerify(id:string):Promise<RecoveryPreview>{return this.backupCenter.candidateVerify(id);}
   @Remote
   backupCandidatePlan(id:string):Promise<RecoveryPlan>{return this.backupCenter.candidatePlan(id);}
+  @Remote
+  backupCandidateProjects(id:string,cursor:string):Promise<RecoveryProjects>{return this.backupCenter.candidateProjects(id,cursor);}
   @Remote
   backupCandidateList(cursor:string):RecoveryCatalogView{return this.backupCenter.candidateList(cursor);}
   @Remote

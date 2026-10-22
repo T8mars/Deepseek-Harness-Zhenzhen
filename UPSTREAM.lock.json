@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T15:57:32.056Z",
+  "checkedAt": "2026-10-22T22:01:22.122Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2224,6 +2224,14 @@
       "wholeApplicationRestore": false,
       "runtimeInstalled": true,
       "runtimeVerificationScope": "Actual normal startup and205 installed-file hashes; settings and own metadata preserved; actual browser/project use unverified."
+    },
+    "recoveryProjectReview": {
+      "schemaVersion": 1,
+      "pageSize": 20,
+      "automaticActivation": false,
+      "verification": "New20/related119 pass; build and clean types pass. C136 actual public session-header project pagination,source baseline before/after,only20 groups/counts per page,no session IDs/messages or old project reads. C137 actual published Owner Gateway rejects anonymous and busy,shares same read,resolves project session mappings on Host,and seals an independent fresh restoration; original candidate/header/project bytes preserved. C138 production handlers cover chooser,pagination,stale source/target/replies,confirmation/form link,definite refusal and separate restore password. Immutable base schema kept for C121 dev70 reader. Complete1191/1191 and208-file archive pass; C63/C76 stable payload matches local,other version payloads byte-identical; actual public CLI install/uninstall and worker hashes pass. Current exact CI pending. Workspace/RAG/skill binding,permissions,activation/fullL2/browser pending; same tested208-file archive installed with preserved settings and scoped own metadata; browser unverified,Native/model0.",
+      "runtimeInstalled": true,
+      "runtimeVerificationScope": "Actual normal public CLI replacement,208 installed-file hashes,preserved settings/own Canvas hashes/own RAG metadata; actual browser and real user restore unverified."
     }
   }
 }
