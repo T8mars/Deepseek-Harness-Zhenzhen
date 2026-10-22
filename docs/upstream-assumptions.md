@@ -192,3 +192,8 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 
 
 0090/C101：公开PluginPackages.resolution/packageOf提供包路由和元信息，读取不载入入口；包资源与公开运行解析表分别保存，实际Node/Cordis Context核对普通祖先链、profile fallback、linked root、嵌套多版本和循环。Context.get按调用上下文创建新traceable包装，不能当提供者身份；Cordis4.0.5根出口symbols.original仅用于稳定标识，调用仍经作用域包装，不读取私有状态。C101验证同一服务多次get稳定、公开ctx.set替换拒绝和实际Host原home保护。目录存在但无package.json可按明确声明保留，公开元信息缺失标为unresolved，不能推断为已安装或自动下载。保留的公开表是候选数据，构造验证只在EXAMPLE TEMP；没有启用用户profile、替换SDK、执行包脚本或读取PM私有布局。
+
+
+## 0091 · 实体组合后的公开CLI与Node链接
+
+C102核对公开initProfile/writeProfileManifest、createRuntimeResolution和官方CLI。标准node_modules链接及候选link依赖保留alias和同名多版本；恢复时没有PM、包入口/生命周期/包本地hook。实际CLI由EXAMPLE TEMP夹具显式启动，源包隔离后核对恢复模块、nested依赖、覆盖顺序及当前Cordis实例；候选自身不自动运行。安装层包只在公开解析表名字/版本与当前SDK一致时重绑现有安装层，归档副本保留出处，不混入已加载Host。原PM文件和真实用户Host不在此证明范围。

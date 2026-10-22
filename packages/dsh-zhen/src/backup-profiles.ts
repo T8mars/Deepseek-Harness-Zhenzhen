@@ -72,7 +72,7 @@ async function profileNames(home:string):Promise<string[]>{
 async function capture(source:ProfileBackupSource,options:BackupOptions):Promise<{document:ProfileBackupDocument;revision:string}>{
   options.signal?.throwIfAborted();
   if(!isAbsolute(source.home)||!isAbsolute(source.installAnchor))throw new BackupError('BACKUP_PATH_INVALID');
-  const home=await realpath(source.home),homeState=await observation(home,true),profilesState=await observation(join(home,PROFILES_DIR),true),names=await profileNames(home);
+  const installAnchor=await realpath(source.installAnchor),anchorState=await observation(source.installAnchor),home=await realpath(source.home),homeState=await observation(home,true),profilesState=await observation(join(home,PROFILES_DIR),true),names=await profileNames(home);
   const files=[join(home,PROFILE_PATCH_FILENAME),...names.flatMap(name=>{const dir=resolveProfileDir(name,home);return [join(dir,'package.json'),join(dir,PROFILE_PATCH_FILENAME),join(dir,PROFILE_COMPATIBILITY_FILENAME)];})];
   const before=[];let total=0;
   for(const file of files){options.signal?.throwIfAborted();const state=await observation(file);if((total+=state.bytes)>MAX_TOTAL_BYTES)throw new BackupError('BACKUP_PROFILE_LIMIT');before.push(state);}
@@ -96,15 +96,20 @@ async function capture(source:ProfileBackupSource,options:BackupOptions):Promise
   const serialized=json(document);if(Buffer.byteLength(serialized)>MAX_TOTAL_BYTES)throw new BackupError('BACKUP_PROFILE_LIMIT');
   const detached:unknown=JSON.parse(serialized);if(!validDocument(detached))throw new BackupError('BACKUP_PROFILE_RECORD_INVALID');
   const after=[];for(const file of files){options.signal?.throwIfAborted();after.push(await observation(file));}
-  if(json(before)!==json(after)||await realpath(source.home)!==home||json(await profileNames(home))!==json(names)||(await observation(home,true)).identity!==homeState.identity||(await observation(join(home,PROFILES_DIR),true)).identity!==profilesState.identity)throw new BackupError('BACKUP_SOURCE_CHANGED');
-  return {document:detached,revision:hash(json({home:homeState.identity,profiles:profilesState.identity,files:after,document:detached}))};
+  if(json(before)!==json(after)||await realpath(source.installAnchor)!==installAnchor||json(await observation(source.installAnchor))!==json(anchorState)||await realpath(source.home)!==home||json(await profileNames(home))!==json(names)||(await observation(home,true)).identity!==homeState.identity||(await observation(join(home,PROFILES_DIR),true)).identity!==profilesState.identity)throw new BackupError('BACKUP_SOURCE_CHANGED');
+  return {document:detached,revision:hash(json({installAnchor,anchorState,home:homeState.identity,profiles:profilesState.identity,files:after,document:detached}))};
 }
 /** Host-only logical snapshot; no module loading, config cleanup or credential reads. */
-export async function* profileBackupRecords(resolve:()=>ProfileBackupSource,options:BackupOptions={}):AsyncGenerator<BackupRecord>{
-  const read=async()=>{try{return await capture(resolve(),options);}catch(error){options.signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_PROFILE_READ_FAILED');}};
+export interface ProfileBackupLease {document:ProfileBackupDocument;records():AsyncGenerator<BackupRecord>;assertCurrent():Promise<void>;close():void;}
+export async function prepareProfileBackup(resolve:()=>ProfileBackupSource,options:BackupOptions={}):Promise<ProfileBackupLease>{
+  const controller=new AbortController(),signal=options.signal?AbortSignal.any([options.signal,controller.signal]):controller.signal;let closed=false,used=false;
+  const read=async()=>{signal.throwIfAborted();try{return await capture(resolve(),{...options,signal});}catch(error){signal.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_PROFILE_READ_FAILED');}};
   const initial=await read(),data=Buffer.from(json(initial.document));
-  yield {metadata:{kind:'profile-snapshot',schema:SCHEMA,profiles:initial.document.profiles.length,credentialStoresIncluded:false},size:data.length,data:(async function*(){yield data;})()};
-  if((await read()).revision!==initial.revision)throw new BackupError('BACKUP_SOURCE_CHANGED');
+  const assertCurrent=async()=>{if(closed)throw new BackupError('BACKUP_PROFILE_LEASE_CLOSED');if((await read()).revision!==initial.revision)throw new BackupError('BACKUP_SOURCE_CHANGED');};
+  return {document:structuredClone(initial.document),assertCurrent,close(){if(!closed){closed=true;controller.abort();}},async*records(){if(closed)throw new BackupError('BACKUP_PROFILE_LEASE_CLOSED');if(used)throw new BackupError('BACKUP_PROFILE_STREAM_USED');used=true;await assertCurrent();yield {metadata:{kind:'profile-snapshot',schema:SCHEMA,profiles:initial.document.profiles.length,credentialStoresIncluded:false},size:data.length,data:(async function*(){yield data;})()};await assertCurrent();}};
+}
+export async function* profileBackupRecords(resolve:()=>ProfileBackupSource,options:BackupOptions={}):AsyncGenerator<BackupRecord>{
+  const lease=await prepareProfileBackup(resolve,options);try{yield* lease.records();}finally{lease.close();}
 }
 export async function writeProfileBackup(destination:string,password:string,resolve:()=>ProfileBackupSource,options:BackupOptions={}):Promise<BackupReceipt>{
   return writeBackupArchive(destination,password,profileBackupRecords(resolve,options),options);

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T00:24:36.327Z",
+  "checkedAt": "2026-10-22T01:12:45.563Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -1990,6 +1990,22 @@
       "localPassed": 833,
       "packageFiles": 178,
       "localPackageSha256": "a6dd6204699f26e43fac1a49634b5540a00434482f398033e61d7f02387405a8"
+    },
+    "profilePackageAssembly": {
+      "entry": "dsh-zhen/backup writeProfilePackageBackup/restoreProfilePackageBackup/prepareProfileBackup",
+      "decision": "0091-profile-package-assembly",
+      "schema": "dsh-zhen-profile-packages-v1",
+      "targetedTests": 24,
+      "relatedTests": 77,
+      "fullRegressionPending": false,
+      "fullM2Complete": false,
+      "originalPackageManagerFiles": false,
+      "activated": false,
+      "verification": "Complete857/857, new24/related77 and179-file archive pass C63/C76 exact payload, C96 public CLI, C97 RAG, C98 home gates, C99 market/schema, C100 sources, C101 packages/Host and C102 composed profiles/packages/current framework. No package manager, module or hook runs during restore; CLI boot is a separate EXAMPLE fixture. Original PM/other state/unified restore remain incomplete; exact current CI separate.",
+      "localTests": 857,
+      "localPassed": 857,
+      "packageFiles": 179,
+      "localPackageSha256": "ea4b52e97cf96278ad643bb775d93782ec7caef5455268e7d4dad81113bcbbdd"
     }
   }
 }
