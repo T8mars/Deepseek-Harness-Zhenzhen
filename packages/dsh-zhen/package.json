@@ -84,6 +84,7 @@
     "@deepseek-ai/dsh-credentials": "0.2.1-rc.2",
     "@deepseek-ai/dsh-fs-local": "0.2.1-rc.2",
     "@deepseek-ai/dsh-home-paths": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-host-directory-picker": "0.2.1-rc.2",
     "@deepseek-ai/dsh-host-webserver": "0.2.1-rc.2",
     "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
     "@deepseek-ai/dsh-mcp-client": "0.2.1-rc.2",
@@ -111,6 +112,9 @@
     "zod": "4.4.3"
   },
   "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-host-directory-picker": {
+      "optional": true
+    },
     "@deepseek-ai/dsh-host-webserver": {
       "optional": true
     }

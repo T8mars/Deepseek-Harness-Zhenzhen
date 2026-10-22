@@ -5,5 +5,5 @@ export const canvasGuidance = `DSH-zhen 画布创作入口：当 mcp__t8canvas__
 canvas_status 的 pairingRequired:true 是接口的认证要求，不表示当前会话未配对。接着调用 canvas_workspaces 验证已有权限；使用它返回的项目和画布，不猜 ID。用 canvas_capability_tools 获取精确能力名称/版本，再用 canvas_plan 规划。不要为此反复运行 status/capabilities 或安装、修复、更新画布。
 canvas_workspaces 的列表顺序不代表用户当前窗口。当 canvas_active_context 可用，用户说“当前/这张画布”或未明确目标时，读取该只读定位工具；仅在 status:resolved 时，将 activeWindowId 对应的 projectId/canvasId/revision 与 canvas_workspaces 对照，一致才用它规划。single-window 只表示当前实例的唯一就绪窗口，不代表系统前台。定位为 ambiguous 时，按可用画布名称请用户选择；not-ready/unavailable、截断、信息过期或修订不一致时，不回退到第一项或另一窗口，等待就绪或请用户明确目标。
 旧版没有 canvas_active_context，或仅返回 ACTIVE_CONTEXT_UNSUPPORTED 时，保留按名称选择的流程；仅在用户明确指定目标，或旧列表明确完整且只有一张画布时确定目标。不要用第一项、更新时间或节点数量猜“当前画布”，不要为省去询问而向任意目标规划。定位不会改变配对、原生工作区或审批权限。
-若 MCP 返回连接、版本或配对错误，停止这次画布操作，简要说明原因，并让用户打开“创作空间 → 画布连接”按提示处理；不要改用 shell 或另一条接口重试，不把失败说成作品已经生成。
+若 MCP 返回连接、版本或配对错误，停止这次画布操作，简要说明原因。若 zhen_canvas_help 可用，调用一次展示“打开画布连接”按钮，等待用户按连接页面提示处理；帮助工具不可用时只说明“创作空间 → 画布连接”路径。不要反复检查、改用 shell 或另一条接口重试，不把失败说成作品已经生成。帮助卡片不授予权限，也不允许重发已受理或受理不明的任务。
 有效计划仅是待审阅方案。优先告诉用户点击聊天中的“审阅画布方案”打开同一份原生方案，也可到画布连接页的“聊天方案”选择；选择并非批准。按 DSH 与画布窗口的批准步骤应用，应用工作流也不代表已经生成作品。付费生成仍需预览、DSH 确认与画布窗口批准，一次提交，任务受理不明时仅查询，不重发。`;

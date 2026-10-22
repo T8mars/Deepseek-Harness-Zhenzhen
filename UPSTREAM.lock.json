@@ -2062,6 +2062,32 @@
       "localPassed": 935,
       "packageFiles": 185,
       "localPackageSha256": "3f4e42df19c6171f3445fc2053ae1bfee7d6903dd816610d6896be9835311429"
+    },
+    "directoryChoiceAndCanvasErrors": {
+      "decision": "0095-directory-choice-and-canvas-errors",
+      "sdk": "@deepseek-ai/dsh-host-directory-picker@0.2.1-rc.2",
+      "schema": "dsh-zhen directoryChoice strict v1",
+      "ownerOnly": true,
+      "agentPickerTool": false,
+      "nativeTimeoutMs": 120000,
+      "browseTimeoutMs": 15000,
+      "maxPending": 8,
+      "maxDirectoryEntries": 1000,
+      "maxRecentRequests": 2048,
+      "targetedTests": 36,
+      "relatedPassed": 64,
+      "fullRegressionPending": false,
+      "realModelRequests": 3,
+      "realModelScope": "Actual Flash and AgentLoop with EXAMPLE APP_NOT_RUNNING status, then actual client parser; no real Native instance.",
+      "nativeRequests": 0,
+      "nativeWrites": 0,
+      "browserVerified": false,
+      "nativeDialogVerified": false,
+      "verification": "Complete971/971, new36/related64 and188-file archive pass. C107 verifies actual public Host/Owner and BrowsePicker; C108 verifies production chooser/parent handlers and stale-result protection; C109 verifies actual AgentLoop reported-error guidance. Real Flash3 with EXAMPLE status then one help call accepted by client parser, no shell/Native calls. Existing C63/C76/C96-C106 proofs pass. Browser/native dialog and real creation, unified restore and original scope remain incomplete; live user Host stays0093. Exact current CI separate.",
+      "localTests": 971,
+      "localPassed": 971,
+      "packageFiles": 188,
+      "localPackageSha256": "2a942d97ea9ea70ea95843114d657cb9147df3dd7e9c29ebb9fa82aa7662b01c"
     }
   }
 }

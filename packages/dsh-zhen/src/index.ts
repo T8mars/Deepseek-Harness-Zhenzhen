@@ -1,6 +1,9 @@
 import type { Context } from '@deepseek-ai/cordis';
 import {symbols} from '@deepseek-ai/cordis';
 import {createCanvasHelpTool} from './canvas-help-tool.ts';
+import type {} from '@deepseek-ai/dsh-host-directory-picker';
+import {DirectoryChoices,DirectoryChoiceError} from './directory-choice.ts';
+import type {DirectoryChoiceInfo,DirectoryChoiceRequest,DirectoryChoiceBrowseRequest,DirectoryChoiceResult,DirectoryChoiceBrowseResult} from './directory-choice-schema.ts';
 import { credentialRef } from '@deepseek-ai/dsh-credentials';
 import { credentialSource } from './client/credential-source.ts';
 import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
@@ -144,6 +147,7 @@ const githubCredential = credentialRef('DSH_ZHEN_GITHUB_TOKEN');
 
 /** Creator workspace Host operations, guarded by DSH's authenticated Remote access. */
 export default class ZhenService extends TypertRemoteService {
+  private readonly directoryChoices:DirectoryChoices;
   static inject: string[] = ['credentials'];
   private knowledgeStore?: KnowledgeStore;
   // One Host keeps its startup data root even if another plugin changes env/cwd.
@@ -182,6 +186,9 @@ export default class ZhenService extends TypertRemoteService {
 
   constructor(ctx: Context) {
     super(ctx, 'zhen');
+    this.directoryChoices=new DirectoryChoices(()=>{const service=ctx.get('directoryPicker');return service?{owner:(service as unknown as {[key:symbol]:object|undefined})[symbols.original]??service,capability:service.capability()}:undefined;});
+    ctx.effect(()=>()=>this.directoryChoices.close(),'zhen: directory choice lifetime');
+    ctx.inject(['directoryPicker'],inner=>{this.directoryChoices.invalidate();inner.effect(()=>()=>this.directoryChoices.invalidate(),'zhen: directory provider lifetime');});
     const skillSources=new SkillSourceTracker(ctx);ctx.provide('zhenSkillBackupSources',skillSources);
     this.rag=new ZhenRag(()=>this.knowledge(),join(this.zhenHome,'rag-backend.json'));
     ctx.provide('zhenRag',this.rag);
@@ -454,6 +461,15 @@ export default class ZhenService extends TypertRemoteService {
   async updatesCheck(): Promise<UpdateReport> { return this.updates().check(); }
   @Remote
   updatesAutomatic(enabled: boolean): void { this.updates().setAutomatic(enabled); }
+  private async directoryOperation<T>(work:()=>Promise<T>|T):Promise<T>{try{return await work();}catch(error){const known=error instanceof DirectoryChoiceError;throw new RemoteError('zhen/refused',known?error.message:'目录选择未完成，原路径保留。',{reason:known?'DIRECTORY_'+error.code:'DIRECTORY_UNAVAILABLE'});}}
+  @Remote
+  directoryPickerInfo():Promise<DirectoryChoiceInfo>{return this.directoryOperation(()=>this.directoryChoices.info());}
+  @Remote
+  directoryPickerNative(request:DirectoryChoiceRequest):Promise<DirectoryChoiceResult>{return this.directoryOperation(()=>this.directoryChoices.pick(request));}
+  @Remote
+  directoryPickerBrowse(request:DirectoryChoiceBrowseRequest):Promise<DirectoryChoiceBrowseResult>{return this.directoryOperation(()=>this.directoryChoices.browse(request));}
+  @Remote
+  directoryPickerCancel(request:DirectoryChoiceRequest):Promise<void>{return this.directoryOperation(()=>this.directoryChoices.cancel(request));}
   private canvasConfig(): CanvasConfig | undefined {
     const file = join(this.zhenHome,'canvas.json');
     if (!existsSync(file)) return undefined;

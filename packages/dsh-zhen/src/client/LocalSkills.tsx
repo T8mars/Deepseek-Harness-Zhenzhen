@@ -4,6 +4,7 @@ import { LOCAL_SKILL_POLICY } from 'dsh-zhen/remote';
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
 import type { LocalSkillDraft, LocalSkillView, LocalSkillBody, LocalSkillMode } from 'dsh-zhen';
 import {useRemoteAction, type CurrentAction, type RemoteAction} from './useRemoteAction.ts';
+import {DirectoryChooser} from './DirectoryChooser.tsx';
 const unwrap = <T,>(value: RemoteResult<T>): T => { if (!value.ok) throw value.error; return value.value; };
 
 export function LocalSkills({ api, query = '' }: { api: ZhenRemote; query?: string }): React.ReactElement {
@@ -25,6 +26,7 @@ export function LocalSkills({ api, query = '' }: { api: ZhenRemote; query?: stri
     <form onSubmit={event => { event.preventDefault(); void action(async current => { setDraft(undefined); setBody(undefined); setTrusted(false); const next = unwrap(await api.localSkillPreview(folder, mode)); if (current()) setDraft(next); }); }}>
       <label className="zhen-label">目录类型<select className="zhen-input" value={mode} disabled={busy} onChange={event => { setMode(event.target.value as LocalSkillMode); setDraft(undefined); setTrusted(false); }}><option value="skill">单个技能：目录内有 SKILL.md</option><option value="library">整个技能库：各子目录内有 SKILL.md</option></select></label>
       <label className="zhen-label">本机目录<input className="zhen-input" value={folder} maxLength={4096} disabled={busy} onChange={event => { setFolder(event.target.value); setDraft(undefined); setTrusted(false); }} placeholder="粘贴技能或技能库的绝对路径" required/></label>
+      <DirectoryChooser api={api} value={folder} scopeKey={mode} disabled={busy} onChoose={path=>{setFolder(path);setDraft(undefined);setBody(undefined);setTrusted(false);}}/>
       <button className="zhen-secondary" disabled={busy || !folder.trim()}>扫描并预览</button>
     </form>
     {draft && <div className="zhen-margin">

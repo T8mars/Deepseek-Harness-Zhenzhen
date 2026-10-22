@@ -212,3 +212,10 @@ C104仅读自有固定schema与Node公开SQLite/fs接口。Host owner比较沿�
 ## 0094 · 无画布工具时的公开提示与导航槽位
 
 公开system-prompt section支持固定text；恢复引导不能以自有配置存在作为前提，也不应在提示组装时解析可能损坏的连接JSON。C105使用真实Prompt/AgentLoop并验证普通作用域工具仍执行。C106使用公开ToolRuntime注册纯固定导航工具及卸载移除，客户端通过既有tool.call.toolview注册并调用真实按钮闭包选择已注册main面板和connections子页。UI注册/事件测试不是物理浏览器显示或Native权限批准；工具输出和旧记录都不能证明连接。没有改SDK、MCP协议或新增远程修改入口。
+
+
+## 0095 · 公开目录选择能力及陈旧提供者
+
+公开DirectoryPicker.capability返回稳定的native/browse判别对象，缺失/未知能力不发起选择。Native pick(signal)可不服从取消；公开BrowsePicker.list提供Host绝对path/home/crumbs/entries及布尔truncated，不能把未知完整性默认false。C107真实公开服务/Owner和TEMP BrowsePicker核对，派发前及返回前再次比较提供者身份；超时仍保留未结束槽位，防止重复窗口/资源失控。客户端不借workspace专用流程创建目录或工作区，不拼接远端路径，选择不等于父动作授权。C108为真实生产处理器/SSR证明而非浏览器或系统窗口。C109真实AgentLoop验证MCP返回错误后的同一导航工具；三次真实Flash使用EXAMPLE状态，不涉及真实Native实例。无上游协议/源码改动。
+
+0095焦点负例要求按钮提交为启用后再focus；React effect仅在相同API/作用域且未禁用时回焦。C108使用显式提交状态替身验证顺序，仍不是DOM/系统窗口验收。package.json采用统一JSON格式，使两版本测试的stable归档与正式pack逐字节相同；没有只比较内部载荷而忽略manifest。

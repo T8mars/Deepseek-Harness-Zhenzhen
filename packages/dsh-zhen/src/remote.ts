@@ -1,5 +1,9 @@
 /** Hand-authored contribution using the published protocol factory; no upstream types are modified. */
 import { z } from 'zod';
+import {directoryChoiceInfoSchema,directoryChoiceRequestSchema,directoryChoiceBrowseRequestSchema,directoryChoiceResultSchema,directoryChoiceBrowseResultSchema} from './directory-choice-schema.ts';
+import type {DirectoryChoiceInfo,DirectoryChoiceRequest,DirectoryChoiceBrowseRequest,DirectoryChoiceResult,DirectoryChoiceBrowseResult} from './directory-choice-schema.ts';
+export type {DirectoryChoiceInfo,DirectoryChoiceListing} from './directory-choice-schema.ts';
+export {directoryChoiceInfoSchema,directoryChoiceResultSchema,directoryChoiceBrowseResultSchema} from './directory-choice-schema.ts';
 export {canvasHelpSchema} from './canvas-help-schema.ts';
 import { createTypertRemoteInfo } from '@deepseek-ai/dsh-typert-protocol/remote-info';
 import type { RemoteResult, TypertRemoteCodecSpec, TypertRemoteMethodSpec } from '@deepseek-ai/dsh-typert-protocol';
@@ -68,6 +72,10 @@ import { gatewayMediaTicketSchema, gatewayMediaReceiptSchema } from './gateway-m
 import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-schema.ts';
 
 export interface ZhenRemote {
+  directoryPickerInfo():Promise<RemoteResult<DirectoryChoiceInfo>>;
+  directoryPickerNative(request:DirectoryChoiceRequest):Promise<RemoteResult<DirectoryChoiceResult>>;
+  directoryPickerBrowse(request:DirectoryChoiceBrowseRequest):Promise<RemoteResult<DirectoryChoiceBrowseResult>>;
+  directoryPickerCancel(request:DirectoryChoiceRequest):Promise<RemoteResult<void>>;
   githubAccessInfo(): Promise<RemoteResult<GithubAccessInfo>>;
   githubSaveCredential(value: string): Promise<RemoteResult<void>>;
   githubRemoveCredential(): Promise<RemoteResult<void>>;
@@ -226,6 +234,10 @@ function method(name: string, schema: z.ZodType, description: string, inputs: Ar
     sourceLocation: { file: 'packages/dsh-zhen/src/remote.ts', line: 1, column: 1 } };
 }
 export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', methods: {
+  'zhen/directoryPickerInfo':method('directoryPickerInfo',directoryChoiceInfoSchema,'Owner UI only: describe the public Host directory-picker capability without opening a dialog or reading files.'),
+  'zhen/directoryPickerNative':method('directoryPickerNative',directoryChoiceResultSchema,'Owner UI only: explicitly open one Host directory chooser. Selection does not grant access or start another action.',[['request',directoryChoiceRequestSchema]]),
+  'zhen/directoryPickerBrowse':method('directoryPickerBrowse',directoryChoiceBrowseResultSchema,'Owner UI only: browse one bounded directory level through the public Host picker. No file reads or workspace creation.',[['request',directoryChoiceBrowseRequestSchema]]),
+  'zhen/directoryPickerCancel':method('directoryPickerCancel',z.void(),'Owner UI only: cancel this picker request without changing the selected path.',[['request',directoryChoiceRequestSchema]]),
   'zhen/gatewayMediaPreview': method('gatewayMediaPreview', z.array(gatewayMediaTicketSchema).max(100), 'Prepare short-lived result references without returning signed URLs.', [['id', z.uuid()]]),
   'zhen/gatewayMediaSave': method('gatewayMediaSave', gatewayMediaReceiptSchema, 'Save one chosen task result into an existing local folder without overwriting files.', [['id', z.uuid()], ['folder', z.string().min(1).max(4096)]]),
   'zhen/gatewayMediaList': method('gatewayMediaList', z.array(gatewayMediaReceiptSchema).max(100), 'List local export receipts without media contents or URLs.'),

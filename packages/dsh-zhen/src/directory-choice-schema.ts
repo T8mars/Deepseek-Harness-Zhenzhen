@@ -1,0 +1,15 @@
+import {z} from 'zod';
+const path=z.string().min(1).max(4096).refine(value=>!value.includes('\0'));
+export const directoryChoiceInfoSchema=z.object({kind:z.enum(['native','browse','unavailable']),generation:z.uuid()}).strict();
+export const directoryChoiceRequestSchema=z.object({generation:z.uuid(),id:z.uuid()}).strict();
+export const directoryChoiceBrowseRequestSchema=directoryChoiceRequestSchema.extend({path:path.optional()}).strict();
+const entry=z.object({name:z.string().max(4096),path,hidden:z.boolean()}).strict();
+export const directoryChoiceListingSchema=z.object({path,home:path,crumbs:z.array(entry).min(1).max(512),entries:z.array(entry).max(1000),truncated:z.boolean()}).strict();
+export const directoryChoiceResultSchema=directoryChoiceRequestSchema.extend({path:path.nullable()}).strict();
+export const directoryChoiceBrowseResultSchema=directoryChoiceRequestSchema.extend({listing:directoryChoiceListingSchema}).strict();
+export type DirectoryChoiceInfo=z.infer<typeof directoryChoiceInfoSchema>;
+export type DirectoryChoiceRequest=z.infer<typeof directoryChoiceRequestSchema>;
+export type DirectoryChoiceBrowseRequest=z.infer<typeof directoryChoiceBrowseRequestSchema>;
+export type DirectoryChoiceListing=z.infer<typeof directoryChoiceListingSchema>;
+export type DirectoryChoiceResult=z.infer<typeof directoryChoiceResultSchema>;
+export type DirectoryChoiceBrowseResult=z.infer<typeof directoryChoiceBrowseResultSchema>;
