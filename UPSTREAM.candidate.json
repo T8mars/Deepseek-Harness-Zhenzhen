@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "activation": "requires-contracts-and-review",
+  "candidates": [
+    {
+      "id": "canvas",
+      "current": "3.3.7",
+      "available": "3.4.1",
+      "revision": "c800daa285e34d8fb6032ce2d148248d8faa37bf",
+      "url": "https://github.com/T8mars/T8-penguin-canvas/commits/main"
+    },
+    {
+      "id": "gateway",
+      "current": "cd7d81ab06320a5d653a64e7413ca3834523fc7881b7b2bbf5077d2d878245e5",
+      "available": "d5ed640068aa17bcab2878a0490f675f54edad3393957ab1826bb1767f5617a2",
+      "revision": "d5ed640068aa17bcab2878a0490f675f54edad3393957ab1826bb1767f5617a2",
+      "url": "https://api.seedance.nz/docs/llms.txt"
+    }
+  ]
+}
