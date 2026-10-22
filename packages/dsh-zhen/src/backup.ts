@@ -44,3 +44,7 @@ export type {OwnedStateBackupPolicy,OwnedStateBackupSource,OwnedStateBackupLease
 export type {OwnedStateDocument} from './backup-owned-schema.ts';
 export {prepareWorkspaceBackup,workspaceBackupRecords,writeWorkspaceBackup,restoreWorkspaceBackup} from './backup-workspaces.ts';
 export type {WorkspaceBackupSource,WorkspaceBackupDocument,WorkspaceBackupLease,WorkspaceRestoreCandidate} from './backup-workspaces.ts';
+
+export {writeRecoveryLayout,inspectRecoveryLayout} from './recovery-layout.ts';
+export {recoveryLayoutSchema,recoveryPlanSchema,recoveryComponentLayoutSchema,recoveryLocationLabels,recoveryPlanReasonLabels} from './recovery-layout-schema.ts';
+export type {RecoveryComponentLayout,RecoveryPlan,RecoveryLocationRole} from './recovery-layout-schema.ts';

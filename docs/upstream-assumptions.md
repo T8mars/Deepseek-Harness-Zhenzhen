@@ -239,3 +239,8 @@ C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/ch
 ## C118–C120：自有候选索引与Owner重启管理
 
 候选索引是本项目自己的SQLite schema1，不读取SDK私有profile或数据库。按原任务ID保存创建基线；生成角色和有界组合回执只是扫描前置条件，不能取代基线。C118用实际独立Node进程重启和SQLite事务；C119用固定公开Cordis插件生命周期卸载/重挂、实际Gateway/Owner及严格RemoteError details.reason确认明确BACKUP_BUSY，既有丢回执原ID查询不变；十一项Owner接口拒绝匿名，Tools实际非空但未新增备份工具。C120为生产组件处理器/SSR及迟到响应保护，不证明浏览器或完整应用激活。真实591安装项/639恢复包的温缓存验证使用0098既有编译模块，不将其泛化成本次索引或候选CLI已验。
+
+
+## C121–C123：类型化恢复布局与准备检查
+
+布局来自已有各恢复模块的返回值，而非SDK私有目录猜测。会话使用既有JSONL配置root，附件只记录公开服务dshHome；工作区使用实际公开Storage/Domain恢复root。C122真实Owner组合核配置、会话、暖RAG、自有记录四范围，另外实际技能库存与工作区写入布局通过。C121用公开initProfile生成128个配置档，直接编译固定dev70原索引读取器并核依赖源码字节，接受新候选的原schema1基线；不改变目录角色或旧schema以求通过。布局读取前后身份/字节核对中间复核整份候选，拒绝改写、超限与逃逸，不执行归档代码。C123仅生产处理器/SSR，不证明窗口或全应用激活。

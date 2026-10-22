@@ -1,3 +1,7 @@
+import {recoveryPlanSchema} from './recovery-layout-schema.ts';
+import type {RecoveryPlan} from './recovery-layout-schema.ts';
+export {recoveryPlanSchema,recoveryLocationLabels,recoveryPlanReasonLabels} from './recovery-layout-schema.ts';
+export type {RecoveryPlan} from './recovery-layout-schema.ts';
 /** Hand-authored contribution using the published protocol factory; no upstream types are modified. */
 import { z } from 'zod';
 import {recoveryPreviewSchema,recoveryCatalogSchema} from './recovery-schema.ts';
@@ -80,6 +84,7 @@ import { gatewayMediaTicketSchema, gatewayMediaReceiptSchema } from './gateway-m
 import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-schema.ts';
 
 export interface ZhenRemote {
+  backupCandidatePlan(id:string):Promise<RemoteResult<RecoveryPlan>>;
   backupCandidateList(cursor:string):Promise<RemoteResult<RecoveryCatalogView>>;
   backupCandidateForget(id:string):Promise<RemoteResult<void>>;
   backupCandidateRegister(id:string):Promise<RemoteResult<BackupJob>>;
@@ -253,6 +258,7 @@ function method(name: string, schema: z.ZodType, description: string, inputs: Ar
     sourceLocation: { file: 'packages/dsh-zhen/src/remote.ts', line: 1, column: 1 } };
 }
 export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', methods: {
+  'zhen/backupCandidatePlan':method('backupCandidatePlan',recoveryPlanSchema,'Owner UI: verify original candidate bytes and inspect typed restored locations; no execution, rebinding or activation.',[['id',z.uuid()]]),
   'zhen/backupCandidateList':method('backupCandidateList',recoveryCatalogSchema,'Owner UI: page durable candidate records plus current in-memory candidates; no candidate file content or activation.',[['cursor',z.string().max(256)]]),
   'zhen/backupCandidateForget':method('backupCandidateForget',z.void(),'Owner UI: remove only the selected candidate record; preserve candidate directories and backup files.',[['id',z.uuid()]]),
   'zhen/backupCandidateRegister':method('backupCandidateRegister',backupJobSchema,'Owner UI: recheck the original candidate and retry saving its local record without repeating restoration.',[['id',z.uuid()]]),

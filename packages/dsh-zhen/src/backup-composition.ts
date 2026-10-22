@@ -13,13 +13,15 @@ import {sealRecoveryCandidate} from './recovery-candidate.ts';
 import type {RecoveryBaseline} from './recovery-candidate.ts';
 import {recoverySummarySchema} from './recovery-schema.ts';
 import type {RecoverySummary} from './recovery-schema.ts';
+import type {RecoveryComponentLayout} from './recovery-layout-schema.ts';
+import {writeRecoveryLayout} from './recovery-layout.ts';
 
 const SCHEMA='dsh-zhen-selected-backup-v1',MAX_CHUNK=4*1024**2;
 export interface BackupComponentLease {records():AsyncGenerator<BackupRecord>;assertCurrent():Promise<void>;close():void|Promise<void>;}
 export interface BackupComponentAdapter {
   available?:boolean;
   prepare(password:string,options:BackupOptions):Promise<BackupComponentLease>;
-  restore(source:string,password:string,parent:string,options:BackupOptions):Promise<{root:string;summary?:RecoverySummary}>;
+  restore(source:string,password:string,parent:string,options:BackupOptions):Promise<{root:string;summary?:RecoverySummary;layout?:RecoveryComponentLayout}>;
 }
 export type BackupAdapters=Partial<Record<BackupComponent,BackupComponentAdapter>>;
 type Progress=(phase:'preparing'|'capturing'|'verifying'|'restoring',component:BackupComponent|null,completed:number,total:number)=>void;
@@ -66,9 +68,9 @@ export async function restoreComposedBackup(source:string,password:string,parent
     if(!(await records.next()).done)invalid();options.signal?.throwIfAborted();
     // Check every nested envelope before asking any domain to create a candidate.
     for(const file of files){const sealed=await openBackupArchive(file,password,options);try{for await(const record of sealed.records())for await(const _part of record.data){options.signal?.throwIfAborted();}}finally{await sealed.close();}}
-    candidate=await realpath(await mkdtemp(join(target,'dsh-zhen-recovery-')));const restored=[];
-    for(let i=0;i<selected.length;i++){progress('restoring',selected[i],i,selected.length);const item=await adapters[selected[i]]!.restore(files[i],password,candidate,options),part=relative(candidate,await realpath(item.root));if(!part||isAbsolute(part)||part.startsWith('..'))throw new BackupError('BACKUP_TEMP_BOUNDARY');const summary=recoverySummarySchema.safeParse(item.summary??{kind:selected[i],counts:{},warnings:['COMPONENT_DETAILS_UNAVAILABLE']});if(!summary.success||summary.data.kind!==selected[i])throw new BackupError('BACKUP_CANDIDATE_SUMMARY_INVALID');restored.push({kind:selected[i],root:item.root,summary:summary.data});options.signal?.throwIfAborted();}
+    candidate=await realpath(await mkdtemp(join(target,'dsh-zhen-recovery-')));const restored=[],layouts:RecoveryComponentLayout[]=[];
+    for(let i=0;i<selected.length;i++){progress('restoring',selected[i],i,selected.length);const item=await adapters[selected[i]]!.restore(files[i],password,candidate,options),part=relative(candidate,await realpath(item.root));if(!part||isAbsolute(part)||part.startsWith('..'))throw new BackupError('BACKUP_TEMP_BOUNDARY');const summary=recoverySummarySchema.safeParse(item.summary??{kind:selected[i],counts:{},warnings:['COMPONENT_DETAILS_UNAVAILABLE']});if(!summary.success||summary.data.kind!==selected[i])throw new BackupError('BACKUP_CANDIDATE_SUMMARY_INVALID');if(item.layout&&(item.layout.kind!==selected[i]||item.layout.root!==item.root))throw new BackupError('BACKUP_RECOVERY_LAYOUT_INVALID');layouts.push(item.layout??{kind:selected[i],root:item.root,details:false,locations:[],profiles:[],externalPackages:0});restored.push({kind:selected[i],root:item.root,summary:summary.data});options.signal?.throwIfAborted();}
     const result={root:candidate,components:selected,activated:false as const,wholeApplicationRestore:false as const};
-    await writeFile(join(candidate,'dsh-zhen-recovery.json'),JSON.stringify({...result,schema:SCHEMA,credentialStoresIncluded:false,limitations:manifest.limitations,restored})+'\n',{flag:'wx',mode:0o600});progress('verifying',null,selected.length,selected.length);const verification=await sealRecoveryCandidate(candidate,restored.map(row=>row.summary),options);options.signal?.throwIfAborted();complete=true;return {...result,verification};
+    await writeFile(join(candidate,'dsh-zhen-recovery.json'),JSON.stringify({...result,schema:SCHEMA,credentialStoresIncluded:false,limitations:manifest.limitations,restored})+'\n',{flag:'wx',mode:0o600});progress('verifying',null,selected.length,selected.length);await writeRecoveryLayout(candidate,layouts,options.signal);const verification=await sealRecoveryCandidate(candidate,restored.map(row=>row.summary),options);options.signal?.throwIfAborted();complete=true;return {...result,verification};
   }finally{try{await archive.close();}finally{try{if(temporary)await removeBackupCandidate(base,temporary,'dsh-zhen-composed-input-');}finally{if(candidate&&!complete)await removeBackupCandidate(target,candidate,'dsh-zhen-recovery-');}}}
 }

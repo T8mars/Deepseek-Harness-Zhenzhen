@@ -1,3 +1,4 @@
+import type {RecoveryPlan} from './recovery-layout-schema.ts';
 import type { Context } from '@deepseek-ai/cordis';
 import {symbols} from '@deepseek-ai/cordis';
 import {BackupCenter} from './backup-center.ts';
@@ -451,6 +452,8 @@ export default class ZhenService extends TypertRemoteService {
   backupCandidateSnapshot(id:string):RecoveryPreview{return this.backupCenter.candidateSnapshot(id);}
   @Remote
   backupCandidateVerify(id:string):Promise<RecoveryPreview>{return this.backupCenter.candidateVerify(id);}
+  @Remote
+  backupCandidatePlan(id:string):Promise<RecoveryPlan>{return this.backupCenter.candidatePlan(id);}
   @Remote
   backupCandidateList(cursor:string):RecoveryCatalogView{return this.backupCenter.candidateList(cursor);}
   @Remote
