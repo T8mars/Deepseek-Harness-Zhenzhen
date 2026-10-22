@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {lstat,mkdir,mkdtemp,open,readdir,realpath,rm,writeFile} from 'node:fs/promises';
+import {lstat,mkdir,mkdtemp,open,readdir,realpath,readlink,rm,writeFile} from 'node:fs/promises';
 import type {FileHandle} from 'node:fs/promises';
 import {basename,dirname,isAbsolute,join,parse,posix,relative,win32} from 'node:path';
 import {homedir} from 'node:os';
@@ -7,7 +7,7 @@ import {z} from 'zod';
 import {BackupError,DEFAULT_BACKUP_LIMITS,openBackupArchive,writeBackupArchive} from './backup-archive.ts';
 import type {BackupOptions,BackupRecord,BackupReceipt} from './backup-archive.ts';
 import {backupJsonString,parseBackupJson} from './backup-data.ts';
-import {projectSkillRoots,projectedKey} from './backup-skill-projection.ts';
+import {projectSkillRoots,projectedKey,originKey} from './backup-skill-projection.ts';
 import type {SkillProjectionAnchor,ProjectedLocation} from './backup-skill-projection.ts';
 
 const SCHEMA='dsh-zhen-skill-roots-v1',MAX_ROOTS=1024,MAX_ENTRIES=80_000,MAX_MANIFEST=32*1024**2,CHUNK=64*1024;
@@ -55,16 +55,23 @@ async function protectedSelection(selection:SkillBackupSelection,signal?:AbortSi
   return parseBackupJson(Buffer.from(backupJsonString(roots))) as StoredRoot[];
 }
 function childParts(parts:string[]):boolean{return parts.every(part=>part!=='.'&&part!=='..'&&!/[\\/\x00-\x1f\x7f]/.test(part));}
-async function inventory(roots:StoredRoot[],options:BackupOptions):Promise<{nodes:ObservedNode[];roots:string[]}>{
-  const nodes:ObservedNode[]=[],rootIdentities:string[]=[],paths=new Set<string>();let total=0;
+export interface ApprovedResourceLink {target:string;identity:string;text:string;}
+export interface SkillResourceReservation {key:string;parts:readonly string[];}
+/** Internal package composition seam; ordinary skill backups approve no links. */
+export async function assertSkillBackupScope(selection:SkillBackupSelection,signal?:AbortSignal):Promise<void>{await protectedSelection(selection,signal);}
+async function inventory(roots:StoredRoot[],options:BackupOptions,approved:ReadonlyMap<string,ApprovedResourceLink>):Promise<{nodes:ObservedNode[];roots:string[];links:string[]}>{
+  const nodes:ObservedNode[]=[],rootIdentities:string[]=[],paths=new Set<string>(),seenLinks=new Set<string>(),links:string[]=[];let total=0;
   const visit=async(root:number,parts:string[])=>{
     options.signal?.throwIfAborted();const selected=roots[root],directory=join(selected.canonicalRoot,...parts);
     const entries=await readdir(directory,{withFileTypes:true});entries.sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0);
     for(const entry of entries){
       if(entry.name.toLowerCase()==='.git'||(!parts.length&&selected.excludedMetadata.includes('.system')&&entry.name==='.system'))continue;
       const child=[...parts,entry.name];if(!childParts(child)||child.length>64)throw new BackupError('BACKUP_SKILL_PATH_INVALID');destination(selected.canonicalRoot,child);
-      const folded=(root+':'+child.join('/')).normalize('NFKC').toLowerCase();if(paths.has(folded))throw new BackupError('BACKUP_SKILL_PATH_COLLISION');paths.add(folded);
+      const folded=(root+':'+child.join('/')).normalize('NFKC').toLowerCase();if(paths.has(folded))throw new BackupError('BACKUP_SKILL_PATH_COLLISION');if(paths.size>=MAX_ENTRIES)throw new BackupError('BACKUP_SKILL_ENTRY_LIMIT');paths.add(folded);
       options.signal?.throwIfAborted();const path=join(selected.canonicalRoot,...child),stat=await lstat(path,{bigint:true});
+      if(stat.isSymbolicLink()){
+        const rule=approved.get(path);if(!rule||identity(stat)!==rule.identity||await realpath(path)!==rule.target||await readlink(path)!==rule.text)throw new BackupError('BACKUP_SKILL_LINK_REFUSED');seenLinks.add(path);links.push(backupJsonString({root,path,...rule}));continue;
+      }
       if(stat.isSymbolicLink()||!inside(selected.canonicalRoot,await realpath(path)))throw new BackupError('BACKUP_SKILL_LINK_REFUSED');
       if(nodes.length>=MAX_ENTRIES)throw new BackupError('BACKUP_SKILL_ENTRY_LIMIT');
       if(stat.isDirectory()){nodes.push({root,parts:child,kind:'directory',bytes:0,identity:directoryIdentity(stat)});await visit(root,child);}
@@ -79,7 +86,7 @@ async function inventory(roots:StoredRoot[],options:BackupOptions):Promise<{node
     const root=roots[index],before=await fileIdentity(root.path);if((before!=='absent')!==root.present||await canonical(root.path)!==root.canonicalRoot)throw new BackupError('BACKUP_SOURCE_CHANGED');
     if(root.present)await visit(index,[]);if(await fileIdentity(root.path)!==before)throw new BackupError('BACKUP_SOURCE_CHANGED');rootIdentities.push(before);
   }
-  return {nodes,roots:rootIdentities};
+  if([...approved.keys()].some(path=>!seenLinks.has(path)))throw new BackupError('BACKUP_SOURCE_CHANGED');return {nodes,roots:rootIdentities,links};
 }
 async function* fileBytes(root:StoredRoot,node:ObservedNode,signal?:AbortSignal):AsyncGenerator<Uint8Array>{
   signal?.throwIfAborted();const path=join(root.canonicalRoot,...node.parts);
@@ -91,27 +98,36 @@ async function* fileBytes(root:StoredRoot,node:ObservedNode,signal?:AbortSignal)
     if(identity(await file.stat({bigint:true}))!==node.identity||await fileIdentity(path)!==node.identity)throw new BackupError('BACKUP_SOURCE_CHANGED');
   }finally{await file.close();}
 }
-async function snapshot(selection:SkillBackupSelection,options:BackupOptions):Promise<Snapshot>{
-  const roots=await protectedSelection(selection,options.signal),initial=await inventory(roots,options),nodes:SkillNode[]=[];
+async function snapshot(selection:SkillBackupSelection,options:BackupOptions,approved:ReadonlyMap<string,ApprovedResourceLink>):Promise<Snapshot>{
+  const roots=await protectedSelection(selection,options.signal),initial=await inventory(roots,options,approved),nodes:SkillNode[]=[];
   for(const node of initial.nodes){
     const {identity:_identity,...stored}=node;
     if(node.kind==='file'){const hash=createHash('sha256');for await(const bytes of fileBytes(roots[node.root],node,options.signal))hash.update(bytes);stored.sha256=hash.digest('hex');}nodes.push(stored);
   }
-  const after=await inventory(roots,options);if(backupJsonString(after)!==backupJsonString(initial))throw new BackupError('BACKUP_SOURCE_CHANGED');
+  const after=await inventory(roots,options,approved);if(backupJsonString(after)!==backupJsonString(initial))throw new BackupError('BACKUP_SOURCE_CHANGED');
   const manifest:SkillManifest={schema:SCHEMA,credentialStoresIncluded:false,roots,nodes,activated:false},serialized=backupJsonString(manifest);if(Buffer.byteLength(serialized)>MAX_MANIFEST)throw new BackupError('BACKUP_SKILL_MANIFEST_LIMIT');
-  return {manifest,observations:initial.nodes.map(node=>node.identity),revision:sha(backupJsonString({roots:initial.roots,manifest,observations:initial.nodes.map(node=>node.identity)}))};
+  return {manifest,observations:initial.nodes.map(node=>node.identity),revision:sha(backupJsonString({roots:initial.roots,manifest,links:initial.links,observations:initial.nodes.map(node=>node.identity)}))};
 }
 /** Host-selected, declared skill roots only; resources are not a marketplace publish allowlist. */
 export async function* skillBackupRecords(resolveSelection:()=>SkillBackupSelection,options:BackupOptions={}):AsyncGenerator<BackupRecord>{
-  const state=await snapshot(resolveSelection(),options),manifest=Buffer.from(backupJsonString(state.manifest));
+  yield* linkedSkillBackupRecords(resolveSelection,new Map(),options);
+}
+/** Only a composed authenticated package archive may declare mapped links. The
+ * outer package document preserves every link; this stream emits regular bytes. */
+function projectedManifest(manifest:SkillManifest,anchors:readonly SkillProjectionAnchor[],reserved:readonly SkillResourceReservation[]=[]){
+  if(manifest.nodes.length+reserved.length>MAX_ENTRIES)throw new BackupError('BACKUP_SKILL_ENTRY_LIMIT');const indexes=new Map(manifest.roots.map((root,index)=>[root.key,index])),extra=reserved.map(item=>{assertSkillResourcePath(item.parts);const root=indexes.get(item.key);if(root===undefined)throw new BackupError('BACKUP_PACKAGE_ROOTS_MISMATCH');return {root,parts:[...item.parts],kind:'file' as const,bytes:0,sha256:'0'.repeat(64),executable:false};});return projectSkillRoots(manifest.roots,[...manifest.nodes,...extra],anchors,assertSkillResourcePath);
+}
+export async function* linkedSkillBackupRecords(resolveSelection:()=>SkillBackupSelection,approved:ReadonlyMap<string,ApprovedResourceLink>,options:BackupOptions={},anchors:readonly SkillProjectionAnchor[]=[],reserved:readonly SkillResourceReservation[]=[]):AsyncGenerator<BackupRecord>{
+  const state=await snapshot(resolveSelection(),options,approved);projectedManifest(state.manifest,anchors,reserved);const manifest=Buffer.from(backupJsonString(state.manifest));
   yield {metadata:{kind:'skill-manifest',schema:SCHEMA},size:manifest.length,data:(async function*(){yield manifest;})()};
   for(let index=0;index<state.manifest.nodes.length;index++){
     const node=state.manifest.nodes[index];if(node.kind!=='file')continue;
     const data=(async function*(){const hash=createHash('sha256');for await(const bytes of fileBytes(state.manifest.roots[node.root],{...node,identity:state.observations[index]},options.signal)){hash.update(bytes);yield bytes;}if(hash.digest('hex')!==node.sha256)throw new BackupError('BACKUP_SOURCE_CHANGED');})();
     yield {metadata:{kind:'skill-file',node:index},size:node.bytes,data};
   }
-  if((await snapshot(resolveSelection(),options)).revision!==state.revision)throw new BackupError('BACKUP_SOURCE_CHANGED');
+  if((await snapshot(resolveSelection(),options,approved)).revision!==state.revision)throw new BackupError('BACKUP_SOURCE_CHANGED');
 }
+export async function skillResourceRevision(selection:SkillBackupSelection,approved:ReadonlyMap<string,ApprovedResourceLink>,options:BackupOptions={},anchors:readonly SkillProjectionAnchor[]=[],reserved:readonly SkillResourceReservation[]=[]):Promise<string>{const state=await snapshot(selection,options,approved);projectedManifest(state.manifest,anchors,reserved);return state.revision;}
 export async function writeSkillBackup(destination:string,password:string,resolveSelection:()=>SkillBackupSelection,options:BackupOptions={}):Promise<BackupReceipt>{return writeBackupArchive(destination,password,skillBackupRecords(resolveSelection,options),options);}
 
 /** Pure preflight for the portable resource namespace; creates no paths. */
@@ -131,12 +147,13 @@ export async function restoreSkillBackup(source:string,password:string,parentDir
 }
 /** Internal composition seam. Public restore entry points authenticate the full
  * archive before passing any records here. Not exported from dsh-zhen/backup. */
-export async function restoreAuthenticatedSkillRecords(records:AsyncGenerator<BackupRecord>,parentDirectory:string,options:BackupOptions={},expectedRoots?:readonly SkillBackupRoot[],anchors:readonly SkillProjectionAnchor[]=[]):Promise<SkillRestoreCandidate>{
+export async function restoreAuthenticatedSkillRecords(records:AsyncGenerator<BackupRecord>,parentDirectory:string,options:BackupOptions={},expectedRoots?:readonly SkillBackupRoot[],anchors:readonly SkillProjectionAnchor[]=[],expectedCanonical?:ReadonlyMap<string,string>,reserved:readonly SkillResourceReservation[]=[]):Promise<SkillRestoreCandidate>{
   if(!isAbsolute(parentDirectory))throw new BackupError('BACKUP_PATH_INVALID');const parent=await realpath(parentDirectory);let root:string|undefined,complete=false;
   try{
     const first=await records.next();if(first.done||first.value.metadata.kind!=='skill-manifest'||first.value.metadata.schema!==SCHEMA||Object.keys(first.value.metadata).length!==2||first.value.size>MAX_MANIFEST)throw new BackupError('BACKUP_SKILL_MANIFEST_INVALID');
     const parts:Uint8Array[]=[];for await(const bytes of first.value.data)parts.push(bytes);const manifest=manifestSchema.parse(parseBackupJson(Buffer.concat(parts,first.value.size)));
     if(expectedRoots&&backupJsonString(manifest.roots.map(({canonicalRoot:_canonical,excludedMetadata:_excluded,present:_present,...value})=>rootSchema.parse(value)))!==backupJsonString(expectedRoots.map(value=>rootSchema.parse(value))))throw new BackupError('BACKUP_SKILL_INVENTORY_ROOTS_MISMATCH');
+    if(expectedCanonical&&(expectedCanonical.size!==manifest.roots.length||manifest.roots.some(row=>{const expected=expectedCanonical.get(row.key);return expected===undefined||originKey(expected)!==originKey(row.canonicalRoot);})))throw new BackupError('BACKUP_PACKAGE_ROOTS_MISMATCH');
     const keys=new Set<string>(),paths=new Set<string>(),nodePaths=new Map<string,'directory'|'file'>();
     for(const selected of manifest.roots){
       const absolute=(path:string)=>posix.isAbsolute(path)||win32.isAbsolute(path),excluded=selected.kind==='user-dsh'?['.git','.system']:['.git'];
@@ -150,7 +167,7 @@ export async function restoreAuthenticatedSkillRecords(records:AsyncGenerator<Ba
       destination(parent,node.parts);const path=node.root+':'+node.parts.join('/'),folded=path.normalize('NFKC').toLowerCase();if(paths.has(folded))throw new BackupError('BACKUP_SKILL_PATH_COLLISION');paths.add(folded);nodePaths.set(path,node.kind);
     }
     for(const node of manifest.nodes)if(node.parts.length>1&&nodePaths.get(node.root+':'+node.parts.slice(0,-1).join('/'))!=='directory')throw new BackupError('BACKUP_SKILL_MANIFEST_INVALID');
-    const projection=projectSkillRoots(manifest.roots,manifest.nodes,anchors,assertSkillResourcePath);
+    projectedManifest(manifest,anchors,reserved);const projection=projectSkillRoots(manifest.roots,manifest.nodes,anchors,assertSkillResourcePath);
     root=await realpath(await mkdtemp(join(parent,'dsh-zhen-skill-restore-')));await mkdir(join(root,'roots'),{mode:0o700});
     const projectedPath=(value:ProjectedLocation)=>join(root!,'roots','r'+value.group,...value.parts);
     for(const directory of projection.directories)await mkdir(projectedPath(directory),{mode:0o700});

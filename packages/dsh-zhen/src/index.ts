@@ -30,6 +30,10 @@ import type {BackupOptions,BackupRecord} from './backup-archive.ts';
 import {prepareRagBackup} from './backup-rag.ts';
 import {readonlyKnowledgeSource} from './knowledge-backup.ts';
 import type {RagBackupLease,RagBackupPolicy} from './backup-rag.ts';
+import {preparePackageBackup} from './backup-packages.ts';
+import type {PackageBackupLease} from './backup-packages.ts';
+import {hostPackageBackupSource} from './backup-host-packages.ts';
+import type {HostPackageBackupPolicy} from './backup-host-packages.ts';
 import { GithubAccess } from './github-access.ts';
 import { FIRST_PARTY_REPOSITORY, githubCredentialValue } from './github-access-schema.ts';
 import type { GithubAccessInfo } from './github-access-schema.ts';
@@ -383,6 +387,11 @@ export default class ZhenService extends TypertRemoteService {
   ragBackupLease(policy:()=>RagBackupPolicy,options:BackupOptions={}):Promise<RagBackupLease>{
     const cold=!this.knowledgeStore&&existsSync(this.knowledgeFile)?readonlyKnowledgeSource(this.knowledgeFile):null;
     return prepareRagBackup(()=>{const present=existsSync(this.knowledgeFile);if(!this.knowledgeStore&&present&&!cold)throw new BackupError('BACKUP_SOURCE_CHANGED');return {store:this.knowledgeStore??(present?cold:null),rag:this.rag,policy:policy()};},options);
+  }
+  /** Host-only package lease. Uses the existing public resolver; protects the
+   * pinned application home even if ambient DSH_HOME changes after startup. */
+  packageBackupLease(policy:()=>HostPackageBackupPolicy,options:BackupOptions={}):Promise<PackageBackupLease>{
+    return preparePackageBackup(()=>{const selected=policy();return hostPackageBackupSource(this.ctx,{...selected,protectedContainers:[...selected.protectedContainers,dirname(dirname(this.knowledgeFile))]});},options);
   }
   @Remote
   marketFeedSnapshot(): import('./market-schema.ts').SkillFeedSnapshot { return this.feed().snapshot(); }

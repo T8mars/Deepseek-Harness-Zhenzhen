@@ -189,3 +189,6 @@ C69（0064）：自有知识库生产组件通过React公开hooks保存API实例
 
 
 0088/C99仅使用自有SkillMarket schema3及公开node:sqlite，不读上游私有数据。自有普通构造会推进pending，故候选先建空库再事务导入；既有对象/已知行只读校验，不再次启动。实际负例复制候选后普通构造确实晋升pending，原候选和源不改。共享验证保留完整package SHA与active/pending/skipped身份、mode/revision语义。原库存v1仍可恢复；新增输出明确仅市场DB和目录元数据已还原，其他来源和激活未做，不能泛称全应用恢复。
+
+
+0090/C101：公开PluginPackages.resolution/packageOf提供包路由和元信息，读取不载入入口；包资源与公开运行解析表分别保存，实际Node/Cordis Context核对普通祖先链、profile fallback、linked root、嵌套多版本和循环。Context.get按调用上下文创建新traceable包装，不能当提供者身份；Cordis4.0.5根出口symbols.original仅用于稳定标识，调用仍经作用域包装，不读取私有状态。C101验证同一服务多次get稳定、公开ctx.set替换拒绝和实际Host原home保护。目录存在但无package.json可按明确声明保留，公开元信息缺失标为unresolved，不能推断为已安装或自动下载。保留的公开表是候选数据，构造验证只在EXAMPLE TEMP；没有启用用户profile、替换SDK、执行包脚本或读取PM私有布局。
