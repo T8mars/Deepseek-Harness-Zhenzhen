@@ -50,5 +50,7 @@ export {recoveryLayoutSchema,recoveryPlanSchema,recoveryComponentLayoutSchema,re
 export type {RecoveryComponentLayout,RecoveryPlan,RecoveryLocationRole} from './recovery-layout-schema.ts';
 
 export {prepareRestoredApplication} from './restore-application.ts';
-export type {ApplicationRestoreOptions,ApplicationRestoreProfile,ApplicationRestoreRecipe} from './restore-application.ts';
+export type {ApplicationRestoreOptions,ApplicationRestoreProfile,ApplicationRestoreRecipe,ApplicationRestoreParts} from './restore-application.ts';
 export type {ComposedRestoreOptions} from './backup-composition.ts';
+export {prepareRestoredKnowledge} from './restore-knowledge.ts';
+export type {KnowledgeApplicationReceipt} from './restore-knowledge.ts';

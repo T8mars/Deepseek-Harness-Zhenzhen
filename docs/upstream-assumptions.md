@@ -249,3 +249,8 @@ C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/ch
 ## C124：候选应用公开提供者回绑
 
 固定SDK公开 readProfileManifest/resolveBundleDir/bundlePatchPaths/loadOptionalPatches/composeEntries 只用于有界读取与离线组合；不用会改写清单的 loadProfileDirectory。重复ID拒绝，整行config覆盖保留其他字段，JSONL压缩参数与真实恢复写入默认一致。C124受控官方CLI在原示例home/包/工作目录移走后，以当前安装SDK提供者读回逻辑会话、附件字节和Storage/Domain库存；探针显式使用当前已发布工作区schema，不证明整个639包环境可移植。旧workspace pending原样保留但禁用注册器，schedule、上报和官方美术按模块身份禁用；候选own任务副本tracking/querying暂停，原组件记录保留。不修改SDK会话格式、配置私有文件、Native或活动用户home；完整应用激活仍未实现。
+
+
+## C125–C127：恢复应用知识目录
+
+全部操作为本项目自有schema3和逻辑行接口。只读知识组件快照后，经既有导入重建FTS；映射从真实恢复返回值传递，不变更布局/索引格式、不读取SDK私有格式。C125保留全部非collection逻辑表与历史grants，增加collection epoch并关闭agent_enabled，不把原项目统一猜成新目录；原库和组件不改。C126在新home挂实际ZhenService及固定SDK Owner Gateway，读回真实集合/搜索与暂停后端。C127涵盖不含records范围的warm/cold知识组合，不伪造冷数据库。未证明完整环境启动、激活、浏览器、Native或任意规模。

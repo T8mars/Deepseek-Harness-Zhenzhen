@@ -13,8 +13,12 @@ import {gatewayTaskRecordSchema} from './gateway-task-schema.ts';
 import {SUPPORTED_DSH} from './compatibility.ts';
 import {recoveryLayoutSchema} from './recovery-layout-schema.ts';
 import type {RecoveryComponentLayout} from './recovery-layout-schema.ts';
+import {prepareRestoredKnowledge} from './restore-knowledge.ts';
+import type {KnowledgeApplicationReceipt} from './restore-knowledge.ts';
+import type {RagRestoreCandidate} from './backup-rag.ts';
 
 export interface ApplicationRestoreOptions {installAnchor:string;}
+export interface ApplicationRestoreParts {knowledge?:RagRestoreCandidate;}
 export interface ApplicationRestoreProfile {
   name:string;originName:string;overlay:string|null;
   bindings:Array<{id:string;module:string;role:'sessions'|'attachmentsHome'|'workspaceStorage';target:string}>;
@@ -25,6 +29,7 @@ export interface ApplicationRestoreProfile {
 export interface ApplicationRestoreRecipe {
   schema:'dsh-zhen-application-restore-v1';sdkVersion:string;home:string;agentsHome:string;
   records:Array<{kind:'checks'|'tasks'|'media';rows:number;destination:string;paused:number}>;
+  knowledge:KnowledgeApplicationReceipt|null;
   profiles:ApplicationRestoreProfile[];reviewRequired:true;activated:false;readyForActivation:false;wholeApplicationRestore:false;
 }
 const MAX_FILE=8*1024**2,MAX_TOTAL=64*1024**2;
@@ -65,7 +70,7 @@ function pauseTracking(path:string):number{
 
 /** Builds inert whole-row overlays in a NEW, not-yet-sealed composition. It
  * never imports restored modules, evaluates expressions, or starts a profile. */
-export async function prepareRestoredApplication(root:string,layouts:RecoveryComponentLayout[],options:ApplicationRestoreOptions,signal?:AbortSignal):Promise<ApplicationRestoreRecipe|null>{
+export async function prepareRestoredApplication(root:string,layouts:RecoveryComponentLayout[],options:ApplicationRestoreOptions,signal?:AbortSignal,parts:ApplicationRestoreParts={}):Promise<ApplicationRestoreRecipe|null>{
   const parsed=recoveryLayoutSchema.safeParse({schema:'dsh-zhen-recovery-layout-v1',components:layouts});if(!parsed.success)fail();const environment=parsed.data.components.find(row=>row.kind==='environment'&&row.details);if(!environment)return null;
   const home=location(environment,'home'),agentsHome=location(environment,'agents');if(!home||!agentsHome)fail();await owned(root,home,'directory');await owned(root,agentsHome,'directory');
   const readBudget={bytes:0};
@@ -83,18 +88,20 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
   const scope=new Map(parsed.data.components.map(row=>[row.kind,row])),sessions=scope.get('sessions'),workspaces=scope.get('workspaces');
   const targets={sessions:location(sessions,'sessions')??join(home,'sessions'),attachmentsHome:location(sessions,'attachmentsHome')??home,workspaceStorage:location(workspaces,'workspaceStorage')??join(home,'storages')};
   for(const path of Object.values(targets))await owned(root,path,'directory',true);
-  const recipe:ApplicationRestoreRecipe={schema:'dsh-zhen-application-restore-v1',sdkVersion:SUPPORTED_DSH,home,agentsHome,records:[],profiles:[],reviewRequired:true,activated:false,readyForActivation:false,wholeApplicationRestore:false};
+  const recipe:ApplicationRestoreRecipe={schema:'dsh-zhen-application-restore-v1',sdkVersion:SUPPORTED_DSH,home,agentsHome,records:[],knowledge:null,profiles:[],reviewRequired:true,activated:false,readyForActivation:false,wholeApplicationRestore:false};
   const ownSource=location(scope.get('records'),'ownData'),dataRoot=join(home,'dsh-zhen');let ownsData=false;
   try{
-    if(ownSource){await owned(root,ownSource,'directory');await mkdir(dataRoot,{mode:0o700});ownsData=true;let copied=0;
+    if(ownSource||parts.knowledge){await mkdir(dataRoot,{mode:0o700});ownsData=true;}
+    if(ownSource){await owned(root,ownSource,'directory');let copied=0;
       for(const descriptor of OWNED_STORES){signal?.throwIfAborted();const source=join(ownSource,...descriptor.file),destination=join(dataRoot,...descriptor.file);let before:BigIntStats;try{await owned(root,source,'file');before=await lstat(source,{bigint:true});}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')continue;throw error;}if((copied+=Number(before.size))>DEFAULT_BACKUP_LIMITS.archiveBytes)fail('BACKUP_APPLICATION_LIMIT');
         await mkdir(dirname(destination),{recursive:true,mode:0o700});const exclusive=await open(destination,'wx',0o600);await exclusive.close();const db=new DatabaseSync(source,{readOnly:true,allowExtension:false,enableDoubleQuotedStringLiterals:false});
         try{db.exec('PRAGMA trusted_schema=OFF;');if(db.prepare('PRAGMA user_version').get()?.user_version!==1)fail('BACKUP_OWN_STATE_SCHEMA_UNSUPPORTED');const version=db.prepare('PRAGMA data_version').get()?.data_version,rows=Number(db.prepare('SELECT COUNT(*) AS total FROM '+descriptor.table).get()?.total);await backup(db,destination,{rate:256,progress:()=>signal?.throwIfAborted()});if(db.prepare('PRAGMA data_version').get()?.data_version!==version||identity(await lstat(source,{bigint:true}))!==identity(before))fail('BACKUP_SOURCE_CHANGED');const copied=new DatabaseSync(destination,{readOnly:true,allowExtension:false,enableDoubleQuotedStringLiterals:false});try{copied.exec('PRAGMA trusted_schema=OFF;');if(copied.prepare('PRAGMA user_version').get()?.user_version!==1||Number(copied.prepare('SELECT COUNT(*) AS total FROM '+descriptor.table).get()?.total)!==rows||copied.prepare('PRAGMA quick_check').get()?.quick_check!=='ok')fail('BACKUP_APPLICATION_COPY_INVALID');}finally{copied.close();}const paused=descriptor.kind==='tasks'?pauseTracking(destination):0;recipe.records.push({kind:descriptor.kind,rows,destination,paused});}finally{db.close();}
       }
     }
+    if(parts.knowledge){const knowledge=scope.get('knowledge');if(!knowledge?.details||parts.knowledge.root!==knowledge.root||parts.knowledge.database!==(location(knowledge,'knowledgeDatabase')??null)||parts.knowledge.backendState!==location(knowledge,'knowledgeBackend'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.knowledge=await prepareRestoredKnowledge(root,home,parts.knowledge,{signal});}
     const cwd=join(home,'recovered-workspace');await mkdir(cwd,{mode:0o700});let outputBytes=0;
     for(const profile of environment.profiles){signal?.throwIfAborted();const row:ApplicationRestoreProfile={name:profile.name,originName:profile.originName,overlay:null,bindings:[],paused:[],reasons:['PERMISSIONS_REVIEW_REQUIRED','PROJECT_FILES_NOT_INCLUDED'],launch:null};recipe.profiles.push(row);
-      if(!scope.has('sessions'))row.reasons.push('SESSIONS_NOT_SELECTED');if(!scope.has('workspaces'))row.reasons.push('WORKSPACES_NOT_SELECTED');if(scope.has('knowledge'))row.reasons.push('KNOWLEDGE_HOME_REBIND_PENDING');if(scope.has('skills'))row.reasons.push('SKILL_HOME_REBIND_PENDING');
+      if(!scope.has('sessions'))row.reasons.push('SESSIONS_NOT_SELECTED');if(!scope.has('workspaces'))row.reasons.push('WORKSPACES_NOT_SELECTED');if(scope.has('knowledge'))row.reasons.push(...recipe.knowledge?['KNOWLEDGE_PROJECT_REVIEW_REQUIRED','KNOWLEDGE_BACKEND_REVIEW_REQUIRED']:['KNOWLEDGE_HOME_REBIND_PENDING']);if(scope.has('skills'))row.reasons.push('SKILL_HOME_REBIND_PENDING');
       if(!profile.launchable||profile.dependencyIssues){row.reasons.push('PROFILE_NOT_LAUNCHABLE');continue;}
       try{
         if(!/^[A-Za-z0-9_-]{1,255}$/.test(profile.name))fail();await owned(root,profile.directory,'directory');await owned(root,profile.overlay,'file');const manifest=await parsedFile(root,join(profile.directory,'package.json'),()=>readProfileManifest('dsh-zhen restore',profile.directory)),bundles=manifest.dsh?.profile?.bundles;if(!Array.isArray(bundles))fail();const layers:PatchOptions[][]=[];
