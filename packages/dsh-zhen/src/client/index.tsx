@@ -22,6 +22,7 @@ import { connectDefaultArt } from './default-art-client.ts';
 import { Capabilities } from './Capabilities.tsx';
 import { RagToolView } from './RagSources.tsx';
 import {CanvasPlanToolView} from './CanvasPlanTool.tsx';
+import {CanvasHelpToolView} from './CanvasHelpTool.tsx';
 import {createWorkspaceNavigation} from './workspace-navigation.ts';
 import type {WorkspaceNavigation,WorkspaceSection} from './workspace-navigation.ts';
 import type {ToolCallViewProps} from '@deepseek-ai/dsh-client-ui-tool/client';
@@ -143,6 +144,7 @@ export async function apply(ctx: Context): Promise<void> {
     inner.effect(() => connectDefaultArt(inner.remote.zhen), 'zhen: confirmed local default art');
     inner.slots.inject('main', () => inner.slots.register({ name: 'main', key: workspacePanel, inject: () => ({ ctx: inner,navigation }) }, Workspace));
     inner.slots.inject('tool.call.toolview',()=>inner.slots.register({name:'tool.call.toolview',key:'mcp__t8canvas__canvas_plan'},(props:ToolCallViewProps)=><CanvasPlanToolView {...props} api={api} onOpen={openCanvas}/>));
+    inner.slots.inject('tool.call.toolview',()=>inner.slots.register({name:'tool.call.toolview',key:'zhen_canvas_help'},(props:ToolCallViewProps)=><CanvasHelpToolView {...props} onOpen={openCanvas}/>));
   });
   ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({ name: 'sidebar.panellist', id: workspacePanel, order: -100, label: '创作空间' }, TideMark));
   ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({ name: 'sidebar.brand.mark' }, TideMark));

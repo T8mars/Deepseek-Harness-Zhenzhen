@@ -207,3 +207,8 @@ C102核对公开initProfile/writeProfileManifest、createRuntimeResolution和官
 ## 0093 · 自有SQLite完整库存及公开服务身份
 
 C104仅读自有固定schema与Node公开SQLite/fs接口。Host owner比较沿用Cordis公开symbols.original；替换测试采用实际plugin dispose/reload，不跨fiber直接覆盖provider。公开resolveAgentsHome在Host启动时记录为受保护来源，不随后来的环境变化。自有三个存储的实际打开文件身份由本项目自己的方法提供，不检查SDK私有字段；只读保留连接跨transaction检查data_version，以捕获WAL写后恢复。新候选保留旧审批owner而不授权执行，原件路径重映射后由实际交接校验读取。没有读取用户/Native库、凭据或上游持久化布局。
+
+
+## 0094 · 无画布工具时的公开提示与导航槽位
+
+公开system-prompt section支持固定text；恢复引导不能以自有配置存在作为前提，也不应在提示组装时解析可能损坏的连接JSON。C105使用真实Prompt/AgentLoop并验证普通作用域工具仍执行。C106使用公开ToolRuntime注册纯固定导航工具及卸载移除，客户端通过既有tool.call.toolview注册并调用真实按钮闭包选择已注册main面板和connections子页。UI注册/事件测试不是物理浏览器显示或Native权限批准；工具输出和旧记录都不能证明连接。没有改SDK、MCP协议或新增远程修改入口。

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T03:13:26.286Z",
+  "checkedAt": "2026-10-22T04:01:09.906Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2043,6 +2043,25 @@
       "localPassed": 924,
       "packageFiles": 182,
       "localPackageSha256": "62f4fe34e23142af361d3605c00c558c975f43cee0d70d4863bc0420350bb506"
+    },
+    "canvasChatConnectionHelp": {
+      "decision": "0094-canvas-chat-connection-help",
+      "prompt": "zhen:canvas-entry",
+      "tool": "zhen_canvas_help",
+      "toolSchema": "dsh-zhen-canvas-help-v1",
+      "slot": "tool.call.toolview",
+      "targetedTests": 11,
+      "relatedPassed": 18,
+      "fullRegressionPending": false,
+      "realModelRequests": 3,
+      "nativeRequests": 0,
+      "nativeWrites": 0,
+      "browserVerified": false,
+      "verification": "Complete935/935, new11/related18 and185-file archive pass. C105 verifies always-available guidance and ordinary scoped tools; C106 verifies pure help metadata, actual client registration/button and the existing connections route. Real default Flash used3 total requests, final2 for one help card with actual result accepted by the client parser, zero shell/Native calls. Existing C63/C76/C96-C104 proofs pass. Actual browser/native creation, whole restore/UI and original goal remain incomplete; current user Host stays at0093 until safe replacement. Exact current CI separate.",
+      "localTests": 935,
+      "localPassed": 935,
+      "packageFiles": 185,
+      "localPackageSha256": "3f4e42df19c6171f3445fc2053ae1bfee7d6903dd816610d6896be9835311429"
     }
   }
 }

@@ -1,5 +1,6 @@
 import type { Context } from '@deepseek-ai/cordis';
 import {symbols} from '@deepseek-ai/cordis';
+import {createCanvasHelpTool} from './canvas-help-tool.ts';
 import { credentialRef } from '@deepseek-ai/dsh-credentials';
 import { credentialSource } from './client/credential-source.ts';
 import { Remote, RemoteError, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol';
@@ -206,7 +207,9 @@ export default class ZhenService extends TypertRemoteService {
     ctx.effect(() => () => { this.canvasInbox.clear(); this.canvasCaptures.clear(); }, 'zhen: process-local Canvas plan inbox');
     ctx.inject(['systemPrompt'], inner => inner.systemPrompt.section({
       name: 'zhen:canvas-entry', order: inner.systemPrompt.getSectionOrder('MCP_SERVERS'),
-      interpolate: false, text: () => this.canvasConfig() ? canvasGuidance : '',
+      // Keep the recovery route available before setup, after disconnect, and
+      // while saved connection metadata is damaged. Prompt assembly is read-only.
+      interpolate: false, text: canvasGuidance,
     }));
     ctx.on('tools/execute', async (execution, next) => {
       if (execution.name === 'mcp__t8canvas__canvas_plan' && execution.agent?.session.id) {
@@ -255,6 +258,7 @@ export default class ZhenService extends TypertRemoteService {
       return sources.provider();
     }));
     ctx.inject(['tools'], inner => inner.tools.register(createCapabilityTool(() => this.capabilities())));
+    ctx.inject(['tools'], inner => inner.tools.register(createCanvasHelpTool()));
     ctx.inject(['skills'], inner => inner.skills.registerProvider(control => {
       const sources = this.githubSkills(); const unsubscribe = sources.subscribe(control.invalidate);
       control.signal.addEventListener('abort', unsubscribe, { once: true }); return sources.provider();

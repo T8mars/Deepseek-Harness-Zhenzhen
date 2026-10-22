@@ -22,7 +22,7 @@ test('C55: published Owner check and prompt registry use reviewed MCP route, pre
  writeFileSync(join(f.root,'src/agentClient.cjs'),"exports.selectInstance=async()=>{const e=new Error('EXAMPLE_PRIVATE');e.code='CREATIVE_CAPABILITY_GRAPH_DIGEST_MISMATCH';throw e;};exports.requestAgentControl=async()=>({ok:true,data:{pairingRequired:true,EXAMPLE_RAW:true}});");
  try{
   await ctx.plugin(SystemPrompt);await ctx.plugin(ToolRuntime);await ctx.plugin(Typert);await ctx.plugin(Access);await ctx.plugin(ZhenService);ctx.typert.register(TYPERT);await ctx.plugin(Gateway,{});
-  const service=ctx.get('zhen');assert.equal((await service.canvasConnectionCheck()).state,'not-configured');assert.equal((await ctx.systemPrompt.assemble()).sections.find(item=>item.name==='zhen:canvas-entry').text,'');
+  const service=ctx.get('zhen');assert.equal((await service.canvasConnectionCheck()).state,'not-configured');assert.match((await ctx.systemPrompt.assemble()).sections.find(item=>item.name==='zhen:canvas-entry').text,/mcp__t8canvas__.*没有出现在/);
   const config=inspectCanvasCli(f.root);await service.connectCanvas(config.root,'',config.digest);
   const peer={id:'EXAMPLE_OWNER',ctx,principal:{kind:'owner'},signal:new AbortController().signal,interactions:'none',dispose:async()=>{}};
   const invoke=(method,principal=peer.principal)=>ctx.typertGateway.invoke({namespace:'zhen',method,args:{},peer:{...peer,principal}});
@@ -31,6 +31,6 @@ test('C55: published Owner check and prompt registry use reviewed MCP route, pre
   const guidance=(await ctx.systemPrompt.assemble()).sections.find(item=>item.name==='zhen:canvas-entry').text;assert.match(guidance,/pairingRequired:true/);assert.match(guidance,/不要另起 shell/);assert.match(guidance,/canvas_plan/);assert.match(guidance,/计划仅是待审阅方案/);
   assert.equal(ctx.tools.schemas().filter(tool=>tool.name.startsWith('mcp__t8canvas__')).length, 11);assert.equal(ctx.tools.schemas().some(tool=>/canvasConnectionCheck|canvasSetupDiscover/.test(tool.name)),false);assert.equal(keys,0);
   const pending=service.canvasConnectionCheck();writeFileSync(join(process.env.DSH_HOME,'dsh-zhen/canvas.json'),JSON.stringify({...config,instance:'EXAMPLE_OTHER_WINDOW'}));assert.equal((await pending).code,'CONNECTION_CHANGED');
-  await service.disconnectCanvas();assert.equal((await ctx.systemPrompt.assemble()).sections.find(item=>item.name==='zhen:canvas-entry').text,'');
+  await service.disconnectCanvas();assert.match((await ctx.systemPrompt.assemble()).sections.find(item=>item.name==='zhen:canvas-entry').text,/创作空间 → 画布连接/);
  }finally{await ctx.fiber.dispose();if(previous===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=previous;const rel=relative(realpathSync.native(tmpdir()),base);assert.ok(rel&&!isAbsolute(rel)&&!rel.startsWith('..'));rmSync(base,{recursive:true,force:true});}
 });

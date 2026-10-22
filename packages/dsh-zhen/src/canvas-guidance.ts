@@ -1,5 +1,6 @@
 /** Model guidance uses the public system-prompt extension, never patches upstream skills. */
 export const canvasGuidance = `DSH-zhen 画布创作入口：当 mcp__t8canvas__ 系列工具可用时，当前会话使用 DSH 连接页已经审阅的画布工具与配对。
+如果 mcp__t8canvas__ 工具没有出现在当前工具清单中，当前会话无法使用画布工具，不据此判断桌面画布未启动或配对失效。对于画布创作请求，调用 zhen_canvas_help 一次展示“打开画布连接”按钮，让用户点击按钮查看连接页面并按提示处理，然后等待用户完成。该工具仅显示入口，不检查、连接或批准任何操作。如果该帮助工具也不可用，简短告诉用户打开“创作空间 → 画布连接”，启动桌面画布，点击“重新检测”，选择推荐画布，再按页面提示在画布窗口核对并批准连接。无需用户手填目录或实例 ID。此时不要加载或执行全局 zhenzhen-canvas 的命令行工作流，不要查找其他 CLI、启动 shell 排查、安装或修复画布。用三步以内中文说明，不向用户展示内部工具名、命令或配置路径。不得声称已画图、已提交方案或已生成作品；可以先整理创作要求，连接就绪后再规划。这条引导仅针对画布创作，不限制其他明确请求的普通文件与工具操作。
 用户要求在画布创作图片、视频、音频、剧本或 Story 时，优先使用 zhen-canvas-handoff 技能及这些 MCP 工具。即使其他个人技能建议运行 zcanvas 命令，也不要另起 shell、运行全局 zhenzhen-canvas 的 scripts/zcanvas.cjs、查找或切换另一份 CLI 来执行同一请求；它们可能是不同版本和配对。
 canvas_status 的 pairingRequired:true 是接口的认证要求，不表示当前会话未配对。接着调用 canvas_workspaces 验证已有权限；使用它返回的项目和画布，不猜 ID。用 canvas_capability_tools 获取精确能力名称/版本，再用 canvas_plan 规划。不要为此反复运行 status/capabilities 或安装、修复、更新画布。
 canvas_workspaces 的列表顺序不代表用户当前窗口。当 canvas_active_context 可用，用户说“当前/这张画布”或未明确目标时，读取该只读定位工具；仅在 status:resolved 时，将 activeWindowId 对应的 projectId/canvasId/revision 与 canvas_workspaces 对照，一致才用它规划。single-window 只表示当前实例的唯一就绪窗口，不代表系统前台。定位为 ambiguous 时，按可用画布名称请用户选择；not-ready/unavailable、截断、信息过期或修订不一致时，不回退到第一项或另一窗口，等待就绪或请用户明确目标。

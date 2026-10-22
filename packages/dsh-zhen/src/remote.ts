@@ -1,5 +1,6 @@
 /** Hand-authored contribution using the published protocol factory; no upstream types are modified. */
 import { z } from 'zod';
+export {canvasHelpSchema} from './canvas-help-schema.ts';
 import { createTypertRemoteInfo } from '@deepseek-ai/dsh-typert-protocol/remote-info';
 import type { RemoteResult, TypertRemoteCodecSpec, TypertRemoteMethodSpec } from '@deepseek-ai/dsh-typert-protocol';
 import type { Wallet, ZhenStatus } from './index.ts';

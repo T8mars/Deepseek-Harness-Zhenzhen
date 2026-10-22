@@ -371,6 +371,13 @@
       "status": "implemented-inactive-candidate",
       "fullM2Complete": false,
       "verification": "Complete924/924, new53/related91 and182-file archive pass. C104 verifies complete own checks/tasks/media rows, real restored resources with originals absent, retained source guards and actual warm store identity. Existing C63/C76/C96-C103 proofs also pass. Candidate is inactive; no user Host replacement/restart, Native writes or model calls. Other state/unified restore/UI and full original scope remain incomplete; exact current CI separate."
+    },
+    {
+      "id": "canvas-chat-connection-help",
+      "status": "implemented",
+      "liveVerified": true,
+      "liveVerificationScope": "Actual default Flash to fixed navigation tool and client parser; no browser, native connection or creation claim.",
+      "verification": "Complete935/935, new11/related18 and185-file archive pass. C105 verifies always-available guidance and ordinary scoped tools; C106 verifies pure help metadata, actual client registration/button and the existing connections route. Real default Flash used3 total requests, final2 for one help card with actual result accepted by the client parser, zero shell/Native calls. Existing C63/C76/C96-C104 proofs pass. Actual browser/native creation, whole restore/UI and original goal remain incomplete; current user Host stays at0093 until safe replacement. Exact current CI separate."
     }
   ]
 }
