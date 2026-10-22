@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T14:06:35.632Z",
+  "checkedAt": "2026-10-22T14:37:59.225Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -290,7 +290,18 @@
         "passed": 255,
         "liveProviderCalls": 0
       },
-      "verifiedLocalPackDigest": "8b3db49ce49f75bc071de13389c6ebf16d23d016e1288c4b8826511ffb9b00ae"
+      "verifiedLocalPackDigest": "8b3db49ce49f75bc071de13389c6ebf16d23d016e1288c4b8826511ffb9b00ae",
+      "darkVariantPack": {
+        "id": "zhen-community-creative-v2",
+        "contentSha256": "b0a77b9a9ffee35b827ea5077f28d37d77bdf429b868e7f93d896427c7a43ad2",
+        "selectionContract": "C133",
+        "actualRasterFiles": 4,
+        "themeSlots": 6,
+        "publicBundleContainsRasters": false,
+        "browserRenderingVerified": false,
+        "userHostUpdated": false,
+        "verification": "Complete1158/1158,new1/related25 and204-file code archive pass. C63/C76 exact stable payload and other canary bytes identical; package bytes unchanged from dev74. Actual public CLI install/uninstall and worker hashes pass. Built-in image_gen produced two matching dark variants of existing authorized local portraits; original light bytes/pack retained,1254x1254 RGBA each<2MiB. Actual published Gateway/client matches four hashes and six slots across159 chunks,maxJSON61670; credentials/network/browser-storage0. Separate5-file ZIP exact/private/secret audit passes. C133 prefers available v2,retains v1 and explicit pinned selection,refuses invalid newer pack. Current exact CI/browser/live Host pending; no upstream/Native changes,Seedance verification0,image_gen creation2. Whole original scope incomplete."
+      }
     },
     "canvasSavedMedia": {
       "surface": "explicit-host-ui",

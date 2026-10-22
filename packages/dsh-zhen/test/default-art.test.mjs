@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync, copyFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { DefaultArt } from '../lib/default-art.js';
@@ -52,6 +52,15 @@ test('launcher automatically selects only the confirmed local pack and refuses s
   const f = fixture(t, { automatic: true }), selected = selectDefaultArt(f.base); assert.equal(selected.state, 'ready'); assert.equal(selected.environment.DSH_ZHEN_ART_ROOT, f.root);
   assert.equal(selectDefaultArt(f.base, { DSH_ZHEN_ART_ROOT: f.root, DSH_ZHEN_ART_DIGEST: 'f'.repeat(64) }).state, 'unavailable'); assert.equal(selectDefaultArt(f.base, { DSH_ZHEN_ART_DIGEST: selected.digest }).state, 'unavailable');
   f.manifest.license.confirmedByUser = false; f.save(); assert.equal(selectDefaultArt(f.base).state, 'unavailable'); assert.deepEqual(selectDefaultArt(f.base).environment, {});
+});
+
+test('C133: launcher prefers the complete light/dark pack, retains explicit selections and never silently bypasses an invalid newer pack', t => {
+  const f=fixture(t,{automatic:true}),old=selectDefaultArt(f.base),before=readFileSync(join(f.root,'manifest.json')),next=join(f.root,'..','community-creative-v2');mkdirSync(next);assert.equal(selectDefaultArt(f.base).environment.DSH_ZHEN_ART_ROOT,f.root);
+  for(const file of['hero.png','mark.png'])copyFileSync(join(f.root,file),join(next,file));const manifest=structuredClone(f.manifest);manifest.id='example-light-dark';writeFileSync(join(next,'manifest.json'),JSON.stringify(manifest));
+  const selected=selectDefaultArt(f.base);assert.equal(selected.state,'ready');assert.equal(selected.environment.DSH_ZHEN_ART_ROOT,next);assert.notEqual(selected.digest,old.digest);
+  const explicit=selectDefaultArt(f.base,{DSH_ZHEN_ART_ROOT:f.root,DSH_ZHEN_ART_DIGEST:old.digest});assert.equal(explicit.state,'ready');assert.equal(explicit.environment.DSH_ZHEN_ART_ROOT,f.root);assert.equal(explicit.digest,old.digest);
+  assert.equal(selectDefaultArt(f.base,{DSH_ZHEN_ART_ROOT:next,DSH_ZHEN_ART_DIGEST:old.digest}).state,'unavailable');manifest.license.confirmedByUser=false;writeFileSync(join(next,'manifest.json'),JSON.stringify(manifest));assert.equal(selectDefaultArt(f.base).state,'unavailable');assert.deepEqual(selectDefaultArt(f.base).environment,{});assert.deepEqual(readFileSync(join(f.root,'manifest.json')),before);
+  console.log(JSON.stringify({contract:'C133',newerPackPreferred:true,olderPackRetained:true,explicitSelectionAndDigestPreserved:true,invalidNewerPackNotBypassed:true,missingNewerManifestUsesOriginal:true,browserRendered:false,nativeRequests:0,modelRequests:0}));
 });
 test('client negotiates a smaller supported server chunk size without using a compiled offset stride', async t => {
   const f = fixture(t), art = source(f), info = art.info(); info.pack.chunkBytes = 32 * 1024; const captured = new Map([[createHash('sha256').update(f.hero).digest('hex'), f.hero], [createHash('sha256').update(f.mark).digest('hex'), f.mark]]);

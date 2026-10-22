@@ -5,7 +5,8 @@ import { inspectArtSource } from './art-policy.mjs';
  * public npm bundle; never inherit an incomplete or changed environment pin. */
 export function selectDefaultArt(workspace, environment = {}) {
   const explicit = environment.DSH_ZHEN_ART_ROOT, provided = environment.DSH_ZHEN_ART_DIGEST;
-  const root = explicit || resolve(workspace, 'packages/dsh-zhen-client-brand/assets/community-creative-v1');
+  const defaults = ['community-creative-v2', 'community-creative-v1'].map(name => resolve(workspace, 'packages/dsh-zhen-client-brand/assets', name));
+  const root = explicit || defaults.find(path => existsSync(resolve(path, 'manifest.json'))) || defaults[0];
   if (!explicit && !provided && !existsSync(resolve(root, 'manifest.json'))) return { state: 'none', environment: {} };
   try {
     if (!isAbsolute(root) || /^[/\\]{2}/.test(root) || !explicit && provided) throw Error('Invalid local art selection');
