@@ -1,9 +1,9 @@
 /** Hand-authored contribution using the published protocol factory; no upstream types are modified. */
 import { z } from 'zod';
-import {recoveryPreviewSchema} from './recovery-schema.ts';
-import type {RecoveryPreview} from './recovery-schema.ts';
-export {recoveryPreviewSchema,recoveryFactLabels,recoveryWarningLabels} from './recovery-schema.ts';
-export type {RecoveryPreview,RecoverySummary} from './recovery-schema.ts';
+import {recoveryPreviewSchema,recoveryCatalogSchema} from './recovery-schema.ts';
+import type {RecoveryPreview,RecoveryCatalogView} from './recovery-schema.ts';
+export {recoveryPreviewSchema,recoveryCatalogSchema,recoveryFactLabels,recoveryWarningLabels} from './recovery-schema.ts';
+export type {RecoveryPreview,RecoverySummary,RecoveryCatalogView} from './recovery-schema.ts';
 import {backupInfoSchema,backupFilesSchema,backupCreateSchema,backupRestoreSchema,backupJobSchema,backupFolderSchema} from './backup-center-schema.ts';
 import type {BackupInfo,BackupFiles,BackupCreate,BackupRestore,BackupJob} from './backup-center-schema.ts';
 export {backupLabels,backupLimitations,backupInfoSchema,backupFilesSchema,backupJobSchema} from './backup-center-schema.ts';
@@ -80,6 +80,9 @@ import { gatewayMediaTicketSchema, gatewayMediaReceiptSchema } from './gateway-m
 import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-schema.ts';
 
 export interface ZhenRemote {
+  backupCandidateList(cursor:string):Promise<RemoteResult<RecoveryCatalogView>>;
+  backupCandidateForget(id:string):Promise<RemoteResult<void>>;
+  backupCandidateRegister(id:string):Promise<RemoteResult<BackupJob>>;
   backupCandidateSnapshot(id:string):Promise<RemoteResult<RecoveryPreview>>;
   backupCandidateVerify(id:string):Promise<RemoteResult<RecoveryPreview>>;
   backupInfo():Promise<RemoteResult<BackupInfo>>;
@@ -250,6 +253,9 @@ function method(name: string, schema: z.ZodType, description: string, inputs: Ar
     sourceLocation: { file: 'packages/dsh-zhen/src/remote.ts', line: 1, column: 1 } };
 }
 export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', methods: {
+  'zhen/backupCandidateList':method('backupCandidateList',recoveryCatalogSchema,'Owner UI: page durable candidate records plus current in-memory candidates; no candidate file content or activation.',[['cursor',z.string().max(256)]]),
+  'zhen/backupCandidateForget':method('backupCandidateForget',z.void(),'Owner UI: remove only the selected candidate record; preserve candidate directories and backup files.',[['id',z.uuid()]]),
+  'zhen/backupCandidateRegister':method('backupCandidateRegister',backupJobSchema,'Owner UI: recheck the original candidate and retry saving its local record without repeating restoration.',[['id',z.uuid()]]),
   'zhen/backupCandidateSnapshot':method('backupCandidateSnapshot',recoveryPreviewSchema,'Owner UI: inspect creation-time counts and review issues of the original inactive recovery job; no file reads or activation.',[['id',z.uuid()]]),
   'zhen/backupCandidateVerify':method('backupCandidateVerify',recoveryPreviewSchema,'Owner UI: compare owned candidate files and link text with the original retained baseline; no arbitrary path, external link reads or activation.',[['id',z.uuid()]]),
   'zhen/backupInfo':method('backupInfo',backupInfoSchema,'Owner UI: describe supported local backup coverage; never initializes a missing source.'),

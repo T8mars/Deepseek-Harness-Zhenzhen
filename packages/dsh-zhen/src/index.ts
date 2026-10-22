@@ -2,7 +2,7 @@ import type { Context } from '@deepseek-ai/cordis';
 import {symbols} from '@deepseek-ai/cordis';
 import {BackupCenter} from './backup-center.ts';
 import {summarizeEnvironment,summarizeSessions,summarizeSkills,summarizeKnowledge,summarizeRecords,summarizeWorkspaces} from './recovery-summary.ts';
-import type {RecoveryPreview} from './recovery-schema.ts';
+import type {RecoveryPreview,RecoveryCatalogView} from './recovery-schema.ts';
 import {prepareProfilePackageBackup,restoreProfilePackageBackup} from './backup-profile-packages.ts';
 import {restoreSessionBackup} from './backup-sessions.ts';
 import {restoreSkillInventoryBackup} from './backup-skill-inventory.ts';
@@ -208,7 +208,7 @@ export default class ZhenService extends TypertRemoteService {
   constructor(ctx: Context) {
     super(ctx, 'zhen');
     this.backupProfile=ctx.get('profileContext');
-    this.backupCenter=new BackupCenter(join(this.zhenHome,'backups'),()=>this.backupAdapters());
+    this.backupCenter=new BackupCenter(join(this.zhenHome,'backups'),()=>this.backupAdapters(),{catalogFile:join(this.zhenHome,'recovery-candidates.sqlite')});
     ctx.effect(()=>()=>this.backupCenter.close(),'zhen: local backup jobs');
     this.directoryChoices=new DirectoryChoices(()=>{const service=ctx.get('directoryPicker');return service?{owner:(service as unknown as {[key:symbol]:object|undefined})[symbols.original]??service,capability:service.capability()}:undefined;});
     ctx.effect(()=>()=>this.directoryChoices.close(),'zhen: directory choice lifetime');
@@ -439,9 +439,10 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   backupFiles(folder:string):Promise<BackupFiles>{return this.backupCenter.files(folder);}
   @Remote
-  backupCreate(request:BackupCreate):BackupJob{return this.backupCenter.startBackup(request);}
+  backupCreate(request:BackupCreate):BackupJob{return this.backupRequest(()=>this.backupCenter.startBackup(request));}
   @Remote
-  backupRestore(request:BackupRestore):BackupJob{return this.backupCenter.startRestore(request);}
+  backupRestore(request:BackupRestore):BackupJob{return this.backupRequest(()=>this.backupCenter.startRestore(request));}
+  private backupRequest(run:()=>BackupJob):BackupJob{try{return run();}catch(error){if(error instanceof BackupError&&error.code==='BACKUP_BUSY')throw new RemoteError('zhen/refused','已有备份、恢复或候选校验正在进行。',{reason:'BACKUP_BUSY'});throw error;}}
   @Remote
   backupStatus(id:string):BackupJob{return this.backupCenter.status(id);}
   @Remote
@@ -450,6 +451,12 @@ export default class ZhenService extends TypertRemoteService {
   backupCandidateSnapshot(id:string):RecoveryPreview{return this.backupCenter.candidateSnapshot(id);}
   @Remote
   backupCandidateVerify(id:string):Promise<RecoveryPreview>{return this.backupCenter.candidateVerify(id);}
+  @Remote
+  backupCandidateList(cursor:string):RecoveryCatalogView{return this.backupCenter.candidateList(cursor);}
+  @Remote
+  backupCandidateForget(id:string):void{this.backupCenter.candidateForget(id);}
+  @Remote
+  backupCandidateRegister(id:string):Promise<BackupJob>{return this.backupCenter.candidateRegister(id);}
   /** Host-only stream for the composed backup. Not a browser Remote: source
    * paths, backup passwords and archive bytes stay on the Host. Never construct
    * a managed service here, since its startup may activate a pending update. */

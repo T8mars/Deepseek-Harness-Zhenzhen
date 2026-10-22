@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T08:36:26.235Z",
+  "checkedAt": "2026-10-22T10:22:55.018645Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2127,10 +2127,20 @@
     "recoveryCandidatePreview": {
       "schemaVersion": 1,
       "components": 6,
-      "persistentCatalog": false,
+      "persistentCatalog": true,
       "activated": false,
       "wholeApplicationRestore": false,
       "verification": "Complete1069/1069, new24/related92 and197-file archive pass. C63/C76 independently rebuild the same payload. C115 actual candidate bytes and link text; C116 actual Owner profile/session/warm RAG/records, original source preserved, bounded verification/cancellation; actual full skill/workspace summaries. C117 production recovery preview handlers and stale result guards. Exact CI, real UI/full installation performance and activation remain pending. Native/model0; active user Host unchanged."
+    },
+    "persistentRecoveryCandidates": {
+      "schemaVersion": 1,
+      "ownerRemoteMethods": 3,
+      "pageSize": 20,
+      "coldReadsCreateFiles": false,
+      "removalDeletesCandidateFiles": false,
+      "wholeApplicationRestore": false,
+      "activated": false,
+      "verification": "Complete1100/1100, new31/related78 and199-file archive pass. C63/C76 rebuild the exact payload; C118 actual own SQLite and separate Node restart, 53 records and unchanged original baseline; C119 actual published Owner Gateway and Host reload, definite busy refusal and file preservation; C120 production history/retry handlers and stale result guards. Exact CI and real UI/activation pending. Existing dev69 module separately restored actual SDK591 installation entries to639 packages/30952 files; no CLI boot, whole-app activation, Native/model or user Host replacement."
     }
   }
 }

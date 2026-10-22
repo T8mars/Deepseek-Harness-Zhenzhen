@@ -5,11 +5,13 @@ import {backupLabels,backupInfoSchema,backupFilesSchema,backupJobSchema} from 'd
 import {DirectoryChooser} from './DirectoryChooser.tsx';
 import {useRemoteAction} from './useRemoteAction.ts';
 import {RecoveryPreview} from './RecoveryPreview.tsx';
+import {RecoveryHistory} from './RecoveryHistory.tsx';
 
 const unwrap=<T,>(value:RemoteResult<T>):T=>{if(!value.ok)throw value.error;return value.value;};
 const terminal=(job:BackupJob)=>['succeeded','failed','cancelled'].includes(job.phase);
 const phases:Record<BackupJob['phase'],string>={preparing:'准备数据',capturing:'加密备份',verifying:'校验完整性',restoring:'生成恢复候选',succeeded:'已完成',failed:'未完成',cancelled:'已取消'};
 export function backupErrorMessage(code:string|null):string{
+  if(code?.startsWith('BACKUP_CANDIDATE_CATALOG_'))return '恢复记录暂时无法保存或读取。已生成的候选目录和原备份保留，请保留路径，稍后重试保存记录。';
   if(code==='BACKUP_AUTHENTICATION_FAILED')return '密码不正确或文件已损坏。请核对密码，保留原备份文件。';
   if(code==='BACKUP_PASSWORD_INVALID')return '请使用至少 12 个字符、最多 1024 字节的备份密码。';
   if(code==='BACKUP_SOURCE_CHANGED')return '备份期间数据发生了变化。请等待当前创作完成后重新备份。';
@@ -30,7 +32,7 @@ export function BackupCenter({api}:{api:ZhenRemote}):React.ReactElement{
   async function start(operation:'backup'|'restore'):Promise<void>{
     await scope.run(async current=>{const id=crypto.randomUUID(),secret=password;setPassword('');setRepeat('');setPending(id);let value:BackupJob;
       try{value=backupJobSchema.parse(unwrap(operation==='backup'?await api.backupCreate({id,folder,password:secret,components}):await api.backupRestore({id,folder,name:selected,password:secret,target})));}
-      catch{try{value=backupJobSchema.parse(unwrap(await api.backupStatus(id)));}catch{if(current())scope.setNotice('请求回执未收到。请检查原任务，不要重复点击创建。');return;}}
+      catch(error){const reason=error&&typeof error==='object'&&'details'in error&&error.details&&typeof error.details==='object'&&'reason'in error.details?error.details.reason:undefined;if(reason==='BACKUP_BUSY'){if(current()){setPending(undefined);scope.setNotice(backupErrorMessage('BACKUP_BUSY'));}return;}try{value=backupJobSchema.parse(unwrap(await api.backupStatus(id)));}catch{if(current())scope.setNotice('请求回执未收到。请检查原任务，不要重复点击创建。');return;}}
       if(current()){setJob(value);setPending(undefined);}
     });
   }
@@ -55,7 +57,8 @@ export function BackupCenter({api}:{api:ZhenRemote}):React.ReactElement{
       <button type="button" className="zhen-secondary" disabled={locked||!!pending||!list||!selected||!target||!validPassword} onClick={()=>void start('restore')}>校验并生成恢复候选</button>
     </section>
     {job&&<section className="zhen-card" aria-label="备份任务"><p role="status">{job.operation==='backup'?'备份':'恢复'}：{phases[job.phase]}{job.component?' · '+backupLabels[job.component]:''}（{job.completed}/{job.total}）</p>{job.output&&<><p>{job.operation==='backup'?'文件已保存至：':'候选已生成，尚未激活：'}</p><p className="zhen-source-path">{job.output}</p></>}{job.error&&<p role="status">{backupErrorMessage(job.error)} <span className="zhen-muted">{job.error}</span></p>}{active&&<button type="button" className="zhen-secondary" disabled={scope.busy} onClick={()=>void scope.run(async()=>{unwrap(await api.backupCancel(job.id));})}>取消此任务</button>}</section>}
-    {job?.operation==='restore'&&job.phase==='succeeded'&&<RecoveryPreview key={job.id} api={api} job={job} onBusyChange={setRecoveryBusy}/>}
+    {job?.operation==='restore'&&job.output&&['succeeded','failed'].includes(job.phase)&&<RecoveryPreview key={job.id} api={api} job={job} onBusyChange={setRecoveryBusy} onJob={setJob}/>}
+    <RecoveryHistory api={api} disabled={locked} revision={job?job.id+':'+job.phase:''} onSelect={setJob} onForget={id=>{if(job?.id===id)setJob(undefined);}}/>
     {pending&&<div role="status"><p>请求编号：{pending}</p><button type="button" className="zhen-secondary" disabled={scope.busy} onClick={()=>void scope.run(async current=>{try{const value=backupJobSchema.parse(unwrap(await api.backupStatus(pending)));if(current()){setJob(value);setPending(undefined);}}catch{if(current())scope.setNotice('原任务状态仍不明确，请先检查文件列表或重新检测。');}})}>检查原任务</button></div>}
     {scope.notice&&<p role="status">{scope.notice}</p>}
   </div>;
