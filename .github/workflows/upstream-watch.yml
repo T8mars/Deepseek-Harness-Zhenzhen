@@ -2,7 +2,7 @@ name: Prepare upstream compatibility candidates
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 2 * * *'
+    - cron: '17 2,8,14,20 * * *'
 permissions:
   contents: read
 concurrency:
@@ -32,6 +32,8 @@ jobs:
       - id: prepare
         continue-on-error: true
         run: node scripts/prepare-upstream.mjs --apply
+        env:
+          UPSTREAM_METADATA_TOKEN: ${{ github.token }}
       - id: dependencies
         if: steps.prepare.outcome == 'success' && steps.prepare.outputs.changed == 'true'
         continue-on-error: true

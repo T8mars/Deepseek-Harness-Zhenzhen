@@ -5,6 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
 import { releaseCommit, upgradeGuides, inspectUpgrade, captureProfile } from './upstream-inspect.mjs';
 import { readCompatibility, upgradedManifests, sha256 } from './upstream-policy.mjs';
+import {createUpstreamMetadataFetcher} from './upstream-metadata.mjs';
 const parse = text=>JSON.parse(text);
 export async function prepare({baselineOnly=false,apply=false,workspace=process.cwd(),fetcher=fetch}={}) {
   const read = path=>readFile(resolve(workspace,path),'utf8');
@@ -41,4 +42,4 @@ export async function prepare({baselineOnly=false,apply=false,workspace=process.
   await writeFile(resolve(workspace,'UPSTREAM.prepared.json'),JSON.stringify(plan,null,2)+'\n');
   console.log(`Applied exact candidate pins for ${plan.target.version}; installation, contracts and review remain required.`);return plan;
 }
-if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){const args=process.argv.slice(2);if(args.some(value=>!['--baseline','--apply'].includes(value))||args.includes('--baseline')&&args.includes('--apply'))throw new Error('Usage: prepare-upstream.mjs [--baseline | --apply]');const plan=await prepare({baselineOnly:args.includes('--baseline'),apply:args.includes('--apply')});if(process.env.GITHUB_OUTPUT)await appendFile(process.env.GITHUB_OUTPUT,`changed=${plan.state==='prepared'&&args.includes('--apply')}\n`);}
+if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){const args=process.argv.slice(2);if(args.some(value=>!['--baseline','--apply'].includes(value))||args.includes('--baseline')&&args.includes('--apply'))throw new Error('Usage: prepare-upstream.mjs [--baseline | --apply]');const plan=await prepare({baselineOnly:args.includes('--baseline'),apply:args.includes('--apply'),fetcher:createUpstreamMetadataFetcher({token:process.env.UPSTREAM_METADATA_TOKEN})});if(process.env.GITHUB_OUTPUT)await appendFile(process.env.GITHUB_OUTPUT,`changed=${plan.state==='prepared'&&args.includes('--apply')}\n`);}
