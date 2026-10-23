@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-23T18:58:56.640Z",
+  "checkedAt": "2026-10-23T20:27:52.877Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2410,6 +2410,24 @@
       "automaticApprove": false,
       "automaticMerge": false,
       "verification": "C192 four scoped-transport/workflow contracts and related12 pass. Scheduled39918347882 actual failures preserved;metadata HTTP cause unknown. Public readonly rc.3/45 publications/one changed guide observed without pinning or installing. Complete1429/1429 and226-file identical archive/public CLI install-uninstall pass;exact CI and actual candidate PR pending."
+    },
+    "restoredPermissionBoundary": {
+      "schema": 1,
+      "sdkVersion": "0.2.1-rc.2",
+      "events": [
+        "permission/preset",
+        "sandbox/mode",
+        "approval/policy"
+      ],
+      "newCopyOnly": true,
+      "originalHeadersPreserved": true,
+      "originalEventPrefixPreserved": true,
+      "allSessionsReviewed": true,
+      "defaultSandbox": "read-only",
+      "defaultApproval": "ask",
+      "applicationActivated": false,
+      "status": "implemented-local-verified",
+      "verification": "Actual published policy services reproduced danger-full-access/never despite a permissionsRestored:false receipt. C193 resets historical permission facts only in the independent application copy,including unmapped and seeded sessions,retaining original header,prefix,inherited cut and selected directory order. C194 verifies the actual published implicit table,all three permission-default owners by module identity,misleading read-only names,whole config preservation and opaque-expression refusal. New7,focused5/related55/final order10 pass,build and clean types pass. Original C150 order regression fixed without weakening assertions;initial fixture errors preserved. Complete1436/1436,227-file archive and public CLI install-uninstall pass;exact CI pending. Whole application activation,unified program permissions,real GUI/native creation and original scope remain incomplete;no user Host replacement or Native/model request."
     }
   }
 }

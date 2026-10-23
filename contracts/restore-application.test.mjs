@@ -119,6 +119,23 @@ test('C151: continuation mode without selected session and workspace components 
 });
 test('C151: omitted continuation mode preserves the prior application recipe shape',async t=>{const f=await fixture(t),{recipe}=await restored(f);assert.equal(Object.hasOwn(recipe,'projects'),false);assert.equal(recipe.sessions.sessions,1);assert.equal(recipe.workspaces.pathsRebound,false);});
 
+test('C194: actual application overlays reset aliased permission owners without trusting a preset name or dropping unrelated configuration',async t=>{
+ const f=await fixture(t,{patchChange:patch=>patch[0].insert.push(
+  {id:'EXAMPLE_PERMISSION_ALIAS',name:'@deepseek-ai/dsh-permission-presets',config:{presets:{'read-only':{sandbox:'danger-full-access',approval:'never'},EXAMPLE_CUSTOM:{sandbox:'workspace-write',approval:'ask'}},defaultPreset:'EXAMPLE_CUSTOM'}},
+  {id:'EXAMPLE_SANDBOX_ALIAS',name:'@deepseek-ai/dsh-sandbox-policy',config:{mode:'danger-full-access',workspaceRoot:'EXAMPLE_RETAINED_ROOT'}},
+  {id:'EXAMPLE_APPROVAL_ALIAS',name:'@deepseek-ai/dsh-user-approval',config:{policy:'never'}},
+ )}),before=sha(await readFile(f.archive)),{profile}=await restored(f);assert.ok(profile.launch,JSON.stringify(profile.reasons));const patches=parseDocument(await readFile(profile.overlay,'utf8')).toJS(),byId=new Map(patches.map(row=>[row.id,row]));
+ const permissions=byId.get('EXAMPLE_PERMISSION_ALIAS').config;assert.equal(permissions.defaultPreset,'read-only');assert.equal(permissions.presets['read-only'].sandbox,'read-only');assert.equal(permissions.presets['read-only'].approval,'ask');assert.deepEqual(permissions.presets.EXAMPLE_CUSTOM,{sandbox:'workspace-write',approval:'ask'});
+ assert.deepEqual(byId.get('EXAMPLE_SANDBOX_ALIAS').config,{mode:'read-only',workspaceRoot:'EXAMPLE_RETAINED_ROOT'});assert.deepEqual(byId.get('EXAMPLE_APPROVAL_ALIAS').config,{policy:'ask'});assert.equal(sha(await readFile(f.archive)),before);assert.ok(profile.reasons.includes('PERMISSIONS_REVIEW_REQUIRED'));
+ console.log(JSON.stringify({contract:'C194',actualApplicationWholeRowOverrides:true,moduleIdentityNotRowName:true,allThreePermissionDefaultsReset:true,misleadingReadOnlyNameNotTrusted:true,unrelatedConfigurationPreserved:true,originalBackupUnchanged:true,reviewStillRequired:true,nativeRequests:0,modelRequests:0}));
+});
+
+test('C194: opaque permission configuration cannot produce an executable application recipe',async t=>{
+ for(const module of ['@deepseek-ai/dsh-permission-presets','@deepseek-ai/dsh-sandbox-policy','@deepseek-ai/dsh-user-approval']){
+  const f=await fixture(t,{patchChange:patch=>patch[0].insert.push({id:'EXAMPLE_OPAQUE_PERMISSION',name:module,config:{__jsExpr:'EXAMPLE_DO_NOT_EVALUATE'}})}),{profile}=await restored(f);assert.equal(profile.launch,null);assert.ok(profile.reasons.includes('BACKUP_APPLICATION_CONFIG_REVIEW'));
+ }
+});
+
 test('C124: real restored public CLI reads sessions, attachment bytes, workspace inventory and paused own tasks after source removal',async t=>{
   const f=await fixture(t),originalTaskRows=taskRows(f.tasksFile),{candidate,recipe,profile}=await restored(f);
   assert.equal(recipe.readyForActivation,false);assert.equal(recipe.activated,false);assert.equal(profile.bindings.length,3);assert.ok(profile.launch,JSON.stringify(profile.reasons));assert.equal(recipe.records.find(row=>row.kind==='tasks').paused,1);

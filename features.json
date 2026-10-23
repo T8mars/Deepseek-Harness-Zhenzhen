@@ -531,6 +531,11 @@
       "id": "package-test-cleanup",
       "status": "implemented-owned-temp-cleanup",
       "verification": "Dev88 exact CI1416/1417 failed old C63 at owned TEMP root rmdir with Windows EBUSY;finally could mask a prior pack operation failure,so root cause remains unknown. Test-only cleanup now awaits asynchronous bounded removal,checks canonical system TEMP direct-leaf ownership and directory identity before every attempt,preserves replacement directories,and reports both primary and cleanup failures. No npm30s/test120s timeout change,no package-byte/hash assertion relaxation. C191 four tests include transient retry,replacement identity,dual-error preservation and a real owned child holding its cwd then being reaped;with original C63 focused5/5 pass. Complete1425/1425,cleanup5 and226-file archive/public CLI install-uninstall pass. Exact CI pending;no claim the remote underlying cause is fixed. Native/model0,user Host unchanged."
+    },
+    {
+      "id": "restored-permission-boundary",
+      "status": "implemented-local-verified",
+      "verification": "Actual published policy services reproduced danger-full-access/never despite a permissionsRestored:false receipt. C193 resets historical permission facts only in the independent application copy,including unmapped and seeded sessions,retaining original header,prefix,inherited cut and selected directory order. C194 verifies the actual published implicit table,all three permission-default owners by module identity,misleading read-only names,whole config preservation and opaque-expression refusal. New7,focused5/related55/final order10 pass,build and clean types pass. Original C150 order regression fixed without weakening assertions;initial fixture errors preserved. Complete1436/1436,227-file archive and public CLI install-uninstall pass;exact CI pending. Whole application activation,unified program permissions,real GUI/native creation and original scope remain incomplete;no user Host replacement or Native/model request."
     }
   ]
 }

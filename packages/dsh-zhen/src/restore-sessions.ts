@@ -16,6 +16,7 @@ import {prepareSessionBackup,restoreVerifiedSessionRecords} from './backup-sessi
 import type {SessionRestoreCandidate} from './backup-sessions.ts';
 import {BackupError} from './backup-archive.ts';
 import type {BackupOptions} from './backup-archive.ts';
+import {emptyRestoredPermissionFold,foldRestoredPermissions,requiresRestoredPermissionReset,restoredPermissionEvents} from './restore-permissions.ts';
 
 const equal=(a:string,b:string)=>process.platform==='win32'?a.toLowerCase()===b.toLowerCase():a===b;
 const within=(root:string,path:string)=>{const part=relative(root,path);return isAbsolute(root)&&isAbsolute(path)&&!isAbsolute(part)&&part!=='..'&&!part.startsWith('../')&&!part.startsWith('..\\');};
@@ -27,6 +28,8 @@ export interface SessionApplicationReceipt {
   sessions:number;images:number;files:number;
   directories:Array<{sessionId:string;directory:string;identity:string;eventSeq:number;originalDirectory?:string|null;previousDirectory?:string|null}>;
   unmappedSessions:number;reviewRequired:true;activated:false;permissionsRestored:false;
+  /** Number of sessions receiving new read-only/ask events in this copy. */
+  permissionResets?:number;
 }
 async function ordinary(root:string,path:string):Promise<void>{
   if(!within(root,path))throw new BackupError('BACKUP_TEMP_BOUNDARY');let current=path;
@@ -53,16 +56,19 @@ export async function prepareRestoredSessions(root:string,home:string,source:Ses
     const snapshots=await ctx.sessionPersistence.list({signal:options.signal});if(snapshots.length!==source.sessions)throw new BackupError('BACKUP_SESSION_COUNT_MISMATCH');const ids=new Map(snapshots.map(row=>[String(row.header.id),row.header]));if([...selections.keys()].some(id=>!ids.has(id)))throw new BackupError('BACKUP_SESSION_DIRECTORY_UNKNOWN');for(const row of parsed.data)if(row.originalDirectory!==undefined&&(ids.get(row.sessionId)!.cwd??null)!==row.originalDirectory)throw new BackupError('BACKUP_SESSION_PROJECT_CHANGED');
     lease=await prepareSessionBackup(()=>({sessions:ctx.sessions,sessionPersistence:ctx.sessionPersistence,sessionQuery:ctx.sessionQuery,attachments:ctx.attachments}),options);await checkDirectories();
     copy=await restoreVerifiedSessionRecords(lease.records(),home,options);await lease.assertCurrent();if(copy.sessions!==source.sessions||copy.images!==source.images||copy.files!==source.files)throw new BackupError('BACKUP_SESSION_COUNT_MISMATCH');await ordinary(home,copy.root);
-    const result:SessionApplicationReceipt={schema:'dsh-zhen-session-application-v1',root:copy.root,sessionsRoot:join(copy.root,'sessions'),attachmentsHome:copy.root,sessions:copy.sessions,images:copy.images,files:copy.files,directories:[],unmappedSessions:copy.sessions-selections.size,reviewRequired:true,activated:false,permissionsRestored:false};
-    if(selections.size){
+    const result:SessionApplicationReceipt={schema:'dsh-zhen-session-application-v1',root:copy.root,sessionsRoot:join(copy.root,'sessions'),attachmentsHome:copy.root,sessions:copy.sessions,images:copy.images,files:copy.files,directories:[],unmappedSessions:copy.sessions-selections.size,reviewRequired:true,activated:false,permissionsRestored:false,permissionResets:0};
+    if(ids.size){
       target=new Context();await target.plugin(Sessions);await target.plugin(Jsonl,{root:result.sessionsRoot});await target.plugin(Projections);await target.plugin(LocalFs,{cwd:home});await target.plugin(SystemPrompt);await target.plugin(WorkingDirectory,{defaultDirectory:home});
-      for(const [id,row]of selections){options.signal?.throwIfAborted();await checkDirectory(row);const handle=await target.sessionPersistence.open(SessionId(id),'write',{signal:options.signal});
-        try{let offset=0,projection=target.sessionProjections.restore({},[],SessionLogOffset(0),handle.header,handle.inheritedEventCount);for(;;){const batch=await handle.read(offset,128,{signal:options.signal});if(!batch.events.length)break;projection=target.sessionProjections.restore(projection.checkpoint,batch.events,SessionLogOffset(offset),handle.header,handle.inheritedEventCount);offset+=batch.events.length;if(offset>Number.MAX_SAFE_INTEGER-1)throw new BackupError('BACKUP_SESSION_APPLICATION_LIMIT');}
+      const ordered=new Set([...selections.keys(),...ids.keys()]);
+      for(const id of ordered){const row=selections.get(id);options.signal?.throwIfAborted();if(row)await checkDirectory(row);const handle=await target.sessionPersistence.open(SessionId(id),'write',{signal:options.signal});
+        try{let offset=0,projection=target.sessionProjections.restore({},[],SessionLogOffset(0),handle.header,handle.inheritedEventCount);const permissions=emptyRestoredPermissionFold();for(;;){const batch=await handle.read(offset,128,{signal:options.signal});if(!batch.events.length)break;projection=target.sessionProjections.restore(projection.checkpoint,batch.events,SessionLogOffset(offset),handle.header,handle.inheritedEventCount);for(const event of batch.events)foldRestoredPermissions(permissions,event);offset+=batch.events.length;if(offset>Number.MAX_SAFE_INTEGER-4)throw new BackupError('BACKUP_SESSION_APPLICATION_LIMIT');}
+          if(requiresRestoredPermissionReset(permissions)){const events=restoredPermissionEvents(offset);await handle.append(events,{signal:options.signal});offset+=events.length;result.permissionResets!++;}
           // This released event type is owned by WorkingDirectoryService. The
           // public backend validates and durably appends it without rewriting
           // immutable headers or needing an Agent/model to run during restore.
-          const event:SessionEvent<'working-directory/change'>={type:'working-directory/change',seq:SessionSeq(offset),time:Date.now(),data:{cwd:row.path}};
-          await checkDirectory(row);await handle.append([event],{signal:options.signal});await handle.flush({signal:options.signal});result.directories.push({sessionId:id,directory:row.path,identity:row.identity,eventSeq:offset,originalDirectory:ids.get(id)!.cwd??null,previousDirectory:projection.snapshot.values.workingDirectory??null});
+          if(row){const event:SessionEvent<'working-directory/change'>={type:'working-directory/change',seq:SessionSeq(offset),time:Date.now(),data:{cwd:row.path}};
+          await checkDirectory(row);await handle.append([event],{signal:options.signal});result.directories.push({sessionId:id,directory:row.path,identity:row.identity,eventSeq:offset,originalDirectory:ids.get(id)!.cwd??null,previousDirectory:projection.snapshot.values.workingDirectory??null});}
+          await handle.flush({signal:options.signal});
         }finally{await handle.close();}
       }
       await target.sessionPersistence.flush();await target.fiber.dispose();target=undefined;

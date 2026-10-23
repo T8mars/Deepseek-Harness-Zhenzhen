@@ -9,8 +9,10 @@
 也可手动运行；GitHub 调度可能延迟。最近定时任务曾在上游标签读取和 PR 创建处失败，
 现已增加限定上游对象的只读凭据通道，并开启仓库允许 Actions 创建 PR 的设置，
 默认工作流权限仍为只读。旧元数据请求没有 HTTP 状态，原因未确认。
-dev89 的独立 Windows CI 已核对1425项及同一226文件包、公共CLI临时安装和卸载。
-这些不等于新流程已经创建升级 PR，也不等于候选迁移、canary或晋升成功。
+dev90 的独立 Windows CI 已核对1429项及同一226文件包、公共CLI临时安装和卸载。
+新流程已实际创建[草稿 PR #1](https://github.com/T8mars/Deepseek-Harness-Zhenzhen/pull/1)，
+只包含发现信息。rc.3 候选检查1377/1429、52项失败，原因仍需分类；当前应用保持rc.2。
+PR 创建成功不等于候选兼容、canary或晋升成功。
 本次修复和待验证范围见[0119记录](decisions/0119-scheduled-upstream-metadata.md)。
 
 1. 只读任务先验证现有版本，再读取 npm `next`、对应 `dsh-v*` 标签和发布
