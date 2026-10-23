@@ -1,5 +1,7 @@
 # 给画布 Agent 的 DSH 接入交接
 
+> 0109新增[仅核对Moss模型契约](canvas-agent-moss-image.md)：尚未判定当前画布缺少实现，已有支持无需重复开发或发版；DSH只更新自己的目录和聊天路由。
+
 > 0107已换装DSH目录审阅界面；画布MCP字节与此前实测相同，当前仍CLI_CHANGED/待审阅，无新增必须画布修改项。见[接入现状](canvas-agent-active-context-dsh-status.md)。
 
 > 0106续接已正常重启DSH并核对205安装文件；11工具MCP仍为CLI_CHANGED/待审阅，无新增必须画布修改项。见[接入现状](canvas-agent-active-context-dsh-status.md)。

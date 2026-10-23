@@ -24,7 +24,7 @@ uses `max_tokens`. The generic adapter otherwise chooses
 `max_completion_tokens` for this custom provider. Its public compatibility
 setting now explicitly chooses `max_tokens`; this changes our bundle only.
 
-The reviewed catalog now configures all 18 documented chat ids as text routes;
+The reviewed catalog now configures all 19 reviewed documented chat ids as text routes;
 the Flash default remains unchanged. C14 verifies native adapter discovery and
 an exact-id local SSE request for each route. Configured output/context budgets
 do not establish gateway limits. See [capability coverage](seedance-capabilities.md)
@@ -100,3 +100,6 @@ Preserve the native adapter state; do not coerce one representation to another o
 a valid tool response without thinking. C68 verifies these paths through the published
 AgentLoop. TokenUsage separates non-cache input from cacheReadTokens/cacheWriteTokens;
 its partial counters alone do not establish billing. See0063.
+
+
+[0109](decisions/0109-api-model-inventory.md) adds the exact zhenzhen/gm-4-argon route with documented text/image input and a1048576 context budget while preserving the Flash default. Sixteen image routes pass native attachment transport; one real Argon synthetic-image call and one real scoped file-tool turn complete normally. Configured capacities are not maximum-context or general quality tests.

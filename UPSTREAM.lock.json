@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T22:42:45.709Z",
+  "checkedAt": "2026-10-22T23:29:08.579Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -27,7 +27,7 @@
   },
   "seedance": {
     "docs": "https://api.seedance.nz/docs/llms.txt",
-    "sha256": "CD7D81AB06320A5D653A64E7413CA3834523FC7881B7B2BBF5077D2D878245E5",
+    "sha256": "E2EC2F8FC4CA54F6FA75FC4C7CC83F75CA4DE61E56121FA9A6C175DD6888756F",
     "liveChatVerified": true,
     "liveChatVerificationScope": "One explicitly authorized fixed default Flash text stream, max_tokens32, normal completion; not tools, vision, all-model coverage, browser or precise billing."
   },
@@ -2263,6 +2263,16 @@
       "imageBytes": 339041,
       "customDisplayUnitPreserved": true,
       "nativeRequests": 0
+    },
+    "gatewayModelInventory": {
+      "schemaVersion": 1,
+      "catalogRecords": 277,
+      "models": 213,
+      "chatRoutes": 19,
+      "imageRoutes": 16,
+      "defaultModelUnchanged": true,
+      "automaticRoutingInstallation": false,
+      "verification": "New13/related32,build and clean types pass. C142 actual Node catalog CLI shares bounded metadata extraction with Host; explicit appendix models included,examples ignored,unknown/conflicting protocols refused. C143 precise model differences ignore line-only movement and never install routing. C144 actual Owner Gateway/public GET loopback rejects anonymous and resolves no credentials. C145 actual Runtime context/input/default budget and C146 actual AgentLoop/PiAi explicit model/canonical tool wire pass with Flash default preserved. Actual production public monitor matches all3 source hashes and semantic inventory. One real Argon synthetic-image request and two real scoped Agent/file-tool requests complete normally. Complete1217/1217,210-file archive,public CLI install/uninstall and workers pass; stable artifact identical to local and other canary payload bytes identical. Exact CI pending. Browser/native/Moss execution/all-model quality/fullL2 unverified; Same tested210-file package installed; only the exact reviewed Argon model is added and all other public settings/scoped owned metadata preserved. Browser remains unverified."
     }
   }
 }

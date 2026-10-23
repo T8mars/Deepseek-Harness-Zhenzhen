@@ -277,3 +277,8 @@ C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/ch
 ## C141：真实网关通用任务身份与计费单位
 
 2026-10-23单张示例图片的实际HTTP200查询含数字data.id与准确的公开data.task_id。只有五类通用TaskDto允许前者作为非负安全整数并在后者严格匹配时忽略内部编号；另外三类协议、字符串冲突与缺失公开编号仍拒绝。C141经生产解析器及实际发布Host/Remote核对。真实成功响应还含非ISO、自定义显示单位，终态amount保持原值、单位作为最长32字符纯文本保留；控制字符、双向控制符和URL/标签语法拒绝。生产下载器成功取得既有结果并核对字节/摘要；没有第二次付费提交。这是直接网关验证，不代表原生画布窗口、整个导出服务回执或图到视频到画布回流已完成。
+
+
+## C142–C146：文档模型与显式Argon调用
+
+纯数据TypeScript提取器由Node22.19原生类型擦除加载，实际目录CLI在C142验证；发布Host包通过esbuild内联，不要求用户运行源TS。固定公开来源不变，元数据只解析显式声明及已审协议，示例/代码块不产生模型。C143验证真实监视器的模型事实差异、行移动、超限及取消；C144用实际发布Owner Gateway与HTTP传输核对，不解析凭据、不装工具/改路由。C145验证发布Runtime的resolveModelInfo和PreparedLlmCall.context/config/inputModalities，不依赖Adapter内部model字段；新配置是完整provider整行替换，旧模型与默认Flash保持。C146由实际发布AgentLoop/PiAi验证单Agent显式model选项与规范工具结果传递，默认服务不变；真实同范围两请求另验证。没有修改生成协议/SDK或宣称Native审批和全模态就绪。

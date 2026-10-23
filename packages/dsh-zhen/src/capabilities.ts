@@ -2,7 +2,8 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync, renameSync, statSyn
 import { dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import { defineTool } from '@deepseek-ai/dsh-tools';
-import { capabilityCatalogSchema, capabilityFamilySchema, capabilityCheckSchema } from './capability-schema.ts';
+import { capabilityCatalogSchema, capabilityFamilySchema, capabilityCheckSchema, capabilityItemSchema } from './capability-schema.ts';
+import {extractDocumentedModels} from './capability-docs.ts';
 import type { CapabilityCatalog, CapabilityPage, CapabilityCheck } from './capability-schema.ts';
 import { readPublic } from './updates.ts';
 export function readCapabilityCatalog(): CapabilityCatalog {
@@ -25,6 +26,7 @@ export function createCapabilityTool(catalog: () => CapabilityCatalog) {
 }
 const hash = (text: string): string => createHash('sha256').update(text).digest('hex');
 const registryFacts = (entry: Record<string, unknown>): string => JSON.stringify([entry.billing_sku, entry.upstream_model ?? '', entry.ref_type, entry.required_fields ?? [], entry.allowed_versions ?? [], entry.sync, entry.requires_version ?? false, entry.require_index_or_custom_id ?? false]);
+const modelFacts = (entry: CapabilityCatalog['items'][number]): string => JSON.stringify([entry.family, entry.protocol, entry.required, entry.versions, entry.sync]);
 export class CapabilityMonitor {
   private pending?: Promise<CapabilityCheck>;
   constructor(private readonly file: string, private readonly catalog: CapabilityCatalog, private readonly fetcher: typeof fetch = fetch) {}
@@ -42,7 +44,12 @@ export class CapabilityMonitor {
         try {
           const text = await readPublic(source.url, this.fetcher, signal, source.id === 'docs' ? 4 * 1024 * 1024 : 256 * 1024);
           const digest = hash(text); const added: string[] = [], removed: string[] = [], modified: string[] = [];
-          if (source.id !== 'docs') {
+          if (source.id === 'docs') {
+            const current = new Map(extractDocumentedModels(text).map(value => {const item=capabilityItemSchema.parse(value);return [item.key,modelFacts(item)];}));
+            const old = new Map(this.catalog.items.filter(item=>item.kind==='model').map(item=>[item.key,modelFacts(item)]));
+            for(const [key,facts] of current)if(!old.has(key))added.push(key);else if(old.get(key)!==facts)modified.push(key);
+            for(const key of old.keys())if(!current.has(key))removed.push(key);
+          } else {
             const body = JSON.parse(text);
             if (body.success !== true || !Array.isArray(body.data) || body.data.length > 200) throw new Error();
             const current = new Map<string, string>();
@@ -57,6 +64,7 @@ export class CapabilityMonitor {
             for (const [key, facts] of current) if (!old.has(key)) added.push(key); else if (old.get(key) !== facts) modified.push(key);
             for (const key of old.keys()) if (!current.has(key)) removed.push(key);
           }
+          if([added,removed,modified].some(items=>items.length>200))throw new Error('Capability difference limit.');
           return { id: source.id, sha256: digest, changed: digest !== source.sha256, state: 'checked' as const, added, removed, modified };
         } catch { return { id: source.id, sha256: '', changed: false, state: 'unavailable' as const, added: [], removed: [], modified: [] }; }
       }));

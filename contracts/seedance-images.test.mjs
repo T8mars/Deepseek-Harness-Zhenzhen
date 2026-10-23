@@ -12,7 +12,7 @@ import LocalAttachments from '@deepseek-ai/dsh-attachment-local';
 import * as PiAi from '@deepseek-ai/dsh-llm-pi-ai';
 
 // Independently reviewed from the pinned public docs. No inference from names.
-const imageModels=['deepseek/deepseek-v4.1-flash','deepseek/deepseek-v4-flash-vision-exp','glm/glm-5.3-flash','qwen/qwen3.8-omni-flash','qwen/qwen3.8-flash-next','zhenzhen/gk-4.6','zhenzhen/g6-astra','zhenzhen/g6-sol','zhenzhen/g6-luna','zhenzhen/g5.6-sol','zhenzhen/g5.6-terra','zhenzhen/g5.6-luna','zhenzhen/g5.5','zhenzhen/gm-3.8-flash','zhenzhen-op-5.5'];
+const imageModels=['deepseek/deepseek-v4.1-flash','deepseek/deepseek-v4-flash-vision-exp','glm/glm-5.3-flash','qwen/qwen3.8-omni-flash','qwen/qwen3.8-flash-next','zhenzhen/gk-4.6','zhenzhen/g6-astra','zhenzhen/g6-sol','zhenzhen/g6-luna','zhenzhen/g5.6-sol','zhenzhen/g5.6-terra','zhenzhen/g5.6-luna','zhenzhen/g5.5','zhenzhen/gm-3.8-flash','zhenzhen/gm-4-argon','zhenzhen-op-5.5'];
 const textModels=['glm-5.3','qwen/qwen3.8-max','kimi-k3'];
 const patch=parse(readFileSync('packages/dsh-zhen/cordis.patch.yml','utf8'));
 function png(red){
@@ -33,11 +33,19 @@ async function fixture(t,attachments=true){
  return {ctx,requests,stream};
 }
 
-test('C37: published model discovery advertises images only for the 15 explicitly documented routes',async t=>{
+test('C37: published model discovery advertises images only for the 16 explicitly documented routes',async t=>{
  const h=await fixture(t),models=await h.ctx.llm.listModels('seedance');
  assert.deepEqual(models.filter(model=>model.inputModalities.includes('image')).map(model=>model.id).sort(),[...imageModels].sort());
  assert.deepEqual(models.filter(model=>!model.inputModalities.includes('image')).map(model=>model.id).sort(),[...textModels].sort());
  assert.equal(h.requests.length,0);assert.equal(patch.find(row=>row.id==='agent-default-model').config.model,imageModels[0]);
+});
+
+test('C145: the published runtime resolves the reviewed Argon context and image route without changing the Flash default',async t=>{
+ const h=await fixture(t),id='zhenzhen/gm-4-argon',model=await h.ctx.llm.resolveModelInfo('seedance',id),prepared=await h.ctx.llm.prepareCall({provider:'seedance',model:id});
+ assert.equal(model.id,id);assert.equal(model.name,'Gemini 4 Argon');assert.deepEqual(model.inputModalities,['text','image']);assert.equal(model.context.contextWindow,1048576);assert.equal(model.defaultMaxTokens,4096);
+ assert.equal(prepared.config.model,id);assert.equal(prepared.context.contextWindow,1048576);assert.deepEqual(prepared.inputModalities,['text','image']);assert.equal(prepared.config.maxTokens,4096);assert.equal(h.requests.length,0);
+ assert.deepEqual(patch.find(row=>row.id==='agent-default-model').config,{provider:'seedance',model:'deepseek/deepseek-v4.1-flash'});
+ console.log(JSON.stringify({contract:'C145',actualPublishedLlmRuntime:true,argonExactIdentity:true,documentedContextBudgetResolved:true,imageInputAdvertised:true,defaultResponseBudgetPreserved:true,flashDefaultUnchanged:true,prepareWithoutDispatch:true,nativeRequests:0,modelRequests:0}));
 });
 
 test('C37: actual durable attachments become ordered inline request images for all documented image routes',async t=>{
@@ -49,7 +57,7 @@ test('C37: actual durable attachments become ordered inline request images for a
   for(let i=0;i<refs.length;i++){const expected=await h.ctx.attachments.readImageRequest(refs[i],h.ctx.llm.imageRequestTarget('seedance',model,refs[i]));assert.equal(images[i].image_url.url,`data:${expected.mediaType};base64,${Buffer.from(expected.data).toString('base64')}`);}
   const before=sent.findIndex(x=>x.text==='EXAMPLE_BEFORE'),middle=sent.findIndex(x=>x.text==='EXAMPLE_BETWEEN'),after=sent.findIndex(x=>x.text==='EXAMPLE_AFTER'),positions=sent.flatMap((x,i)=>x.type==='image_url'?[i]:[]);assert.ok(before<positions[0]&&positions[0]<middle&&middle<positions[1]&&positions[1]<after);
  }
- assert.equal(h.requests.length,15);
+ assert.equal(h.requests.length,16);
 });
 
 test('C37: text routes send placeholders only; missing attachment storage and nonexistent image references send no image request',async t=>{

@@ -4,13 +4,13 @@ The model/settings page provides a searchable inventory of the gateway's
 [published documentation](https://api.seedance.nz/docs/llms.txt) and public
 [music actions](https://api.seedance.nz/api/music/actions) and
 [Midjourney actions](https://api.seedance.nz/api/midjourney/actions).
-The reviewed snapshot contains 275 records across 17 application categories:
-211 model records, 60 action records including default aliases, and four
+The reviewed snapshot contains 277 records across 17 application categories:
+213 model records, 60 action records including default aliases, and four
 operation records. These are inventory counts, not executable feature counts.
 
 | Category | Planned owner | Current behavior |
 | --- | --- | --- |
-| Chat | DSH | 18 exact text routes, 15 declared image-input routes; local contracts, actual default Flash file-tool turn and one simple-image turn pass; broader models/UI remain unverified |
+| Chat | DSH | 19 exact text routes, 16 declared image-input routes; local contracts, actual default Flash file-tool turn and one simple-image turn pass; broader models/UI remain unverified |
 | Video, image, enhancement, motion, audio | Canvas | Documented models/protocol distinctions indexed; execution adapters remain |
 | Suno, Flow Music/Lyria, Midjourney | Canvas | Distinct actions, billing SKUs, reference types, required fields, versions and synchronous exceptions indexed |
 | MiniMax H3 V2 | Canvas | Exact case-sensitive model and separate V2 protocol recorded |
@@ -20,8 +20,8 @@ operation records. These are inventory counts, not executable feature counts.
 | Action registries | Host | Public read and differences verified on the real service |
 | Task queries and settlement | Host | Eight fixed read protocols and terminal usage in the [task center](gateway-tasks.md); no job is submitted or retried |
 
-The default remains `deepseek/deepseek-v4.1-flash`. All 18 chat routes currently
-declare text input and a 4096 default response budget; 15 also declare image input
+The default remains `deepseek/deepseek-v4.1-flash`. All 19 chat routes currently
+declare text input and a 4096 default response budget; 16 also declare image input
 from explicit reviewed documentation. Models with documented
 context capacities use those configured budgets; models without a known
 capacity use 262144 conservatively. These configuration limits are not a claim
@@ -29,7 +29,7 @@ about each gateway model's maximum. Native conversation model selection can
 use the configured catalog after a credential is supplied. C14 mounts the
 published adapter and confirms that each exact id is offered and sent unchanged
 to an isolated SSE fixture. C37 verifies native attachment bytes and image order
-for all15 declared image routes. C60 verifies default-model image transport through
+for all16 declared image routes. C60 verifies default-model image transport through
 the actual AgentLoop. Separate real tests now include a normally completed
 AgentLoop/Flash/file-tool turn (0058) and one default Flash image with randomly
 ordered color blocks (0059). Other-model vision, general image quality, official
@@ -86,3 +86,6 @@ three plain reasoning fields, structured native metadata and no-reasoning tool r
 The earlier0062 field-presence observation remains narrower. Reasoning-effort controls,
 other models and precise billing remain unverified; no model/default/config changes.
 See [0063](decisions/0063-native-reasoning-replay.md).
+
+
+[0109](decisions/0109-api-model-inventory.md) shares model extraction between the builder and Host monitor, including explicit declarations after the main inventory. Model changes are reported by identity and protocol; line movement alone is ignored. Observations never install executable routes. Gemini4Argon has one real simple-image request and a two-request scoped Agent/tool turn; general quality and all-model coverage remain unverified. MossImage stays documented-only until the Canvas contract is confirmed; see the [Canvas handoff](handoffs/canvas-agent-moss-image.md).

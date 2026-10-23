@@ -81,7 +81,7 @@ try {
   const models = rows.get('llm-pi-ai')?.config?.providers?.seedance?.models;
   if (!isDeepStrictEqual(rows.get('llm-pi-ai')?.config?.providers?.seedance, expectedProvider)) throw new Error('Installed provider profile differs from the complete source declaration.');
   if (!rows.has('attachment-local') || rows.get('attachment-local').disabled === true) throw new Error('Native attachment backend is unavailable.');
-  if (models?.length !== 18 || rows.get('agent-default-model')?.config?.model !== 'deepseek/deepseek-v4.1-flash' || !rows.has('dsh-zhen')) throw new Error('Installed profile composition differs.');
+  if (models?.length !== 19 || rows.get('agent-default-model')?.config?.model !== 'deepseek/deepseek-v4.1-flash' || !rows.has('dsh-zhen')) throw new Error('Installed profile composition differs.');
   for (const name of ['session-log-deepseek','plugin-package-inventory-deepseek','deepseek-llm-api-extensions','otel','session-telemetry-otel','product-analytics','desktop-product-telemetry','ui-brand-official']) if (rows.get(name)?.disabled !== true) throw new Error('Required privacy/branding row differs.');
   // Exercise the installed worker and external dependency through the public
   // CLI, not the development lib directory. Only this owned EXAMPLE profile.

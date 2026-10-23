@@ -69,9 +69,9 @@ test('capability extraction preserves protocol/case/action differences and refus
 
 test('reviewed catalog covers each family, supports bounded multilingual lookup, and keeps metadata separate from execution', () => {
   const catalog = readCapabilityCatalog();
-  assert.equal(catalog.families.length, 17); assert.equal(catalog.items.length, 275);
+  assert.equal(catalog.families.length, 17); assert.equal(catalog.items.length, 277);
   for (const family of catalog.families) assert.ok(catalog.items.some(item => item.family === family.id));
-  assert.equal(catalog.items.filter(item => item.family === 'chat').length, 18);
+  assert.equal(catalog.items.filter(item => item.family === 'chat').length, 19);
   assert.equal(catalog.items.filter(item => item.kind === 'action').length, 60);
   const first = searchCapabilities(catalog, '', '', 0); assert.equal(first.items.length, 30);
   const next = searchCapabilities(catalog, '', '', first.nextOffset); assert.notEqual(first.items[0].key, next.items[0].key);

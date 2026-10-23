@@ -1,3 +1,4 @@
+import {extractDocumentedModels} from '../packages/dsh-zhen/src/capability-docs.ts';
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
@@ -17,53 +18,9 @@ export function extractSeedanceCatalog(docsBytes, musicBytes, mjBytes, observedA
   if (docsBytes.length > 4 * 1024 * 1024 || musicBytes.length > 256 * 1024 || mjBytes.length > 256 * 1024) throw new Error('Source size limit.');
   const docs = new TextDecoder('utf8', { fatal: true }).decode(docsBytes), lines = docs.split(/\r?\n/);
   const items = new Map();
-  const add = value => { if (!idPattern.test(value.key) || items.has(value.key)) throw new Error(`Duplicate/invalid capability ${value.key}.`); items.set(value.key, value); };
-  const lineOf = text => { const index = lines.findIndex(line => line.includes(text)); if (index < 0) throw new Error(`Missing source anchor ${text}.`); return index + 1; };
-  function model(id, family, line, section, protocol, options = {}) {
-    const key = `model/${id}`; if (items.has(key)) return;
-    add({ key, family, kind: 'model', model: id, action: '', title: id, line, section, protocol, readiness: family === 'chat' ? 'configured' : 'observed', required: [], versions: [], sync: family === 'chat' || family === 'transcription' || family === 'decisions', ...options });
-  }
-  const chatLine = lines.findIndex(line => line.includes('POST /v1/chat/completions') && line.includes('deepseek/deepseek-v4.1-flash'));
-  if (chatLine < 0) throw new Error('Missing chat inventory.');
-  const chatModels = [...lines[chatLine].matchAll(/`([^`]+)`/g)].map(match => match[1]).filter(id => !id.includes(' ') && idPattern.test(id));
-  if (!chatModels.includes('deepseek/deepseek-v4.1-flash') || chatModels.length < 10) throw new Error('Chat inventory changed.');
-  for (const id of chatModels) model(id, 'chat', chatLine + 1, '文本对话', 'chat-completions');
-
-  const start = lines.findIndex(line => line === '## 模型列表'), end = lines.findIndex((line, index) => index > start && line === '## 价格与计费');
-  if (start < 0 || end <= start) throw new Error('Model inventory anchors changed.');
-  let fence = false, section = '', sectionFamily = 'video', baseFamily = 'video';
-  const classify = (id, fallback) => /upscal|flashvsr|vosr|topaz/i.test(id) ? 'enhance' : /motion|animate|lip-sync|identify-face|elements-advanced|context-ir/i.test(id) ? 'motion' : /^(?:seedream|dola-seedream|qwen-image|mai-image|wan-2\.7-global|zhenzhen-image|flux-3-image)/.test(id) ? 'image' : /^(?:doubao|mureka|minimax-(?:speech|voice|music)|qwen3-tts)/.test(id) ? 'audio' : /^(?:seedance-|wan-3|wan-2\.7-spicy|happyhorse-|kling-|hailuo-|minimax-h3-ow-|flux-3-video-|vidu-|zhenzhen-video-)/.test(id) ? 'video' : fallback;
-  for (let index = start; index < end; index++) {
-    const text = lines[index];
-    if (/^#{2,4} /.test(text)) {
-      section = text.replace(/^#+ /, '');
-      if (/^#{2,3} /.test(text)) baseFamily = /音频模型/.test(section) ? 'audio' : /图片/.test(section) && !/视频/.test(section) ? 'image' : /超分/.test(section) && !/视频与/.test(section) ? 'enhance' : /Animate/.test(section) ? 'motion' : 'video';
-      sectionFamily = /音频/.test(section) ? 'audio' : /图片/.test(section) && !/视频/.test(section) ? 'image' : baseFamily;
-    }
-    if (!fence) for (const match of text.matchAll(/`([^`]+)`/g)) {
-      const id = match[1];
-      if (idPattern.test(id) && /^(?:seedance-|seedream-|dola-seedream-|qwen-image-|mai-image-|wan-|happyhorse-|kling-|hailuo-|minimax-|minmax-|flux-|vidu-|zhenzhen-|FlashVSR_|vosr2-|animate-|doubao-|mureka-|qwen3-tts-)/.test(id)) {
-        const family = classify(id, sectionFamily);
-        const protocol = family === 'image' || /^vosr2-image/.test(id) ? 'image-task' : family === 'audio' ? 'audio-task' : /^(?:wan-3\..*-t2v|minmax-h3-context-ir|FlashVSR_|vosr2-video|animate-motion)/.test(id) ? 'legacy-video-task' : 'video-task';
-        model(id, family, index + 1, section, protocol);
-      }
-    }
-    if (/^```/.test(text)) { if (fence) fence = false; else fence = /^```(?:text)?\s*$/.test(text) ? 'plain' : 'other'; continue; }
-    if (fence !== 'plain') continue;
-    const content = text.split('#')[0].trim(); if (!content) continue;
-    const tokens = content.split(/\s+/);
-    if (!tokens.every(token => idPattern.test(token))) continue;
-    for (const id of tokens) {
-      const family = classify(id, sectionFamily);
-      const protocol = family === 'image' || /^vosr2-image/.test(id) ? 'image-task' : family === 'audio' ? 'audio-task' : /^(?:wan-3\..*-t2v|minmax-h3-context-ir|FlashVSR_|vosr2-video|animate-motion)/.test(id) ? 'legacy-video-task' : 'video-task';
-      model(id, family, index + 1, section, protocol);
-    }
-  }
-  for (const [id, family, anchor, protocol] of [
-    ['MiniMax-H3', 'minimax-v2', '# MiniMax-H3 API', 'minimax-v2'], ['whisper-1', 'transcription', '### 语音转写', 'transcription'],
-    ['hunyuan3d-v3.1-text-to-3d', 'three-d', '## POST /v1/3d/generations', 'three-d-task'], ['hunyuan3d-v3.1-image-to-3d', 'three-d', '## POST /v1/3d/generations', 'three-d-task'],
-    ['typesafe/jev-1.13', 'decisions', '同步接口 `POST /v1/decisions`', 'decisions'],
-  ]) model(id, family, lineOf(anchor), familyDefinitions.find(item => item.id === family).title, protocol);
+  const add = value => { if (!idPattern.test(value.key) || items.has(value.key)) throw new Error('Duplicate/invalid capability.'); items.set(value.key, value); };
+  const lineOf = text => { const index = lines.findIndex(line => line.includes(text)); if (index < 0) throw new Error('Missing source anchor.'); return index + 1; };
+  for (const item of extractDocumentedModels(docs)) add({...item, readiness: item.family === 'chat' ? 'configured' : 'observed'});
 
   function actions(bytes, source) {
     const body = JSON.parse(new TextDecoder('utf8', { fatal: true }).decode(bytes));

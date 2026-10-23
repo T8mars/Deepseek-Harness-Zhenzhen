@@ -73,7 +73,7 @@ async function assemble(ctx, options = {}) {
 
 test('C14: every reviewed chat route is offered by the published adapter and preserves its exact wire model', async t => {
   const models = patch.find(row => row.id === 'llm-pi-ai').config.providers.seedance.models;
-  assert.equal(models.length, 18);
+  assert.equal(models.length, 19);
   assert.equal(patch.find(row => row.id === 'agent-default-model').config.model, MODEL);
   const server = await gateway(t, models.map(() => ({events:textEvents})));
   const {ctx} = await harness(t, server);
@@ -83,7 +83,7 @@ test('C14: every reviewed chat route is offered by the published adapter and pre
     assert.equal(server.requests.at(-1).body.model, model.id); assert.equal(server.requests.at(-1).body.max_tokens, 4096);
     assert.equal(model.input.includes('text'), true);
   }
-  assert.equal(server.requests.length, 18);
+  assert.equal(server.requests.length, 19);
 });
 
 test('C12: exact bundled Flash route streams text and usage through the published adapter', async t => {
