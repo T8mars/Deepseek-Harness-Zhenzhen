@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "activation": "requires-contracts-and-review",
+  "candidates": [
+    {
+      "id": "canvas",
+      "current": "3.3.7",
+      "available": "3.4.2",
+      "revision": "0c7ab5c655a5cef823fd717eee8cdb50d59293f8",
+      "url": "https://github.com/T8mars/T8-penguin-canvas/commits/main"
+    },
+    {
+      "id": "dsh",
+      "current": "0.2.1-rc.2",
+      "available": "0.2.1-rc.3",
+      "revision": "sha512-H+E9HLnHf7fJqzen84Z9Bq8ggb5xbrcbyhZjXTJLE9NabHr3zteGvTRvdvGkxPl4ov80is4WLglFmSo+/olJjg==",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/tags"
+    }
+  ]
+}
