@@ -11,6 +11,9 @@ const unwrap=<T,>(value:RemoteResult<T>):T=>{if(!value.ok)throw value.error;retu
 const terminal=(job:BackupJob)=>['succeeded','failed','cancelled'].includes(job.phase);
 const phases:Record<BackupJob['phase'],string>={preparing:'准备数据',capturing:'加密备份',verifying:'校验完整性',restoring:'生成恢复候选',succeeded:'已完成',failed:'未完成',cancelled:'已取消'};
 export function backupErrorMessage(code:string|null):string{
+  if(code==='BACKUP_RAG_PROJECT_CONFLICT')return '知识库项目目录存在冲突。请为不同资料空间选择不同目录，或一并调整关联项目。原备份保留。';
+  if(code==='BACKUP_RAG_PROJECT_DIRECTORY_CHANGED')return '知识库关联的项目文件夹已变化，请重新选择现有文件夹后生成候选。';
+  if(code?.startsWith('BACKUP_RAG_PROJECT_'))return '知识库项目关联未完成。请重新读取项目并核对目录，原备份保留。';
   if(code==='BACKUP_PROJECT_COMPONENTS_REQUIRED')return '建立继续入口需要同时恢复应用配置、会话与工作区。请核对原备份包含这三项。';
   if(code==='BACKUP_PROJECT_WORKSPACE_CONFLICT')return '工作区的目录或会话关联存在冲突。请为不同工作区选择不同目录，并核对重复会话。';
   if(code==='BACKUP_PROJECT_WORKSPACE_PARTIAL')return '工作区仍包含未选择的会话。请为相关项目一并选择同一目录后重试。';
@@ -72,7 +75,7 @@ export function BackupCenter({api}:{api:ZhenRemote}):React.ReactElement{
       <p className="zhen-muted">使用这份备份的原密码解密。恢复会校验整份备份，并在所选文件夹新建目录；不会切换应用、启用旧授权或重交生成任务。</p>
       <button type="button" className="zhen-secondary" disabled={locked||!!pending||!list||!selected||!target||!validRestorePassword} onClick={()=>void start('restore')}>校验并生成恢复候选</button>
     </section>
-    {job&&<section className="zhen-card" aria-label="备份任务"><p role="status">{job.operation==='backup'?'备份':'恢复'}：{phases[job.phase]}{job.component?' · '+backupLabels[job.component]:''}（{job.completed}/{job.total}）</p>{job.output&&<><p>{job.operation==='backup'?'文件已保存至：':'候选已生成，尚未激活：'}</p><p className="zhen-source-path">{job.output}</p></>}{job.error&&<p role="status">{backupErrorMessage(job.error)} <span className="zhen-muted">{job.error}</span></p>}{active&&<button type="button" className="zhen-secondary" disabled={scope.busy} onClick={()=>void scope.run(async()=>{unwrap(await api.backupCancel(job.id));})}>取消此任务</button>}</section>}
+    {job&&<section className="zhen-card" aria-label="备份任务"><p role="status">{job.operation==='backup'?'备份':'恢复'}：{phases[job.phase]}{job.component?' · '+backupLabels[job.component]:''}（{job.completed}/{job.total}）</p>{job.output&&<><p>{job.operation==='backup'?'文件已保存至：':'候选已生成，尚未激活：'}</p><p className="zhen-source-path">{job.output}</p></>}{job.error&&<><p role="status">{backupErrorMessage(job.error)}</p><details><summary>查看诊断编号</summary><code>{job.error}</code></details></>}{active&&<button type="button" className="zhen-secondary" disabled={scope.busy} onClick={()=>void scope.run(async()=>{unwrap(await api.backupCancel(job.id));})}>取消此任务</button>}</section>}
     {job?.operation==='restore'&&job.output&&['succeeded','failed'].includes(job.phase)&&<RecoveryPreview key={job.id} api={api} job={job} onBusyChange={setRecoveryBusy} onJob={setJob} projectReviewKey={JSON.stringify([folder,selected,target])} onProjectsInvalidated={()=>setProjects(undefined)} onProjects={list&&selected&&target?(selection=>{if(projectCurrent.current.api===api&&projectCurrent.current.key===projectKey&&selection.candidateId===job.id)setProjects({api,key:projectKey,selection});}):undefined}/>}
     <RecoveryHistory api={api} disabled={locked} revision={job?job.id+':'+job.phase:''} onSelect={setJob} onForget={id=>{if(job?.id===id)setJob(undefined);}}/>
     {pending&&<div role="status"><p>请求编号：{pending}</p><button type="button" className="zhen-secondary" disabled={scope.busy} onClick={()=>void scope.run(async current=>{try{const value=backupJobSchema.parse(unwrap(await api.backupStatus(pending)));if(current()){setJob(value);setPending(undefined);}}catch{if(current())scope.setNotice('原任务状态仍不明确，请先检查文件列表或重新检测。');}})}>检查原任务</button></div>}

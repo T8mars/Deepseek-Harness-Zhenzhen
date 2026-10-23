@@ -22,7 +22,7 @@ export interface SessionDirectoryBinding {sessionId:string;directory:string;orig
 export interface SessionApplicationReceipt {
   schema:'dsh-zhen-session-application-v1';root:string;sessionsRoot:string;attachmentsHome:string;
   sessions:number;images:number;files:number;
-  directories:Array<{sessionId:string;directory:string;identity:string;eventSeq:number}>;
+  directories:Array<{sessionId:string;directory:string;identity:string;eventSeq:number;originalDirectory?:string|null}>;
   unmappedSessions:number;reviewRequired:true;activated:false;permissionsRestored:false;
 }
 async function ordinary(root:string,path:string):Promise<void>{
@@ -59,7 +59,7 @@ export async function prepareRestoredSessions(root:string,home:string,source:Ses
           // public backend validates and durably appends it without rewriting
           // immutable headers or needing an Agent/model to run during restore.
           const event:SessionEvent<'working-directory/change'>={type:'working-directory/change',seq:SessionSeq(offset),time:Date.now(),data:{cwd:row.path}};
-          await checkDirectory(row);await handle.append([event],{signal:options.signal});await handle.flush({signal:options.signal});result.directories.push({sessionId:id,directory:row.path,identity:row.identity,eventSeq:offset});
+          await checkDirectory(row);await handle.append([event],{signal:options.signal});await handle.flush({signal:options.signal});result.directories.push({sessionId:id,directory:row.path,identity:row.identity,eventSeq:offset,originalDirectory:ids.get(id)!.cwd??null});
         }finally{await handle.close();}
       }
       await target.sessionPersistence.flush();await target.fiber.dispose();target=undefined;

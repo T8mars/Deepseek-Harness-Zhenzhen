@@ -292,3 +292,8 @@ C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/ch
 ## C150–C153：项目恢复的继续会话
 
 固定SDK公开Session.create与buildForkSeed支持新ID、新cwd及parentSession、继承历史和切分位置；显式Persistence写入后可独立重开，不能假定Store.create自动落盘。原有fork保持原cwd，因此使用新会话入口并保留全部原件。C150在旧项目仍存在时通过实际Registry核对成员，准备阶段不构造Registry；子Agent保留origin/delegationDepth且不进入顶层入口。完整工作区通过公开Domain复制，冲突和部分选择拒绝。C151的实际CLI证明组合路径和整行配置，亦复现Windows深层mkdtemp限制；独立组件在候选根下创建。C152验证Owner接线与匿名拒绝，C153为生产处理器验证而非浏览器验收。权限、RAG/技能范围统一关联、激活及完整L2仍待完成。
+
+
+## C154–C156：恢复知识库的项目绑定
+
+Session应用回执中的原目录来自公开持久化头，组合流程用已核回执将映射传给自有KnowledgeStore逻辑装配。空间标识和路径分开，旧授权不转给新session；新增binding revision在同一事务装配，支持原子互换，未选空间保持。C154加密组件与真实存储验证原目录不可用、引用/FTS、冲突、身份、取消与高水位。C155是实际发布Owner组合的普通/继续两模式；候选使用前基线通过，用应用构造器打开后基线变化单独核对，不把正常写入的应用当只读探针。C156是生产表单处理器和默认关闭的原生details验证，非浏览器实显。未修改SDK持久化或私有profile格式。

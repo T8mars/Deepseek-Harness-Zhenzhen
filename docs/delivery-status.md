@@ -1,5 +1,7 @@
 # DSH-zhen 当前交付状态
 
+0112把所选项目的新目录同步到知识库副本，保留资料空间、引用和失效的历史授权；支持目录互换及冲突拒绝，错误建议与诊断编号分开展示。完整1276/1276、新增16/相关160及211文件归档、公开CLI安装/卸载通过，精确CI另核。dev82精确Windows CI1260/211同包已核；本机保留该版本，画布未改。 见 docs/decisions/0112-restored-knowledge-project-bindings.md。
+
 0111新增可选项目继续入口：公开SDK创建新会话与工作区副本，保留原历史、原组件、附件和子Agent身份，默认关闭且不激活。完整1260/1260、新增34/相关160及211文件归档通过；公开CLI安装/卸载与worker核对通过，精确CI另核。dev81精确Windows CI1226/210同包已严格核对；本机仍运行已验证dev81，画布未改。 见 docs/decisions/0111-restored-project-continuations.md。
 
 0110修复源码bundle覆盖已安装配置：移除自身workspace链接，保留固定依赖并核对锁摘要；启动自动修复残留链接，prepared入口提前拒绝。完整1226/1226、新增9/相关47及210文件归档通过；归档与dev80逐字一致，公开CLI安装/卸载与worker核对通过。实际启动修复与本机运行已验证，当前精确CI另核。dev80精确Windows CI1217/210同包已严格核对；本机已正常恢复，配置/自有画布/RAG元数据与角色保持，画布未改。 见 docs/decisions/0110-installed-bundle-source.md。
