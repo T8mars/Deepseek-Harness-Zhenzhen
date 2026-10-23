@@ -86,7 +86,7 @@ export class BackupCenter {
     this.catalog?.get(request.id);
     if(!isAbsolute(request.folder)||!isAbsolute(request.target))throw new BackupError('BACKUP_PATH_INVALID');const source=join(await realpath(request.folder),request.name),target=await realpath(request.target);
     if(reference&&!this.application)throw new BackupError('BACKUP_PROJECT_ENVIRONMENT_REQUIRED');const sessionDirectories=reference&&request.projects?await resolveRecoveryProjectBindings(reference,request.projects,job.controller.signal):undefined;
-    const candidate=await restoreComposedBackup(source,request.password,target,adapters,{signal:job.controller.signal,application:this.application&&sessionDirectories?{...this.application,sessionDirectories}:this.application},progress);job.view.output=candidate.root;job.view.components=candidate.components;job.candidate=candidate.verification;
+    const candidate=await restoreComposedBackup(source,request.password,target,adapters,{signal:job.controller.signal,application:this.application&&sessionDirectories?{...this.application,sessionDirectories,...request.projects?.continuations?{projectContinuations:true}:{}}:this.application},progress);job.view.output=candidate.root;job.view.components=candidate.components;job.candidate=candidate.verification;
     try{this.catalog?.put({id:request.id,baseline:candidate.verification});}catch{throw new BackupError('BACKUP_CANDIDATE_CATALOG_FAILED');}
   });}
   private start(id:string,operation:BackupJob['operation'],components:BackupJob['components'],run:(job:Work,adapters:BackupAdapters,progress:(phase:'preparing'|'capturing'|'verifying'|'restoring',component:BackupJob['component'],completed:number,total:number)=>void)=>Promise<void>):BackupJob{

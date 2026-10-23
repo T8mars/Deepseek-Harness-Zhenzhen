@@ -11,6 +11,13 @@ const unwrap=<T,>(value:RemoteResult<T>):T=>{if(!value.ok)throw value.error;retu
 const terminal=(job:BackupJob)=>['succeeded','failed','cancelled'].includes(job.phase);
 const phases:Record<BackupJob['phase'],string>={preparing:'准备数据',capturing:'加密备份',verifying:'校验完整性',restoring:'生成恢复候选',succeeded:'已完成',failed:'未完成',cancelled:'已取消'};
 export function backupErrorMessage(code:string|null):string{
+  if(code==='BACKUP_PROJECT_COMPONENTS_REQUIRED')return '建立继续入口需要同时恢复应用配置、会话与工作区。请核对原备份包含这三项。';
+  if(code==='BACKUP_PROJECT_WORKSPACE_CONFLICT')return '工作区的目录或会话关联存在冲突。请为不同工作区选择不同目录，并核对重复会话。';
+  if(code==='BACKUP_PROJECT_WORKSPACE_PARTIAL')return '工作区仍包含未选择的会话。请为相关项目一并选择同一目录后重试。';
+  if(code==='BACKUP_PROJECT_DIRECTORY_CHANGED')return '所选项目目录已变化，请重新选择现有文件夹。原备份保留。';
+  if(code==='BACKUP_PROJECT_CONTINUATION_LIMIT')return '继续入口超过当前容量限制。可减少选中的项目，或先恢复原会话。';
+  if(code==='BACKUP_PROJECT_HISTORY_UNSUPPORTED')return '部分历史需要对应扩展才能建立继续入口。可先恢复原会话，原备份保留。';
+  if(code?.startsWith('BACKUP_PROJECT_APPLICATION_'))return '项目继续入口未准备完成。请保留原备份，核对目录后重试。';
   if(code?.startsWith('BACKUP_CANDIDATE_CATALOG_'))return '恢复记录暂时无法保存或读取。已生成的候选目录和原备份保留，请保留路径，稍后重试保存记录。';
   if(code==='BACKUP_AUTHENTICATION_FAILED')return '密码不正确或文件已损坏。请核对密码，保留原备份文件。';
   if(code==='BACKUP_PASSWORD_INVALID')return '请使用至少 12 个字符、最多 1024 字节的备份密码。';

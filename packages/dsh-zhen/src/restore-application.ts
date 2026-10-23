@@ -25,8 +25,10 @@ import type {SessionRestoreCandidate} from './backup-sessions.ts';
 import {prepareRestoredWorkspaces} from './restore-workspaces.ts';
 import type {WorkspaceApplicationReceipt} from './restore-workspaces.ts';
 import type {WorkspaceRestoreCandidate} from './backup-workspaces.ts';
+import {prepareRestoredProjects} from './restore-projects.ts';
+import type {ProjectApplicationReceipt} from './restore-projects.ts';
 
-export interface ApplicationRestoreOptions {installAnchor:string;sessionDirectories?:readonly SessionDirectoryBinding[];}
+export interface ApplicationRestoreOptions {installAnchor:string;sessionDirectories?:readonly SessionDirectoryBinding[];projectContinuations?:boolean;}
 export interface ApplicationRestoreParts {knowledge?:RagRestoreCandidate;skills?:SkillInventoryRestoreCandidate;sessions?:SessionRestoreCandidate;workspaces?:WorkspaceRestoreCandidate;}
 export interface ApplicationRestoreProfile {
   name:string;originName:string;overlay:string|null;
@@ -42,6 +44,7 @@ export interface ApplicationRestoreRecipe {
   skills:SkillApplicationReceipt|null;
   sessions:SessionApplicationReceipt|null;
   workspaces:WorkspaceApplicationReceipt|null;
+  projects?:ProjectApplicationReceipt;
   profiles:ApplicationRestoreProfile[];reviewRequired:true;activated:false;readyForActivation:false;wholeApplicationRestore:false;
 }
 const MAX_FILE=8*1024**2,MAX_TOTAL=64*1024**2;
@@ -83,7 +86,7 @@ function pauseTracking(path:string):number{
 /** Builds inert whole-row overlays in a NEW, not-yet-sealed composition. It
  * never imports restored modules, evaluates expressions, or starts a profile. */
 export async function prepareRestoredApplication(root:string,layouts:RecoveryComponentLayout[],options:ApplicationRestoreOptions,signal?:AbortSignal,parts:ApplicationRestoreParts={}):Promise<ApplicationRestoreRecipe|null>{
-  const parsed=recoveryLayoutSchema.safeParse({schema:'dsh-zhen-recovery-layout-v1',components:layouts});if(!parsed.success)fail();const environment=parsed.data.components.find(row=>row.kind==='environment'&&row.details);if(!environment){if(options.sessionDirectories?.length)fail('BACKUP_PROJECT_ENVIRONMENT_REQUIRED');return null;}
+  const parsed=recoveryLayoutSchema.safeParse({schema:'dsh-zhen-recovery-layout-v1',components:layouts});if(!parsed.success)fail();const environment=parsed.data.components.find(row=>row.kind==='environment'&&row.details);if(!environment){if(options.projectContinuations)fail('BACKUP_PROJECT_COMPONENTS_REQUIRED');if(options.sessionDirectories?.length)fail('BACKUP_PROJECT_ENVIRONMENT_REQUIRED');return null;}
   const home=location(environment,'home'),agentsHome=location(environment,'agents');if(!home||!agentsHome)fail();await owned(root,home,'directory');await owned(root,agentsHome,'directory');
   const readBudget={bytes:0};
   async function read(owner:string,path:string):Promise<Buffer>{
@@ -110,9 +113,11 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
         try{db.exec('PRAGMA trusted_schema=OFF;');if(db.prepare('PRAGMA user_version').get()?.user_version!==1)fail('BACKUP_OWN_STATE_SCHEMA_UNSUPPORTED');const version=db.prepare('PRAGMA data_version').get()?.data_version,rows=Number(db.prepare('SELECT COUNT(*) AS total FROM '+descriptor.table).get()?.total);await backup(db,destination,{rate:256,progress:()=>signal?.throwIfAborted()});if(db.prepare('PRAGMA data_version').get()?.data_version!==version||identity(await lstat(source,{bigint:true}))!==identity(before))fail('BACKUP_SOURCE_CHANGED');const copied=new DatabaseSync(destination,{readOnly:true,allowExtension:false,enableDoubleQuotedStringLiterals:false});try{copied.exec('PRAGMA trusted_schema=OFF;');if(copied.prepare('PRAGMA user_version').get()?.user_version!==1||Number(copied.prepare('SELECT COUNT(*) AS total FROM '+descriptor.table).get()?.total)!==rows||copied.prepare('PRAGMA quick_check').get()?.quick_check!=='ok')fail('BACKUP_APPLICATION_COPY_INVALID');}finally{copied.close();}const paused=descriptor.kind==='tasks'?pauseTracking(destination):0;recipe.records.push({kind:descriptor.kind,rows,destination,paused});}finally{db.close();}
       }
     }
+    if(options.projectContinuations&&(!options.sessionDirectories?.length||!parts.sessions||!parts.workspaces))fail('BACKUP_PROJECT_COMPONENTS_REQUIRED');
     if(options.sessionDirectories?.length&&!parts.sessions)fail('BACKUP_SESSION_APPLICATION_INPUT_INVALID');
     if(parts.sessions){const selected=scope.get('sessions');if(!selected?.details||parts.sessions.root!==selected.root||location(selected,'sessions')!==join(parts.sessions.root,'sessions')||location(selected,'attachmentsHome')!==parts.sessions.root)fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.sessions=await prepareRestoredSessions(root,home,parts.sessions,options.sessionDirectories,{signal});targets.sessions=recipe.sessions.sessionsRoot;targets.attachmentsHome=recipe.sessions.attachmentsHome;}
     if(parts.workspaces){if(!workspaces?.details||parts.workspaces.root!==workspaces.root||parts.workspaces.storageRoot!==location(workspaces,'workspaceStorage'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.workspaces=await prepareRestoredWorkspaces(root,home,parts.workspaces,{signal});targets.workspaceStorage=recipe.workspaces.storageRoot;}
+    if(options.projectContinuations){if(!recipe.sessions||!recipe.workspaces)fail('BACKUP_PROJECT_COMPONENTS_REQUIRED');recipe.projects=await prepareRestoredProjects(root,home,recipe.sessions,recipe.workspaces,{signal});targets.sessions=recipe.projects.sessionsRoot;targets.attachmentsHome=recipe.projects.attachmentsHome;targets.workspaceStorage=recipe.projects.storageRoot;}
     if(parts.knowledge){const knowledge=scope.get('knowledge');if(!knowledge?.details||parts.knowledge.root!==knowledge.root||parts.knowledge.database!==(location(knowledge,'knowledgeDatabase')??null)||parts.knowledge.backendState!==location(knowledge,'knowledgeBackend'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.knowledge=await prepareRestoredKnowledge(root,home,parts.knowledge,{signal});}
     if(parts.skills){const skills=scope.get('skills');if(!skills?.details||parts.skills.root!==skills.root||parts.skills.market.database!==location(skills,'skillMarket')||parts.skills.managed.local.file!==location(skills,'skillLocalState'))fail('BACKUP_APPLICATION_INPUT_INVALID');recipe.skills=await prepareRestoredSkills(root,home,parts.skills,{signal});}
     const cwd=join(home,'recovered-workspace');await mkdir(cwd,{mode:0o700});let outputBytes=0;

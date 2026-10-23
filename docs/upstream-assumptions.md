@@ -287,3 +287,8 @@ C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/ch
 ## C147–C149：安装锚点与已安装bundle
 
 实际发布CLI的bundle补丁可先从其安装锚点解析到开发workspace，而plugin exec的实际包身份仍是profile中的另一版本。C147用全新TEMP无依赖示例包先红后绿核对，不能以CJS安装身份或同版本号单独证明补丁来源。根开发项目不再把自身bundle暴露为workspace；发布包依赖与上游解析器不变。C148用Node公开模块搜索路径及实际目录检查物理SDK入口，不导入插件或解析私有profile；C149验证缓存命中时自动修复、失败保留与忙碌拒绝。require.resolve的成功缓存不能作为修复后目录仍存在的证据；首轮误报已由实际目录复核修正，没有操作Node私有缓存。
+
+
+## C150–C153：项目恢复的继续会话
+
+固定SDK公开Session.create与buildForkSeed支持新ID、新cwd及parentSession、继承历史和切分位置；显式Persistence写入后可独立重开，不能假定Store.create自动落盘。原有fork保持原cwd，因此使用新会话入口并保留全部原件。C150在旧项目仍存在时通过实际Registry核对成员，准备阶段不构造Registry；子Agent保留origin/delegationDepth且不进入顶层入口。完整工作区通过公开Domain复制，冲突和部分选择拒绝。C151的实际CLI证明组合路径和整行配置，亦复现Windows深层mkdtemp限制；独立组件在候选根下创建。C152验证Owner接线与匿名拒绝，C153为生产处理器验证而非浏览器验收。权限、RAG/技能范围统一关联、激活及完整L2仍待完成。

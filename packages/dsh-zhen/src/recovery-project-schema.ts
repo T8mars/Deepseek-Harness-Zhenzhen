@@ -3,7 +3,7 @@ import {backupRestoreSchema} from './backup-center-schema.ts';
 
 const path=z.string().min(1).max(4096),projectId=z.string().regex(/^[a-f0-9]{64}$/),count=z.number().int().nonnegative().max(10000);
 export const recoveryProjectCursorSchema=z.string().max(5).regex(/^(?:|[1-9]\d{0,4})$/).refine(value=>value===''||Number(value)<=10000&&Number(value)%20===0);
-export const recoveryProjectSelectionSchema=z.object({candidateId:z.uuid(),directories:z.array(z.object({projectId,directory:path}).strict()).min(1).max(10000)}).strict().refine(value=>new Set(value.directories.map(row=>row.projectId)).size===value.directories.length);
+export const recoveryProjectSelectionSchema=z.object({candidateId:z.uuid(),directories:z.array(z.object({projectId,directory:path}).strict()).min(1).max(10000),continuations:z.boolean().optional()}).strict().refine(value=>new Set(value.directories.map(row=>row.projectId)).size===value.directories.length);
 export type RecoveryProjectSelection=z.infer<typeof recoveryProjectSelectionSchema>;
 export const projectAwareRestoreSchema=backupRestoreSchema.extend({projects:recoveryProjectSelectionSchema.optional()}).refine(value=>value.projects?.candidateId!==value.id);
 export type ProjectAwareRestore=z.infer<typeof projectAwareRestoreSchema>;

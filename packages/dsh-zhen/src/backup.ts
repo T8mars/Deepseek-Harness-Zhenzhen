@@ -64,3 +64,5 @@ export {prepareRestoredSessions} from './restore-sessions.ts';
 export type {SessionDirectoryBinding,SessionApplicationReceipt} from './restore-sessions.ts';
 export {prepareRestoredWorkspaces} from './restore-workspaces.ts';
 export type {WorkspaceApplicationReceipt} from './restore-workspaces.ts';
+export {prepareRestoredProjects} from './restore-projects.ts';
+export type {ProjectContinuationEntry,ProjectApplicationReceipt} from './restore-projects.ts';
