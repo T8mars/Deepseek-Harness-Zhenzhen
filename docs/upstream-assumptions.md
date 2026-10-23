@@ -309,3 +309,6 @@ Session应用回执中的原目录来自公开持久化头，组合流程用已�
 固定SDK WorkingDirectory的投影init为header.cwd，apply处理已提交的working-directory/change；服务get不做文件IO，ensure才可能检查并恢复原目录。C169使用实际SessionProjectionRegistry.restore的分页冷折叠及原WorkingDirectory单元，捕获previousDirectory，保留raw originalDirectory给项目分组。App仅RAG/技能关联使用前者；会话格式、原历史及workspace成员规则不改。直接运行的session-projection/system-prompt已显式钉peer0.2.1-rc.2。
 
 C167真实Windows探针复现252字符临时SQLite文件能open但建表时journal报14；同目录更短独占临时名后Owner任务成功，C168核长home、重开、清理和原catalog格式。C171旧恢复home无新来源清单时禁止回退漏项普通库存，自动迁移仍未实现。生产权限放行/激活、完整L2、浏览器和原生创作不在这些结论内。
+## C173–C176 · 恢复文件夹技能审阅
+
+固定0.2.1-rc.2的 FileSystemSkillProvider 仍负责来源排序、正文和相对资源。自有审阅文件按当前profile及原来源摘要选择是否开放，公开 registry 的失效事件用于刷新目录；list/get 前后复核审批与资源身份。C173验证正式放行、缓存/读取中撤销、重建提供者与坏文件拒绝；C174以实际 Owner Gateway、Loader和LocalFs验证匿名拒绝及原配置绑定；C175验证生产表单单次请求和旧连接拒绝；C176通过原Owner组合备份任务验证新home不携带批准。没有修改SDK、恢复原生画布审批、执行程序或启用管理来源更新。

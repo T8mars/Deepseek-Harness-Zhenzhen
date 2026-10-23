@@ -8,6 +8,8 @@ import {readRestoredSkillReview} from './restore-skills.ts';
 import {registerRestoredSkillProviders} from './restored-skill-provider.ts';
 import {readRestoredSkillProjects} from './restored-skill-projects.ts';
 import {prepareRestoredSkillBackupSource} from './restored-skill-backup.ts';
+import {RestoredSkillConsent} from './restored-skill-consent.ts';
+import type {RestoredSkillConsentView,RestoredSkillConsentRequest} from './restored-skill-consent-schema.ts';
 import type {RecoveryPreview,RecoveryCatalogView} from './recovery-schema.ts';
 import {prepareProfilePackageBackup,restoreProfilePackageBackup} from './backup-profile-packages.ts';
 import {restoreSessionBackup} from './backup-sessions.ts';
@@ -173,6 +175,7 @@ const githubCredential = credentialRef('DSH_ZHEN_GITHUB_TOKEN');
 /** Creator workspace Host operations, guarded by DSH's authenticated Remote access. */
 export default class ZhenService extends TypertRemoteService {
   private readonly backupCenter:BackupCenter;
+  private readonly restoredConsent:RestoredSkillConsent;
   private readonly backupProfile:ProfileContext|undefined;
   private readonly directoryChoices:DirectoryChoices;
   static inject: string[] = ['credentials'];
@@ -216,6 +219,12 @@ export default class ZhenService extends TypertRemoteService {
   constructor(ctx: Context) {
     super(ctx, 'zhen');
     this.backupProfile=ctx.get('profileContext');
+    this.restoredConsent=new RestoredSkillConsent(dirname(this.zhenHome),this.backupProfile?.name,async()=>{
+      const profile=this.backupProfile;if(!profile||ctx.get('profileContext')!==profile)throw new BackupError('BACKUP_HOST_PROFILE_UNAVAILABLE');
+      const source=await prepareRestoredSkillBackupSource(ctx,dirname(this.zhenHome),()=>{throw new BackupError('BACKUP_COMPONENT_UNAVAILABLE');},{profileOnly:true});
+      const proof=source.forProfiles({home:profile.home,installAnchor:profile.installAnchor,active:profile});
+      return async()=>{if(ctx.get('profileContext')!==profile)throw new BackupError('BACKUP_SOURCE_CHANGED');await proof.assertCurrent?.();};
+    });
     this.backupCenter=new BackupCenter(join(this.zhenHome,'backups'),()=>this.backupAdapters(),{catalogFile:join(this.zhenHome,'recovery-candidates.sqlite'),application:this.backupProfile?{installAnchor:this.backupProfile.installAnchor}:undefined});
     ctx.effect(()=>()=>this.backupCenter.close(),'zhen: local backup jobs');
     this.directoryChoices=new DirectoryChoices(()=>{const service=ctx.get('directoryPicker');return service?{owner:(service as unknown as {[key:symbol]:object|undefined})[symbols.original]??service,capability:service.capability()}:undefined;});
@@ -445,6 +454,10 @@ export default class ZhenService extends TypertRemoteService {
   }
   @Remote
   backupInfo():BackupInfo{const info=this.backupCenter.info();if(this.hasRestoredSkillProjects()&&!this.ctx.get('loader'))info.limitations.push('恢复后的项目技能缺少配置入口，技能范围暂不可备份。请保留原始备份与恢复候选，并在完整应用中打开。');return info;}
+  @Remote
+  restoredSkillConsent(page:number):Promise<RestoredSkillConsentView>{return this.restoredConsent.view(page);}
+  @Remote
+  restoredSkillConsentChange(request:RestoredSkillConsentRequest):Promise<RestoredSkillConsentView>{return this.restoredConsent.change(request);}
   @Remote
   backupFiles(folder:string):Promise<BackupFiles>{return this.backupCenter.files(folder);}
   @Remote

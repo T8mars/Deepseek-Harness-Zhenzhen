@@ -7,6 +7,7 @@ import {backupJsonString} from './backup-data.ts';
 import {BackupError} from './backup-archive.ts';
 import {RESTORED_SKILL_PROJECTS_FILE,readRestoredSkillProjects,restoredSkillProjectFileVersion,skillPathKey,assertRestoredSkillDirectory,assertRestoredSkillPin,assertRestoredSkillBoundary} from './restored-skill-projects.ts';
 import type {RestoredSkillProjects} from './restored-skill-projects.ts';
+import {effectiveRestoredSkillSnapshot,RESTORED_SKILL_CONSENT_FILE} from './restored-skill-consent.ts';
 
 type Snapshot=NonNullable<ReturnType<typeof readRestoredSkillProjects>>;
 type Project=RestoredSkillProjects['projects'][number];
@@ -15,11 +16,11 @@ interface Reader{current():Snapshot|null;subscribe(invalidate:()=>void):()=>void
 /** One document watcher shared by the active profile's providers. */
 class ProjectReader implements Reader{
  private readonly listeners=new Set<()=>void>();private signature:string;private cached:Snapshot|null;private readonly file:string;private closed=false;
- constructor(private readonly home:string,initial:Snapshot){this.cached=initial;this.signature=initial.signature;this.file=join(home,'dsh-zhen',RESTORED_SKILL_PROJECTS_FILE);watchFile(this.file,{interval:200,persistent:false},this.changed);}
+ constructor(private readonly home:string,private readonly profile:string,initial:Snapshot){this.cached=initial;this.signature=initial.signature;this.file=join(home,'dsh-zhen',RESTORED_SKILL_PROJECTS_FILE);watchFile(this.file,{interval:200,persistent:false},this.changed);watchFile(join(home,'dsh-zhen',RESTORED_SKILL_CONSENT_FILE),{interval:200,persistent:false},this.changed);}
  private readonly changed=()=>{if(this.closed)return;this.current();};
- current():Snapshot|null{if(this.closed)return null;let value:Snapshot|null;try{const stamp=restoredSkillProjectFileVersion(this.home);value=stamp!==null&&stamp===this.cached?.fileVersion?this.cached:readRestoredSkillProjects(this.home);}catch{value=null;}this.cached=value;const signature=value?.signature??'unavailable';if(signature!==this.signature){this.signature=signature;for(const invalidate of this.listeners)invalidate();}return value;}
+ current():Snapshot|null{if(this.closed)return null;let value:Snapshot|null;try{const stamp=restoredSkillProjectFileVersion(this.home);this.cached=stamp!==null&&stamp===this.cached?.fileVersion?this.cached:readRestoredSkillProjects(this.home);value=this.cached?effectiveRestoredSkillSnapshot(this.home,this.profile,this.cached):null;}catch{this.cached=null;value=null;}const signature=value?.signature??'unavailable';if(signature!==this.signature){this.signature=signature;for(const invalidate of this.listeners)invalidate();}return value;}
  subscribe(invalidate:()=>void):()=>void{this.listeners.add(invalidate);return()=>this.listeners.delete(invalidate);}
- close():void{if(this.closed)return;this.closed=true;unwatchFile(this.file,this.changed);this.listeners.clear();}
+ close():void{if(this.closed)return;this.closed=true;unwatchFile(this.file,this.changed);unwatchFile(join(this.home,'dsh-zhen',RESTORED_SKILL_CONSENT_FILE),this.changed);this.listeners.clear();}
 }
 export interface RestoredFilesystemProvider extends SkillProvider{dispose():Promise<void>;}
 interface Delegate{key:string;value:FileSystemSkillProvider;abort:AbortController;close():Promise<void>;}
@@ -53,5 +54,5 @@ export function createRestoredFilesystemProvider(ctx:Context,control:SkillProvid
 export function registerRestoredSkillProviders(ctx:Context,home:string,profile:string|undefined):void{
  const initial=readRestoredSkillProjects(home);if(!initial||profile===undefined)return;
  const rows=initial.document.providers.filter(row=>row.profile===profile&&row.enabled);if(!rows.length)return;
- ctx.inject(['skills'],inner=>{const reader=new ProjectReader(home,initial),providers:RestoredFilesystemProvider[]=[],stops:Array<()=>void>=[];for(const row of rows)stops.push(inner.skills.registerProvider(control=>{const provider=createRestoredFilesystemProvider(inner,control,reader,profile,row.id,String(row.config.providerName??'filesystem'));providers.push(provider);return provider;}));inner.effect(()=>async()=>{reader.close();for(const stop of stops)stop();await Promise.all(providers.map(provider=>provider.dispose()));});});
+ ctx.inject(['skills'],inner=>{const reader=new ProjectReader(home,profile,initial),providers:RestoredFilesystemProvider[]=[],stops:Array<()=>void>=[];for(const row of rows)stops.push(inner.skills.registerProvider(control=>{const provider=createRestoredFilesystemProvider(inner,control,reader,profile,row.id,String(row.config.providerName??'filesystem'));providers.push(provider);return provider;}));inner.effect(()=>async()=>{reader.close();for(const stop of stops)stop();await Promise.all(providers.map(provider=>provider.dispose()));});});
 }

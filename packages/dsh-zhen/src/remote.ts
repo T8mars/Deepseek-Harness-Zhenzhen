@@ -89,6 +89,8 @@ import { gatewayMediaTicketSchema, gatewayMediaReceiptSchema } from './gateway-m
 import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-schema.ts';
 
 export interface ZhenRemote {
+  restoredSkillConsent(page:number):Promise<RemoteResult<RestoredSkillConsentView>>;
+  restoredSkillConsentChange(request:RestoredSkillConsentRequest):Promise<RemoteResult<RestoredSkillConsentView>>;
   backupCandidatePlan(id:string):Promise<RemoteResult<RecoveryPlan>>;
   backupCandidateProjects(id:string,cursor:string):Promise<RemoteResult<RecoveryProjects>>;
   backupCandidateList(cursor:string):Promise<RemoteResult<RecoveryCatalogView>>;
@@ -264,6 +266,8 @@ function method(name: string, schema: z.ZodType, description: string, inputs: Ar
     sourceLocation: { file: 'packages/dsh-zhen/src/remote.ts', line: 1, column: 1 } };
 }
 export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', methods: {
+  'zhen/restoredSkillConsent':method('restoredSkillConsent',restoredSkillConsentViewSchema,'Owner UI: inspect restored filesystem skill sources for this profile; no instruction bodies or activation.',[['page',z.number().int().min(0).max(102).default(0)]]),
+  'zhen/restoredSkillConsentChange':method('restoredSkillConsentChange',restoredSkillConsentViewSchema,'Owner UI: explicitly grant or revoke only this profile and exact recovered skill sources; no archived tasks, downloads or native approval.',[['request',restoredSkillConsentRequestSchema]]),
   'zhen/backupCandidatePlan':method('backupCandidatePlan',recoveryPlanSchema,'Owner UI: verify original candidate bytes and inspect typed restored locations; no execution, rebinding or activation.',[['id',z.uuid()]]),
   'zhen/backupCandidateProjects':method('backupCandidateProjects',recoveryProjectsSchema,'Owner UI: verify the original candidate and page only original project directories and counts; no session content, original project reads or activation.',[['id',z.uuid()],['cursor',recoveryProjectCursorSchema]]),
   'zhen/backupCandidateList':method('backupCandidateList',recoveryCatalogSchema,'Owner UI: page durable candidate records plus current in-memory candidates; no candidate file content or activation.',[['cursor',z.string().max(256)]]),
@@ -413,3 +417,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/knowledgeSource': method('knowledgeSource', ragSourceSchema, 'Read an authorized index snapshot; no arbitrary path or cloud transfer.', [['project', projectInput], ['hitId', z.string().uuid()], ['epoch', z.number().int().positive()]]),
 } }, z);
 export default TYPERT_REMOTE;
+import {restoredSkillConsentViewSchema,restoredSkillConsentRequestSchema} from './restored-skill-consent-schema.ts';
+import type {RestoredSkillConsentView,RestoredSkillConsentRequest} from './restored-skill-consent-schema.ts';
+export {RESTORED_SKILL_CONSENT_POLICY,restoredSkillConsentViewSchema} from './restored-skill-consent-schema.ts';
+export type {RestoredSkillConsentView,RestoredSkillConsentRequest} from './restored-skill-consent-schema.ts';

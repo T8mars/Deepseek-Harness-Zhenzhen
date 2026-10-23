@@ -70,3 +70,5 @@ export {prepareRestoredSkillProjects,readRestoredSkillProjects} from './restored
 export {prepareRestoredSkillBackupSource} from './restored-skill-backup.ts';
 export type {RestoredSkillProjects,RestoredSkillProjectsReceipt,RestoredSkillProviderInput} from './restored-skill-projects.ts';
 export {createRestoredFilesystemProvider,registerRestoredSkillProviders} from './restored-skill-provider.ts';
+export {RestoredSkillConsent,readRestoredSkillConsent,effectiveRestoredSkillSnapshot,RESTORED_SKILL_CONSENT_FILE} from './restored-skill-consent.ts';
+export {RESTORED_SKILL_CONSENT_POLICY,restoredSkillConsentRequestSchema,restoredSkillConsentViewSchema} from './restored-skill-consent-schema.ts';

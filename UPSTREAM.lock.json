@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-23T05:30:47.032Z",
+  "checkedAt": "2026-10-23T12:10:26.320Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2324,7 +2324,21 @@
       "productionApprovalImplemented": false,
       "legacyAutomaticMigrationImplemented": false,
       "status": "implemented-inactive-application-rebackup",
-      "verification": "C161-C163 actual authenticated v3 inventory keeps physical SDK roots separate from logical projects and original enabled separate from technical pause; v1/v2 readers and ordinary v2 writer preserved. Complete literal-config provenance,profile/entry identity and resource limits refuse mismatches without truncation. C164 actual published Loader/LocalFs captures every owned profile overlay and mapped/unmapped project with original retained revision; symbols.original identifies scoped services. C165/C167 actual restored ZhenService and published Owner use normal backup/restore jobs for environment,sessions,skills. C166 two consecutive compositions with a distinct second target preserve both profile preferences and actual Host skill/relative resource reads; test review only. SDK cold projection supplies previousDirectory while immutable header/originalDirectory,history and fork cut remain. C168 fixes a real Windows252-character temporary SQLite journal failure using shorter exclusive same-directory names; catalog format unchanged. C169 paged fork history verifies previous effective directory,C170 inactive profile overlays and retained source,C171 refuses legacy home without provenance rather than ordinary incomplete fallback,C172 verifies v3 multi-profile and resource capacities. Complete1338/1338,new38/related316 and214-file archive pass; C63/C76 stable payload matches local,other version payloads byte-identical,public CLI install/uninstall and workers verified. Exact CI pending; production approval,activation/fullL2,legacy automatic migration,browser/native creation and all original scope remain incomplete. User Host stays dev82;Native/model0."
+      "verification": "C161-C163 actual authenticated v3 inventory keeps physical SDK roots separate from logical projects and original enabled separate from technical pause; v1/v2 readers and ordinary v2 writer preserved. Complete literal-config provenance,profile/entry identity and resource limits refuse mismatches without truncation. C164 actual published Loader/LocalFs captures every owned profile overlay and mapped/unmapped project with original retained revision; symbols.original identifies scoped services. C165/C167 actual restored ZhenService and published Owner use normal backup/restore jobs for environment,sessions,skills. C166 two consecutive compositions with a distinct second target preserve both profile preferences and actual Host skill/relative resource reads; test review only. SDK cold projection supplies previousDirectory while immutable header/originalDirectory,history and fork cut remain. C168 fixes a real Windows252-character temporary SQLite journal failure using shorter exclusive same-directory names; catalog format unchanged. C169 paged fork history verifies previous effective directory,C170 inactive profile overlays and retained source,C171 refuses legacy home without provenance rather than ordinary incomplete fallback,C172 verifies v3 multi-profile and resource capacities. Complete1338/1338,new38/related316 and214-file archive pass; C63/C76 stable payload matches local,other version payloads byte-identical,public CLI install/uninstall and workers verified. Exact Windows CI39907958406 verified1338/214 with matching payload and public install/uninstall; production approval,activation/fullL2,legacy automatic migration,browser/native creation and all original scope remain incomplete. User Host stays dev82;Native/model0.",
+      "filesystemConsentImplementedBy": "restoredFilesystemSkillConsent"
+    },
+    "restoredFilesystemSkillConsent": {
+      "schema": 1,
+      "sdkVersion": "0.2.1-rc.2",
+      "profileScoped": true,
+      "sourceDigestBound": true,
+      "sourceManifestUnchanged": true,
+      "defaultPending": true,
+      "recoveryConsentTransferred": false,
+      "managedSkillsReleased": false,
+      "applicationActivated": false,
+      "status": "implemented-profile-filesystem-consent",
+      "verification": "C173 actual published Host FS and SkillRegistry require explicit profile/source-bound consent,retain original enabled choices,global/project scope and source manifest,deny cached or in-flight definitions on revocation,and cover malformed files,links,source/target replacement,concurrent requests,pagination and provider reconstruction. C174 actual published Owner Gateway,Loader and restored ZhenService deny anonymous mutation and integrate the actual profile/provenance proof. C175 production handlers require explicit acknowledgement,issue one snapshot-bound decision,refuse stale connections/pages/replies and recover ambiguous results only by explicit status read. A first double-click failure was reproduced and fixed by incrementing UI revision only after single-flight admission. C176 normal Owner application backup/restore preserves both profile enablement choices but never transfers consent to the new home. Complete1361/1361,new23/related189 and final client9/9,217-file archive pass; C63/C76 stable payload matches local,other version payloads byte-identical,public CLI install/uninstall and workers verified. Exact CI pending; managed-source approval,unified permissions,activation/fullL2,browser/native creation and original scope remain incomplete. No user runtime replacement or Native/model request."
     }
   }
 }

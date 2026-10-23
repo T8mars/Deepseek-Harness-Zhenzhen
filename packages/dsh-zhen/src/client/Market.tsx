@@ -4,6 +4,7 @@ import type { ZhenRemote } from 'dsh-zhen/remote';
 import type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } from 'dsh-zhen';
 import { LocalSkills } from './LocalSkills.tsx';
 import { GithubSkills } from './GithubSkills.tsx';
+import {RestoredSkillReview} from './RestoredSkillReview.tsx';
 import {useRemoteAction, type CurrentAction, type RemoteAction} from './useRemoteAction.ts';
 
 function unwrap<T>(value: RemoteResult<T>): T { if (!value.ok) throw value.error; return value.value; }
@@ -50,6 +51,7 @@ export function Market({ api }: { api: ZhenRemote }): React.ReactElement {
   const isInstalledVersion = !!preview && selected?.installedVersion === preview.manifest.version && selected.installedDigest === preview.manifest.digest;
   const visible = items.filter(item => (filter === 'all' || (filter === 'installed' ? !!item.installedVersion : filter === 'updates' ? item.updateAvailable : item.manifest.category === filter)) && `${item.manifest.title} ${item.manifest.description} ${item.manifest.id}`.toLowerCase().includes(query.toLowerCase()));
   return <div className="zhen-settings">
+    <RestoredSkillReview api={api}/>
     <section className="zhen-card">
       <div className="zhen-section-heading"><h2>技能市场</h2><span>内置与发布源：{items.filter(item => item.enabled).length} 项已启用 · {items.length} 项可浏览</span></div>
       <p className="zhen-muted">安装后在会话中输入 / 调用。已打开会话的指令列表会缓存，安装后请新建会话或刷新页面。正文与版本保存在本机。</p>
