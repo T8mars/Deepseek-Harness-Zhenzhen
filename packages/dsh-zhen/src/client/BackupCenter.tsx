@@ -7,7 +7,7 @@ import {useRemoteAction} from './useRemoteAction.ts';
 import {RecoveryPreview} from './RecoveryPreview.tsx';
 import {RecoveryHistory} from './RecoveryHistory.tsx';
 import {RestoredSkillReview} from './RestoredSkillReview.tsx';
-import {RestoredManagedSkills} from './RestoredManagedSkills.tsx';
+import {RestoredSkillManagement} from './RestoredSkillManagement.tsx';
 
 const unwrap=<T,>(value:RemoteResult<T>):T=>{if(!value.ok)throw value.error;return value.value;};
 const terminal=(job:BackupJob)=>['succeeded','failed','cancelled'].includes(job.phase);
@@ -64,7 +64,7 @@ export function BackupCenter({api}:{api:ZhenRemote}):React.ReactElement{
   const list=listing?.folder===folder?listing.value:undefined,validPassword=password.length>=12&&new TextEncoder().encode(password).length<=1024,validRestorePassword=restorePassword.length>=12&&new TextEncoder().encode(restorePassword).length<=1024;
   return <div className="zhen-settings">
     <RestoredSkillReview api={api}/>
-    <RestoredManagedSkills api={api}/>
+    <RestoredSkillManagement api={api}/>
     <section className="zhen-card"><div className="zhen-section-heading"><h2>备份与恢复</h2><button type="button" className="zhen-secondary" disabled={locked} onClick={()=>void refreshInfo()}>重新检测</button></div>
       <p>先选择要保存的数据，再设置备份密码。恢复会生成一个独立候选目录，完成校验后供你审阅。</p>
       <p className="zhen-muted">API 令牌不进入备份。请自行保存备份密码，应用无法找回。</p>

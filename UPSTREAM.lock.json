@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-23T13:05:07.313Z",
+  "checkedAt": "2026-10-23T15:07:51.912Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2353,7 +2353,22 @@
       "maxSources": 40032,
       "pageSize": 20,
       "status": "implemented-profile-managed-invocation",
-      "verification": "C177 actual restored Owner and published SkillRegistry grant exact active market,local and GitHub sources,read original instructions and relative resources,deny anonymous changes,and preserve pending,disabled,personal versions and all managed write guards. First GitHub body failure was diagnosed as reading the ordinary running field; fixed to grant-scoped original active without mutating state. C178 verifies profile isolation,current-context changes,corrupt grants,source drift,in-flight local revocation,Host reconstruction and retained provenance before commit. C179 production handlers require one exact-source acknowledgement,refuse stale connection/snapshot/page,and explicitly query ambiguous replies;missing profile is explained. C180 actual61 extra market selections and managed-only recovery preserve complete pagination and later-page decisions. C181 normal Owner application backup/restore preserves choices but never transfers invocation grants. New19,focused27,final UI17,relative resources1 and ordinary23 pass;Complete1380/1380,new19/focused27/final UI17/resources1/ordinary23 and221-file archive pass; C63/C76 stable payload matches local,other version payloads byte-identical,public CLI install/uninstall and workers verified. Exact CI pending; Previous dev86 CI1360/1361 failed old C32 status;cause unknown,local repeats pass and safe diagnostics added without relaxing assertions or retrying. Managed writers,restored automatic updates,unified permissions,activation/fullL2,browser/native creation and all original scope remain incomplete;Native/model0,no user runtime replacement."
+      "verification": "C177 actual restored Owner and published SkillRegistry grant exact active market,local and GitHub sources,read original instructions and relative resources,deny anonymous changes,and preserve pending,disabled,personal versions and all managed write guards. First GitHub body failure was diagnosed as reading the ordinary running field; fixed to grant-scoped original active without mutating state. C178 verifies profile isolation,current-context changes,corrupt grants,source drift,in-flight local revocation,Host reconstruction and retained provenance before commit. C179 production handlers require one exact-source acknowledgement,refuse stale connection/snapshot/page,and explicitly query ambiguous replies;missing profile is explained. C180 actual61 extra market selections and managed-only recovery preserve complete pagination and later-page decisions. C181 normal Owner application backup/restore preserves choices but never transfers invocation grants. New19,focused27,final UI17,relative resources1 and ordinary23 pass;Complete1380/1380,new19/focused27/final UI17/resources1/ordinary23 and221-file archive pass; C63/C76 stable payload matches local,other version payloads byte-identical,public CLI install/uninstall and workers verified. Exact CI pending; Previous dev86 CI1360/1361 failed old C32 status;cause unknown,local repeats pass and safe diagnostics added without relaxing assertions or retrying. Managed writers,restored automatic updates,unified permissions,activation/fullL2,browser/native creation and all original scope remain incomplete;Native/model0,no user runtime replacement.",
+      "managementExtendedBy": "restoredManagedSkillRuntime"
+    },
+    "restoredManagedSkillRuntime": {
+      "schema": 1,
+      "sdkVersion": "0.2.1-rc.2",
+      "oneManagedStorePerRestoredHome": true,
+      "profileScopedConsent": true,
+      "archivedPendingPreserved": true,
+      "freshUpdateReceiptsRequired": true,
+      "receiptsTransferred": false,
+      "originalSourcesPreserved": true,
+      "pageSize": 20,
+      "maxSources": 40032,
+      "status": "implemented-profile-scoped-managed-runtime",
+      "verification": "C182 current-epoch exact pending receipts,profile-scoped automatic consent,fresh fixed-source evidence,skip/cancel/rollback/forks,in-flight pause fence,and no receipt transfer. C183 production bounded copy preserves all retained resources and immutable sources,checks cancellation/source drift/quota/root replacement. C184 actual published Owner/SkillRegistry enables immediately,denies anonymous or changed profiles,keeps archived pending,repairs broken receipts without deleting skills,and uses normal application backup/restore. C185 production handlers require one acknowledged request,reject stale scope/page/replies,and preserve drafts on source refresh;not GUI acceptance. C188 reproduced loss of second-profile personal edits,then verifies one shared independent data store with invocation/management/automatic consent per profile,all three individual gates,cross-profile snapshot refusal,complete normal backup/restore and no grants in new home. A second reproduced stale-feed case now refreshes verified shared candidates without scheduling or inherited consent. Focused36 plus shared-feed1 pass;Complete1417/1417,new37 and226-file archive pass;C63/C76 stable payload matches local,other version payloads byte-identical,public CLI install/uninstall and workers verified. Exact CI pending. Original components preserved;whole application activation,unified permissions,fullL2,real GUI/native creation remain incomplete. Native/model0;no user Host replacement."
     }
   }
 }

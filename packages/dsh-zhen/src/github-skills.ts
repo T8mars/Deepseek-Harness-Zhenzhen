@@ -8,6 +8,7 @@ import { GITHUB_SKILL_POLICY, githubSkillSpecSchema, githubSkillReleaseSchema, g
 import type { GithubSkillSpec, GithubSkillFile, GithubSkillRelease, GithubSkillSource, GithubSkillSourceView, GithubSkillSummary, GithubSkillPreview, GithubSkillFilePreview } from './github-skills-schema.ts';
 import {managedSkillInvocationKey} from './managed-skill-invocation.ts';
 import type {ManagedSkillInvocationGate,ManagedSkillInvocationRow} from './managed-skill-invocation.ts';
+import type {ManagedSkillRuntimePolicy} from './managed-skill-runtime-policy.ts';
 export class GithubSkillError extends Error { constructor(message: string) { super(message); this.name = 'GithubSkillError'; } }
 
 const sha256 = (value: string | Uint8Array): string => createHash('sha256').update(value).digest('hex');
@@ -65,18 +66,21 @@ export class GithubSkills {
   private closed = false;
   private readonly lifetime = new AbortController();
   private downloading?: AbortController;
-  constructor(root: string, private readonly fetcher: typeof fetch = fetch,private readonly options:{candidate?:boolean;reviewOnly?:boolean}={}) {
+  constructor(root: string, private readonly fetcher: typeof fetch = fetch,private readonly options:{candidate?:boolean;reviewOnly?:boolean;runtime?:ManagedSkillRuntimePolicy}={}) {
     mkdirSync(root, { recursive: true }); this.root = realpathSync.native(root);
     const initial=lstatSync(this.root,{bigint:true});this.rootIdentity=initial.dev+':'+initial.ino;
     this.reload();
     if(options.candidate||options.reviewOnly)return;
     let changed = false;
+    const consumed:string[]=[];
     for (const source of this.sources) if (source.pending) {
+      if(options.runtime&&!options.runtime.allowPending('github',source.id,source.pending,'manual'))continue;
       try { this.verify(source.id, source.pending); if (source.enabled) source.active = source.pending; }
       catch { source.state = 'unavailable'; }
-      source.pending = ''; changed = true;
+      source.pending = ''; changed = true;consumed.push(source.id);
     }
     if (changed) this.save(this.sources);
+    for(const id of consumed)options.runtime?.forgetPending('github',id);
     for (const source of this.sources) if (source.enabled && source.active) this.mounted.set(source.id, source.active);
   }
   private owned(path: string): string {
@@ -106,7 +110,7 @@ export class GithubSkills {
     writeFileSync(this.owned(file + '.tmp'), text, { mode: 0o600 }); renameSync(this.owned(file + '.tmp'), file); this.serialized = text; this.sources = sources;
   }
   subscribe(listener: () => void): () => void { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
-  private writable():void{if(this.options.reviewOnly)throw new GithubSkillError('恢复的技能管理操作仍暂停；调用许可可在“恢复来源审阅”设置。下载和更新需先完成整个恢复应用的启用。');}
+  private writable():void{if(this.options.reviewOnly)throw new GithubSkillError('恢复的技能管理操作仍暂停；调用许可可在“恢复来源审阅”设置。下载和更新请在“恢复后的技能管理”启用独立副本。');this.options.runtime?.assertWritable();}
   private changed(): void { if (!this.closed) for (const listener of this.listeners) listener(); }
   private releaseRoot(id: string, digest: string): string {
     if (!/^[a-f0-9]{64}$/.test(id) || !/^[a-f0-9]{64}$/.test(digest)) throw new GithubSkillError('技能版本标识无效。');
@@ -140,7 +144,7 @@ export class GithubSkills {
     this.reload(); return this.sources.map(source => {
       const running = source.enabled ? this.mounted.get(source.id) ?? '' : ''; let skills: GithubSkillRelease['entries'] = [];
       try { if (running || source.active) skills = this.release(source.id, running || source.active).entries; } catch {}
-      return { ...structuredClone(source), running, skills };
+      return { ...structuredClone(source),...(this.options.runtime?{automatic:source.automatic&&this.options.runtime.automatic('github-checks',source.id)}:{}), running, skills };
     });
   }
   /** Read all retained immutable releases, including unapproved or forgotten
@@ -202,9 +206,11 @@ export class GithubSkills {
       this.owned(stage);
       let spec = normalizeGithubSkillSpec(input); const repo = spec.repository.slice('https://github.com/'.length), api = `https://api.github.com/repos/${repo}`;
       const metadata = JSON.parse(await readPublic(api, this.fetcher, abort, 256 * 1024));
+      this.writable();
       if (String(metadata.full_name).toLowerCase() !== repo || metadata.private !== false) throw new GithubSkillError('仓库身份不匹配或不是公开仓库。');
       if (!spec.reference) spec = normalizeGithubSkillSpec({ ...spec, reference: metadata.default_branch });
       const commit = JSON.parse(await readPublic(`${api}/commits/${encodeURIComponent(spec.reference)}`, this.fetcher, abort, 2 * 1024 * 1024));
+      this.writable();
       if (!gitSha(commit.sha) || !gitSha(commit.commit?.tree?.sha)) throw new GithubSkillError('GitHub 提交标识无效。');
       const revision = commit.sha, id = sourceId(spec);
       for (const old of this.history(id)) if (old.revision === revision) { this.verify(id, old.digest); return this.inspect(id, old.digest); }
@@ -248,6 +254,7 @@ export class GithubSkills {
         abort.throwIfAborted();
         const url = `https://raw.githubusercontent.com/${repo}/${revision}/${item.remote.split('/').map(encodeURIComponent).join('/')}`;
         const bytes = await this.raw(url, item.entry.size!, abort);
+        this.writable();
         if (sha1(bytes) !== item.entry.sha) throw new GithubSkillError('Git 文件摘要与提交树不匹配。');
         if (bytes.subarray(0, 43).toString('utf8').startsWith('version https://git-lfs.github.com/spec/v1')) throw new GithubSkillError('技能包含尚未支持的 Git LFS 资源。');
         const path = this.owned(join(stage, item.location, item.entry.path)); mkdirSync(this.owned(dirname(path)), { recursive: true });
@@ -258,6 +265,7 @@ export class GithubSkills {
       const parser = new LocalSkills(join(stage, 'inspection.json'));
       let draft;
       try { draft = await parser.preview(join(stage, 'package'), spec.mode); } finally { parser.close(); }
+      this.writable();
       if (!draft.entries.length) throw new GithubSkillError('所选目录没有有效 SKILL.md。');
       const payload = { schemaVersion: 1 as const, spec, sourceId: id, revision, tree: selected, license: typeof metadata.license?.spdx_id === 'string' ? metadata.license.spdx_id.slice(0, 100) : 'NOASSERTION', files: stored, entries: draft.entries, problems: draft.problems };
       const release = githubSkillReleaseSchema.parse({ ...payload, digest: releaseDigest(payload) });
@@ -272,13 +280,13 @@ export class GithubSkills {
     if (confirmation !== GITHUB_SKILL_POLICY) throw new GithubSkillError('请先审阅来源及完整资源清单。');
     this.reload(); const release = this.verify(id, digest), old = this.sources.find(item => item.id === id), running = this.mounted.get(id) ?? '', activate = !running || running === digest;
     const source: GithubSkillSource = old ? { ...old, enabled: true, pending: activate ? '' : digest, active: activate ? digest : old.active } : { id, spec: release.spec, enabled: true, automatic: true, active: digest, pending: '', latest: digest, checkedAt: new Date().toISOString(), state: 'checked', policy: GITHUB_SKILL_POLICY };
-    this.save(old ? this.sources.map(item => item.id === id ? source : item) : [...this.sources, source]); if (activate) this.mounted.set(id, digest); this.changed();
+    this.save(old ? this.sources.map(item => item.id === id ? source : item) : [...this.sources, source]);if(source.pending)this.options.runtime?.authorizePending('github',id,source.pending,'manual');else this.options.runtime?.forgetPending('github',id);if(!old)this.options.runtime?.setAutomatic('github-checks',true,id); if (activate) this.mounted.set(id, digest); this.changed();
   }
-  disable(id: string): void { this.reload(); this.save(this.sources.map(item => item.id === id ? { ...item, enabled: false, pending: '' } : item)); this.changed(); }
-  forget(id: string): void { this.reload(); this.save(this.sources.filter(item => item.id !== id)); this.mounted.delete(id); this.changed(); }
-  cancelPending(id: string): void { this.reload(); this.save(this.sources.map(item => item.id === id ? { ...item, pending: '' } : item)); }
+  disable(id: string): void { this.reload(); this.save(this.sources.map(item => item.id === id ? { ...item, enabled: false, pending: '' } : item));this.options.runtime?.forgetPending('github',id); this.changed(); }
+  forget(id: string): void { this.reload(); this.save(this.sources.filter(item => item.id !== id));this.options.runtime?.forgetPending('github',id);this.options.runtime?.setAutomatic('github-checks',false,id); this.mounted.delete(id); this.changed(); }
+  cancelPending(id: string): void { this.reload(); this.save(this.sources.map(item => item.id === id ? { ...item, pending: '' } : item));this.options.runtime?.forgetPending('github',id); }
   cancelDownload(): void { this.downloading?.abort(); }
-  automatic(id: string, enabled: boolean): void { this.reload(); this.save(this.sources.map(item => item.id === id ? { ...item, automatic: enabled } : item)); }
+  automatic(id: string, enabled: boolean): void {if(typeof enabled!=='boolean')throw new GithubSkillError('请选择明确的更新检查策略。'); this.reload();if(!this.sources.some(item=>item.id===id))throw new GithubSkillError('技能来源不存在。'); this.save(this.sources.map(item => item.id === id ? { ...item, automatic: enabled } : item));this.options.runtime?.setAutomatic('github-checks',enabled,id); }
   async check(id: string, signal?: AbortSignal): Promise<void> {
     this.writable();
     this.reload(); const source = this.sources.find(item => item.id === id); if (!source) throw new GithubSkillError('技能来源不存在。');
@@ -290,7 +298,7 @@ export class GithubSkills {
   async automaticCheck(signal?: AbortSignal): Promise<void> {
     if(this.options.reviewOnly)return;
     if (this.busy || this.closed) return;
-    for (const source of this.list()) if (source.enabled && source.automatic && (!source.checkedAt || Date.now() - Date.parse(source.checkedAt) > 86400000)) { if (signal?.aborted || this.closed) return; await this.check(source.id, signal); }
+    for (const source of this.list()) if (source.enabled && source.automatic && (!this.options.runtime||this.options.runtime.automatic('github-checks',source.id))&& (!source.checkedAt || Date.now() - Date.parse(source.checkedAt) > 86400000)) { if (signal?.aborted || this.closed) return; await this.check(source.id, signal); }
   }
   deleteRelease(id: string, digest: string): void {
     this.writable();
@@ -302,12 +310,17 @@ export class GithubSkills {
   }
   private invocationKey(source:GithubSkillSource):string{return managedSkillInvocationKey('github',source.id,JSON.stringify({root:this.root,identity:this.rootIdentity,source}));}
   recoveryInvocationRows():ManagedSkillInvocationRow[]{this.reload();return this.sources.map(source=>({kind:'github',id:source.id,key:this.invocationKey(source),name:source.spec.repository,version:source.active,location:this.root,enabled:source.enabled,eligible:source.enabled&&!!source.active}));}
+  recoveryManagementSummary():{pending:number;automatic:boolean}{this.reload();return{pending:this.sources.filter(row=>!!row.pending).length,automatic:this.sources.some(row=>row.automatic)};}
   async verifyRecoveryInvocation(key:string):Promise<void>{this.reload();const source=this.sources.find(source=>this.invocationKey(source)===key&&source.enabled&&source.active);if(!source)throw new GithubSkillError('恢复技能来源已变化。');this.verify(source.id,source.active);}
   provider(gate?:ManagedSkillInvocationGate): SkillProvider {
+    const consentRequired=!!this.options.reviewOnly||!!gate;
+    // Effective automatic-check preferences are profile scoped. Invocation
+    // receipts identify the unchanged stored source, never that derived view.
+    const sources=()=>{this.reload();return this.sources.map(source=>({...source,running:this.mounted.get(source.id)??''}));};
     return { name: 'dsh-zhen-github-skills',
       list: async options => {
         options.signal?.throwIfAborted(); const candidates = [], seen = new Set<string>();
-        for (const source of this.list()) {const {running:_running,skills:_skills,...record}=source,key=this.invocationKey(record),token=this.options.reviewOnly?gate?.token(key):undefined,active=this.options.reviewOnly&&token?source.active:source.running;if (source.enabled && active) try { const release = this.release(source.id, active); for (const entry of release.entries) if (!seen.has(entry.name)) {
+        for (const source of sources()) {const {running:_running,...record}=source,key=this.invocationKey(record),token=consentRequired?gate?.token(key):undefined,active=consentRequired?(token?source.active:''):source.running;if (source.enabled && active) try { const release = this.release(source.id, active); for (const entry of release.entries) if (!seen.has(entry.name)) {
           seen.add(entry.name); candidates.push({ name: entry.name, description: entry.description, provider: 'dsh-zhen-github-skills', source: 'custom', rank: 450,
             resourceBase: { kind: 'directory' as const, path: join(this.releaseRoot(source.id, active), 'package', entry.directory) }, invocation: { modelInvocable: entry.modelInvocable, userInvocable: entry.userInvocable }, locator: { sourceId: source.id, digest: active, directory: entry.directory, bodyDigest: entry.digest } });
         } } catch {} }
@@ -315,13 +328,13 @@ export class GithubSkills {
       },
       get: async (candidate, options) => {
         options.signal?.throwIfAborted(); const locator = candidate.locator as { sourceId?: string; digest?: string; directory?: string; bodyDigest?: string } | undefined;
-        const source = this.list().find(item => item.id === locator?.sourceId && item.enabled && (this.options.reviewOnly?item.active:item.running) === locator?.digest);
+        const source = sources().find(item => item.id === locator?.sourceId && item.enabled && (consentRequired?item.active:item.running) === locator?.digest);
         if (!source || !locator || typeof locator.directory !== 'string' || typeof locator.bodyDigest !== 'string') return undefined;
-        const {running:_running,skills:_skills,...record}=source,key=this.invocationKey(record),token=this.options.reviewOnly?gate?.token(key):undefined;if(this.options.reviewOnly&&!token)return undefined;
+        const {running:_running,...record}=source,key=this.invocationKey(record),token=consentRequired?gate?.token(key):undefined;if(consentRequired&&!token)return undefined;
         try {
-          const active=this.options.reviewOnly?source.active:source.running,release = this.verify(source.id, active), root = this.releaseRoot(source.id, active), parser = new LocalSkills(join(root, 'inspection.json')); let body;
+          const active=consentRequired?source.active:source.running,release = this.verify(source.id, active), root = this.releaseRoot(source.id, active), parser = new LocalSkills(join(root, 'inspection.json')); let body;
           try { body = await parser.body(join(root, 'package'), locator.directory, locator.bodyDigest); } finally { parser.close(); }
-          options.signal?.throwIfAborted(); if (body.entry.name !== candidate.name || !this.list().some(item => item.id === source.id && item.enabled && (this.options.reviewOnly?item.active:item.running) === release.digest) || this.closed||this.options.reviewOnly&&gate?.token(key)!==token) return undefined;
+          options.signal?.throwIfAborted(); if (body.entry.name !== candidate.name || !sources().some(item => item.id === source.id && item.enabled && (consentRequired?item.active:item.running) === release.digest) || this.closed||consentRequired&&gate?.token(key)!==token) return undefined;
           return { name: body.entry.name, description: body.entry.description, provider: 'dsh-zhen-github-skills', source: 'custom', resourceBase: { kind: 'directory', path: body.resourceRoot }, invocation: { modelInvocable: body.entry.modelInvocable, userInvocable: body.entry.userInvocable }, content: body.content };
         } catch { options.signal?.throwIfAborted(); return undefined; }
       },

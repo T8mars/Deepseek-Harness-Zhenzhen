@@ -5,7 +5,7 @@ import type { MarketItem, SkillPackage, SkillFeedSnapshot, SkillAutoPolicy } fro
 import { LocalSkills } from './LocalSkills.tsx';
 import { GithubSkills } from './GithubSkills.tsx';
 import {RestoredSkillReview} from './RestoredSkillReview.tsx';
-import {RestoredManagedSkills} from './RestoredManagedSkills.tsx';
+import {RestoredSkillManagement} from './RestoredSkillManagement.tsx';
 import {useRemoteAction, type CurrentAction, type RemoteAction} from './useRemoteAction.ts';
 
 function unwrap<T>(value: RemoteResult<T>): T { if (!value.ok) throw value.error; return value.value; }
@@ -26,9 +26,11 @@ export function Market({ api }: { api: ZhenRemote }): React.ReactElement {
   const {busy, notice, setNotice} = scope;
   const detailRevision = useRef(0), draftRevision = useRef(0);
   const [refreshNeeded, setRefreshNeeded] = useState(false);
+  const [managedRevision,setManagedRevision]=useState(0),catalogRevision=useRef(0);
   async function refresh(current: CurrentAction): Promise<void> {
+    const version=++catalogRevision.current;
     const [catalog, source, automatic] = await Promise.all([api.marketList(), api.marketFeedSnapshot(), api.marketAutoPolicy()]);
-    if (!current()) return;
+    if (!current()||version!==catalogRevision.current) return;
     const nextItems = unwrap(catalog), nextFeed = unwrap(source), nextPolicy = unwrap(automatic);
     setItems(nextItems); setFeed(nextFeed); setPolicy(nextPolicy);
   }
@@ -53,7 +55,7 @@ export function Market({ api }: { api: ZhenRemote }): React.ReactElement {
   const visible = items.filter(item => (filter === 'all' || (filter === 'installed' ? !!item.installedVersion : filter === 'updates' ? item.updateAvailable : item.manifest.category === filter)) && `${item.manifest.title} ${item.manifest.description} ${item.manifest.id}`.toLowerCase().includes(query.toLowerCase()));
   return <div className="zhen-settings">
     <RestoredSkillReview api={api}/>
-    <RestoredManagedSkills api={api}/>
+    <RestoredSkillManagement api={api} onChanged={()=>{setManagedRevision(value=>value+1);void refresh(scope.capture()).catch(()=>setRefreshNeeded(true));}}/>
     <section className="zhen-card">
       <div className="zhen-section-heading"><h2>技能市场</h2><span>内置与发布源：{items.filter(item => item.enabled).length} 项已启用 · {items.length} 项可浏览</span></div>
       <p className="zhen-muted">安装后在会话中输入 / 调用。已打开会话的指令列表会缓存，安装后请新建会话或刷新页面。正文与版本保存在本机。</p>
@@ -73,8 +75,8 @@ export function Market({ api }: { api: ZhenRemote }): React.ReactElement {
       <p className="zhen-muted">默认关闭。开启后不再逐版确认，更新在下次启动生效。指令会影响模型行为；不会自动安装新技能、覆盖个人副本或扩大工具权限。每日检查与自动安排可分别关闭。</p>
       {policy && policy.pendingAutomatic > 0 && <p className="zhen-margin" role="status">已有 {policy.pendingAutomatic} 项自动更新等待下次启动。请先完成当前工作，再重新启动 DSH-zhen。</p>}
     </section>
-    <LocalSkills api={api} query={query}/>
-    <GithubSkills api={api} query={query}/>
+    <LocalSkills api={api} query={query} refreshRevision={managedRevision}/>
+    <GithubSkills api={api} query={query} refreshRevision={managedRevision}/>
     {notice && <div className="zhen-notice" role="status">{notice}{refreshNeeded && <p><button type="button" className="zhen-link" onClick={() => window.location.reload()}>刷新页面以更新会话指令列表</button></p>}</div>}
     {preview && <section className="zhen-card" aria-label="技能详情">
       <div className="zhen-section-heading"><h2>{preview.manifest.title}</h2><button type="button" className="zhen-link" onClick={() => { detailRevision.current++; draftRevision.current++; setPreview(undefined); setPrevious(undefined); setVersions([]); setBody(''); setEditing(false); }}>关闭详情</button></div>

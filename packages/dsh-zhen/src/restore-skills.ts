@@ -46,7 +46,7 @@ function validateReview(value:unknown):RestoredSkillReview{
 /** Pinned own home only. A missing review file is the normal running application;
  * an invalid review never falls back to activating saved pending selections. */
 export function readRestoredSkillReview(home:string):RestoredSkillReview|null{
-  const file=join(home,REVIEW_FILE);if(!existsSync(file))return null;
+  const file=join(home,REVIEW_FILE);if(!existsSync(file)){try{lstatSync(join(home,'managed-runtime.json'));throw new BackupError('BACKUP_MANAGED_RUNTIME_SOURCE_CHANGED');}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}return null;}
   try{
     const root=lstatSync(home),before=lstatSync(file,{bigint:true});if(!isAbsolute(home)||root.isSymbolicLink()||!root.isDirectory()||!equal(realpathSync.native(home),home)||before.isSymbolicLink()||!before.isFile()||before.size>BigInt(MAX_STATE))throw Error();
     const fd=openSync(file,'r');try{if(identity(fstatSync(fd,{bigint:true}))!==identity(before))throw Error();const bytes=Buffer.alloc(Number(before.size));let at=0;while(at<bytes.length){const count=readSync(fd,bytes,at,bytes.length-at,at);if(!count)throw Error();at+=count;}if(identity(fstatSync(fd,{bigint:true}))!==identity(before)||identity(lstatSync(file,{bigint:true}))!==identity(before))throw Error();return validateReview(parseBackupJson(bytes));}finally{closeSync(fd);}

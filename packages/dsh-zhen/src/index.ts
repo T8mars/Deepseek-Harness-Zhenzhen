@@ -10,6 +10,10 @@ import {readRestoredSkillProjects} from './restored-skill-projects.ts';
 import {prepareRestoredSkillBackupSource} from './restored-skill-backup.ts';
 import {RestoredSkillConsent} from './restored-skill-consent.ts';
 import {RestoredManagedSkillConsent} from './restored-managed-skill-consent.ts';
+import {RestoredManagedRuntime} from './restored-managed-runtime.ts';
+import type {ManagedRuntimeSelection} from './restored-managed-runtime.ts';
+import type {RestoredManagedRuntimeView,RestoredManagedRuntimeRequest} from './restored-managed-runtime-schema.ts';
+import type {SkillProvider,SkillProviderControl} from '@deepseek-ai/dsh-skill';
 import type {RestoredManagedSkillView,RestoredManagedSkillRequest} from './restored-managed-skill-schema.ts';
 import {backupJsonString} from './backup-data.ts';
 import type {RestoredSkillConsentView,RestoredSkillConsentRequest} from './restored-skill-consent-schema.ts';
@@ -180,6 +184,11 @@ export default class ZhenService extends TypertRemoteService {
   private readonly backupCenter:BackupCenter;
   private readonly restoredConsent:RestoredSkillConsent;
   private readonly restoredManagedConsent:RestoredManagedSkillConsent;
+  private readonly restoredManagedRuntime:RestoredManagedRuntime;
+  private managedEpoch?:string;
+  private managedRole:ManagedRuntimeSelection|null=null;
+  private readonly managedProviderListeners=new Set<()=>void>();
+  private readonly managedRegistration={depth:0};
   private readonly backupProfile:ProfileContext|undefined;
   private readonly directoryChoices:DirectoryChoices;
   static inject: string[] = ['credentials'];
@@ -224,12 +233,17 @@ export default class ZhenService extends TypertRemoteService {
     super(ctx, 'zhen');
     this.backupProfile=ctx.get('profileContext');
     const managedProfileName=this.backupProfile?.name,managedProfileHome=this.backupProfile?.home,originalManaged=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value;
-    const managedContextCurrent=()=>!!this.backupProfile&&originalManaged(ctx.get('profileContext'))===originalManaged(this.backupProfile)&&this.backupProfile.name===managedProfileName&&this.backupProfile.home===managedProfileHome&&managedProfileHome===dirname(this.zhenHome)&&originalManaged(ctx.get('zhen'))===originalManaged(this);
+    const managedContextCurrent=()=>!!this.backupProfile&&originalManaged(ctx.get('profileContext'))===originalManaged(this.backupProfile)&&this.backupProfile.name===managedProfileName&&this.backupProfile.home===managedProfileHome&&managedProfileHome===dirname(this.zhenHome)&&(this.managedRegistration.depth>0||originalManaged(ctx.get('zhen'))===originalManaged(this));
     this.restoredManagedConsent=new RestoredManagedSkillConsent(dirname(this.zhenHome),this.backupProfile?.name,!!this.restoredSkills,()=>({market:this.market(),local:this.localSkills(),github:this.githubSkills()}),async()=>{
       const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value;
       if(!managedContextCurrent()||backupJsonString(readRestoredSkillReview(this.zhenHome))!==backupJsonString(this.restoredSkills))throw new BackupError('BACKUP_MANAGED_SKILL_SOURCE_CHANGED');
     },managedContextCurrent);
     ctx.effect(()=>()=>this.restoredManagedConsent.close(),'zhen: restored managed skill consent');
+    this.restoredManagedRuntime=new RestoredManagedRuntime(dirname(this.zhenHome),this.backupProfile?.name,!!this.restoredSkills,()=>({market:this.market(),local:this.localSkills(),github:this.githubSkills(),feed:this.feed()}),async()=>{
+      if(!managedContextCurrent()||backupJsonString(readRestoredSkillReview(this.zhenHome))!==backupJsonString(this.restoredSkills))throw new BackupError('BACKUP_MANAGED_RUNTIME_CHANGED');
+    },managedContextCurrent);
+    const stopManagedRuntime=this.restoredManagedRuntime.subscribe(()=>{const selected=this.ensureManagedRole();if(selected&&!selected.entry.enabled)this.githubSkillSources?.cancelDownload();if(selected&&this.skillFeed)this.skillFeed.snapshot();for(const listener of this.managedProviderListeners)listener();});
+    ctx.effect(()=>()=>{stopManagedRuntime();this.restoredManagedRuntime.close();},'zhen: restored managed runtime');
     this.restoredConsent=new RestoredSkillConsent(dirname(this.zhenHome),this.backupProfile?.name,async()=>{
       const profile=this.backupProfile;if(!profile||ctx.get('profileContext')!==profile)throw new BackupError('BACKUP_HOST_PROFILE_UNAVAILABLE');
       const source=await prepareRestoredSkillBackupSource(ctx,dirname(this.zhenHome),()=>{throw new BackupError('BACKUP_COMPONENT_UNAVAILABLE');},{profileOnly:true});
@@ -295,36 +309,20 @@ export default class ZhenService extends TypertRemoteService {
       const controller = new AbortController();
       const check = () => {
         void this.updates().automaticCheck(controller.signal).catch(() => {});
-        if(!this.restoredSkills)void this.feed().automaticCheck(controller.signal).catch(() => {});
+        if(this.canCheckManaged())void this.feed().automaticCheck(controller.signal).catch(() => {});
         void this.mcps().automaticCheck(controller.signal).catch(() => {});
         void this.capabilityUpdates().automaticCheck(controller.signal).catch(() => {});
-        if(!this.restoredSkills)void this.githubSkills().automaticCheck(controller.signal).catch(() => {});
+        if(this.canCheckManaged())void this.githubSkills().automaticCheck(controller.signal).catch(() => {});
       };
       const start = setTimeout(check, 30000); start.unref();
       const interval = setInterval(check, 3600000); interval.unref();
       return () => { clearTimeout(start); clearInterval(interval); controller.abort(); };
     }, 'zhen: public update metadata');
-    ctx.inject(['skills'], inner => inner.skills.registerProvider(control => {
-      const market = this.market();
-      const unsubscribe = market.subscribe(control.invalidate);
-      const stopConsent=this.restoredManagedConsent.subscribe(control.invalidate);control.signal.addEventListener('abort',stopConsent,{once:true});
-      control.signal.addEventListener('abort', unsubscribe, { once: true });
-      return market.provider(this.restoredSkills?this.restoredManagedConsent:undefined);
-    }));
-    ctx.inject(['skills'], inner => inner.skills.registerProvider(control => {
-      const sources = this.localSkills();
-      const unsubscribe = sources.subscribe(control.invalidate);
-      const stopConsent=this.restoredManagedConsent.subscribe(control.invalidate);control.signal.addEventListener('abort',stopConsent,{once:true});
-      control.signal.addEventListener('abort', unsubscribe, { once: true });
-      return sources.provider(this.restoredSkills?this.restoredManagedConsent:undefined);
-    }));
+    ctx.inject(['skills'], inner => inner.skills.registerProvider(control =>this.managedProvider(control,()=>this.market())));
+    ctx.inject(['skills'], inner => inner.skills.registerProvider(control =>this.managedProvider(control,()=>this.localSkills())));
     ctx.inject(['tools'], inner => inner.tools.register(createCapabilityTool(() => this.capabilities())));
     ctx.inject(['tools'], inner => inner.tools.register(createCanvasHelpTool()));
-    ctx.inject(['skills'], inner => inner.skills.registerProvider(control => {
-      const sources = this.githubSkills(); const unsubscribe = sources.subscribe(control.invalidate);
-      const stopConsent=this.restoredManagedConsent.subscribe(control.invalidate);control.signal.addEventListener('abort',stopConsent,{once:true});
-      control.signal.addEventListener('abort', unsubscribe, { once: true }); return sources.provider(this.restoredSkills?this.restoredManagedConsent:undefined);
-    }));
+    ctx.inject(['skills'], inner => inner.skills.registerProvider(control =>this.managedProvider(control,()=>this.githubSkills())));
     registerRestoredSkillProviders(ctx,dirname(this.zhenHome),this.backupProfile?.name);
     ctx.inject(['tools', 'workingDirectory'], inner => {
       const runtime = this.mcpRuntime = new CuratedMcpRuntime(inner, this.mcps());
@@ -439,13 +437,30 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   setKnowledgeAgentAccess(project: string, collectionId: string, enabled: boolean): void { this.knowledge().setAgentAccess(project, collectionId, enabled); }
   private market(): SkillMarket {
+    const role=this.ensureManagedRole();
     if (!this.skillMarket) {
-      this.skillMarket = new SkillMarket(join(this.zhenHome,'skills.sqlite'), this.restoredSkills?[]:readBundledCatalog(),this.restoredSkills?{candidateState:this.restoredSkills.market}:undefined);
-      this.skillFeed = new SkillFeed(join(this.zhenHome,'skills-feed.json'), this.skillMarket, fetch, this.githubAccess(),this.restoredSkills?{candidateState:this.restoredSkills.feed,reviewOnly:true}:undefined);
+      if(role){const runtime=this.restoredManagedRuntime.policy(role);this.skillMarket=new SkillMarket(join(role.root,'s.db'),[],{runtime,catalog:role.role.catalog,bundled:role.role.bundled});this.skillFeed=new SkillFeed(join(role.root,'f.json'),this.skillMarket,fetch,this.githubAccess(),{runtime});}
+      else{this.skillMarket = new SkillMarket(join(this.zhenHome,'skills.sqlite'), this.restoredSkills?[]:readBundledCatalog(),this.restoredSkills?{candidateState:this.restoredSkills.market}:undefined);this.skillFeed = new SkillFeed(join(this.zhenHome,'skills-feed.json'), this.skillMarket, fetch, this.githubAccess(),this.restoredSkills?{candidateState:this.restoredSkills.feed,reviewOnly:true}:undefined);}
     }
     return this.skillMarket;
   }
   private feed(): SkillFeed { this.market(); return this.skillFeed!; }
+  private ensureManagedRole():ManagedRuntimeSelection|null{
+    const selected=this.restoredManagedRuntime.selection(),epoch=selected?selected.entry.epoch+':'+selected.granted:'';
+    if(this.managedEpoch!==undefined&&this.managedEpoch!==epoch){this.localSkillSources?.close();this.githubSkillSources?.close();this.skillMarket?.close();this.localSkillSources=undefined;this.githubSkillSources=undefined;this.skillMarket=undefined;this.skillFeed=undefined;}
+    this.managedEpoch=epoch;this.managedRole=selected;return selected;
+  }
+  private canCheckManaged():boolean{try{return !this.restoredSkills||!!this.restoredManagedRuntime.selection()?.entry.enabled;}catch{return false;}}
+  private managedProvider(control:SkillProviderControl,source:()=>Pick<SkillMarket,'subscribe'|'provider'>):SkillProvider{
+    let unsubscribe=()=>{};const bind=()=>{unsubscribe();unsubscribe=source().subscribe(control.invalidate);control.invalidate();},provider=(owner:ReturnType<typeof source>)=>owner.provider(this.restoredSkills&&!this.managedRole?.granted?this.restoredManagedConsent:undefined);let name:string;
+    // Cordis initializes dependency providers before publishing this Service.
+    // Only this synchronous registration uses the fixed profile/home proof;
+    // subsequent reads, Owner calls and writes require the actual Service too.
+    this.managedRegistration.depth++;try{bind();name=provider(source()).name;}catch(error){unsubscribe();throw error;}finally{this.managedRegistration.depth--;}
+    this.managedProviderListeners.add(bind);const stopConsent=this.restoredManagedConsent.subscribe(control.invalidate);control.signal.addEventListener('abort',()=>{unsubscribe();stopConsent();this.managedProviderListeners.delete(bind);},{once:true});
+    const unavailable=(error:unknown)=>error instanceof BackupError&&error.code.startsWith('BACKUP_MANAGED_RUNTIME_');
+    return{name,list:async options=>{try{const owner=source(),result=await provider(owner).list(options);return source()===owner?result:[];}catch(error){options.signal?.throwIfAborted();if(unavailable(error))return [];throw error;}},get:async(candidate,options)=>{try{const owner=source(),result=await provider(owner).get(candidate,options);return source()===owner?result:undefined;}catch(error){options.signal?.throwIfAborted();if(unavailable(error))return undefined;throw error;}}};
+  }
   private backupAdapters():BackupAdapters{
     const profile=this.backupProfile,home=dirname(this.zhenHome),policy={protectedContainers:[home,this.agentsHome],forbiddenTrees:[] as string[]};
     const profileSource=()=>{if(!profile||this.ctx.get('profileContext')!==profile)throw new BackupError('BACKUP_HOST_PROFILE_UNAVAILABLE');return {home:profile.home,installAnchor:profile.installAnchor,active:profile};};
@@ -473,9 +488,13 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   restoredSkillConsentChange(request:RestoredSkillConsentRequest):Promise<RestoredSkillConsentView>{return this.restoredConsent.change(request);}
   @Remote
-  restoredManagedSkillConsent(page:number):Promise<RestoredManagedSkillView>{return this.restoredManagedConsent.view(page);}
+  async restoredManagedSkillConsent(page:number):Promise<RestoredManagedSkillView>{if(this.restoredManagedRuntime.selection()?.granted)return{available:false,reason:'not-restored',profile:this.backupProfile?.name??null,snapshot:null,items:[],total:0,page:0,nextPage:null,updatesPaused:true,applicationActivated:false};return this.restoredManagedConsent.view(page);}
   @Remote
-  restoredManagedSkillConsentChange(request:RestoredManagedSkillRequest):Promise<RestoredManagedSkillView>{return this.restoredManagedConsent.change(request);}
+  restoredManagedSkillConsentChange(request:RestoredManagedSkillRequest):Promise<RestoredManagedSkillView>{if(this.restoredManagedRuntime.selection()?.granted)throw new BackupError('BACKUP_MANAGED_RUNTIME_ACTIVE');return this.restoredManagedConsent.change(request);}
+  @Remote
+  restoredManagedRuntimeStatus(page:number):Promise<RestoredManagedRuntimeView>{return this.restoredManagedRuntime.view(page);}
+  @Remote
+  restoredManagedRuntimeChange(request:RestoredManagedRuntimeRequest):Promise<RestoredManagedRuntimeView>{return this.restoredManagedRuntime.change(request);}
   @Remote
   backupFiles(folder:string):Promise<BackupFiles>{return this.backupCenter.files(folder);}
   @Remote
@@ -769,8 +788,8 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   async disconnectCanvas(): Promise<void> { await this.mountCanvas?.(); this.saveCanvasConfig(); }
 
-  private localSkills(): LocalSkills { return this.localSkillSources ??= new LocalSkills(join(this.zhenHome,'local-skills.json'),1000,{reviewOnly:!!this.restoredSkills}); }
-  private githubSkills(): GithubSkills { return this.githubSkillSources ??= new GithubSkills(join(this.zhenHome,'github-skills'),fetch,{reviewOnly:!!this.restoredSkills}); }
+  private localSkills(): LocalSkills {const role=this.ensureManagedRole();return this.localSkillSources ??= role?new LocalSkills(join(role.root,'l.json'),1000,{runtime:this.restoredManagedRuntime.policy(role)}):new LocalSkills(join(this.zhenHome,'local-skills.json'),1000,{reviewOnly:!!this.restoredSkills}); }
+  private githubSkills(): GithubSkills {const role=this.ensureManagedRole();return this.githubSkillSources ??= role?new GithubSkills(join(role.root,'g'),fetch,{runtime:this.restoredManagedRuntime.policy(role)}):new GithubSkills(join(this.zhenHome,'github-skills'),fetch,{reviewOnly:!!this.restoredSkills}); }
   private async githubOperation<T>(work: () => T | Promise<T>): Promise<T> {
     try { return await work(); }
     catch (error) { throw new RemoteError('zhen/refused', error instanceof GithubSkillError ? error.message : 'GitHub 操作暂不可用或已取消，请检查仓库是否公开及请求是否限频。', { reason: 'GITHUB_SKILL_REFUSED' }); }
@@ -828,7 +847,7 @@ export default class ZhenService extends TypertRemoteService {
 
   /** Read the verified bundled catalog and locally selected versions. */
   @Remote
-  marketList(): MarketItem[] { return this.market().list(); }
+  marketList(): MarketItem[] { const market=this.market();if(this.managedRole)this.feed().snapshot();return market.list(); }
   /** Read exactly the selected instruction digest before installation. */
   @Remote
   marketPreview(id: string, digest: string, version = ''): SkillPackage { return this.market().preview(id, digest, version); }

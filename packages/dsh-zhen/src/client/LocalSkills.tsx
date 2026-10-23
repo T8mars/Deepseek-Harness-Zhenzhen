@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { ZhenRemote } from 'dsh-zhen/remote';
 import { LOCAL_SKILL_POLICY } from 'dsh-zhen/remote';
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
@@ -7,16 +7,18 @@ import {useRemoteAction, type CurrentAction, type RemoteAction} from './useRemot
 import {DirectoryChooser} from './DirectoryChooser.tsx';
 const unwrap = <T,>(value: RemoteResult<T>): T => { if (!value.ok) throw value.error; return value.value; };
 
-export function LocalSkills({ api, query = '' }: { api: ZhenRemote; query?: string }): React.ReactElement {
+export function LocalSkills({ api, query = '',refreshRevision=0 }: { api: ZhenRemote; query?: string;refreshRevision?:number }): React.ReactElement {
   const [folder, setFolder] = useState(''), [mode, setMode] = useState<LocalSkillMode>('skill');
   const [draft, setDraft] = useState<LocalSkillDraft>(), [views, setViews] = useState<LocalSkillView[]>([]), [body, setBody] = useState<LocalSkillBody>();
   const [trusted, setTrusted] = useState(false);
   const scope = useRemoteAction(api, '操作未完成，请重新扫描。');
   const {busy, notice, setNotice} = scope;
+  const catalogRevision=useRef(0),refreshScope=useRef({api,revision:refreshRevision});
   async function refresh(current: CurrentAction): Promise<void> {
-    const next = unwrap(await api.localSkillList()); if (current()) setViews(next);
+    const version=++catalogRevision.current,next = unwrap(await api.localSkillList()); if (current()&&version===catalogRevision.current) setViews(next);
   }
   useEffect(() => { const current = scope.capture(); setFolder(''); setMode('skill'); setDraft(undefined); setBody(undefined); setViews([]); setTrusted(false); void refresh(current).catch(() => { if (current()) setNotice('本地技能库暂时不可用。'); }); }, [api]);
+  useEffect(()=>{const before=refreshScope.current;refreshScope.current={api,revision:refreshRevision};if(!refreshRevision||before.api!==api||before.revision===refreshRevision)return;const current=scope.capture();setDraft(undefined);setBody(undefined);setTrusted(false);void refresh(current).catch(()=>{if(current())setNotice('管理状态已变化，请刷新目录。');});},[api,refreshRevision]);
   const action = (work: RemoteAction): Promise<void> => scope.run(work, refresh);
   const search = query.toLowerCase().trim();
   const visible = views.map(view => ({ ...view, entries: view.entries.filter(entry => `${entry.name} ${entry.description}`.toLowerCase().includes(search)) })).filter(view => !search || view.entries.length > 0);

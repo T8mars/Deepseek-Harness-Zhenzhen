@@ -315,3 +315,9 @@ C167真实Windows探针复现252字符临时SQLite文件能open但建表时journ
 ## C177–C181 · 恢复管理来源调用与更新分开
 
 固定0.2.1-rc.2公开SkillRegistry继续从自有SkillProvider读取。C177以实际Owner/Host验证只读市场、本地导入、GitHub三类来源的确切活动版本、来源优先级及相对资源；原pending和写入策略不动。C178验证配置身份、来源修订、坏文件、在途撤销和重建Host；C179验证生产表单的单次明确批准与旧scope拒绝；C180验证真实61个新增市场选择的分页及无filesystem的管理恢复；C181验证实际Owner再次备份/恢复不携带调用批准。没有改变上游类型或会话格式，也没有通过重新构造普通管理器来应用归档中的更新。
+
+## C182–C188 · 恢复技能的独立管理数据与配置授权
+
+仍通过固定0.2.1-rc.2的SkillProvider、SkillRegistry失效事件和Owner Gateway。Cordis依赖提供者在Service发布前同步初始化；只有同步注册允许固定profile/home证明，其后继续核真实Service身份。C184真实Owner与SDK验证启用即读、重建Host及原来源保持；C185是生产表单处理器，不能替代浏览器验收。
+
+原单域managed inventory不表达每profile独立数据，C188实际组合备份复现第二配置修改丢失，现保持普通共享库语义：每恢复home一个独立数据副本，profile分别批准调用、管理和自动检查；普通备份完整捕获全库，授权不转移。C182/183验证exact新收据及有界副本；原pending、所有保留版本和偏好不直接生效。共享目录变化仅载入有持久校验证据的候选，不通过重建服务应用pending或调网络。未改SDK、私有profile/会话格式、Native或Desktop协议。

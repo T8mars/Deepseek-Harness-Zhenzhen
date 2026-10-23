@@ -74,3 +74,8 @@ export {RestoredSkillConsent,readRestoredSkillConsent,effectiveRestoredSkillSnap
 export {RESTORED_SKILL_CONSENT_POLICY,restoredSkillConsentRequestSchema,restoredSkillConsentViewSchema} from './restored-skill-consent-schema.ts';
 export {RestoredManagedSkillConsent,RESTORED_MANAGED_SKILL_CONSENT_FILE} from './restored-managed-skill-consent.ts';
 export {RESTORED_MANAGED_SKILL_POLICY} from './restored-managed-skill-schema.ts';
+export {FileManagedSkillRuntimePolicy} from './managed-skill-runtime-policy.ts';
+export type {ManagedSkillRuntimePolicy,ManagedPendingKind,ManagedPendingMode,ManagedAutomaticKind} from './managed-skill-runtime-policy.ts';
+export {prepareManagedRuntimeCopy,discardManagedRuntimeCopy} from './managed-skill-runtime-copy.ts';
+export type {ManagedRuntimeCopy,ManagedRuntimeRole,ManagedRuntimeOwners} from './managed-skill-runtime-copy.ts';
+export {RestoredManagedRuntime} from './restored-managed-runtime.ts';

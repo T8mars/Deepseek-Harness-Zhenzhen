@@ -91,6 +91,8 @@ import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-sc
 export interface ZhenRemote {
   restoredManagedSkillConsent(page:number):Promise<RemoteResult<RestoredManagedSkillView>>;
   restoredManagedSkillConsentChange(request:RestoredManagedSkillRequest):Promise<RemoteResult<RestoredManagedSkillView>>;
+  restoredManagedRuntimeStatus(page:number):Promise<RemoteResult<RestoredManagedRuntimeView>>;
+  restoredManagedRuntimeChange(request:RestoredManagedRuntimeRequest):Promise<RemoteResult<RestoredManagedRuntimeView>>;
   restoredSkillConsent(page:number):Promise<RemoteResult<RestoredSkillConsentView>>;
   restoredSkillConsentChange(request:RestoredSkillConsentRequest):Promise<RemoteResult<RestoredSkillConsentView>>;
   backupCandidatePlan(id:string):Promise<RemoteResult<RecoveryPlan>>;
@@ -271,6 +273,8 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/restoredSkillConsent':method('restoredSkillConsent',restoredSkillConsentViewSchema,'Owner UI: inspect restored filesystem skill sources for this profile; no instruction bodies or activation.',[['page',z.number().int().min(0).max(102).default(0)]]),
   'zhen/restoredManagedSkillConsent':method('restoredManagedSkillConsent',restoredManagedSkillView,'Owner UI: page original managed source invocation choices; no downloads or pending activation.',[['page',z.number().int().min(0).max(2002).default(0)]]),
   'zhen/restoredManagedSkillConsentChange':method('restoredManagedSkillConsentChange',restoredManagedSkillView,'Owner UI: explicitly grant or revoke one exact restored managed source for this profile; keep all writers and automatic updates paused.',[['request',restoredManagedSkillRequest]]),
+  'zhen/restoredManagedRuntimeStatus':method('restoredManagedRuntimeStatus',restoredManagedRuntimeView,'Owner UI: review complete paged source metadata before creating a writable managed-skill copy.',[['page',z.number().int().min(0).max(2002).default(0)]]),
+  'zhen/restoredManagedRuntimeChange':method('restoredManagedRuntimeChange',restoredManagedRuntimeView,'Owner UI: explicitly enable or pause this profile\'s independent managed-skill copy; original restore remains unchanged and update approvals start fresh.',[['request',restoredManagedRuntimeRequest]]),
   'zhen/restoredSkillConsentChange':method('restoredSkillConsentChange',restoredSkillConsentViewSchema,'Owner UI: explicitly grant or revoke only this profile and exact recovered skill sources; no archived tasks, downloads or native approval.',[['request',restoredSkillConsentRequestSchema]]),
   'zhen/backupCandidatePlan':method('backupCandidatePlan',recoveryPlanSchema,'Owner UI: verify original candidate bytes and inspect typed restored locations; no execution, rebinding or activation.',[['id',z.uuid()]]),
   'zhen/backupCandidateProjects':method('backupCandidateProjects',recoveryProjectsSchema,'Owner UI: verify the original candidate and page only original project directories and counts; no session content, original project reads or activation.',[['id',z.uuid()],['cursor',recoveryProjectCursorSchema]]),
@@ -429,3 +433,7 @@ import {restoredManagedSkillView,restoredManagedSkillRequest} from './restored-m
 import type {RestoredManagedSkillView,RestoredManagedSkillRequest} from './restored-managed-skill-schema.ts';
 export {RESTORED_MANAGED_SKILL_POLICY,restoredManagedSkillView} from './restored-managed-skill-schema.ts';
 export type {RestoredManagedSkillView,RestoredManagedSkillRequest} from './restored-managed-skill-schema.ts';
+import {restoredManagedRuntimeRequest,restoredManagedRuntimeView} from './restored-managed-runtime-schema.ts';
+import type {RestoredManagedRuntimeRequest,RestoredManagedRuntimeView} from './restored-managed-runtime-schema.ts';
+export {RESTORED_MANAGED_RUNTIME_POLICY,restoredManagedRuntimeView} from './restored-managed-runtime-schema.ts';
+export type {RestoredManagedRuntimeRequest,RestoredManagedRuntimeView} from './restored-managed-runtime-schema.ts';

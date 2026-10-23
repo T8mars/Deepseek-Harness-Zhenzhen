@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
 import type { ZhenRemote } from 'dsh-zhen/remote';
 import { GITHUB_SKILL_POLICY } from 'dsh-zhen/remote';
@@ -6,14 +6,16 @@ import type { GithubSkillSpec, GithubSkillSourceView, GithubSkillPreview, Github
 import {useRemoteAction, type CurrentAction, type RemoteAction} from './useRemoteAction.ts';
 const unwrap = <T,>(value: RemoteResult<T>): T => { if (!value.ok) throw value.error; return value.value; };
 
-export function GithubSkills({ api, query = '' }: { api: ZhenRemote; query?: string }): React.ReactElement {
+export function GithubSkills({ api, query = '',refreshRevision=0 }: { api: ZhenRemote; query?: string;refreshRevision?:number }): React.ReactElement {
   const [spec, setSpec] = useState<GithubSkillSpec>({ repository: '', reference: '', path: '', mode: 'skill' });
   const [sources, setSources] = useState<GithubSkillSourceView[]>([]), [preview, setPreview] = useState<GithubSkillPreview>(), [file, setFile] = useState<GithubSkillFilePreview>();
   const [history, setHistory] = useState<GithubSkillSummary[]>([]), [trusted, setTrusted] = useState(false), [downloading, setDownloading] = useState(false);
   const scope = useRemoteAction(api);
   const {busy, notice, setNotice} = scope;
-  async function refresh(current: CurrentAction): Promise<void> { const next = unwrap(await api.githubSkillList()); if (current()) setSources(next); }
+  const catalogRevision=useRef(0),refreshScope=useRef({api,revision:refreshRevision});
+  async function refresh(current: CurrentAction): Promise<void> { const version=++catalogRevision.current,next = unwrap(await api.githubSkillList()); if (current()&&version===catalogRevision.current) setSources(next); }
   useEffect(() => { const current = scope.capture(); setSpec({repository: '', reference: '', path: '', mode: 'skill'}); setSources([]); setPreview(undefined); setFile(undefined); setHistory([]); setTrusted(false); setDownloading(false); void refresh(current).catch(() => { if (current()) setNotice('GitHub 技能源暂不可用。'); }); }, [api]);
+  useEffect(()=>{const before=refreshScope.current;refreshScope.current={api,revision:refreshRevision};if(!refreshRevision||before.api!==api||before.revision===refreshRevision)return;const current=scope.capture();setPreview(undefined);setFile(undefined);setHistory([]);setTrusted(false);void refresh(current).catch(()=>{if(current())setNotice('管理状态已变化，请刷新来源。');});},[api,refreshRevision]);
   function edit(value: GithubSkillSpec): void { setSpec(value); setPreview(undefined); setFile(undefined); setTrusted(false); }
   const action = (work: RemoteAction): Promise<void> => scope.run(work, refresh);
   async function inspect(id: string, digest: string, current: CurrentAction): Promise<void> { const next = unwrap(await api.githubSkillInspect(id, digest)); if (!current()) return; setPreview(next); setFile(undefined); setTrusted(false); }

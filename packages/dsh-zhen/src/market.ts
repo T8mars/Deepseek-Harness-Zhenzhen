@@ -10,6 +10,7 @@ import {BackupError} from './backup-archive.ts';
 import {backupJsonString} from './backup-data.ts';
 import {managedSkillInvocationKey} from './managed-skill-invocation.ts';
 import type {ManagedSkillInvocationGate,ManagedSkillInvocationRow} from './managed-skill-invocation.ts';
+import type {ManagedSkillRuntimePolicy} from './managed-skill-runtime-policy.ts';
 
 export function verifySkill(input: unknown): SkillPackage {
   const item = skillPackageSchema.parse(input);
@@ -62,18 +63,21 @@ export class SkillMarket {
   private backupStateRestored=false;
   private restoringBackup=false;
   private readonly reviewOnly:boolean;
+  private readonly runtime?:ManagedSkillRuntimePolicy;
 
-  constructor(filename: string, catalog: SkillPackage[],options?:{candidateState:MarketBackupState}) {
-    const restored=options?validateMarketBackupState(options.candidateState,verifySkill):undefined;this.reviewOnly=!!restored;
+  constructor(filename: string, catalog: SkillPackage[],options?:{candidateState:MarketBackupState}|{runtime:ManagedSkillRuntimePolicy;catalog:SkillPackage[];bundled:SkillPackage[]}) {
+    const restored=options&&'candidateState'in options?validateMarketBackupState(options.candidateState,verifySkill):undefined,running=options&&'runtime'in options?options:undefined;this.reviewOnly=!!restored;this.runtime=running?.runtime;
     if(restored&&(!existsSync(filename)||catalog.length))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');
-    this.catalog = new Map((restored?.catalog??catalog).map(input => { const item = verifySkill(input); return [item.manifest.id, item]; }));
-    if (this.catalog.size !== (restored?.catalog??catalog).length) throw new Error('技能目录存在重复标识。');
-    this.bundled = new Map((restored?.bundled??catalog).map(input=>{const item=verifySkill(input);return[item.manifest.id,item];}));
+    if(running&&(!existsSync(filename)||catalog.length))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');
+    this.catalog = new Map((restored?.catalog??running?.catalog??catalog).map(input => { const item = verifySkill(input); return [item.manifest.id, item]; }));
+    if (this.catalog.size !== (restored?.catalog??running?.catalog??catalog).length) throw new Error('技能目录存在重复标识。');
+    this.bundled = new Map((restored?.bundled??running?.bundled??catalog).map(input=>{const item=verifySkill(input);return[item.manifest.id,item];}));
     mkdirSync(dirname(filename), { recursive: true });
     this.db = new DatabaseSync(filename,{readOnly:this.reviewOnly});
     try {
     const version = this.db.prepare('PRAGMA user_version').get() as { user_version: number };
     if(restored){if(backupJsonString(this.readBackupState())!==backupJsonString(restored))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');return;}
+    if(running){if(version.user_version!==3)throw new BackupError('BACKUP_MARKET_SCHEMA_UNSUPPORTED');validateMarketBackupState(this.readBackupState(),verifySkill);}else{
     if (version.user_version > 3) { this.db.close(); throw new Error('技能数据库版本较新，请升级应用。'); }
     this.db.exec(`PRAGMA foreign_keys=ON;
       CREATE TABLE IF NOT EXISTS versions (digest TEXT PRIMARY KEY, id TEXT NOT NULL, version TEXT NOT NULL, package TEXT NOT NULL, UNIQUE(id,version));
@@ -108,23 +112,27 @@ export class SkillMarket {
           PRAGMA user_version=3; COMMIT;`);
       } catch (error) { this.db.exec('ROLLBACK'); this.db.close(); throw error; }
     }
+    }
     // Activation only crosses a Host restart. Automatic selections additionally
     // recheck the persisted user policy, enabled state, exact release and scope.
-    this.db.exec('BEGIN IMMEDIATE');
+    const consumed:string[]=[];this.db.exec('BEGIN IMMEDIATE');
     try {
       for (const row of this.db.prepare("SELECT * FROM selections WHERE pending<>''").all() as Selection[]) {
+        if(this.runtime&&!this.runtime.allowPending('market',row.id,row.pending,row.pending_mode,row.pending_revision))continue;
         const target = this.stored(row.pending), active = row.active ? this.stored(row.active) : undefined;
         const receipt = this.db.prepare('SELECT verified_revision FROM update_preferences WHERE id=1').get() as { verified_revision: string } | undefined;
         const allowed = !!target && target.manifest.id === row.id && (row.pending_mode === 'manual' || row.pending_mode === 'automatic' && this.automaticEnabled() && row.enabled === 1 && !row.auto_paused && row.skipped !== row.pending && /^[a-f0-9]{40}$/.test(row.pending_revision) && receipt?.verified_revision === row.pending_revision && !!active && automaticTextPackage(active) && automaticTextPackage(target) && compareVersion(target.manifest.version, active.manifest.version) > 0);
         if (allowed) this.db.prepare("UPDATE selections SET active=pending, pending='', pending_mode='', pending_revision='', enabled=1 WHERE id=?").run(row.id);
         else this.db.prepare("UPDATE selections SET pending='', pending_mode='', pending_revision='' WHERE id=?").run(row.id);
+        consumed.push(row.id);
       }
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); this.db.close(); throw error; }
+    for(const id of consumed)this.runtime?.forgetPending('market',id);
     } catch(error) { try{this.db.close();}catch{}throw error; }
   }
   close(): void { this.listeners.clear(); this.db.close(); }
-  private writable():void{if(this.reviewOnly)throw new Error('恢复的技能管理操作仍暂停；调用许可可在“恢复来源审阅”设置。下载和更新需先完成整个恢复应用的启用。');}
+  private writable():void{if(this.reviewOnly)throw new Error('恢复的技能管理操作仍暂停；调用许可可在“恢复来源审阅”设置。下载和更新请在“恢复后的技能管理”启用独立副本。');this.runtime?.assertWritable();}
   /** A read transaction over every retained version, including records hidden
    * by UI history limits. No startup activation or update staging occurs. */
   backupState(): MarketBackupState {
@@ -169,7 +177,7 @@ export class SkillMarket {
   subscribe(listener: () => void): () => void { this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   private changed(): void { for (const listener of this.listeners) listener(); }
   private selected(id: string): Selection | undefined { return this.db.prepare('SELECT * FROM selections WHERE id=?').get(id) as Selection | undefined; }
-  private automaticEnabled(): boolean { return (this.db.prepare("SELECT enabled FROM update_preferences WHERE id=1 AND scope='first-party-text-v1'").get() as { enabled: number } | undefined)?.enabled === 1; }
+  private automaticEnabled(): boolean { return (this.db.prepare("SELECT enabled FROM update_preferences WHERE id=1 AND scope='first-party-text-v1'").get() as { enabled: number } | undefined)?.enabled === 1&&(!this.runtime||this.runtime.automatic('market-updates')); }
   /** Internal receipt for bytes actually fetched through the fixed source.
    * This is local provenance bookkeeping, not a publisher signature. */
   recordVerifiedFeed(inputs: SkillPackage[], revision: string): void {
@@ -177,6 +185,7 @@ export class SkillMarket {
     const items = this.validateRemoteCatalog(inputs);
     if (!/^[a-f0-9]{40}$/.test(revision)) throw new Error('更新来源提交无效。');
     this.db.prepare('UPDATE update_preferences SET verified_revision=?, verified_digest=? WHERE id=1').run(revision, createHash('sha256').update(JSON.stringify(items)).digest('hex'));
+    this.runtime?.verifiedFeed(revision);
   }
   hasVerifiedFeed(inputs: SkillPackage[], revision: string): boolean {
     if (!/^[a-f0-9]{40}$/.test(revision)) return false;
@@ -196,12 +205,14 @@ export class SkillMarket {
       if (!enabled) this.db.exec("UPDATE selections SET pending='', pending_mode='', pending_revision='' WHERE pending_mode='automatic'");
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
+    this.runtime?.setAutomatic('market-updates',enabled);
   }
   pauseAutoUpdate(id: string, paused: boolean): void {
     this.writable();
     const selected = this.selected(id), item = selected?.active ? this.stored(selected.active) : undefined;
     if (typeof paused !== 'boolean' || !item || item.manifest.source !== 'bundled' || !id.startsWith('zhen-')) throw new Error('只有已安装的发布源技能可以设置自动更新策略。');
     this.db.prepare("UPDATE selections SET auto_paused=?, pending=CASE WHEN ?=1 AND pending_mode='automatic' THEN '' ELSE pending END, pending_revision=CASE WHEN ?=1 AND pending_mode='automatic' THEN '' ELSE pending_revision END, pending_mode=CASE WHEN ?=1 AND pending_mode='automatic' THEN '' ELSE pending_mode END WHERE id=?").run(paused ? 1 : 0, paused ? 1 : 0, paused ? 1 : 0, paused ? 1 : 0, id);
+    if(paused)this.runtime?.forgetPending('market',id);
   }
   /** Only the fixed, fully validated text feed can schedule this path. A user's
    * source policy replaces per-release confirmation, never tool authorization. */
@@ -209,8 +220,8 @@ export class SkillMarket {
     this.writable();
     const items = this.validateRemoteCatalog(inputs);
     if (!/^[a-f0-9]{40}$/.test(revision)) throw new Error('自动更新缺少固定来源提交。');
-    if (!this.automaticEnabled() || !this.hasVerifiedFeed(items, revision)) return 0;
-    let staged = 0;
+    if (!this.automaticEnabled() || !this.hasVerifiedFeed(items, revision)||this.runtime&&!this.runtime.canStageAutomatic(revision)) return 0;
+    let staged = 0;const authorized:Array<{id:string;key:string}>=[];
     this.db.exec('BEGIN IMMEDIATE');
     try {
       const available = new Set(items.map(item => item.manifest.id));
@@ -219,6 +230,7 @@ export class SkillMarket {
         const selected = this.selected(item.manifest.id), active = selected?.active ? this.stored(selected.active) : undefined;
         const key = versionKey(item);
         if (!selected || selected.enabled !== 1 || selected.auto_paused || selected.skipped === key || !active || !automaticTextPackage(active) || !automaticTextPackage(item) || compareVersion(item.manifest.version, active.manifest.version) <= 0 || selected.pending && selected.pending_mode !== 'automatic') continue;
+        authorized.push({id:item.manifest.id,key});
         if (selected.pending === key) { if (selected.pending_revision !== revision) this.db.prepare('UPDATE selections SET pending_revision=? WHERE id=?').run(revision, item.manifest.id); continue; }
         this.save(item);
         this.db.prepare("UPDATE selections SET pending=?, pending_mode='automatic', pending_revision=? WHERE id=?").run(key, revision, item.manifest.id);
@@ -226,6 +238,7 @@ export class SkillMarket {
       }
       this.db.exec('COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
+    for(const row of authorized)this.runtime?.authorizePending('market',row.id,row.key,'automatic',revision);
     return staged;
   }
   private stored(digest: string): SkillPackage | undefined {
@@ -263,7 +276,15 @@ export class SkillMarket {
   }
   offerRemoteCatalog(inputs: SkillPackage[]): void {
     this.writable();
-    const items = this.validateRemoteCatalog(inputs);
+    this.replaceCatalog(this.validateRemoteCatalog(inputs));
+  }
+  /** Read verified cached discovery into an active copy while management is
+   * paused. No preference, pending record, receipt or database row is written. */
+  loadVerifiedRuntimeCatalog(inputs:SkillPackage[],revision:string):void{
+    if(!this.runtime||this.reviewOnly||!this.hasVerifiedFeed(inputs,revision))throw new BackupError('BACKUP_MANAGED_RUNTIME_CATALOG_UNVERIFIED');
+    this.replaceCatalog(this.validateRemoteCatalog(inputs));
+  }
+  private replaceCatalog(items:SkillPackage[]):void{
     const next = new Map(this.bundled);
     for (const item of items) next.set(item.manifest.id, item);
     this.catalog.clear();
@@ -314,17 +335,20 @@ export class SkillMarket {
     const hold = selected?.auto_paused === 1 || !!selected?.active && !!latest && compareVersion(item.manifest.version, latest.manifest.version) < 0;
     if (selected?.active && selected.active !== key) {
       this.db.prepare("UPDATE selections SET pending=?, pending_mode='manual', pending_revision='', auto_paused=?, skipped='' WHERE id=?").run(key, hold ? 1 : 0, id);
+      this.runtime?.authorizePending('market',id,key,'manual');
     } else {
       this.db.prepare("INSERT INTO selections(id,active,enabled,auto_paused) VALUES(?,?,1,?) ON CONFLICT(id) DO UPDATE SET active=excluded.active, enabled=1, pending='', pending_mode='', pending_revision='', auto_paused=excluded.auto_paused, skipped=''").run(id, key, hold ? 1 : 0);
+      this.runtime?.forgetPending('market',id);
     }
     this.changed();
   }
   disable(id: string): void {
     this.writable();
     this.db.prepare("UPDATE selections SET enabled=0, pending='', pending_mode='', pending_revision='' WHERE id=?").run(id);
+    this.runtime?.forgetPending('market',id);
     this.changed();
   }
-  cancelPending(id: string): void { this.writable();this.db.prepare("UPDATE selections SET skipped=CASE WHEN pending<>'' THEN pending ELSE skipped END, pending='', pending_mode='', pending_revision='' WHERE id=?").run(id); this.changed(); }
+  cancelPending(id: string): void { this.writable();this.db.prepare("UPDATE selections SET skipped=CASE WHEN pending<>'' THEN pending ELSE skipped END, pending='', pending_mode='', pending_revision='' WHERE id=?").run(id);this.runtime?.forgetPending('market',id); this.changed(); }
   versions(id: string): SkillPackage[] {
     return (this.db.prepare('SELECT package FROM versions WHERE id=? ORDER BY rowid DESC LIMIT 50').all(id) as { package: string }[]).map(row => verifySkill(JSON.parse(row.package)));
   }
@@ -342,28 +366,30 @@ export class SkillMarket {
     return name;
   }
   recoveryInvocationRows():ManagedSkillInvocationRow[]{return (this.db.prepare('SELECT * FROM selections ORDER BY rowid').all() as Selection[]).map(row=>{const item=row.active?this.stored(row.active):undefined;return{kind:'market',id:row.id,key:managedSkillInvocationKey('market',row.id,row.active),name:item?.manifest.title??row.id,version:item?.manifest.version??'',location:null,enabled:row.enabled===1,eligible:row.enabled===1&&!!item};});}
+  recoveryManagementSummary():{pending:number;automatic:boolean}{return{pending:Number(this.db.prepare("SELECT COUNT(*) AS count FROM selections WHERE pending<>''").get()?.count),automatic:this.db.prepare('SELECT enabled FROM update_preferences WHERE id=1').get()?.enabled===1};}
   async verifyRecoveryInvocation(key:string):Promise<void>{const row=this.recoveryInvocationRows().find(row=>row.key===key);if(!row?.eligible)throw new BackupError('BACKUP_MANAGED_SKILL_SOURCE_CHANGED');}
   provider(gate?:ManagedSkillInvocationGate): SkillProvider {
+    const consentRequired=this.reviewOnly||!!gate;
     const summary = (item: SkillPackage) => ({ name: item.manifest.id, description: item.manifest.description,
       provider: 'dsh-zhen-market', source: item.manifest.source === 'personal' ? 'user-dsh' : 'bundled',
       invocation: { modelInvocable: true, userInvocable: true }, metadata: { version: item.manifest.version, digest: item.manifest.digest } });
     return { name: 'dsh-zhen-market',
       list: async options => {
         options.signal?.throwIfAborted();
-        if(this.reviewOnly&&!gate)return [];
-        return (this.db.prepare("SELECT * FROM selections WHERE enabled=1 AND active<>''").all() as Selection[]).filter(selected=>!this.reviewOnly||!!gate?.token(managedSkillInvocationKey('market',selected.id,selected.active))).map(selected => {
+        if(consentRequired&&!gate)return [];
+        return (this.db.prepare("SELECT * FROM selections WHERE enabled=1 AND active<>''").all() as Selection[]).filter(selected=>!consentRequired||!!gate?.token(managedSkillInvocationKey('market',selected.id,selected.active))).map(selected => {
           const item = this.stored(selected.active)!;
           return { ...summary(item), rank: item.manifest.source === 'personal' ? 390 : 600, locator: { id: selected.id, digest: selected.active } } satisfies SkillCandidate;
         });
       },
       get: async (candidate, options): Promise<SkillDefinition | undefined> => {
         options.signal?.throwIfAborted();
-        if(this.reviewOnly&&!gate)return undefined;
+        if(consentRequired&&!gate)return undefined;
         const locator = candidate.locator as { id?: string; digest?: string } | undefined;
         if (!locator || locator.id !== candidate.name || typeof locator.digest !== 'string') return undefined;
         const selected = this.selected(candidate.name);
         if (!selected?.enabled || selected.active !== locator.digest) return undefined;
-        if(this.reviewOnly&&!gate?.token(managedSkillInvocationKey('market',selected.id,selected.active)))return undefined;
+        if(consentRequired&&!gate?.token(managedSkillInvocationKey('market',selected.id,selected.active)))return undefined;
         const item = this.stored(locator.digest);
         if (!item) return undefined;
         return { ...summary(item), content: skillBody(item.content) };
