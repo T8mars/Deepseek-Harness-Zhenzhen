@@ -34,7 +34,7 @@
   "packageManager": {
     "name": "pnpm",
     "version": "10.34.7",
-    "scope": "profile package operations; npm lockfile owns workspace"
+    "scope": "profile package operations; npm lockfile owns development dependencies without a self-bundle workspace link"
   },
   "extensions": {
     "mcpSdk": "1.32.1",
@@ -2272,7 +2272,14 @@
       "imageRoutes": 16,
       "defaultModelUnchanged": true,
       "automaticRoutingInstallation": false,
-      "verification": "New13/related32,build and clean types pass. C142 actual Node catalog CLI shares bounded metadata extraction with Host; explicit appendix models included,examples ignored,unknown/conflicting protocols refused. C143 precise model differences ignore line-only movement and never install routing. C144 actual Owner Gateway/public GET loopback rejects anonymous and resolves no credentials. C145 actual Runtime context/input/default budget and C146 actual AgentLoop/PiAi explicit model/canonical tool wire pass with Flash default preserved. Actual production public monitor matches all3 source hashes and semantic inventory. One real Argon synthetic-image request and two real scoped Agent/file-tool requests complete normally. Complete1217/1217,210-file archive,public CLI install/uninstall and workers pass; stable artifact identical to local and other canary payload bytes identical. Exact CI pending. Browser/native/Moss execution/all-model quality/fullL2 unverified; Same tested210-file package installed; only the exact reviewed Argon model is added and all other public settings/scoped owned metadata preserved. Browser remains unverified."
+      "verification": "New13/related32,build and clean types pass. C142 actual Node catalog CLI shares bounded metadata extraction with Host; explicit appendix models included,examples ignored,unknown/conflicting protocols refused. C143 precise model differences ignore line-only movement and never install routing. C144 actual Owner Gateway/public GET loopback rejects anonymous and resolves no credentials. C145 actual Runtime context/input/default budget and C146 actual AgentLoop/PiAi explicit model/canonical tool wire pass with Flash default preserved. Actual production public monitor matches all3 source hashes and semantic inventory. One real Argon synthetic-image request and two real scoped Agent/file-tool requests complete normally. Complete1217/1217,210-file archive,public CLI install/uninstall and workers pass; stable artifact identical to local and other canary payload bytes identical. Exact Windows CI39877348317 verified1217/210 with identical local artifact and public CLI install/uninstall. Browser/native/Moss execution/all-model quality/fullL2 unverified; Same tested210-file package installed; only the exact reviewed Argon model is added and all other public settings/scoped owned metadata preserved. Browser remains unverified."
+    },
+    "installedBundleSource": {
+      "schemaVersion": 1,
+      "upstreamModified": false,
+      "selfWorkspaceLink": false,
+      "automaticResidualRepair": true,
+      "verification": "New9/related47 pass. Explicit declared source Remote paths replace removed workspace aliases in two client fixtures; all original assertions preserved. First full failure retained and complete recheck separate. C147 actual published CLI in fresh TEMP composes the installed independent EXAMPLE bundle instead of workspace source; red-before/green-after retained. C148 actual prepared launcher rejects shadow before lease/profile,checks physical SDK and missing entry,loads no plugin code. C149 cached-setup repair uses hook-free npm under existing lease,refuses incomplete repair and preserves old setup record; busy Host prevents mutation. Successful require.resolve cache is not filesystem evidence: public search paths plus fresh metadata check fixes first failing cached-removal case. All existing lock versions/resolutions/integrities preserved. Actual bootstrap --repair --check and current live startup pass with same210-file artifact,complete public settings,ownCanvas/RAG metadata and art selection preserved. Complete1226/1226,210-file archive byte-identical to dev80,public CLI install/uninstall and worker hashes pass; stable archive matches local and other canary payload bytes identical. Exact CI pending. Browser,Native creation,all-model quality,fullL2 and whole-goal scope remain unverified."
     }
   }
 }

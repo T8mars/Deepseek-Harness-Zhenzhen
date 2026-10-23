@@ -282,3 +282,8 @@ C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/ch
 ## C142–C146：文档模型与显式Argon调用
 
 纯数据TypeScript提取器由Node22.19原生类型擦除加载，实际目录CLI在C142验证；发布Host包通过esbuild内联，不要求用户运行源TS。固定公开来源不变，元数据只解析显式声明及已审协议，示例/代码块不产生模型。C143验证真实监视器的模型事实差异、行移动、超限及取消；C144用实际发布Owner Gateway与HTTP传输核对，不解析凭据、不装工具/改路由。C145验证发布Runtime的resolveModelInfo和PreparedLlmCall.context/config/inputModalities，不依赖Adapter内部model字段；新配置是完整provider整行替换，旧模型与默认Flash保持。C146由实际发布AgentLoop/PiAi验证单Agent显式model选项与规范工具结果传递，默认服务不变；真实同范围两请求另验证。没有修改生成协议/SDK或宣称Native审批和全模态就绪。
+
+
+## C147–C149：安装锚点与已安装bundle
+
+实际发布CLI的bundle补丁可先从其安装锚点解析到开发workspace，而plugin exec的实际包身份仍是profile中的另一版本。C147用全新TEMP无依赖示例包先红后绿核对，不能以CJS安装身份或同版本号单独证明补丁来源。根开发项目不再把自身bundle暴露为workspace；发布包依赖与上游解析器不变。C148用Node公开模块搜索路径及实际目录检查物理SDK入口，不导入插件或解析私有profile；C149验证缓存命中时自动修复、失败保留与忙碌拒绝。require.resolve的成功缓存不能作为修复后目录仍存在的证据；首轮误报已由实际目录复核修正，没有操作Node私有缓存。

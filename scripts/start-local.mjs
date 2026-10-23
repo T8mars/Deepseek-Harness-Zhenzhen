@@ -6,6 +6,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
 import {acquireRuntimeLease,assertRuntimeLease} from './runtime-lifecycle.mjs';
 import {redactLauncherLine} from './log-output.mjs';
+import {bundleShadowsProfile,assertBundleIsolation} from './bundle-isolation.mjs';
 
 const workspace=dirname(dirname(fileURLToPath(import.meta.url)));
 const required=['@deepseek-ai/dsh/lib/bin.js','yaml/package.json','typescript/bin/tsc','esbuild/package.json','zod/package.json'];
@@ -61,14 +62,17 @@ export async function startLocal({root=workspace,flags=process.argv.slice(2),por
     if(existsSync(marker))previous=json(marker,4096);
     const execute=run??((args)=>npmStep(root,findNpmCli(),args));
     if(previous&&previous.schema!==1)throw new Error('准备记录来自其他版本，请先核对工具版本；未覆盖记录。');
-    if(flags.includes('--repair')||previous?.digest!==digest||!dependenciesReady(root)) {
-      console.log('正在准备锁定版本的依赖，首次运行需要联网下载…');
+    const ready=dependenciesReady(root),cli=join(root,'node_modules/@deepseek-ai/dsh/lib/bin.js'),shadowed=ready&&bundleShadowsProfile(cli);
+    if(flags.includes('--repair')||previous?.digest!==digest||!ready||shadowed) {
+      console.log(shadowed?'正在修复旧开发依赖，保留现有资料和配置…':'正在准备锁定版本的依赖，首次运行需要联网下载…');
       await execute(['ci','--ignore-scripts','--no-audit','--no-fund']);
       checkStop();
       if(!dependenciesReady(root))throw new Error('依赖准备不完整，未启动DSH。');
+      assertBundleIsolation(cli);
       const temporary=marker+'.'+process.pid+'.'+randomUUID()+'.tmp';let created=false;
       try {const fd=openSync(temporary,'wx',0o600);created=true;try{writeFileSync(fd,JSON.stringify({schema:1,digest})+'\n');}finally{closeSync(fd);}renameSync(temporary,marker);}finally{if(created&&existsSync(temporary))unlinkSync(temporary);}
     }
+    assertBundleIsolation(cli);
     console.log('正在构建并校验本机扩展包…');
     await execute(['run','build']);checkStop();await execute(['run','typecheck:clean']);checkStop();await execute(['run','pack:bundle']);checkStop();
     await assertRuntimeLease(lease,runtime,lease.port);

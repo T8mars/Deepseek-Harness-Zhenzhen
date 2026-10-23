@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,realpathSync,rmSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,readFileSync,realpathSync,rmSync} from 'node:fs';
 import {join,resolve,relative,isAbsolute} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createRequire} from 'node:module';
 import {build} from 'esbuild';
 import React from 'react';
 import {clientHooks} from './fixtures/client-hooks.mjs';
-const require=createRequire(import.meta.url),react=require.resolve('react'),jsx=require.resolve('react/jsx-runtime'),remote=require.resolve('dsh-zhen/remote');
+const require=createRequire(import.meta.url),react=require.resolve('react'),jsx=require.resolve('react/jsx-runtime'),remote=resolve('packages/dsh-zhen',JSON.parse(readFileSync('packages/dsh-zhen/package.json','utf8')).exports['./remote'].default);
 const ok=value=>Promise.resolve({ok:true,value}),deferred=()=>{let done,fail;const promise=new Promise((yes,no)=>{done=value=>yes({ok:true,value});fail=no;});return {promise,done,fail};};
 function nodes(el){return !el||typeof el!=='object'?[]:[el,...React.Children.toArray(el.props?.children).flatMap(nodes)];}
 function text(el){return React.Children.toArray(el?.props?.children).map(x=>x&&typeof x==='object'?text(x):String(x??'')).join('');}

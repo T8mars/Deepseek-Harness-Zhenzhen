@@ -7,6 +7,7 @@ import { redactLauncherLine } from './log-output.mjs';
 import { acquireRuntimeLease, assertRuntimeLease } from './runtime-lifecycle.mjs';
 import { selectDefaultArt } from './launch-art.mjs';
 import { readLaunchArtifact } from './launch-artifact.mjs';
+import { assertBundleIsolation } from './bundle-isolation.mjs';
 
 export async function launch(preparedLease, flags = process.argv.slice(2)) {
 if (flags.some(value => !['--check', '--no-open'].includes(value))) throw new Error('Usage: npm start -- [--check] [--no-open]');
@@ -14,6 +15,7 @@ const root = process.cwd();
 const runtime = resolve(root, '.runtime');
 const home = join(runtime, 'dsh-home');
 const cli = resolve(root, 'node_modules/@deepseek-ai/dsh/lib/bin.js');
+assertBundleIsolation(cli);
 const manifest = JSON.parse(readFileSync(resolve(root, 'packages/dsh-zhen/package.json'), 'utf8'));
 const {artifact,archivePath:archive,digest}=readLaunchArtifact(root,manifest);
 const marker = join(runtime, 'installed.json');
