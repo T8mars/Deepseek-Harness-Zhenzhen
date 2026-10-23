@@ -335,3 +335,7 @@ C191为测试自有临时资源的清理契约：dev88 CI1416/1417中的C63报�
 ## C193–C194 · 恢复后的权限以当前副本为边界
 
 固定发布SDK0.2.1-rc.2通过公开SessionPersistence写入三个已文档化权限事件，实际SandboxPolicy与Approval服务按最新事件执行；仅写permissionsRestored:false元数据不能阻止旧授权重放。新应用副本保留原header/事件prefix/继承cut，并重置历史权限。C193以实际服务读取验证；C194按三个公开模块身份重置整行默认配置，SDK默认表由契约绑定，不信任read-only名称或不透明表达式。原组件不改，不改存储格式或生成协议。完整应用启动及任意插件权限不能从这些限定检查推断。
+
+## C195–C198 · 恢复应用沿公开启动与配置接缝
+
+固定SDK0.2.1-rc.2的公开RuntimeResolution刻意省略所选bundle自身；审阅必须结合公开Profile.layers及实际模块目录，不能以命名空间当信任。公开writeProfileManifest与标准Node投影负责自有无依赖快照bundle，不重装已还原依赖图。公开user patch的效果已进入完整快照，必须保留原字节并经钉死的公开writeFileAtomic清空新用户层，避免insert重复及安全默认被覆写；不改SDK私有文件。整树CLI overlay会阻止ConfigEditor保存，窄监听/monitor覆盖不会。C195实际两次完整Web启动及真实ConfigEditor验证这一区别与目录来源、变化拒绝、旧monitor剔除。自有普通插件等待公开appReady.onReady，再核11核心服务；不改客户端bootstrap、Desktop IPC或Native协议。C196/C197验证本机认证通道、公开CLI真实进程生命周期、ctx.credentials自有grant绑定及Owner边界；C198是生产事件处理器测试，非浏览器验收。原组件/加密备份保留，运行应用副本正常写入后不再沿用原seal作为活跃状态证明。

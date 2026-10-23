@@ -1,0 +1,13 @@
+import {z} from 'zod';
+export const recoveryApplicationPhase=z.enum(['preparing','starting','running','stopping','exited','failed','unknown']);
+const profile=z.string().regex(/^[A-Za-z0-9_-]{1,255}$/),digest=z.string().regex(/^[a-f0-9]{64}$/);
+export const recoveryApplicationStatusSchema=z.object({candidateId:z.uuid(),consumed:z.boolean(),requestId:z.uuid().nullable(),execution:z.uuid().nullable(),profile:profile.nullable(),title:z.string().max(255).nullable(),phase:recoveryApplicationPhase.nullable(),ready:z.boolean(),pid:z.number().int().positive().nullable(),port:z.number().int().min(1).max(65535).nullable(),browserRequested:z.boolean(),canReopen:z.boolean(),error:z.string().regex(/^BACKUP_[A-Z_]+$/).nullable()}).strict();
+export const recoveryApplicationReviewRequest=z.object({candidateId:z.uuid(),profile:profile.or(z.literal('')).default(''),page:z.number().int().min(0).max(500).default(0),review:digest.nullable().default(null)}).strict();
+export const recoveryApplicationReviewSchema=z.object({candidateId:z.uuid(),status:recoveryApplicationStatusSchema,profiles:z.array(z.object({name:profile,title:z.string().max(255),available:z.boolean()}).strict()).max(128),selected:profile.nullable(),review:digest.nullable(),programs:z.array(z.object({id:z.string().max(100),name:z.string().max(255),enabled:z.boolean(),origin:z.enum(['installed','restored','unresolved']),version:z.string().max(100).nullable()}).strict()).max(20),totalPrograms:z.number().int().min(0).max(10000),unresolvedPrograms:z.number().int().min(0).max(10000),page:z.number().int().min(0).max(500),nextPage:z.number().int().min(0).max(500).nullable(),canOpen:z.boolean()}).strict();
+export const recoveryApplicationOpenRequest=z.object({candidateId:z.uuid(),requestId:z.uuid(),profile,review:digest,approved:z.literal(true),openBrowser:z.boolean().default(true)}).strict();
+export const recoveryApplicationControlRequest=z.object({candidateId:z.uuid(),execution:z.uuid(),operation:z.enum(['show','stop'])}).strict();
+export type RecoveryApplicationStatus=z.infer<typeof recoveryApplicationStatusSchema>;
+export type RecoveryApplicationReview=z.infer<typeof recoveryApplicationReviewSchema>;
+export type RecoveryApplicationReviewRequest=z.infer<typeof recoveryApplicationReviewRequest>;
+export type RecoveryApplicationOpenRequest=z.infer<typeof recoveryApplicationOpenRequest>;
+export type RecoveryApplicationControlRequest=z.infer<typeof recoveryApplicationControlRequest>;

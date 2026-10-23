@@ -3,6 +3,8 @@ import type {RecoveryProjects,ProjectAwareRestore} from './recovery-project-sche
 import type { Context } from '@deepseek-ai/cordis';
 import {symbols} from '@deepseek-ai/cordis';
 import {BackupCenter} from './backup-center.ts';
+import {RecoveryApplication} from './recovery-application.ts';
+import type {RecoveryApplicationReviewRequest,RecoveryApplicationReview,RecoveryApplicationOpenRequest,RecoveryApplicationControlRequest,RecoveryApplicationStatus} from './recovery-application-schema.ts';
 import {summarizeEnvironment,summarizeSessions,summarizeSkills,summarizeKnowledge,summarizeRecords,summarizeWorkspaces} from './recovery-summary.ts';
 import {readRestoredSkillReview} from './restore-skills.ts';
 import {registerRestoredSkillProviders} from './restored-skill-provider.ts';
@@ -182,6 +184,7 @@ const githubCredential = credentialRef('DSH_ZHEN_GITHUB_TOKEN');
 /** Creator workspace Host operations, guarded by DSH's authenticated Remote access. */
 export default class ZhenService extends TypertRemoteService {
   private readonly backupCenter:BackupCenter;
+  private recoveryApplication?:RecoveryApplication;
   private readonly restoredConsent:RestoredSkillConsent;
   private readonly restoredManagedConsent:RestoredManagedSkillConsent;
   private readonly restoredManagedRuntime:RestoredManagedRuntime;
@@ -252,6 +255,7 @@ export default class ZhenService extends TypertRemoteService {
     });
     this.backupCenter=new BackupCenter(join(this.zhenHome,'backups'),()=>this.backupAdapters(),{catalogFile:join(this.zhenHome,'recovery-candidates.sqlite'),application:this.backupProfile?{installAnchor:this.backupProfile.installAnchor}:undefined});
     ctx.effect(()=>()=>this.backupCenter.close(),'zhen: local backup jobs');
+    ctx.effect(()=>()=>this.recoveryApplication?.close(),'zhen: recovered application preparation');
     this.directoryChoices=new DirectoryChoices(()=>{const service=ctx.get('directoryPicker');return service?{owner:(service as unknown as {[key:symbol]:object|undefined})[symbols.original]??service,capability:service.capability()}:undefined;});
     ctx.effect(()=>()=>this.directoryChoices.close(),'zhen: directory choice lifetime');
     ctx.inject(['directoryPicker'],inner=>{this.directoryChoices.invalidate();inner.effect(()=>()=>this.directoryChoices.invalidate(),'zhen: directory provider lifetime');});
@@ -520,6 +524,20 @@ export default class ZhenService extends TypertRemoteService {
   backupCandidateForget(id:string):void{this.backupCenter.candidateForget(id);}
   @Remote
   backupCandidateRegister(id:string):Promise<BackupJob>{return this.backupCenter.candidateRegister(id);}
+  private recovery():RecoveryApplication{
+    const profile=this.backupProfile,original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value;
+    if(!profile||original(this.ctx.get('profileContext'))!==original(profile))throw new BackupError('BACKUP_HOST_PROFILE_UNAVAILABLE');
+    return this.recoveryApplication??=new RecoveryApplication(dirname(this.zhenHome),profile.installAnchor,()=>this.ctx.credentials,this.backupCenter);
+  }
+  private async applicationRequest<T>(run:()=>Promise<T>):Promise<T>{try{return await run();}catch(error){throw new RemoteError('zhen/refused','恢复应用操作未完成，请查看当前状态并保留原备份。',{reason:error instanceof BackupError?error.code:'BACKUP_APPLICATION_OPERATION_FAILED'});}}
+  @Remote
+  backupApplicationReview(request:RecoveryApplicationReviewRequest):Promise<RecoveryApplicationReview>{return this.applicationRequest(()=>this.recovery().review(request));}
+  @Remote
+  backupApplicationOpen(request:RecoveryApplicationOpenRequest):Promise<RecoveryApplicationStatus>{return this.applicationRequest(()=>this.recovery().open(request));}
+  @Remote
+  backupApplicationStatus(id:string):Promise<RecoveryApplicationStatus>{return this.applicationRequest(()=>this.recovery().status(id));}
+  @Remote
+  backupApplicationControl(request:RecoveryApplicationControlRequest):Promise<RecoveryApplicationStatus>{return this.applicationRequest(()=>this.recovery().control(request));}
   /** Host-only stream for the composed backup. Not a browser Remote: source
    * paths, backup passwords and archive bytes stay on the Host. Never construct
    * a managed service here, since its startup may activate a pending update. */

@@ -1,4 +1,8 @@
 import {recoveryPlanSchema} from './recovery-layout-schema.ts';
+import {recoveryApplicationReviewRequest,recoveryApplicationReviewSchema,recoveryApplicationOpenRequest,recoveryApplicationControlRequest,recoveryApplicationStatusSchema} from './recovery-application-schema.ts';
+import type {RecoveryApplicationReviewRequest,RecoveryApplicationReview,RecoveryApplicationOpenRequest,RecoveryApplicationControlRequest,RecoveryApplicationStatus} from './recovery-application-schema.ts';
+export {recoveryApplicationReviewSchema,recoveryApplicationStatusSchema} from './recovery-application-schema.ts';
+export type {RecoveryApplicationReviewRequest,RecoveryApplicationReview,RecoveryApplicationOpenRequest,RecoveryApplicationControlRequest,RecoveryApplicationStatus} from './recovery-application-schema.ts';
 import {recoveryProjectCursorSchema,recoveryProjectsSchema,projectAwareRestoreSchema} from './recovery-project-schema.ts';
 import type {RecoveryProjects,ProjectAwareRestore as BackupRestore} from './recovery-project-schema.ts';
 export {recoveryProjectsSchema} from './recovery-project-schema.ts';
@@ -89,6 +93,10 @@ import { gatewayMediaTicketSchema, gatewayMediaReceiptSchema } from './gateway-m
 import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-schema.ts';
 
 export interface ZhenRemote {
+  backupApplicationReview(request:RecoveryApplicationReviewRequest):Promise<RemoteResult<RecoveryApplicationReview>>;
+  backupApplicationOpen(request:RecoveryApplicationOpenRequest):Promise<RemoteResult<RecoveryApplicationStatus>>;
+  backupApplicationStatus(id:string):Promise<RemoteResult<RecoveryApplicationStatus>>;
+  backupApplicationControl(request:RecoveryApplicationControlRequest):Promise<RemoteResult<RecoveryApplicationStatus>>;
   restoredManagedSkillConsent(page:number):Promise<RemoteResult<RestoredManagedSkillView>>;
   restoredManagedSkillConsentChange(request:RestoredManagedSkillRequest):Promise<RemoteResult<RestoredManagedSkillView>>;
   restoredManagedRuntimeStatus(page:number):Promise<RemoteResult<RestoredManagedRuntimeView>>;
@@ -270,6 +278,10 @@ function method(name: string, schema: z.ZodType, description: string, inputs: Ar
     sourceLocation: { file: 'packages/dsh-zhen/src/remote.ts', line: 1, column: 1 } };
 }
 export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', methods: {
+  'zhen/backupApplicationReview':method('backupApplicationReview',recoveryApplicationReviewSchema,'Owner UI: inspect a retained candidate and page program identities; no program execution or settings disclosure.',[['request',recoveryApplicationReviewRequest]]),
+  'zhen/backupApplicationOpen':method('backupApplicationOpen',recoveryApplicationStatusSchema,'Owner UI: explicitly approve the reviewed program snapshot, adopt normal editable configuration and start once; no credential transfer or paid generation.',[['request',recoveryApplicationOpenRequest]]),
+  'zhen/backupApplicationStatus':method('backupApplicationStatus',recoveryApplicationStatusSchema,'Owner UI: authenticate and query the original application process; never restart on timeout or unknown state.',[['id',z.uuid()]]),
+  'zhen/backupApplicationControl':method('backupApplicationControl',recoveryApplicationStatusSchema,'Owner UI: show or gracefully close the authenticated original recovery application; no arbitrary URL, path or command.',[['request',recoveryApplicationControlRequest]]),
   'zhen/restoredSkillConsent':method('restoredSkillConsent',restoredSkillConsentViewSchema,'Owner UI: inspect restored filesystem skill sources for this profile; no instruction bodies or activation.',[['page',z.number().int().min(0).max(102).default(0)]]),
   'zhen/restoredManagedSkillConsent':method('restoredManagedSkillConsent',restoredManagedSkillView,'Owner UI: page original managed source invocation choices; no downloads or pending activation.',[['page',z.number().int().min(0).max(2002).default(0)]]),
   'zhen/restoredManagedSkillConsentChange':method('restoredManagedSkillConsentChange',restoredManagedSkillView,'Owner UI: explicitly grant or revoke one exact restored managed source for this profile; keep all writers and automatic updates paused.',[['request',restoredManagedSkillRequest]]),
