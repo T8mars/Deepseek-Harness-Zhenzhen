@@ -27,7 +27,7 @@ import {inventoryFixture} from './fixtures/skill-inventory.mjs';
 import {writeSkillInventoryBackup,restoreSkillInventoryBackup,prepareSkillInventoryBackup,prepareRestoredSkills,readRestoredSkillReview,prepareProfilePackageBackup,restoreProfilePackageBackup,summarizeSkills,summarizeEnvironment,writeComposedBackup,restoreComposedBackup,verifyRecoveryCandidate,collectSkillBackupInventory,skillFilesystemConfigDigest,prepareRestoredSkillBackupSource} from '../packages/dsh-zhen/lib/backup.js';
 import {RESTORED_SKILL_CONSENT_POLICY,RESTORED_SKILL_CONSENT_FILE,readRestoredSkillConsent} from '../packages/dsh-zhen/lib/backup.js';
 import {RESTORED_MANAGED_SKILL_POLICY,RESTORED_MANAGED_SKILL_CONSENT_FILE} from '../packages/dsh-zhen/lib/backup.js';
-import {RESTORED_MANAGED_RUNTIME_POLICY} from '../packages/dsh-zhen/lib/remote.js';
+import {RESTORED_MANAGED_RUNTIME_POLICY,LOCAL_SKILL_POLICY} from '../packages/dsh-zhen/lib/remote.js';
 import {GITHUB_SKILL_POLICY} from '../packages/dsh-zhen/lib/github-skills-schema.js';
 import {SkillMarket} from '../packages/dsh-zhen/lib/market.js';
 import {LocalSkills} from '../packages/dsh-zhen/lib/local-skills.js';
@@ -143,6 +143,16 @@ test('C176: normal Owner rebackup preserves original enabled choices but never c
 const managedRequest=(view,key,action='approve')=>({snapshot:view.snapshot,key,action,confirmation:RESTORED_MANAGED_SKILL_POLICY});
 const runtimeRequest=(view,action='enable')=>({snapshot:view.snapshot,action,confirmation:RESTORED_MANAGED_RUNTIME_POLICY});
 async function enableManagedRuntime(f){const view=await f.active.call('restoredManagedRuntimeStatus',{page:0});return f.active.call('restoredManagedRuntimeChange',{request:runtimeRequest(view)});}
+test('C189: actual Owner gives actionable managed-skill refusals before activation, during pause and after context changes',async t=>{
+ const previous=globalThis.fetch;let requests=0;globalThis.fetch=async()=>{requests++;throw Error('EXAMPLE_NO_NETWORK_FOR_REFUSED_MANAGEMENT');};t.after(()=>{globalThis.fetch=previous;});
+ const f=await rebackupHostFixture(t),{ctx,call}=f.active,fork={id:f.f.initial.manifest.id,digest:f.f.initial.manifest.digest,body:'EXAMPLE refused personal',version:f.f.initial.manifest.version};
+ async function refused(method,args,reason,guide){await assert.rejects(call(method,args),error=>{assert.equal(error.isDSHRemoteError,true);assert.equal(error.code,'zhen/refused');assert.equal(error.details.reason,reason);assert.match(error.message,guide);assert.doesNotMatch(error.message,/BACKUP_|限频|UTF-8/);return true;});}
+ await refused('marketFork',fork,'BACKUP_MANAGED_RUNTIME_PAUSED',/恢复后的技能管理.*启用/);await enableManagedRuntime(f);const local=(await call('localSkillList')).find(row=>row.source.enabled).source,draft=await call('localSkillPreview',{folder:local.root,mode:local.mode}),github=(await call('githubSkillList')).find(row=>row.enabled);await call('restoredManagedRuntimeChange',{request:runtimeRequest(await call('restoredManagedRuntimeStatus',{page:0}),'pause')});
+ for(const [method,args]of [['marketFork',fork],['marketFeedCheck',{}],['localSkillDisable',{id:local.id}],['localSkillConnect',{folder:local.root,mode:local.mode,digest:draft.digest,confirmation:LOCAL_SKILL_POLICY}],['githubSkillCheck',{id:github.id}],['githubSkillDownload',{spec:github.spec}]])await refused(method,args,'BACKUP_MANAGED_RUNTIME_PAUSED',/恢复后的技能管理.*启用/);
+ assert.equal(requests,0);assert.ok(await ctx.skills.get(f.f.personal));assert.equal((await call('restoredManagedRuntimeStatus',{page:0})).pending,2);const profile=ctx.get('profileContext'),name=profile.name;try{profile.name='EXAMPLE_CHANGED_PROFILE';await refused('marketFork',fork,'BACKUP_MANAGED_RUNTIME_CHANGED',/检查管理状态/);await refused('localSkillList',{},'BACKUP_MANAGED_RUNTIME_CHANGED',/检查管理状态/);await refused('githubSkillList',{},'BACKUP_MANAGED_RUNTIME_CHANGED',/检查管理状态/);}finally{profile.name=name;}
+ console.log(JSON.stringify({contract:'C189',actualPublishedOwnerGateway:true,allThreeManagedSources:true,beforeActivationAndPausedAndChangedContext:true,typedRefusalReasonPreserved:true,plainNextAction:true,notMisreportedAsNetworkOrDirectoryFailure:true,pausedSkillsStillReadable:true,pendingPreserved:true,networkRequests:requests,nativeRequests:0,modelRequests:0}));
+});
+
 test('C188: normal application backup retains managed edits made from both restored profiles',async t=>{
  const f=await completeRebackupHostFixture(t),{ctx,call}=f.active;new PluginPackages(ctx);await enableManagedRuntime(f);
  await call('marketAutoUpdates',{enabled:true});await call('marketFeedAutomatic',{enabled:true});await call('githubSkillAutomatic',{id:f.f.first.sourceId,enabled:true});

@@ -321,3 +321,9 @@ C167真实Windows探针复现252字符临时SQLite文件能open但建表时journ
 仍通过固定0.2.1-rc.2的SkillProvider、SkillRegistry失效事件和Owner Gateway。Cordis依赖提供者在Service发布前同步初始化；只有同步注册允许固定profile/home证明，其后继续核真实Service身份。C184真实Owner与SDK验证启用即读、重建Host及原来源保持；C185是生产表单处理器，不能替代浏览器验收。
 
 原单域managed inventory不表达每profile独立数据，C188实际组合备份复现第二配置修改丢失，现保持普通共享库语义：每恢复home一个独立数据副本，profile分别批准调用、管理和自动检查；普通备份完整捕获全库，授权不转移。C182/183验证exact新收据及有界副本；原pending、所有保留版本和偏好不直接生效。共享目录变化仅载入有持久校验证据的候选，不通过重建服务应用pending或调网络。未改SDK、私有profile/会话格式、Native或Desktop协议。
+
+## C189–C190 · 管理拒绝使用已发布的 RemoteError
+
+固定0.2.1-rc.2的RemoteError提供稳定code、message和details，Gateway及客户端保留其结构。C189在实际Owner复现未启用/暂停的普通异常及误分类，现仅将自有确切PAUSED/CHANGED转换为zhen/refused，原类内guard与普通错误保留。C190用正式RemoteError和生产三表单验证中文下一步、单次提交和草稿保留；不是浏览器验收。没有改SDK错误类、生成协议、凭据布局或原生画布权限。
+
+C191为测试自有临时资源的清理契约：dev88 CI1416/1417中的C63报根目录EBUSY，原finally可能遮蔽前置异常，未确认底层原因。异步有界清理每次核对目录身份并保留双异常；真实自有Node子进程退出后回收已有实测。只改测试生命周期及安全诊断，原打包摘要断言与超时不变，不能把局部通过等同远端已修复。

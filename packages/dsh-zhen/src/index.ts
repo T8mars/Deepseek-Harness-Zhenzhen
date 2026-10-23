@@ -579,17 +579,17 @@ export default class ZhenService extends TypertRemoteService {
     return prepareOwnedStateBackup(()=>{if(original(this.ctx.get('zhen'))!==owner)throw new BackupError('BACKUP_SOURCE_CHANGED');const selected=policy(),activeFiles={checks:this.gatewayChecks?.backupSourceIdentity(),tasks:this.mediaTasks?.backupSourceIdentity(),media:this.mediaExports?.backupSourceIdentity()};return{...selected,root:this.zhenHome,owner:owner as object,activeFiles,forbiddenTrees:[...selected.forbiddenTrees,dirname(this.zhenHome),this.agentsHome]};},options);
   }
   @Remote
-  marketFeedSnapshot(): import('./market-schema.ts').SkillFeedSnapshot { return this.feed().snapshot(); }
+  marketFeedSnapshot(): import('./market-schema.ts').SkillFeedSnapshot { return this.managedSkillOperation(()=>this.feed().snapshot()); }
   @Remote
-  async marketFeedCheck(): Promise<import('./market-schema.ts').SkillFeedSnapshot> { return this.feed().check(); }
+  async marketFeedCheck(): Promise<import('./market-schema.ts').SkillFeedSnapshot> { return this.managedSkillAsyncWrite(()=>this.feed().check()); }
   @Remote
-  marketFeedAutomatic(enabled: boolean): void { this.feed().setAutomatic(enabled); }
+  marketFeedAutomatic(enabled: boolean): void { this.managedSkillWrite(()=>this.feed().setAutomatic(enabled)); }
   @Remote
-  marketAutoPolicy(): SkillAutoPolicy { return this.market().autoPolicy(); }
+  marketAutoPolicy(): SkillAutoPolicy { return this.managedSkillOperation(()=>this.market().autoPolicy()); }
   @Remote
-  marketAutoUpdates(enabled: boolean): void { this.feed().setAutoUpdates(enabled); }
+  marketAutoUpdates(enabled: boolean): void { this.managedSkillWrite(()=>this.feed().setAutoUpdates(enabled)); }
   @Remote
-  marketPauseAuto(id: string, paused: boolean): void { this.feed().pauseAutoUpdate(id, paused); }
+  marketPauseAuto(id: string, paused: boolean): void { this.managedSkillWrite(()=>this.feed().pauseAutoUpdate(id, paused)); }
   private updates(): UpdateMonitor {
     const baseline = { ...JSON.parse(readFileSync(new URL('../catalog/runtime.json', import.meta.url), 'utf8')), zhen: ownBundleVersion() } as UpdateBaseline;
     return this.updateMonitor ??= new UpdateMonitor(join(this.zhenHome,'updates.json'), baseline, fetch, this.githubAccess());
@@ -788,16 +788,28 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   async disconnectCanvas(): Promise<void> { await this.mountCanvas?.(); this.saveCanvasConfig(); }
 
+  private managedSkillError(error:unknown):RemoteError<'zhen/refused'>|undefined{
+    if(!(error instanceof BackupError))return;
+    const messages={
+      BACKUP_MANAGED_RUNTIME_PAUSED:'恢复的技能管理尚未启用或已暂停。请在“恢复后的技能管理”核对并启用后，再继续操作。',
+      BACKUP_MANAGED_RUNTIME_CHANGED:'恢复的技能来源或当前配置已变化。请在“恢复后的技能管理”点击“检查管理状态”，重新核对后再操作。',
+    };
+    if(Object.hasOwn(messages,error.code))return new RemoteError('zhen/refused',messages[error.code as keyof typeof messages],{reason:error.code});
+  }
+  private managedSkillOperation<T>(work:()=>T):T{try{return work();}catch(error){throw this.managedSkillError(error)??error;}}
+  private managedSkillWritable():void{if(!this.restoredSkills)return;const role=this.ensureManagedRole();if(!role?.granted)throw new BackupError('BACKUP_MANAGED_RUNTIME_PAUSED');this.restoredManagedRuntime.policy(role).assertWritable();}
+  private managedSkillWrite<T>(work:()=>T):T{return this.managedSkillOperation(()=>{this.managedSkillWritable();return work();});}
+  private async managedSkillAsyncWrite<T>(work:()=>T|Promise<T>):Promise<T>{try{this.managedSkillWritable();return await work();}catch(error){throw this.managedSkillError(error)??error;}}
   private localSkills(): LocalSkills {const role=this.ensureManagedRole();return this.localSkillSources ??= role?new LocalSkills(join(role.root,'l.json'),1000,{runtime:this.restoredManagedRuntime.policy(role)}):new LocalSkills(join(this.zhenHome,'local-skills.json'),1000,{reviewOnly:!!this.restoredSkills}); }
   private githubSkills(): GithubSkills {const role=this.ensureManagedRole();return this.githubSkillSources ??= role?new GithubSkills(join(role.root,'g'),fetch,{runtime:this.restoredManagedRuntime.policy(role)}):new GithubSkills(join(this.zhenHome,'github-skills'),fetch,{reviewOnly:!!this.restoredSkills}); }
   private async githubOperation<T>(work: () => T | Promise<T>): Promise<T> {
     try { return await work(); }
-    catch (error) { throw new RemoteError('zhen/refused', error instanceof GithubSkillError ? error.message : 'GitHub 操作暂不可用或已取消，请检查仓库是否公开及请求是否限频。', { reason: 'GITHUB_SKILL_REFUSED' }); }
+    catch (error) { throw this.managedSkillError(error)??new RemoteError('zhen/refused', error instanceof GithubSkillError ? error.message : 'GitHub 操作暂不可用或已取消，请检查仓库是否公开及请求是否限频。', { reason: 'GITHUB_SKILL_REFUSED' }); }
   }
   @Remote
   async githubSkillList(): Promise<GithubSkillSourceView[]> { return this.githubOperation(() => this.githubSkills().list()); }
   @Remote
-  async githubSkillDownload(spec: GithubSkillSpec): Promise<GithubSkillPreview> { return this.githubOperation(() => this.githubSkills().download(spec, this.mcpOperations.signal)); }
+  async githubSkillDownload(spec: GithubSkillSpec): Promise<GithubSkillPreview> { return this.githubOperation(() => {this.managedSkillWritable();return this.githubSkills().download(spec, this.mcpOperations.signal);}); }
   @Remote
   async githubSkillInspect(id: string, digest: string): Promise<GithubSkillPreview> { return this.githubOperation(() => this.githubSkills().inspect(id, digest)); }
   @Remote
@@ -805,65 +817,65 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   async githubSkillFile(id: string, digest: string, location: 'package' | 'origin', path: string): Promise<GithubSkillFilePreview> { return this.githubOperation(() => this.githubSkills().file(id, digest, location, path)); }
   @Remote
-  async githubSkillApprove(id: string, digest: string, confirmation: string): Promise<void> { return this.githubOperation(() => this.githubSkills().approve(id, digest, confirmation)); }
+  async githubSkillApprove(id: string, digest: string, confirmation: string): Promise<void> { return this.githubOperation(() => {this.managedSkillWritable();return this.githubSkills().approve(id, digest, confirmation);}); }
   @Remote
-  async githubSkillCheck(id: string): Promise<void> { return this.githubOperation(() => this.githubSkills().check(id, this.mcpOperations.signal)); }
+  async githubSkillCheck(id: string): Promise<void> { return this.githubOperation(() => {this.managedSkillWritable();return this.githubSkills().check(id, this.mcpOperations.signal);}); }
   @Remote
-  async githubSkillAutomatic(id: string, enabled: boolean): Promise<void> { return this.githubOperation(() => this.githubSkills().automatic(id, enabled)); }
+  async githubSkillAutomatic(id: string, enabled: boolean): Promise<void> { return this.githubOperation(() => {this.managedSkillWritable();return this.githubSkills().automatic(id, enabled);}); }
   @Remote
-  async githubSkillDisable(id: string): Promise<void> { return this.githubOperation(() => this.githubSkills().disable(id)); }
+  async githubSkillDisable(id: string): Promise<void> { return this.githubOperation(() => {this.managedSkillWritable();return this.githubSkills().disable(id);}); }
   @Remote
-  async githubSkillForget(id: string): Promise<void> { return this.githubOperation(() => this.githubSkills().forget(id)); }
+  async githubSkillForget(id: string): Promise<void> { return this.githubOperation(() => {this.managedSkillWritable();return this.githubSkills().forget(id);}); }
   @Remote
-  async githubSkillCancelPending(id: string): Promise<void> { return this.githubOperation(() => this.githubSkills().cancelPending(id)); }
+  async githubSkillCancelPending(id: string): Promise<void> { return this.githubOperation(() => {this.managedSkillWritable();return this.githubSkills().cancelPending(id);}); }
   @Remote
-  async githubSkillDelete(id: string, digest: string): Promise<void> { return this.githubOperation(() => this.githubSkills().deleteRelease(id, digest)); }
+  async githubSkillDelete(id: string, digest: string): Promise<void> { return this.githubOperation(() => {this.managedSkillWritable();return this.githubSkills().deleteRelease(id, digest);}); }
   @Remote
   githubSkillCancelDownload(): void { this.githubSkills().cancelDownload(); }
   @Remote
   async localSkillList(): Promise<LocalSkillView[]> {
     try { return await this.localSkills().list(); }
-    catch { throw new RemoteError('zhen/refused', '无法读取本地技能目录，请检查配置或重新连接。', { reason: 'LOCAL_SKILL_UNAVAILABLE' }); }
+    catch (error) { throw this.managedSkillError(error)??new RemoteError('zhen/refused', '无法读取本地技能目录，请检查配置或重新连接。', { reason: 'LOCAL_SKILL_UNAVAILABLE' }); }
   }
   @Remote
   async localSkillPreview(folder: string, mode: LocalSkillMode): Promise<LocalSkillDraft> {
     try { return await this.localSkills().preview(folder, mode); }
-    catch { throw new RemoteError('zhen/refused', '无法扫描技能目录。请使用绝对路径、UTF-8 SKILL.md 和有效的名称/描述；目录可能过大或发生变化。', { reason: 'LOCAL_SKILL_SCAN' }); }
+    catch (error) { throw this.managedSkillError(error)??new RemoteError('zhen/refused', '无法扫描技能目录。请使用绝对路径、UTF-8 SKILL.md 和有效的名称/描述；目录可能过大或发生变化。', { reason: 'LOCAL_SKILL_SCAN' }); }
   }
   @Remote
   async localSkillBody(folder: string, directory: string, digest: string): Promise<LocalSkillBody> {
     try { return await this.localSkills().body(folder, directory, digest); }
-    catch { throw new RemoteError('zhen/refused', '技能正文不可读取或已变化，请重新扫描。', { reason: 'LOCAL_SKILL_CHANGED' }); }
+    catch (error) { throw this.managedSkillError(error)??new RemoteError('zhen/refused', '技能正文不可读取或已变化，请重新扫描。', { reason: 'LOCAL_SKILL_CHANGED' }); }
   }
   @Remote
   async localSkillConnect(folder: string, mode: LocalSkillMode, digest: string, confirmation: string): Promise<void> {
-    try { await this.localSkills().connect(folder, mode, digest, confirmation); }
-    catch { throw new RemoteError('zhen/refused', '目录尚未确认、清单已变化或没有有效技能，请重新扫描并确认。', { reason: 'LOCAL_SKILL_REFUSED' }); }
+    try { this.managedSkillWritable();await this.localSkills().connect(folder, mode, digest, confirmation); }
+    catch (error) { throw this.managedSkillError(error)??new RemoteError('zhen/refused', '目录尚未确认、清单已变化或没有有效技能，请重新扫描并确认。', { reason: 'LOCAL_SKILL_REFUSED' }); }
   }
   @Remote
-  localSkillDisable(id: string): void { this.localSkills().disable(id); }
+  localSkillDisable(id: string): void { this.managedSkillWrite(()=>this.localSkills().disable(id)); }
   @Remote
-  localSkillDisconnect(id: string): void { this.localSkills().disconnect(id); }
+  localSkillDisconnect(id: string): void { this.managedSkillWrite(()=>this.localSkills().disconnect(id)); }
 
   /** Read the verified bundled catalog and locally selected versions. */
   @Remote
-  marketList(): MarketItem[] { const market=this.market();if(this.managedRole)this.feed().snapshot();return market.list(); }
+  marketList(): MarketItem[] { return this.managedSkillOperation(()=>{const market=this.market();if(this.managedRole)this.feed().snapshot();return market.list();}); }
   /** Read exactly the selected instruction digest before installation. */
   @Remote
-  marketPreview(id: string, digest: string, version = ''): SkillPackage { return this.market().preview(id, digest, version); }
+  marketPreview(id: string, digest: string, version = ''): SkillPackage { return this.managedSkillOperation(()=>this.market().preview(id, digest, version)); }
   /** Install a new skill or stage a reviewed version for the next Host restart. */
   @Remote
-  marketSelect(id: string, digest: string, version = ''): void { this.market().select(id, digest, version); }
+  marketSelect(id: string, digest: string, version = ''): void { this.managedSkillWrite(()=>this.market().select(id, digest, version)); }
   /** Immediately stop new loads and cancel pending changes without deleting user work. */
   @Remote
-  marketDisable(id: string): void { this.market().disable(id); }
+  marketDisable(id: string): void { this.managedSkillWrite(()=>this.market().disable(id)); }
   @Remote
-  marketCancelPending(id: string): void { this.market().cancelPending(id); }
+  marketCancelPending(id: string): void { this.managedSkillWrite(()=>this.market().cancelPending(id)); }
   @Remote
-  marketVersions(id: string): SkillPackage[] { return this.market().versions(id); }
+  marketVersions(id: string): SkillPackage[] { return this.managedSkillOperation(()=>this.market().versions(id)); }
   /** Save an independent local instruction version, never overwrite the source. */
   @Remote
-  marketFork(id: string, digest: string, body: string, version = ''): string { return this.market().fork(id, digest, body, version); }
+  marketFork(id: string, digest: string, body: string, version = ''): string { return this.managedSkillWrite(()=>this.market().fork(id, digest, body, version)); }
 
   /** List collections in the explicitly selected local project space. */
   @Remote
