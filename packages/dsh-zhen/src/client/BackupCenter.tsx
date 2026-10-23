@@ -11,7 +11,9 @@ const unwrap=<T,>(value:RemoteResult<T>):T=>{if(!value.ok)throw value.error;retu
 const terminal=(job:BackupJob)=>['succeeded','failed','cancelled'].includes(job.phase);
 const phases:Record<BackupJob['phase'],string>={preparing:'准备数据',capturing:'加密备份',verifying:'校验完整性',restoring:'生成恢复候选',succeeded:'已完成',failed:'未完成',cancelled:'已取消'};
 export function backupErrorMessage(code:string|null):string{
-  if(code==='BACKUP_SKILL_PROJECT_REBACKUP_PENDING')return '恢复后的项目技能暂不支持再次备份。请保留原始备份与恢复候选，其他可用范围可单独备份。';
+  if(code==='BACKUP_SKILL_PROJECT_REBACKUP_PENDING')return '当前应用缺少技能配置入口，请在完整应用中打开后重试。请保留原始备份与恢复候选，其他可用范围可单独备份。';
+  if(code==='BACKUP_SKILL_PROJECT_REVIEW_INVALID')return '项目技能的恢复清单不可用，请用原始备份重新生成候选。原数据保留。';
+  if(code==='BACKUP_SKILL_PROJECT_SOURCE_CHANGED'||code==='BACKUP_SKILL_PROJECT_PROVENANCE_CHANGED')return '恢复候选或技能配置已变化，请重新校验候选后重试。原始备份保留。';
   if(code==='BACKUP_SKILL_PROJECT_CONFLICT')return '项目技能的目录关联存在冲突，请为不同项目选择不同文件夹。原备份保留。';
   if(code==='BACKUP_SKILL_PROJECT_DIRECTORY_CHANGED'||code==='BACKUP_SKILL_PROJECT_PATH_CHANGED')return '项目技能来源或工作目录已变化，请重新校验候选并选择现有目录。';
   if(code?.startsWith('BACKUP_SKILL_PROJECT_'))return '项目技能关联未完成，请保留原备份，重新读取项目并核对来源。';

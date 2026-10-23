@@ -14,7 +14,7 @@ import {GithubSkills,githubSkillPath} from './github-skills.ts';
 import {LocalSkills} from './local-skills.ts';
 import {SkillFeed} from './skill-feed.ts';
 import {validateSkillBackupInventory} from './backup-skill-inventory.ts';
-import type {SkillInventoryRestoreCandidate} from './backup-skill-inventory.ts';
+import type {SkillInventoryRestoreCandidate,SkillFilesystemRecovery} from './backup-skill-inventory.ts';
 import {BackupError} from './backup-archive.ts';
 import type {BackupOptions} from './backup-archive.ts';
 import type {RestoredSkillProjectsReceipt} from './restored-skill-projects.ts';
@@ -33,7 +33,7 @@ export interface RestoredSkillReview {schema:'dsh-zhen-skills-review-v1';pending
 export interface SkillApplicationReceipt{
   schema:'dsh-zhen-skill-application-v1';database:string;local:string;github:string;feed:string|null;review:string;
   versions:number;localSources:number;githubSources:number;githubReleases:number;
-  filesystems:Array<{id:string;config:{providerName:string;includeDefaultRoots:boolean;dshHome:string;agentsHome:string;customSkillDirs:string[];bundledSkillDir:string};enabled:boolean}>;
+  filesystems:Array<{id:string;config:{providerName:string;includeDefaultRoots:boolean;dshHome:string;agentsHome:string;customSkillDirs:string[];bundledSkillDir:string};enabled:boolean;recovery?:SkillFilesystemRecovery}>;
   projects:Array<{originCwd:string;originRoot:string;root:string}>;
   projectBindings?:RestoredSkillProjectsReceipt;
   reviewRequired:true;activated:false;automaticallyDownloads:false;
@@ -83,7 +83,7 @@ export async function prepareRestoredSkills(root:string,home:string,source:Skill
     for(const fs of inventory.filesystem){const selected=source.roots.filter(row=>row.origin.provenance?.provider===fs.id),role=(name:string)=>selected.find(row=>row.origin.provenance?.role===name)?.restoredPath,base=join(portals,'providers',hash(fs.id)),dshHome=join(base,'dsh'),agentsHome=join(base,'agents');
       const custom=selected.filter(row=>row.origin.provenance?.role==='custom').sort((a,b)=>Number(a.origin.provenance?.index)-Number(b.origin.provenance?.index)).map(row=>row.restoredPath);
       await portal(role('user-dsh'),join(dshHome,'skills'));await portal(role('user-agents'),join(agentsHome,'skills'));
-      result.filesystems.push({id:fs.id,enabled:fs.enabled!==false,config:{providerName:fs.config.providerName,includeDefaultRoots:fs.config.includeDefaultRoots,dshHome,agentsHome,customSkillDirs:custom,bundledSkillDir:role('bundled')??''}});
+      result.filesystems.push({id:fs.id,enabled:fs.enabled!==false,...fs.recovery?{recovery:structuredClone(fs.recovery)}:{},config:{providerName:fs.config.providerName,includeDefaultRoots:fs.config.includeDefaultRoots,dshHome,agentsHome,customSkillDirs:custom,bundledSkillDir:role('bundled')??''}});
     }
     const boundaries=new Set<string>();for(const project of inventory.projects){const selected=source.roots.filter(row=>row.origin.workspace===project.projectRoot&&['project-dsh','project-agents'].includes(row.origin.kind)),projectRoot=join(portals,'projects',hash(project.projectRoot));if(selected.length){for(const row of selected)await portal(row.restoredPath,join(projectRoot,row.origin.kind==='project-dsh'?'.dsh':'.agents','skills'));if(!boundaries.has(projectRoot)){await write(join(projectRoot,'.git'),RESTORED_SKILL_BOUNDARY_CONTENT);boundaries.add(projectRoot);}result.projects.push({originCwd:project.cwd,originRoot:project.projectRoot,root:projectRoot});}}
     await write(database,Buffer.alloc(0));market=new SkillMarket(database,[]);await market.restoreBackupState(inventory.market,options.signal);market.close();market=undefined;

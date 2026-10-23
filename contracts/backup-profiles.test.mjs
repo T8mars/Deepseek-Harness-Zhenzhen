@@ -9,7 +9,7 @@ import {Context} from '@deepseek-ai/cordis';
 import Credentials from '@deepseek-ai/dsh-credentials-local';
 import {credentialRef} from '@deepseek-ai/dsh-credentials';
 import {initProfile,readProfileManifest,writeProfileManifest,resolveProfileDir,PROFILE_PATCH_FILENAME,PROFILE_COMPATIBILITY_FILENAME,PROFILES_DIR,setProfileVersionExemption} from '@deepseek-ai/dsh-app-boot';
-import {writeProfileBackup,readProfileBackup,profileBackupRecords,writeBackupArchive,openBackupArchive} from '../packages/dsh-zhen/lib/backup.js';
+import {writeProfileBackup,readProfileBackup,profileBackupRecords,writeBackupArchive,openBackupArchive,prepareProfileBackup,BackupError} from '../packages/dsh-zhen/lib/backup.js';
 
 const password='EXAMPLE profile snapshot password',anchor=createRequire(import.meta.url).resolve('@deepseek-ai/dsh/package.json');
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -33,6 +33,9 @@ async function fixture(t){
 }
 async function decoded(path){const archive=await openBackupArchive(path,password),rows=[];try{for await(const item of archive.records()){const parts=[];for await(const bytes of item.data)parts.push(bytes);rows.push({metadata:item.metadata,bytes:Buffer.concat(parts)});}return rows;}finally{await archive.close();}}
 async function* encoded(rows){for(const row of rows)yield {metadata:row.metadata,size:row.bytes.length,data:(async function*(){yield row.bytes;})()};}
+test('C170: owned overlays are retained for an inactive profile without creating or changing source profile patches',async t=>{const f=await fixture(t),patch={id:'EXAMPLE_owned_overlay',disabled:true,config:{watchMaxProjects:11}},source={...f.source,additionalProfilePatches:[{profile:'EXAMPLE_beta',patches:[patch]}]};await writeProfileBackup(f.path,password,()=>source);const document=await readProfileBackup(f.path,password);assert.equal(document.profiles[1].patch.present,true);assert.deepEqual(document.profiles[1].patch.patches,[patch]);await assert.rejects(readFile(join(f.beta,PROFILE_PATCH_FILENAME)),{code:'ENOENT'});assert.deepEqual(await Promise.all(f.files.map(async file=>digest(await readFile(file)))),f.before);});
+test('C170: fresh profile capture cannot renew away the initial owned-overlay revision',async t=>{const f=await fixture(t);let revision=0;const source=()=>{const captured=revision;return{...f.source,assertCurrent:async()=>{if(captured!==revision)throw new BackupError('BACKUP_SOURCE_CHANGED');}};};const lease=await prepareProfileBackup(source);try{revision++;await assert.rejects(lease.assertCurrent(),{code:'BACKUP_SOURCE_CHANGED'});}finally{lease.close();}});
+for(const name of['EXAMPLE_missing','EXAMPLE_duplicate'])test('C170: '+name+' owned profile overlays refuse instead of disappearing from a complete snapshot',async t=>{const f=await fixture(t),row={profile:name==='EXAMPLE_missing'?name:'EXAMPLE_beta',patches:[]},additionalProfilePatches=name==='EXAMPLE_duplicate'?[row,row]:[row];await assert.rejects(writeProfileBackup(f.path,password,()=>({...f.source,additionalProfilePatches})),{code:'BACKUP_PROFILE_RECORD_INVALID'});await assert.rejects(readFile(f.path),{code:'ENOENT'});});
 
 test('C91: public profile readers preserve every named profile, machine layer, order, expressions and compatibility without loading code',async t=>{
   const f=await fixture(t);await writeProfileBackup(f.path,password,()=>f.source);const result=await readProfileBackup(f.path,password);

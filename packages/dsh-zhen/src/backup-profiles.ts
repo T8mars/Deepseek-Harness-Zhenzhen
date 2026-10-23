@@ -15,6 +15,10 @@ export interface ProfileBackupSource {
   home:string;
   installAnchor:string;
   active?:Pick<ProfileContext,'name'|'dir'|'cwd'|'startedBundles'|'overlays'|'telemetryDisabledEnv'>;
+  /** Owned application overlays for every restored profile. Kept in the
+   * logical snapshot; never written into SDK profile files on the source. */
+  additionalProfilePatches?:readonly{profile:string;patches:readonly PatchOptions[]}[];
+  assertCurrent?:()=>Promise<void>;
 }
 interface Layer {present:boolean;patches:PatchOptions[];}
 export interface ProfileBackupDocument {
@@ -69,10 +73,12 @@ async function profileNames(home:string):Promise<string[]>{
   }
   if(names.length>MAX_PROFILES)throw new BackupError('BACKUP_PROFILE_COUNT_LIMIT');return names.sort();
 }
-async function capture(source:ProfileBackupSource,options:BackupOptions):Promise<{document:ProfileBackupDocument;revision:string}>{
+async function capture(source:ProfileBackupSource,options:BackupOptions):Promise<{document:ProfileBackupDocument;revision:string;assertSourceCurrent?:()=>Promise<void>}>{
   options.signal?.throwIfAborted();
+  const assertSourceCurrent=source.assertCurrent?.bind(source);await assertSourceCurrent?.();
   if(!isAbsolute(source.home)||!isAbsolute(source.installAnchor))throw new BackupError('BACKUP_PATH_INVALID');
   const installAnchor=await realpath(source.installAnchor),anchorState=await observation(source.installAnchor),home=await realpath(source.home),homeState=await observation(home,true),profilesState=await observation(join(home,PROFILES_DIR),true),names=await profileNames(home);
+  const additional=new Map<string,PatchOptions[]>();if(source.additionalProfilePatches!==undefined){const serialized=json(source.additionalProfilePatches);if(Buffer.byteLength(serialized)>MAX_TOTAL_BYTES||!Array.isArray(source.additionalProfilePatches)||source.additionalProfilePatches.length>MAX_PROFILES)throw new BackupError('BACKUP_PROFILE_LIMIT');for(const item of JSON.parse(serialized)){if(!keys(item,['profile','patches'])||typeof item.profile!=='string'||!names.includes(item.profile)||additional.has(item.profile)||!Array.isArray(item.patches)||!item.patches.every(object))throw new BackupError('BACKUP_PROFILE_RECORD_INVALID');additional.set(item.profile,item.patches);}}
   const files=[join(home,PROFILE_PATCH_FILENAME),...names.flatMap(name=>{const dir=resolveProfileDir(name,home);return [join(dir,'package.json'),join(dir,PROFILE_PATCH_FILENAME),join(dir,PROFILE_COMPATIBILITY_FILENAME)];})];
   const before=[];let total=0;
   for(const file of files){options.signal?.throwIfAborted();const state=await observation(file);if((total+=state.bytes)>MAX_TOTAL_BYTES)throw new BackupError('BACKUP_PROFILE_LIMIT');before.push(state);}
@@ -85,7 +91,7 @@ async function capture(source:ProfileBackupSource,options:BackupOptions):Promise
     const inventory=readProfilePlugins({binName:'dsh-zhen backup',profileDir:dir,installAnchor:source.installAnchor}),patches=loadOptionalPatches('dsh-zhen backup',join(dir,PROFILE_PATCH_FILENAME)),compat=readProfileCompatibility(dir);
     if(!compat.rewritable||compat.warnings.length)throw new BackupError('BACKUP_PROFILE_COMPATIBILITY_INVALID');
     const present=before[files.indexOf(join(dir,PROFILE_COMPATIBILITY_FILENAME))].present;
-    profiles.push({name,manifest,dependencies:inventory.dependencies,patch:{present:patches!==undefined,patches:patches??[]},compatibility:{present,exemptions:compat.exemptions}});
+    profiles.push({name,manifest,dependencies:inventory.dependencies,patch:{present:patches!==undefined||additional.has(name),patches:[...patches??[],...additional.get(name)??[]]},compatibility:{present,exemptions:compat.exemptions}});
   }
   let active:ProfileBackupDocument['active'];
   if(source.active){
@@ -97,7 +103,7 @@ async function capture(source:ProfileBackupSource,options:BackupOptions):Promise
   const detached:unknown=JSON.parse(serialized);if(!validDocument(detached))throw new BackupError('BACKUP_PROFILE_RECORD_INVALID');
   const after=[];for(const file of files){options.signal?.throwIfAborted();after.push(await observation(file));}
   if(json(before)!==json(after)||await realpath(source.installAnchor)!==installAnchor||json(await observation(source.installAnchor))!==json(anchorState)||await realpath(source.home)!==home||json(await profileNames(home))!==json(names)||(await observation(home,true)).identity!==homeState.identity||(await observation(join(home,PROFILES_DIR),true)).identity!==profilesState.identity)throw new BackupError('BACKUP_SOURCE_CHANGED');
-  return {document:detached,revision:hash(json({installAnchor,anchorState,home:homeState.identity,profiles:profilesState.identity,files:after,document:detached}))};
+  await assertSourceCurrent?.();options.signal?.throwIfAborted();return {document:detached,revision:hash(json({installAnchor,anchorState,home:homeState.identity,profiles:profilesState.identity,files:after,document:detached})),assertSourceCurrent};
 }
 /** Host-only logical snapshot; no module loading, config cleanup or credential reads. */
 export interface ProfileBackupLease {document:ProfileBackupDocument;records():AsyncGenerator<BackupRecord>;assertCurrent():Promise<void>;close():void;}
@@ -105,7 +111,7 @@ export async function prepareProfileBackup(resolve:()=>ProfileBackupSource,optio
   const controller=new AbortController(),signal=options.signal?AbortSignal.any([options.signal,controller.signal]):controller.signal;let closed=false,used=false;
   const read=async()=>{signal.throwIfAborted();try{return await capture(resolve(),{...options,signal});}catch(error){signal.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_PROFILE_READ_FAILED');}};
   const initial=await read(),data=Buffer.from(json(initial.document));
-  const assertCurrent=async()=>{if(closed)throw new BackupError('BACKUP_PROFILE_LEASE_CLOSED');if((await read()).revision!==initial.revision)throw new BackupError('BACKUP_SOURCE_CHANGED');};
+  const assertCurrent=async()=>{if(closed)throw new BackupError('BACKUP_PROFILE_LEASE_CLOSED');try{await initial.assertSourceCurrent?.();if((await read()).revision!==initial.revision)throw new BackupError('BACKUP_SOURCE_CHANGED');await initial.assertSourceCurrent?.();}catch(error){signal.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_PROFILE_READ_FAILED');}};
   return {document:structuredClone(initial.document),assertCurrent,close(){if(!closed){closed=true;controller.abort();}},async*records(){if(closed)throw new BackupError('BACKUP_PROFILE_LEASE_CLOSED');if(used)throw new BackupError('BACKUP_PROFILE_STREAM_USED');used=true;await assertCurrent();yield {metadata:{kind:'profile-snapshot',schema:SCHEMA,profiles:initial.document.profiles.length,credentialStoresIncluded:false},size:data.length,data:(async function*(){yield data;})()};await assertCurrent();}};
 }
 export async function* profileBackupRecords(resolve:()=>ProfileBackupSource,options:BackupOptions={}):AsyncGenerator<BackupRecord>{

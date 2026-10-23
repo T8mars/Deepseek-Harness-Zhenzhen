@@ -301,3 +301,11 @@ Session应用回执中的原目录来自公开持久化头，组合流程用已�
 ## C157–C160：恢复项目技能的 SDK 委托
 
 固定0.2.1-rc.2的 FileSystemSkillProvider 按 cwd 向父目录寻找 `.git`，并将空 bundledSkillDir 解析成 process.cwd()。C157 先复现父项目混入，再用新建候选内的查找边界及明确的缺失 bundle 路径验证隔离；边界不是 Git checkout，不写用户项目。实际公开 LocalFs/SkillRegistry/Provider 验证来源、优先级、相对资源、编辑观察、取消及读取前后清单与目录身份。每配置档完整配置及禁用状态经C158/C159真实组合和新 home Host/Owner接线；待审不读技能，测试放行不是生产批准。现有普通库存不能表达恢复入口及原启用偏好，C160明确拒绝恢复 home 的技能再次备份，不以 allDeclaredSources 掩盖缺项。再次完整备份、生产审阅、激活与完整L2继续。
+
+## C161–C171：恢复来源再次备份与两代恢复
+
+恢复来源以每profile/entry独立标识保存原enabled和技术暂停证据，实际Loader按symbols.original核服务身份；SDK包装对象的直接相等不可靠。C164验证实际Loader/LocalFs、全部配置档、未映射项目、普通物理根及原修订保留。v3库存不授权链接，v1/v2读取保持；普通来源仍v2。C165/C167是实际Owner正常组合任务，C166是不同目标的两代恢复与实际技能相对资源读取。未运行profile的自有应用覆盖设置通过逻辑快照保留，不写SDK配置文件；C170保留原始来源检查并拒绝未知/重复配置档。
+
+固定SDK WorkingDirectory的投影init为header.cwd，apply处理已提交的working-directory/change；服务get不做文件IO，ensure才可能检查并恢复原目录。C169使用实际SessionProjectionRegistry.restore的分页冷折叠及原WorkingDirectory单元，捕获previousDirectory，保留raw originalDirectory给项目分组。App仅RAG/技能关联使用前者；会话格式、原历史及workspace成员规则不改。直接运行的session-projection/system-prompt已显式钉peer0.2.1-rc.2。
+
+C167真实Windows探针复现252字符临时SQLite文件能open但建表时journal报14；同目录更短独占临时名后Owner任务成功，C168核长home、重开、清理和原catalog格式。C171旧恢复home无新来源清单时禁止回退漏项普通库存，自动迁移仍未实现。生产权限放行/激活、完整L2、浏览器和原生创作不在这些结论内。

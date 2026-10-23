@@ -24,29 +24,38 @@ import {SUPPORTED_DSH} from './compatibility.ts';
 import {githubProjectionAnchor,restoreManagedSkills} from './backup-managed-skills.ts';
 import type {ManagedSkillRestore} from './backup-managed-skills.ts';
 
-const LEGACY_SCHEMA='dsh-zhen-skill-inventory-v1',SCHEMA='dsh-zhen-skill-inventory-v2',MAX_STATE=64*1024**2;
+const LEGACY_SCHEMA='dsh-zhen-skill-inventory-v1',SCHEMA='dsh-zhen-skill-inventory-v2',RECOVERY_SCHEMA='dsh-zhen-skill-inventory-v3',MAX_STATE=64*1024**2;
 export {validate as validateSkillBackupInventory};
 const sha=(value:string)=>createHash('sha256').update(value).digest('hex');
+/** Compare complete literal provider settings without depending on object-key
+ * insertion order. Arrays retain their order; expressions are never run. */
+export function skillFilesystemConfigDigest(value:Record<string,unknown>):string{backupJsonString(value);const ordered=(entry:unknown):unknown=>Array.isArray(entry)?entry.map(ordered):entry!==null&&typeof entry==='object'?Object.fromEntries(Object.keys(entry).sort().map(key=>[key,ordered((entry as Record<string,unknown>)[key])])):entry;return sha(JSON.stringify(ordered(value)));}
 type ResolvedFilesystem={providerName:string;includeDefaultRoots:boolean;dshHome:string;agentsHome:string;customSkillDirs:string[];bundledSkillDir?:string};
 export type ResolvedSkillFilesystem=ResolvedFilesystem;
 export interface SkillFilesystemDefaults {dshHome:string;agentsHome:string;bundledSkillDir?:string;cwd:string;}
+export interface SkillFilesystemRecovery{profile:string;entryId?:string;configDigest:string;paused:true;}
+export interface SkillRecoveryLocations{locations:Array<{key:string;path:string}>;}
 export interface SkillInventorySource {
   /** Effective settings of every Host-local filesystem skill provider. A virtual
    * filesystem requires its own backup adapter and cannot be guessed from disk. */
-  filesystem:readonly {id:string;mode:'host-local'|'host-local-resolved';config:FilesystemConfig;enabled?:boolean}[];
+  filesystem:readonly {id:string;mode:'host-local'|'host-local-resolved';config:FilesystemConfig;enabled?:boolean;recovery?:SkillFilesystemRecovery}[];
   workspaces:readonly string[];
   local:Pick<LocalSkills,'backupState'>;github:Pick<GithubSkills,'backupState'>;
   market:Pick<SkillMarket,'backupState'>;feed:Pick<SkillFeed,'backupState'>;
   protectedContainers:readonly string[];forbiddenTrees:readonly string[];
+  /** Host-only provenance from an owned recovery adapter. Physical roots stay
+   * ordinary files/directories; this does not approve archive links. */
+  recovery?:SkillRecoveryLocations&{projects:Array<{cwd:string;projectRoot:string}>;assertCurrent?:()=>Promise<void>};
 }
 export interface SkillBackupInventory {
-  schema:typeof SCHEMA|typeof LEGACY_SCHEMA;sdkVersion:string;
-  filesystem:Array<{id:string;config:ResolvedFilesystem;enabled?:boolean}>;
+  schema:typeof SCHEMA|typeof LEGACY_SCHEMA|typeof RECOVERY_SCHEMA;sdkVersion:string;
+  filesystem:Array<{id:string;config:ResolvedFilesystem;enabled?:boolean;recovery?:SkillFilesystemRecovery}>;
   projects:Array<{cwd:string;projectRoot:string}>;
   local:ReturnType<LocalSkills['backupState']>;
   github:Omit<ReturnType<GithubSkills['backupState']>,'root'|'statePresent'>&{root?:string;statePresent?:boolean};
   market:MarketBackupState;feed:ReturnType<SkillFeed['backupState']>;
   roots:SkillBackupRoot[];
+  recovery?:SkillRecoveryLocations;
   coverage:{allDeclaredSources:true;allRetainedManagedReleases:true;credentials:false;activatesSources:false;wholeApplicationRestore:false};
 }
 const marketSchema=marketBackupStateSchema;
@@ -54,10 +63,13 @@ const cacheSchema=z.object({status:skillFeedSnapshotSchema,catalog:z.array(skill
 const feedSchema=cacheSchema.extend({persisted:z.object({present:z.boolean(),cache:cacheSchema.optional()}).strict()}).strict();
 const path=z.string().min(1).max(4096).refine(value=>posix.isAbsolute(value)||win32.isAbsolute(value)),resolvedSchema=z.object({providerName:z.string().min(1).max(128),includeDefaultRoots:z.boolean(),dshHome:path,agentsHome:path,customSkillDirs:z.array(path).max(128),bundledSkillDir:path.optional()}).strict();
 const rootSchema=z.object({key:z.string().min(1).max(128),path,kind:z.enum(['user-dsh','user-agents','project-dsh','project-agents','custom']),mode:z.enum(['skill','library']),enabled:z.boolean(),workspace:path.optional(),provenance:z.record(z.string(),z.unknown())}).strict();
-const inventorySchema=z.object({schema:z.enum([LEGACY_SCHEMA,SCHEMA]),sdkVersion:z.literal(SUPPORTED_DSH),filesystem:z.array(z.object({id:z.string().min(1).max(128),config:resolvedSchema,enabled:z.boolean().optional()}).strict()).max(16),projects:z.array(z.object({cwd:path,projectRoot:path}).strict()).max(128),local:localSkillStateSchema,github:z.object({schemaVersion:z.literal(1),root:path.optional(),statePresent:z.boolean().optional(),sources:githubSkillStateSchema.shape.sources,running:z.array(z.object({id:digestSchema,digest:digestSchema}).strict()).max(16),releases:z.array(z.object({root:path,release:githubSkillReleaseSchema}).strict()).max(1024)}).strict(),market:marketSchema,feed:feedSchema,roots:z.array(rootSchema).max(1024),coverage:z.object({allDeclaredSources:z.literal(true),allRetainedManagedReleases:z.literal(true),credentials:z.literal(false),activatesSources:z.literal(false),wholeApplicationRestore:z.literal(false)}).strict()}).strict();
+const recoveryProviderSchema=z.object({profile:z.string().min(1).max(255),entryId:z.string().min(1).max(128).optional(),configDigest:digestSchema,paused:z.literal(true)}).strict();
+const recoveryLocationsSchema=z.object({locations:z.array(z.object({key:z.string().regex(/^sdk:[a-f0-9]{64}$/),path}).strict()).max(1024)}).strict();
+const projectSchema=z.object({cwd:path,projectRoot:path}).strict();
+const inventorySchema=z.object({schema:z.enum([LEGACY_SCHEMA,SCHEMA,RECOVERY_SCHEMA]),sdkVersion:z.literal(SUPPORTED_DSH),filesystem:z.array(z.object({id:z.string().min(1).max(128),config:resolvedSchema,enabled:z.boolean().optional(),recovery:recoveryProviderSchema.optional()}).strict()).max(2048),projects:z.array(projectSchema).max(128),local:localSkillStateSchema,github:z.object({schemaVersion:z.literal(1),root:path.optional(),statePresent:z.boolean().optional(),sources:githubSkillStateSchema.shape.sources,running:z.array(z.object({id:digestSchema,digest:digestSchema}).strict()).max(16),releases:z.array(z.object({root:path,release:githubSkillReleaseSchema}).strict()).max(1024)}).strict(),market:marketSchema,feed:feedSchema,roots:z.array(rootSchema).max(1024),recovery:recoveryLocationsSchema.optional(),coverage:z.object({allDeclaredSources:z.literal(true),allRetainedManagedReleases:z.literal(true),credentials:z.literal(false),activatesSources:z.literal(false),wholeApplicationRestore:z.literal(false)}).strict()}).strict();
 
 function validate(input:unknown):SkillBackupInventory{
-  backupJsonString(input);const value=inventorySchema.parse(input);if(value.schema===SCHEMA&&(value.github.root===undefined||value.github.statePresent===undefined))throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');if(value.github.statePresent===false&&value.github.sources.length)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');githubProjectionAnchor(value);try{validateMarketBackupState(value.market,verifySkill);}catch{throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');}
+  backupJsonString(input);const value=inventorySchema.parse(input);if(value.schema!==LEGACY_SCHEMA&&(value.github.root===undefined||value.github.statePresent===undefined))throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');if(value.schema!==RECOVERY_SCHEMA&&value.filesystem.length>16)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');if(value.schema===RECOVERY_SCHEMA?!value.recovery:!!value.recovery||value.filesystem.some(row=>row.recovery!==undefined))throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');if(value.github.statePresent===false&&value.github.sources.length)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');githubProjectionAnchor(value);try{validateMarketBackupState(value.market,verifySkill);}catch{throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');}
   for(const items of [value.feed.catalog,...value.feed.persisted.cache?[value.feed.persisted.cache.catalog]:[]]){const names=new Set<string>();for(const item of items){verifySkill(item);if(names.has(item.manifest.id))throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');names.add(item.manifest.id);}}
   for(const cache of [value.feed,...value.feed.persisted.cache?[value.feed.persisted.cache]:[]])if(cache.status.count!==cache.catalog.length)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');
   if(value.feed.persisted.present!==!!value.feed.persisted.cache)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');
@@ -68,9 +80,9 @@ function validate(input:unknown):SkillBackupInventory{
   if(backupJsonString(value.roots)!==backupJsonString(deriveRoots(value).map(root=>rootSchema.parse(root))))throw new BackupError('BACKUP_SKILL_INVENTORY_ROOTS_MISMATCH');
   return value;
 }
-function deriveRoots(value:Pick<SkillBackupInventory,'filesystem'|'projects'|'local'|'github'>):SkillBackupRoot[]{
+export function sdkSkillBackupRoots(value:Pick<SkillBackupInventory,'filesystem'|'projects'>):SkillBackupRoot[]{
   const roots:SkillBackupRoot[]=[];
-  const add=(key:string,path:string,kind:SkillBackupRoot['kind'],provenance:Record<string,unknown>,workspace?:string,mode:SkillBackupRoot['mode']='library',enabled=true)=>roots.push({key,path,kind,mode,enabled,...workspace?{workspace}:{},provenance});
+  const add=(key:string,path:string,kind:SkillBackupRoot['kind'],provenance:Record<string,unknown>,workspace?:string,mode:SkillBackupRoot['mode']='library',enabled=true)=>{if(roots.length>=1024)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');roots.push({key,path,kind,mode,enabled,...workspace?{workspace}:{},provenance});};
   const at=(root:string,...parts:string[])=>(win32.isAbsolute(root)&&!posix.isAbsolute(root)?win32:posix).join(root,...parts);
   for(const {id,config,enabled=true}of value.filesystem){
     const offset=roots.length;
@@ -80,6 +92,11 @@ function deriveRoots(value:Pick<SkillBackupInventory,'filesystem'|'projects'|'lo
     if(config.bundledSkillDir)add('sdk:'+sha(id+':bundled'),config.bundledSkillDir,'custom',{provider:id,role:'bundled'});
     for(let i=offset;i<roots.length;i++)roots[i].enabled=enabled;
   }
+  return roots;
+}
+function deriveRoots(value:Pick<SkillBackupInventory,'filesystem'|'projects'|'local'|'github'|'recovery'>):SkillBackupRoot[]{
+  const roots=sdkSkillBackupRoots(value),add=(key:string,path:string,kind:SkillBackupRoot['kind'],provenance:Record<string,unknown>,workspace?:string,mode:SkillBackupRoot['mode']='library',enabled=true)=>roots.push({key,path,kind,mode,enabled,...workspace?{workspace}:{},provenance});
+  if(value.recovery){const physical=new Map(value.recovery.locations.map(row=>[row.key,row.path]));if(physical.size!==value.recovery.locations.length||physical.size!==roots.length||roots.some(row=>!physical.has(row.key)))throw new BackupError('BACKUP_SKILL_INVENTORY_LOCATIONS_INVALID');for(const root of roots)root.path=physical.get(root.key)!;}
   for(const item of value.local.sources)add('local:'+item.id,item.root,'custom',{provider:'dsh-zhen-local-skills',record:item},undefined,item.mode,item.enabled);
   for(const {root,release}of value.github.releases)add('github:'+sha(release.sourceId+':'+release.digest),root,'custom',{provider:'dsh-zhen-github-skills',sourceId:release.sourceId,digest:release.digest},undefined,'library',value.github.sources.some(row=>row.id===release.sourceId&&row.enabled&&row.active===release.digest));
   return roots;
@@ -97,17 +114,19 @@ async function projectRoot(cwd:string,signal?:AbortSignal):Promise<string>{
   let current=cwd;while(true){signal?.throwIfAborted();try{await access(join(current,'.git'));return current;}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw new BackupError('BACKUP_SKILL_PROJECT_UNAVAILABLE');}const parent=dirname(current);if(parent===current)return cwd;current=parent;}
 }
 export async function collectSkillBackupInventory(source:SkillInventorySource,options:BackupOptions={}):Promise<{document:SkillBackupInventory;selection:SkillBackupSelection}>{
-  options.signal?.throwIfAborted();if(!Array.isArray(source.filesystem)||source.filesystem.length>16||!Array.isArray(source.workspaces)||source.workspaces.length>10000)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');
+  options.signal?.throwIfAborted();if(!Array.isArray(source.filesystem)||source.filesystem.length>(source.recovery?2048:16)||!Array.isArray(source.workspaces)||source.workspaces.length>10000)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');
+  const recovery=source.recovery;if(recovery){await recovery.assertCurrent?.();options.signal?.throwIfAborted();backupJsonString({projects:recovery.projects,locations:recovery.locations});}
   const filesystem:SkillBackupInventory['filesystem']=[],projects:SkillBackupInventory['projects']=[],seenCwd=new Set<string>(),protectedContainers=[...source.protectedContainers],forbiddenTrees=[...source.forbiddenTrees];backupJsonString({protectedContainers,forbiddenTrees});
-  for(const cwd of source.workspaces){if(!isAbsolute(cwd))throw new BackupError('BACKUP_PATH_INVALID');const absolute=resolve(cwd);if(seenCwd.has(absolute))continue;seenCwd.add(absolute);if(projects.length>=128)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');projects.push({cwd:absolute,projectRoot:await projectRoot(absolute,options.signal)});}
+  if(recovery){projects.push(...z.array(projectSchema).max(128).parse(recovery.projects));}else for(const cwd of source.workspaces){if(!isAbsolute(cwd))throw new BackupError('BACKUP_PATH_INVALID');const absolute=resolve(cwd);if(seenCwd.has(absolute))continue;seenCwd.add(absolute);if(projects.length>=128)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');projects.push({cwd:absolute,projectRoot:await projectRoot(absolute,options.signal)});}
   for(const provider of source.filesystem){
-    if(!['host-local','host-local-resolved'].includes(provider.mode))throw new BackupError('BACKUP_SKILL_FILESYSTEM_UNSUPPORTED');if(provider.mode==='host-local-resolved')backupJsonString(provider.config);const config=provider.mode==='host-local-resolved'?resolvedSchema.parse(provider.config):resolveSkillFilesystem(provider.config);filesystem.push({id:provider.id,config,...provider.enabled!==undefined?{enabled:provider.enabled}:{}});
+    if(!['host-local','host-local-resolved'].includes(provider.mode))throw new BackupError('BACKUP_SKILL_FILESYSTEM_UNSUPPORTED');if(provider.mode==='host-local-resolved')backupJsonString(provider.config);const config=provider.mode==='host-local-resolved'?resolvedSchema.parse(provider.config):resolveSkillFilesystem(provider.config);filesystem.push({id:provider.id,config,...provider.enabled!==undefined?{enabled:provider.enabled}:{},...provider.recovery?{recovery:recoveryProviderSchema.parse(provider.recovery)}:{}});
   }
   const local=source.local.backupState(),github=source.github.backupState(),market=source.market.backupState(),feed=source.feed.backupState();
   for(const item of local.sources){try{const stat=await lstat(item.root,{bigint:true});if(stat.isSymbolicLink()||!stat.isDirectory()||[stat.dev,stat.ino].join(':')!==item.identity)throw new BackupError('BACKUP_SKILL_SOURCE_IDENTITY_CHANGED');}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}}
-  const roots=deriveRoots({filesystem,projects,local,github});
-  const document=validate({schema:SCHEMA,sdkVersion:SUPPORTED_DSH,filesystem,projects,local,github,market,feed,roots,coverage:{allDeclaredSources:true,allRetainedManagedReleases:true,credentials:false,activatesSources:false,wholeApplicationRestore:false}});
+  const locations=recovery?recoveryLocationsSchema.parse({locations:recovery.locations}):undefined,roots=deriveRoots({filesystem,projects,local,github,...locations?{recovery:locations}:{}});
+  const document=validate({schema:recovery?RECOVERY_SCHEMA:SCHEMA,sdkVersion:SUPPORTED_DSH,filesystem,projects,local,github,market,feed,roots,...locations?{recovery:locations}:{},coverage:{allDeclaredSources:true,allRetainedManagedReleases:true,credentials:false,activatesSources:false,wholeApplicationRestore:false}});
   if(Buffer.byteLength(backupJsonString(document))>MAX_STATE)throw new BackupError('BACKUP_SKILL_INVENTORY_LIMIT');
+  await recovery?.assertCurrent?.();options.signal?.throwIfAborted();
   return {document,selection:{roots:document.roots,protectedContainers:[...protectedContainers,...filesystem.flatMap(row=>[row.config.dshHome,row.config.agentsHome]),...projects.map(row=>row.projectRoot)],forbiddenTrees}};
 }
 export interface SkillInventoryBackupLease {document:SkillBackupInventory;records():AsyncGenerator<BackupRecord>;assertCurrent():Promise<void>;close():void;}
@@ -118,9 +137,9 @@ export async function prepareSkillInventoryBackup(resolveSource:()=>SkillInvento
   const check=()=>{if(closed)throw new BackupError('BACKUP_SKILL_LEASE_CLOSED');signal.throwIfAborted();};
   const fail=(error:unknown):never=>{check();if(error instanceof BackupError)throw error;if(error instanceof Error&&error.name==='BackupError'&&(error as Error&{code?:unknown}).code==='BACKUP_MARKET_SCHEMA_UNSUPPORTED')throw new BackupError('BACKUP_MARKET_SCHEMA_UNSUPPORTED');throw new BackupError('BACKUP_SKILL_INVENTORY_READ_FAILED');};
   const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value;
-  const capture=async()=>{try{check();const value=resolveSource(),source={...value},owners=[source.local,source.github,source.market,source.feed].map(original);return {...await collectSkillBackupInventory(source,options),owners};}catch(error){return fail(error);}};
+  const capture=async()=>{try{check();const value=resolveSource(),source={...value},owners=[source.local,source.github,source.market,source.feed].map(original),assertRecoveryCurrent=source.recovery?.assertCurrent?.bind(source.recovery);return {...await collectSkillBackupInventory(source,options),owners,assertRecoveryCurrent};}catch(error){return fail(error);}};
   const initial=await capture(),document=backupJsonString(initial.document),selection=backupJsonString(initial.selection),bytes=Buffer.from(document);
-  const resolveSelection=async()=>{const current=await capture();if(backupJsonString(current.document)!==document||backupJsonString(current.selection)!==selection||current.owners.some((value,index)=>value!==initial.owners[index]))throw new BackupError('BACKUP_SOURCE_CHANGED');return current.selection;};
+  const resolveSelection=async()=>{await initial.assertRecoveryCurrent?.();const current=await capture();if(backupJsonString(current.document)!==document||backupJsonString(current.selection)!==selection||current.owners.some((value,index)=>value!==initial.owners[index]))throw new BackupError('BACKUP_SOURCE_CHANGED');await initial.assertRecoveryCurrent?.();return current.selection;};
   let revision:string;try{revision=await skillResourceRevision(initial.selection,new Map(),options);await resolveSelection();}catch(error){return fail(error);}
   const assertCurrent=async()=>{try{check();const selected=await resolveSelection();if(await skillResourceRevision(selected,new Map(),options)!==revision)throw new BackupError('BACKUP_SOURCE_CHANGED');await resolveSelection();}catch(error){fail(error);}};
   return {document:structuredClone(initial.document),assertCurrent,close(){if(!closed){closed=true;controller.abort();}},async*records(){
@@ -128,7 +147,7 @@ export async function prepareSkillInventoryBackup(resolveSource:()=>SkillInvento
     try{
       const selected=await resolveSelection();
       if(await skillResourceRevision(selected,new Map(),options)!==revision)throw new BackupError('BACKUP_SOURCE_CHANGED');
-      yield {metadata:{kind:'skill-inventory',schema:SCHEMA},size:bytes.length,data:(async function*(){check();yield bytes;})()};
+      yield {metadata:{kind:'skill-inventory',schema:initial.document.schema},size:bytes.length,data:(async function*(){check();yield bytes;})()};
       for await(const item of skillBackupRecords(()=>selected,options)){
         const data=(async function*(){try{check();for await(const bytes of item.data){check();yield bytes;}check();}catch(error){fail(error);}})();
         yield {...item,data};
@@ -148,7 +167,7 @@ export interface SkillInventoryRestoreCandidate extends SkillRestoreCandidate{
 export async function restoreSkillInventoryBackup(source:string,password:string,parent:string,options:BackupOptions={}):Promise<SkillInventoryRestoreCandidate>{
   if(!isAbsolute(parent))throw new BackupError('BACKUP_PATH_INVALID');const directory=await realpath(parent),archive=await openBackupArchive(source,password,options);let candidate:SkillRestoreCandidate|undefined,complete=false;
   try{
-    const records=archive.records(),first=await records.next();if(first.done||first.value.metadata.kind!=='skill-inventory'||![SCHEMA,LEGACY_SCHEMA].includes(String(first.value.metadata.schema))||Object.keys(first.value.metadata).length!==2||first.value.size>MAX_STATE)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');
+    const records=archive.records(),first=await records.next();if(first.done||first.value.metadata.kind!=='skill-inventory'||![SCHEMA,LEGACY_SCHEMA,RECOVERY_SCHEMA].includes(String(first.value.metadata.schema))||Object.keys(first.value.metadata).length!==2||first.value.size>MAX_STATE)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');
     const parts:Uint8Array[]=[];for await(const bytes of first.value.data)parts.push(bytes);let inventory:SkillBackupInventory;
     try{inventory=validate(parseBackupJson(Buffer.concat(parts,first.value.size)));if(inventory.schema!==first.value.metadata.schema)throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');}catch{throw new BackupError('BACKUP_SKILL_INVENTORY_INVALID');}
     candidate=await restoreAuthenticatedSkillRecords(records,directory,options,inventory.roots,githubProjectionAnchor(inventory));options.signal?.throwIfAborted();
@@ -156,7 +175,7 @@ export async function restoreSkillInventoryBackup(source:string,password:string,
     const market=new SkillMarket(database,[]);let managed:ManagedSkillRestore;try{await market.restoreBackupState(inventory.market,options.signal);if(backupJsonString(market.backupState())!==backupJsonString(inventory.market))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');managed=await restoreManagedSkills(candidate,inventory,market,options);if(backupJsonString(market.backupState())!==backupJsonString(inventory.market))throw new BackupError('BACKUP_MARKET_STATE_MISMATCH');}finally{market.close();}
     const metadata=join(candidate.root,'dsh-zhen-skill-inventory.json'),restored={marketDatabase:true,localSourceState:true,githubSourceState:true,feedState:true,wholeApplicationRestore:false} as const;
     await writeFile(metadata,backupJsonString(inventory)+'\n',{flag:'wx',mode:0o600});options.signal?.throwIfAborted();
-    await writeFile(join(candidate.root,'dsh-zhen-skill-inventory-restore.json'),backupJsonString({schema:SCHEMA,managed,roots:candidate.roots,anchors:candidate.anchors,market:{database,metadata,restored:true,activated:false},readyForActivation:false,restoreCoverage:restored,activated:false})+'\n',{flag:'wx',mode:0o600});options.signal?.throwIfAborted();
+    await writeFile(join(candidate.root,'dsh-zhen-skill-inventory-restore.json'),backupJsonString({schema:inventory.schema===RECOVERY_SCHEMA?RECOVERY_SCHEMA:SCHEMA,managed,roots:candidate.roots,anchors:candidate.anchors,market:{database,metadata,restored:true,activated:false},readyForActivation:false,restoreCoverage:restored,activated:false})+'\n',{flag:'wx',mode:0o600});options.signal?.throwIfAborted();
     complete=true;return {...candidate,inventory,managed,market:{database,metadata,restored:true,activated:false},readyForActivation:false,restoreCoverage:restored};
   }catch(error){options.signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_SKILL_RESTORE_FAILED');}
   finally{try{await archive.close();}finally{if(candidate&&!complete){const actual=await realpath(candidate.root),part=relative(directory,actual);if((await lstat(candidate.root)).isSymbolicLink()||!part||isAbsolute(part)||part.startsWith('..')||/[\\/]/.test(part)||!part.startsWith('dsh-zhen-skill-restore-'))throw new BackupError('BACKUP_TEMP_BOUNDARY');await rm(actual,{recursive:true,force:true,maxRetries:3,retryDelay:100});}}}

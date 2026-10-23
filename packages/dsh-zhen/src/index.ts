@@ -7,6 +7,7 @@ import {summarizeEnvironment,summarizeSessions,summarizeSkills,summarizeKnowledg
 import {readRestoredSkillReview} from './restore-skills.ts';
 import {registerRestoredSkillProviders} from './restored-skill-provider.ts';
 import {readRestoredSkillProjects} from './restored-skill-projects.ts';
+import {prepareRestoredSkillBackupSource} from './restored-skill-backup.ts';
 import type {RecoveryPreview,RecoveryCatalogView} from './recovery-schema.ts';
 import {prepareProfilePackageBackup,restoreProfilePackageBackup} from './backup-profile-packages.ts';
 import {restoreSessionBackup} from './backup-sessions.ts';
@@ -427,9 +428,9 @@ export default class ZhenService extends TypertRemoteService {
     const profileSource=()=>{if(!profile||this.ctx.get('profileContext')!==profile)throw new BackupError('BACKUP_HOST_PROFILE_UNAVAILABLE');return {home:profile.home,installAnchor:profile.installAnchor,active:profile};};
     const deps=sessionLogExportDeps(this.ctx),facility=this.ctx.get('storageDomain');
     return {
-      environment:{available:!!profile&&!!this.ctx.get('pluginPackages'),prepare:(password,options)=>prepareProfilePackageBackup(password,{profiles:profileSource,packages:()=>hostPackageBackupSource(this.ctx,policy),includeProfileDependencies:true},options),restore:async(file,password,parent,options)=>summarizeEnvironment(await restoreProfilePackageBackup(file,password,parent,{...options,installAnchor:profileSource().installAnchor}))},
+      environment:{available:!!profile&&!!this.ctx.get('pluginPackages'),prepare:async(password,options)=>{const restored=this.hasRestoredSkillProjects()?await prepareRestoredSkillBackupSource(this.ctx,home,()=>{throw new BackupError('BACKUP_COMPONENT_UNAVAILABLE');},{...options,profileOnly:true}):undefined;return prepareProfilePackageBackup(password,{profiles:()=>restored?restored.forProfiles(profileSource()):profileSource(),packages:()=>hostPackageBackupSource(this.ctx,policy),includeProfileDependencies:true},options);},restore:async(file,password,parent,options)=>summarizeEnvironment(await restoreProfilePackageBackup(file,password,parent,{...options,installAnchor:profileSource().installAnchor}))},
       sessions:{available:!!deps.sessionPersistence&&!!deps.sessionQuery&&!!deps.attachments,prepare:(_password,options)=>this.sessionBackupLease(options),restore:async(...args)=>summarizeSessions(await restoreSessionBackup(...args))},
-      skills:{available:!this.hasRestoredSkillProjects()&&!!this.localSkillSources&&!!this.githubSkillSources&&!!this.skillMarket&&!!this.skillFeed&&!!deps.sessionPersistence,prepare:async(_password,options)=>{
+      skills:{available:(!this.hasRestoredSkillProjects()||!!this.ctx.get('loader'))&&!!this.localSkillSources&&!!this.githubSkillSources&&!!this.skillMarket&&!!this.skillFeed&&!!deps.sessionPersistence,prepare:async(_password,options)=>{
         // Complete persistent headers include historical working directories.
         const persistence=this.ctx.get('sessionPersistence');if(!persistence)throw new BackupError('BACKUP_HOST_SERVICES_UNAVAILABLE');const snapshots=await persistence.list({signal:options.signal}),revisions=new Map(snapshots.map(row=>[row.header.id,row.revision]));
         const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value,owner=original(persistence);
@@ -443,7 +444,7 @@ export default class ZhenService extends TypertRemoteService {
     };
   }
   @Remote
-  backupInfo():BackupInfo{const info=this.backupCenter.info();if(this.hasRestoredSkillProjects())info.limitations.push('恢复后的项目技能再次备份适配尚在开发，技能范围暂不可备份。请保留原始备份与恢复候选。');return info;}
+  backupInfo():BackupInfo{const info=this.backupCenter.info();if(this.hasRestoredSkillProjects()&&!this.ctx.get('loader'))info.limitations.push('恢复后的项目技能缺少配置入口，技能范围暂不可备份。请保留原始备份与恢复候选，并在完整应用中打开。');return info;}
   @Remote
   backupFiles(folder:string):Promise<BackupFiles>{return this.backupCenter.files(folder);}
   @Remote
@@ -472,20 +473,19 @@ export default class ZhenService extends TypertRemoteService {
   /** Host-only stream for the composed backup. Not a browser Remote: source
    * paths, backup passwords and archive bytes stay on the Host. Never construct
    * a managed service here, since its startup may activate a pending update. */
-  skillBackupLease(policy:()=>HostSkillBackupPolicy,options:BackupOptions={}):Promise<SkillInventoryBackupLease>{
-    // The ordinary inventory cannot describe project portals or distinguish
-    // paused SDK rows from original preferences. Refuse rather than emit an
-    // archive claiming complete skill coverage with missing project resources.
-    if(this.hasRestoredSkillProjects())return Promise.reject(new BackupError('BACKUP_SKILL_PROJECT_REBACKUP_PENDING'));
+  async skillBackupLease(policy:()=>HostSkillBackupPolicy,options:BackupOptions={}):Promise<SkillInventoryBackupLease>{
+    const restored=this.hasRestoredSkillProjects();if(restored&&!this.ctx.get('loader'))throw new BackupError('BACKUP_SKILL_PROJECT_REBACKUP_PENDING');
     const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value,owner=original(this);
-    return prepareSkillInventoryBackup(()=>{
+    if(original(this.ctx.get('zhen'))!==owner)throw new BackupError('BACKUP_SOURCE_CHANGED');
+    const source=()=>{
       if(original(this.ctx.get('zhen'))!==owner)throw new BackupError('BACKUP_SOURCE_CHANGED');
       const local=this.localSkillSources,github=this.githubSkillSources,market=this.skillMarket,feed=this.skillFeed;
       if(!local||!github||!market||!feed)throw new BackupError('BACKUP_HOST_SERVICES_UNAVAILABLE');
       return hostSkillInventorySource(this.ctx,{local,github,market,feed},policy());
-    },options);
+    };
+    return prepareSkillInventoryBackup(restored?await prepareRestoredSkillBackupSource(this.ctx,dirname(this.zhenHome),source,options):source,options);
   }
-  private hasRestoredSkillProjects():boolean{return this.restoredSkillProjects!==null||readRestoredSkillProjects(dirname(this.zhenHome))!==null;}
+  private hasRestoredSkillProjects():boolean{return this.restoredSkills!==null||this.restoredSkillProjects!==null||readRestoredSkillProjects(dirname(this.zhenHome))!==null;}
   async* skillBackupRecords(policy:()=>HostSkillBackupPolicy,options:BackupOptions={}):AsyncGenerator<BackupRecord>{
     const lease=await this.skillBackupLease(policy,options);try{yield*lease.records();}finally{lease.close();}
   }

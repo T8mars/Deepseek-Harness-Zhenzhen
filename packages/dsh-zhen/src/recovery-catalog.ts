@@ -53,7 +53,10 @@ export class RecoveryCatalog {
   private check():{parent:string;file:string;}{noLinks(this.file);const parent=dirname(this.file);if(key(realpathSync.native(parent))!==key(parent)||key(realpathSync.native(this.file))!==key(this.file))throw new BackupError('BACKUP_CANDIDATE_CATALOG_CHANGED');const current={parent:identity(parent,true),file:identity(this.file)};if(this.origin&&(current.parent!==this.origin.parent||current.file!==this.origin.file))throw new BackupError('BACKUP_CANDIDATE_CATALOG_CHANGED');return current;}
   private create():void{
     noLinks(this.file);mkdirSync(dirname(this.file),{recursive:true,mode:0o700});noLinks(this.file);if(existsSync(this.file))return;
-    const parent=dirname(this.file),temporary=join(parent,'.dsh-recovery-index-'+randomUUID()+'.sqlite'),fd=openSync(temporary,'wx',0o600);closeSync(fd);let db:DatabaseSync|undefined;
+    // SQLite may create a -journal sibling. Keep this exclusive temporary name
+    // shorter than the final filename so valid Windows homes do not overflow
+    // only during initialization. Identity and same-directory atomicity stay.
+    const parent=dirname(this.file),temporary=join(parent,'.r-'+randomUUID().replaceAll('-','').slice(0,16)+'.db'),fd=openSync(temporary,'wx',0o600);closeSync(fd);let db:DatabaseSync|undefined;
     try{db=new DatabaseSync(temporary,{allowExtension:false,enableDoubleQuotedStringLiterals:false});db.exec('PRAGMA trusted_schema=OFF; BEGIN IMMEDIATE; CREATE TABLE recovery_candidates(id TEXT PRIMARY KEY NOT NULL,created_at TEXT NOT NULL,data TEXT NOT NULL); PRAGMA user_version=1; COMMIT;');db.close();db=undefined;
       try{linkSync(temporary,this.file);}catch(error){const code=(error as NodeJS.ErrnoException).code;if(code!=='EEXIST'){if(!['ENOTSUP','EOPNOTSUPP','EXDEV','EPERM'].includes(code??''))throw error;try{copyFileSync(temporary,this.file,constants.COPYFILE_EXCL);}catch(copyError){if((copyError as NodeJS.ErrnoException).code!=='EEXIST')throw copyError;}}}
     }finally{db?.close();unlinkSync(temporary);}
