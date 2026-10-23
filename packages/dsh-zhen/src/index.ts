@@ -9,6 +9,9 @@ import {registerRestoredSkillProviders} from './restored-skill-provider.ts';
 import {readRestoredSkillProjects} from './restored-skill-projects.ts';
 import {prepareRestoredSkillBackupSource} from './restored-skill-backup.ts';
 import {RestoredSkillConsent} from './restored-skill-consent.ts';
+import {RestoredManagedSkillConsent} from './restored-managed-skill-consent.ts';
+import type {RestoredManagedSkillView,RestoredManagedSkillRequest} from './restored-managed-skill-schema.ts';
+import {backupJsonString} from './backup-data.ts';
 import type {RestoredSkillConsentView,RestoredSkillConsentRequest} from './restored-skill-consent-schema.ts';
 import type {RecoveryPreview,RecoveryCatalogView} from './recovery-schema.ts';
 import {prepareProfilePackageBackup,restoreProfilePackageBackup} from './backup-profile-packages.ts';
@@ -176,6 +179,7 @@ const githubCredential = credentialRef('DSH_ZHEN_GITHUB_TOKEN');
 export default class ZhenService extends TypertRemoteService {
   private readonly backupCenter:BackupCenter;
   private readonly restoredConsent:RestoredSkillConsent;
+  private readonly restoredManagedConsent:RestoredManagedSkillConsent;
   private readonly backupProfile:ProfileContext|undefined;
   private readonly directoryChoices:DirectoryChoices;
   static inject: string[] = ['credentials'];
@@ -219,6 +223,13 @@ export default class ZhenService extends TypertRemoteService {
   constructor(ctx: Context) {
     super(ctx, 'zhen');
     this.backupProfile=ctx.get('profileContext');
+    const managedProfileName=this.backupProfile?.name,managedProfileHome=this.backupProfile?.home,originalManaged=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value;
+    const managedContextCurrent=()=>!!this.backupProfile&&originalManaged(ctx.get('profileContext'))===originalManaged(this.backupProfile)&&this.backupProfile.name===managedProfileName&&this.backupProfile.home===managedProfileHome&&managedProfileHome===dirname(this.zhenHome)&&originalManaged(ctx.get('zhen'))===originalManaged(this);
+    this.restoredManagedConsent=new RestoredManagedSkillConsent(dirname(this.zhenHome),this.backupProfile?.name,!!this.restoredSkills,()=>({market:this.market(),local:this.localSkills(),github:this.githubSkills()}),async()=>{
+      const original=(value:unknown)=>value&&(value as {[symbols.original]?:object})[symbols.original]||value;
+      if(!managedContextCurrent()||backupJsonString(readRestoredSkillReview(this.zhenHome))!==backupJsonString(this.restoredSkills))throw new BackupError('BACKUP_MANAGED_SKILL_SOURCE_CHANGED');
+    },managedContextCurrent);
+    ctx.effect(()=>()=>this.restoredManagedConsent.close(),'zhen: restored managed skill consent');
     this.restoredConsent=new RestoredSkillConsent(dirname(this.zhenHome),this.backupProfile?.name,async()=>{
       const profile=this.backupProfile;if(!profile||ctx.get('profileContext')!==profile)throw new BackupError('BACKUP_HOST_PROFILE_UNAVAILABLE');
       const source=await prepareRestoredSkillBackupSource(ctx,dirname(this.zhenHome),()=>{throw new BackupError('BACKUP_COMPONENT_UNAVAILABLE');},{profileOnly:true});
@@ -296,20 +307,23 @@ export default class ZhenService extends TypertRemoteService {
     ctx.inject(['skills'], inner => inner.skills.registerProvider(control => {
       const market = this.market();
       const unsubscribe = market.subscribe(control.invalidate);
+      const stopConsent=this.restoredManagedConsent.subscribe(control.invalidate);control.signal.addEventListener('abort',stopConsent,{once:true});
       control.signal.addEventListener('abort', unsubscribe, { once: true });
-      return market.provider();
+      return market.provider(this.restoredSkills?this.restoredManagedConsent:undefined);
     }));
     ctx.inject(['skills'], inner => inner.skills.registerProvider(control => {
       const sources = this.localSkills();
       const unsubscribe = sources.subscribe(control.invalidate);
+      const stopConsent=this.restoredManagedConsent.subscribe(control.invalidate);control.signal.addEventListener('abort',stopConsent,{once:true});
       control.signal.addEventListener('abort', unsubscribe, { once: true });
-      return sources.provider();
+      return sources.provider(this.restoredSkills?this.restoredManagedConsent:undefined);
     }));
     ctx.inject(['tools'], inner => inner.tools.register(createCapabilityTool(() => this.capabilities())));
     ctx.inject(['tools'], inner => inner.tools.register(createCanvasHelpTool()));
     ctx.inject(['skills'], inner => inner.skills.registerProvider(control => {
       const sources = this.githubSkills(); const unsubscribe = sources.subscribe(control.invalidate);
-      control.signal.addEventListener('abort', unsubscribe, { once: true }); return sources.provider();
+      const stopConsent=this.restoredManagedConsent.subscribe(control.invalidate);control.signal.addEventListener('abort',stopConsent,{once:true});
+      control.signal.addEventListener('abort', unsubscribe, { once: true }); return sources.provider(this.restoredSkills?this.restoredManagedConsent:undefined);
     }));
     registerRestoredSkillProviders(ctx,dirname(this.zhenHome),this.backupProfile?.name);
     ctx.inject(['tools', 'workingDirectory'], inner => {
@@ -458,6 +472,10 @@ export default class ZhenService extends TypertRemoteService {
   restoredSkillConsent(page:number):Promise<RestoredSkillConsentView>{return this.restoredConsent.view(page);}
   @Remote
   restoredSkillConsentChange(request:RestoredSkillConsentRequest):Promise<RestoredSkillConsentView>{return this.restoredConsent.change(request);}
+  @Remote
+  restoredManagedSkillConsent(page:number):Promise<RestoredManagedSkillView>{return this.restoredManagedConsent.view(page);}
+  @Remote
+  restoredManagedSkillConsentChange(request:RestoredManagedSkillRequest):Promise<RestoredManagedSkillView>{return this.restoredManagedConsent.change(request);}
   @Remote
   backupFiles(folder:string):Promise<BackupFiles>{return this.backupCenter.files(folder);}
   @Remote

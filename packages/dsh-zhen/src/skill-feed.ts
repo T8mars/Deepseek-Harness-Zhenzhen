@@ -46,7 +46,7 @@ export class SkillFeed {
     catch { this.status = { ...this.status, state: 'error', message: '目录已校验，但自动安排未完成，当前技能保留。可重新检查或手动选择。' }; }
   }
   snapshot(): SkillFeedSnapshot { return { ...this.status }; }
-  private writable():void{if(this.options?.reviewOnly)throw new Error('恢复的技能仍待审阅，请先完成恢复检查。');}
+  private writable():void{if(this.options?.reviewOnly)throw new Error('恢复的技能管理操作仍暂停；调用许可可在“恢复来源审阅”设置。下载和更新需先完成整个恢复应用的启用。');}
   /** Capture the running Host's exact offline candidates; never fetch or stage. */
   backupState(): {status:SkillFeedSnapshot;catalog:SkillPackage[];persisted:{present:boolean;cache?:{status:SkillFeedSnapshot;catalog:SkillPackage[]}}} {
     if(this.pending)throw new Error('技能目录检查进行中，请稍后备份。');

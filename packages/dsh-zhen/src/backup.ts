@@ -72,3 +72,5 @@ export type {RestoredSkillProjects,RestoredSkillProjectsReceipt,RestoredSkillPro
 export {createRestoredFilesystemProvider,registerRestoredSkillProviders} from './restored-skill-provider.ts';
 export {RestoredSkillConsent,readRestoredSkillConsent,effectiveRestoredSkillSnapshot,RESTORED_SKILL_CONSENT_FILE} from './restored-skill-consent.ts';
 export {RESTORED_SKILL_CONSENT_POLICY,restoredSkillConsentRequestSchema,restoredSkillConsentViewSchema} from './restored-skill-consent-schema.ts';
+export {RestoredManagedSkillConsent,RESTORED_MANAGED_SKILL_CONSENT_FILE} from './restored-managed-skill-consent.ts';
+export {RESTORED_MANAGED_SKILL_POLICY} from './restored-managed-skill-schema.ts';

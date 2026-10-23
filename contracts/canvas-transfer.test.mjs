@@ -33,7 +33,12 @@ test('C32: published Gateway owner and MCP keep saved-media transfer explicit, s
     assert.equal((await call('canvasTransferComplete', { id: preview.id })).phase, 'pending'); assert.equal(f.transferState.importWrites, 0);
     f.windowApproveTransfer(); assert.equal((await call('canvasTransferComplete', { id: preview.id })).phase, 'available');
     await call('canvasTransferPlacement', { id: preview.id }); await call('canvasTransferApprove', { id: preview.id, confirmed: true }); f.windowApproveTransfer(); assert.equal((await call('canvasTransferComplete', { id: preview.id })).phase, 'applied');
-    const status = await ctx.tools.execute({ callId: 'EXAMPLE_TRANSFER_STATUS', name: 'mcp__t8canvas__canvas_status', arguments: {}, signal: lifetime.signal }); assert.equal(status.isError, false);
+    const statusGetsBefore=f.state.requests.filter(row=>row.method==='GET'&&row.path==='/api/agent-control/v1/status').length,statusStarted=Date.now(),status = await ctx.tools.execute({ callId: 'EXAMPLE_TRANSFER_STATUS', name: 'mcp__t8canvas__canvas_status', arguments: {}, signal: lifetime.signal });
+    // Failure diagnostics contain only bounded codes/counts; never dump the
+    // MCP result, error text, auth store, signed links or approval secrets.
+    const code=value=>typeof value==='string'&&/^[A-Z][A-Z0-9_.:-]{0,79}$/.test(value)?value:null;
+    const diagnosticText=[status.error?.message??'',...(status.content??[]).filter(row=>row.type==='text').map(row=>row.text)].join('\n'),nativeCodes=[...new Set(diagnosticText.match(/\b(?:APP|CLI|PAIRING|CAPABILITY|CANVAS|AGENT_CONTROL|MCP)_[A-Z_]{1,60}\b/g)??[])].slice(0,8);
+    assert.equal(status.isError, false, JSON.stringify({toolErrorCode:code(status.error?.info?.code),nativeCodes,timedOut:/timed?\s*out|timeout|超时/i.test(status.error?.message??''),statusDurationMs:Date.now()-statusStarted,statusGetsDelta:f.state.requests.filter(row=>row.method==='GET'&&row.path==='/api/agent-control/v1/status').length-statusGetsBefore,toolRegistered:ctx.tools.schemas().some(tool=>tool.name==='mcp__t8canvas__canvas_status')}));
     const tools = ctx.tools.schemas().filter(tool => tool.name.startsWith('mcp__t8canvas__')); assert.equal(tools.length, 11); assert.ok(tools.every(tool => !/transfer|approve|complete|import|place|submit/.test(tool.name)));
     assert.equal(f.transferState.importWrites, 1); assert.equal(f.transferState.placeWrites, 1); assert.equal(keys, 0);
     await call('gatewayMediaForget', { id: f.receipt.id }); await assert.rejects(call('canvasTransferPreview', { input }), error => error.details?.reason === 'TRANSFER_RECEIPT_MISSING');

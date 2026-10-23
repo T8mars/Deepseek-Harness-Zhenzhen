@@ -7,6 +7,8 @@ import type { SkillProvider } from '@deepseek-ai/dsh-skill';
 import { skillId } from './market-schema.ts';
 import { LOCAL_SKILL_POLICY, localSkillMode, localSkillEntrySchema, localSkillStateSchema } from './local-skills-schema.ts';
 import type { LocalSkillDraft, LocalSkillEntry, LocalSkillBody, LocalSkillMode, LocalSkillRecord, LocalSkillView } from './local-skills-schema.ts';
+import {managedSkillInvocationKey} from './managed-skill-invocation.ts';
+import type {ManagedSkillInvocationGate,ManagedSkillInvocationRow} from './managed-skill-invocation.ts';
 
 const digest = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 const inside = (root: string, target: string): boolean => { const value = relative(root, target); return !isAbsolute(value) && value !== '..' && !value.startsWith('../') && !value.startsWith('..\\'); };
@@ -34,7 +36,7 @@ export class LocalSkills {
     this.sources = records; this.serialized = text; this.generation++;
   }
   private save(records: LocalSkillRecord[]): void {
-    if(this.options.reviewOnly)throw new Error('恢复的技能仍待审阅，请先完成恢复检查。');
+    if(this.options.reviewOnly)throw new Error('恢复的技能管理操作仍暂停；调用许可可在“恢复来源审阅”设置。下载和更新需先完成整个恢复应用的启用。');
     const disk = existsSync(this.file) ? readFileSync(this.file, 'utf8') : '';
     if (disk !== this.serialized) throw new Error('本地技能配置已被其他 Host 修改，请刷新后重试。');
     const text = JSON.stringify(localSkillStateSchema.parse({ schemaVersion: 1, sources: records })) + '\n';
@@ -140,9 +142,13 @@ export class LocalSkills {
     for (const [path, callback] of this.watches) if (!paths.has(path)) { unwatchFile(path, callback); this.watches.delete(path); }
     for (const path of paths) if (!this.watches.has(path)) { const callback = (): void => { this.changed(); }; this.watches.set(path, callback); watchFile(path, { interval: this.pollMs, persistent: false }, callback); }
   }
-  private async collect(): Promise<LocalSkillView[] | undefined> {
+  private invocationKey(source:LocalSkillRecord):string{return managedSkillInvocationKey('local',source.id,JSON.stringify(source));}
+  recoveryInvocationRows():ManagedSkillInvocationRow[]{return this.backupState().sources.map(source=>({kind:'local',id:source.id,key:this.invocationKey(source),name:source.root,version:'',location:source.root,enabled:source.enabled,eligible:source.enabled}));}
+  async verifyRecoveryInvocation(key:string):Promise<void>{this.reload();const source=this.sources.find(source=>this.invocationKey(source)===key&&source.enabled);if(!source)throw Error('恢复技能来源已变化。');await this.scan(source.root,source.mode,source.identity);this.reload();if(!this.sources.some(row=>this.invocationKey(row)===key&&row.enabled))throw Error('恢复技能来源已变化。');}
+  private async collect(filter?:(source:LocalSkillRecord)=>boolean): Promise<LocalSkillView[] | undefined> {
     this.reload(); const generation = this.generation, views: LocalSkillView[] = [], watches = new Set<string>([this.file]), seen = new Set<string>();
     for (const source of this.sources) {
+      if(filter&&!filter(source))continue;
       if (!source.enabled) { views.push({ source, state: 'disabled', entries: [], problems: 0, skipped: 0 }); continue; }
       try {
         const scan = await this.scan(source.root, source.mode, source.identity);
@@ -162,27 +168,30 @@ export class LocalSkills {
     if(this.closed)throw new Error('技能来源服务已关闭。');this.reload();
     return {schemaVersion:1,sources:structuredClone(this.sources)};
   }
-  provider(): SkillProvider {
+  provider(gate?:ManagedSkillInvocationGate): SkillProvider {
     return { name: 'dsh-zhen-local-skills',
       list: async options => {
-        options.signal?.throwIfAborted();if(this.options.reviewOnly)return [];
-        options.signal?.throwIfAborted(); const views = await this.collect(); options.signal?.throwIfAborted();
+        options.signal?.throwIfAborted();if(this.options.reviewOnly&&!gate)return [];
+        const tokens=new Map<string,string>();
+        options.signal?.throwIfAborted(); const views = await this.collect(this.options.reviewOnly?source=>{const token=gate?.token(this.invocationKey(source));if(!token)return false;tokens.set(source.id,token);return true;}:undefined); options.signal?.throwIfAborted();
         if (!views) return { candidates: [], complete: false };
-        return views.flatMap(view => view.entries.filter(entry => !entry.shadowed).map(entry => ({ name: entry.name, description: entry.description, provider: 'dsh-zhen-local-skills', source: 'custom', rank: 350,
+        return views.filter(view=>!this.options.reviewOnly||tokens.get(view.source.id)===gate?.token(this.invocationKey(view.source))).flatMap(view => view.entries.filter(entry => !entry.shadowed).map(entry => ({ name: entry.name, description: entry.description, provider: 'dsh-zhen-local-skills', source: 'custom', rank: 350,
           path: join(view.source.root, entry.directory, 'SKILL.md'), resourceBase: { kind: 'directory' as const, path: join(view.source.root, entry.directory) },
           invocation: { modelInvocable: entry.modelInvocable, userInvocable: entry.userInvocable }, locator: { sourceId: view.source.id, directory: entry.directory, digest: entry.digest } })));
       },
       get: async (candidate, options) => {
-        options.signal?.throwIfAborted();if(this.options.reviewOnly)return undefined;
+        options.signal?.throwIfAborted();if(this.options.reviewOnly&&!gate)return undefined;
         options.signal?.throwIfAborted(); this.reload(); const generation = this.generation;
         const locator = candidate.locator as { sourceId?: string; directory?: string; digest?: string };
         const source = this.sources.find(item => item.id === locator?.sourceId && item.enabled);
         if (!source || typeof locator.directory !== 'string' || typeof locator.digest !== 'string') return undefined;
+        const consentKey=this.invocationKey(source),token=this.options.reviewOnly?gate?.token(consentKey):undefined;if(this.options.reviewOnly&&!token)return undefined;
         try {
           const root = await this.root(source.root); if (root.root !== source.root || root.identity !== source.identity) return undefined;
           const body = await this.body(root.root, locator.directory, locator.digest); options.signal?.throwIfAborted();
           const after = await this.root(source.root);
           this.reload();
+          if(this.options.reviewOnly&&gate?.token(consentKey)!==token)return undefined;
           if (body.entry.name !== candidate.name || this.closed || this.generation !== generation || after.root !== source.root || after.identity !== source.identity) return undefined;
           return { name: body.entry.name, description: body.entry.description, provider: 'dsh-zhen-local-skills', source: 'custom',
             invocation: { modelInvocable: body.entry.modelInvocable, userInvocable: body.entry.userInvocable }, path: join(body.resourceRoot, 'SKILL.md'), resourceBase: { kind: 'directory', path: body.resourceRoot }, content: body.content };

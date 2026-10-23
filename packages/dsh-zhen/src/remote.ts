@@ -89,6 +89,8 @@ import { gatewayMediaTicketSchema, gatewayMediaReceiptSchema } from './gateway-m
 import type { GatewayMediaTicket, GatewayMediaReceipt } from './gateway-media-schema.ts';
 
 export interface ZhenRemote {
+  restoredManagedSkillConsent(page:number):Promise<RemoteResult<RestoredManagedSkillView>>;
+  restoredManagedSkillConsentChange(request:RestoredManagedSkillRequest):Promise<RemoteResult<RestoredManagedSkillView>>;
   restoredSkillConsent(page:number):Promise<RemoteResult<RestoredSkillConsentView>>;
   restoredSkillConsentChange(request:RestoredSkillConsentRequest):Promise<RemoteResult<RestoredSkillConsentView>>;
   backupCandidatePlan(id:string):Promise<RemoteResult<RecoveryPlan>>;
@@ -267,6 +269,8 @@ function method(name: string, schema: z.ZodType, description: string, inputs: Ar
 }
 export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', methods: {
   'zhen/restoredSkillConsent':method('restoredSkillConsent',restoredSkillConsentViewSchema,'Owner UI: inspect restored filesystem skill sources for this profile; no instruction bodies or activation.',[['page',z.number().int().min(0).max(102).default(0)]]),
+  'zhen/restoredManagedSkillConsent':method('restoredManagedSkillConsent',restoredManagedSkillView,'Owner UI: page original managed source invocation choices; no downloads or pending activation.',[['page',z.number().int().min(0).max(2002).default(0)]]),
+  'zhen/restoredManagedSkillConsentChange':method('restoredManagedSkillConsentChange',restoredManagedSkillView,'Owner UI: explicitly grant or revoke one exact restored managed source for this profile; keep all writers and automatic updates paused.',[['request',restoredManagedSkillRequest]]),
   'zhen/restoredSkillConsentChange':method('restoredSkillConsentChange',restoredSkillConsentViewSchema,'Owner UI: explicitly grant or revoke only this profile and exact recovered skill sources; no archived tasks, downloads or native approval.',[['request',restoredSkillConsentRequestSchema]]),
   'zhen/backupCandidatePlan':method('backupCandidatePlan',recoveryPlanSchema,'Owner UI: verify original candidate bytes and inspect typed restored locations; no execution, rebinding or activation.',[['id',z.uuid()]]),
   'zhen/backupCandidateProjects':method('backupCandidateProjects',recoveryProjectsSchema,'Owner UI: verify the original candidate and page only original project directories and counts; no session content, original project reads or activation.',[['id',z.uuid()],['cursor',recoveryProjectCursorSchema]]),
@@ -421,3 +425,7 @@ import {restoredSkillConsentViewSchema,restoredSkillConsentRequestSchema} from '
 import type {RestoredSkillConsentView,RestoredSkillConsentRequest} from './restored-skill-consent-schema.ts';
 export {RESTORED_SKILL_CONSENT_POLICY,restoredSkillConsentViewSchema} from './restored-skill-consent-schema.ts';
 export type {RestoredSkillConsentView,RestoredSkillConsentRequest} from './restored-skill-consent-schema.ts';
+import {restoredManagedSkillView,restoredManagedSkillRequest} from './restored-managed-skill-schema.ts';
+import type {RestoredManagedSkillView,RestoredManagedSkillRequest} from './restored-managed-skill-schema.ts';
+export {RESTORED_MANAGED_SKILL_POLICY,restoredManagedSkillView} from './restored-managed-skill-schema.ts';
+export type {RestoredManagedSkillView,RestoredManagedSkillRequest} from './restored-managed-skill-schema.ts';

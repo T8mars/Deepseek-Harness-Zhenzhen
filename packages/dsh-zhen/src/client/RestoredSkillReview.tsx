@@ -28,14 +28,15 @@ export function RestoredSkillReview({api}:{api:ZhenRemote}):React.ReactElement|n
       catch{if(active()&&version.current===current){setFailed(true);scope.setNotice('操作结果尚未确认，请点击“检查恢复技能”读取当前状态。这里不会自动重试。');}}
     });
   }
-  if(typeof api.restoredSkillConsent!=='function'||value&&!value.available&&!failed)return null;
+  if(typeof api.restoredSkillConsent!=='function'||value&&!value.available&&value.reason==='not-restored'&&!failed)return null;
   if(!value&&!failed&&!scope.busy&&!scope.notice)return null;
   return <section className="zhen-card" aria-label="恢复技能审阅">
     <div className="zhen-section-heading"><h2>恢复技能审阅</h2><span>{value?.approved?'已允许':'等待审阅'}</span></div>
+    {value?.reason==='profile-unavailable'&&<p role="status">当前窗口缺少恢复配置入口，暂时无法批准。请在对应的完整恢复应用中打开；原始备份和恢复候选保留。</p>}
     {value?.available&&<>
       <p>当前配置：<strong>{value.profile}</strong>。共有 {value.totalProviders} 个文件夹来源，其中 {value.enabledProviders} 个原来已启用，关联 {value.totalProjects} 个项目。</p>
       <p>允许后，技能可向会话提供提示词并读取自己的附带资源。全局来源保留原作用范围，项目技能仅在对应项目使用。原来禁用的来源继续停用，其他配置需要分别审阅。</p>
-      <p className="zhen-muted">市场、本地导入和 GitHub 管理来源仍待审阅，自动更新保持暂停。目录访问、模型调用、画布审批与整个应用的激活分别处理。</p>
+      <p className="zhen-muted">市场、本地导入和 GitHub 管理来源请分别审阅，自动更新保持暂停。目录访问、模型调用、画布审批与整个应用的激活分别处理。</p>
       <details><summary>查看来源与项目（第 {value.page+1} 页）</summary>
         {value.providers.map(row=><div key={row.id}><p><strong>{row.name}</strong> · {row.enabled?'原来已启用':'原来已停用'}</p>{row.roots.map((path,index)=><p className="zhen-source-path" key={index}>{path}</p>)}</div>)}
         {value.projects.map(row=><div key={row.directory}><p className="zhen-source-path">原项目：{row.originalDirectory}</p><p className="zhen-source-path">现在使用：{row.directory}</p></div>)}

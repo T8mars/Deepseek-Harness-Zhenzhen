@@ -8,6 +8,8 @@ import type { MarketItem, SkillPackage, SkillAutoPolicy } from './market-schema.
 import {validateMarketBackupState} from './market-backup-state.ts';
 import {BackupError} from './backup-archive.ts';
 import {backupJsonString} from './backup-data.ts';
+import {managedSkillInvocationKey} from './managed-skill-invocation.ts';
+import type {ManagedSkillInvocationGate,ManagedSkillInvocationRow} from './managed-skill-invocation.ts';
 
 export function verifySkill(input: unknown): SkillPackage {
   const item = skillPackageSchema.parse(input);
@@ -122,7 +124,7 @@ export class SkillMarket {
     } catch(error) { try{this.db.close();}catch{}throw error; }
   }
   close(): void { this.listeners.clear(); this.db.close(); }
-  private writable():void{if(this.reviewOnly)throw new Error('恢复的技能仍待审阅，请先完成恢复检查。');}
+  private writable():void{if(this.reviewOnly)throw new Error('恢复的技能管理操作仍暂停；调用许可可在“恢复来源审阅”设置。下载和更新需先完成整个恢复应用的启用。');}
   /** A read transaction over every retained version, including records hidden
    * by UI history limits. No startup activation or update staging occurs. */
   backupState(): MarketBackupState {
@@ -339,26 +341,29 @@ export class SkillMarket {
     this.changed();
     return name;
   }
-  provider(): SkillProvider {
+  recoveryInvocationRows():ManagedSkillInvocationRow[]{return (this.db.prepare('SELECT * FROM selections ORDER BY rowid').all() as Selection[]).map(row=>{const item=row.active?this.stored(row.active):undefined;return{kind:'market',id:row.id,key:managedSkillInvocationKey('market',row.id,row.active),name:item?.manifest.title??row.id,version:item?.manifest.version??'',location:null,enabled:row.enabled===1,eligible:row.enabled===1&&!!item};});}
+  async verifyRecoveryInvocation(key:string):Promise<void>{const row=this.recoveryInvocationRows().find(row=>row.key===key);if(!row?.eligible)throw new BackupError('BACKUP_MANAGED_SKILL_SOURCE_CHANGED');}
+  provider(gate?:ManagedSkillInvocationGate): SkillProvider {
     const summary = (item: SkillPackage) => ({ name: item.manifest.id, description: item.manifest.description,
       provider: 'dsh-zhen-market', source: item.manifest.source === 'personal' ? 'user-dsh' : 'bundled',
       invocation: { modelInvocable: true, userInvocable: true }, metadata: { version: item.manifest.version, digest: item.manifest.digest } });
     return { name: 'dsh-zhen-market',
       list: async options => {
         options.signal?.throwIfAborted();
-        if(this.reviewOnly)return [];
-        return (this.db.prepare("SELECT * FROM selections WHERE enabled=1 AND active<>''").all() as Selection[]).map(selected => {
+        if(this.reviewOnly&&!gate)return [];
+        return (this.db.prepare("SELECT * FROM selections WHERE enabled=1 AND active<>''").all() as Selection[]).filter(selected=>!this.reviewOnly||!!gate?.token(managedSkillInvocationKey('market',selected.id,selected.active))).map(selected => {
           const item = this.stored(selected.active)!;
           return { ...summary(item), rank: item.manifest.source === 'personal' ? 390 : 600, locator: { id: selected.id, digest: selected.active } } satisfies SkillCandidate;
         });
       },
       get: async (candidate, options): Promise<SkillDefinition | undefined> => {
         options.signal?.throwIfAborted();
-        if(this.reviewOnly)return undefined;
+        if(this.reviewOnly&&!gate)return undefined;
         const locator = candidate.locator as { id?: string; digest?: string } | undefined;
         if (!locator || locator.id !== candidate.name || typeof locator.digest !== 'string') return undefined;
         const selected = this.selected(candidate.name);
         if (!selected?.enabled || selected.active !== locator.digest) return undefined;
+        if(this.reviewOnly&&!gate?.token(managedSkillInvocationKey('market',selected.id,selected.active)))return undefined;
         const item = this.stored(locator.digest);
         if (!item) return undefined;
         return { ...summary(item), content: skillBody(item.content) };
