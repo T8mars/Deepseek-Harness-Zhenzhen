@@ -17,6 +17,8 @@ import {validateSkillBackupInventory} from './backup-skill-inventory.ts';
 import type {SkillInventoryRestoreCandidate} from './backup-skill-inventory.ts';
 import {BackupError} from './backup-archive.ts';
 import type {BackupOptions} from './backup-archive.ts';
+import type {RestoredSkillProjectsReceipt} from './restored-skill-projects.ts';
+import {RESTORED_SKILL_BOUNDARY_CONTENT} from './restored-skill-projects.ts';
 import {backupJsonString,parseBackupJson} from './backup-data.ts';
 
 const REVIEW_FILE='skills-recovery.json',MAX_STATE=64*1024**2,MAX_FILE=8*1024**2;
@@ -33,6 +35,7 @@ export interface SkillApplicationReceipt{
   versions:number;localSources:number;githubSources:number;githubReleases:number;
   filesystems:Array<{id:string;config:{providerName:string;includeDefaultRoots:boolean;dshHome:string;agentsHome:string;customSkillDirs:string[];bundledSkillDir:string};enabled:boolean}>;
   projects:Array<{originCwd:string;originRoot:string;root:string}>;
+  projectBindings?:RestoredSkillProjectsReceipt;
   reviewRequired:true;activated:false;automaticallyDownloads:false;
 }
 function validateReview(value:unknown):RestoredSkillReview{
@@ -82,7 +85,7 @@ export async function prepareRestoredSkills(root:string,home:string,source:Skill
       await portal(role('user-dsh'),join(dshHome,'skills'));await portal(role('user-agents'),join(agentsHome,'skills'));
       result.filesystems.push({id:fs.id,enabled:fs.enabled!==false,config:{providerName:fs.config.providerName,includeDefaultRoots:fs.config.includeDefaultRoots,dshHome,agentsHome,customSkillDirs:custom,bundledSkillDir:role('bundled')??''}});
     }
-    for(const project of inventory.projects){const selected=source.roots.filter(row=>row.origin.workspace===project.projectRoot&&['project-dsh','project-agents'].includes(row.origin.kind)),projectRoot=join(portals,'projects',hash(project.projectRoot));if(selected.length){for(const row of selected)await portal(row.restoredPath,join(projectRoot,row.origin.kind==='project-dsh'?'.dsh':'.agents','skills'));result.projects.push({originCwd:project.cwd,originRoot:project.projectRoot,root:projectRoot});}}
+    const boundaries=new Set<string>();for(const project of inventory.projects){const selected=source.roots.filter(row=>row.origin.workspace===project.projectRoot&&['project-dsh','project-agents'].includes(row.origin.kind)),projectRoot=join(portals,'projects',hash(project.projectRoot));if(selected.length){for(const row of selected)await portal(row.restoredPath,join(projectRoot,row.origin.kind==='project-dsh'?'.dsh':'.agents','skills'));if(!boundaries.has(projectRoot)){await write(join(projectRoot,'.git'),RESTORED_SKILL_BOUNDARY_CONTENT);boundaries.add(projectRoot);}result.projects.push({originCwd:project.cwd,originRoot:project.projectRoot,root:projectRoot});}}
     await write(database,Buffer.alloc(0));market=new SkillMarket(database,[]);await market.restoreBackupState(inventory.market,options.signal);market.close();market=undefined;
     await write(localFile,backupJsonString(local)+'\n');
     await ordinary(data,githubRoot,false,true);await mkdir(githubRoot,{mode:0o700});ownsGithub=true;

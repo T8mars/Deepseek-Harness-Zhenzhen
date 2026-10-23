@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-22T23:29:08.579Z",
+  "checkedAt": "2026-10-23T04:00:03.040Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2297,7 +2297,17 @@
       "atomicBindingRestore": true,
       "agentAccessRestored": false,
       "activated": false,
-      "verification": "New16/related160 and clean types pass. C154 real encrypted RAG component restores explicitly selected project roots with space IDs,FTS/citation IDs and historical grants preserved; source project may be unavailable. Atomic two-space swap,monotonic binding revision,unselected preservation,conflicts,identity,missing/relative inputs,cancellation,replacement and revision exhaustion verified; only new application files removed on failure. C155 actual published Owner Gateway composes both ordinary and continuation mappings from validated session-origin receipts; new candidate baseline passes before use and explicitly changes after opening application storage,original sources/candidate unchanged. C156 production form presents actionable Chinese messages and diagnostic codes in closed details,one request/no retry; not browser acceptance. Collections stay model-disabled with new epoch,backend paused,historical grants denied and new sessions unapproved. Complete1276/1276,new16/related160 and211-file archive pass; C63/C76 stable payload matches local,other version payloads byte-identical,public CLI install/uninstall and workers verified. Exact CI pending; skill project provider,reviews,activation/fullL2 remain incomplete. User Host stays verified dev82;Native/model0."
+      "verification": "New16/related160 and clean types pass. C154 real encrypted RAG component restores explicitly selected project roots with space IDs,FTS/citation IDs and historical grants preserved; source project may be unavailable. Atomic two-space swap,monotonic binding revision,unselected preservation,conflicts,identity,missing/relative inputs,cancellation,replacement and revision exhaustion verified; only new application files removed on failure. C155 actual published Owner Gateway composes both ordinary and continuation mappings from validated session-origin receipts; new candidate baseline passes before use and explicitly changes after opening application storage,original sources/candidate unchanged. C156 production form presents actionable Chinese messages and diagnostic codes in closed details,one request/no retry; not browser acceptance. Collections stay model-disabled with new epoch,backend paused,historical grants denied and new sessions unapproved. Complete1276/1276,new16/related160 and211-file archive pass; C63/C76 stable payload matches local,other version payloads byte-identical,public CLI install/uninstall and workers verified. Exact Windows CI39892203872 verified1276/211 with matching payload and public install/uninstall; skill project provider,reviews,activation/fullL2 remain incomplete. User Host stays verified dev82;Native/model0."
+    },
+    "restoredProjectSkillProvider": {
+      "schema": 1,
+      "sdkVersion": "0.2.1-rc.2",
+      "defaultReviewPending": true,
+      "productionApprovalImplemented": false,
+      "originalFilesystemRowsPaused": true,
+      "rebackupImplemented": false,
+      "status": "implemented-inactive-project-provider",
+      "verification": "C157 actual published Host LocalFs,SkillRegistry and FileSystemSkillProvider preserve project-specific bodies,source priority,relative resources,whole watch config,original disabled/includeDefaultRoots and per-profile isolation; unknown projects retain only global sources. Pending reads no skill bodies; changed review,directory,portal,link,lookup boundary,configuration,cancellation and actual file watcher are covered. Parent Git lookup first reproduced then bounded only inside new candidate; empty bundledSkillDir uses explicit pinned missing candidate path. C158/C159 actual composed new-home ZhenService and published Owner/SkillRegistry read mapped project resources only after explicit TEST review,managed pending untouched,no production approval implemented. C160 current ordinary inventory cannot preserve restored portals/original preferences: rebackup unavailable with visible limitation and Host refusal before collection,document removal cannot bypass. New24/related136 and clean types pass; Complete1300/1300,new24/related136 and213-file archive pass; C63/C76 stable payload matches local,other version payloads byte-identical,public CLI install/uninstall and workers verified. Exact CI pending; pending by default,production review release,complete rebackup,activation/fullL2/browser/native creation and original scope remain incomplete. User Host stays verified dev82;Native/model0."
     }
   }
 }

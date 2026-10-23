@@ -1,5 +1,7 @@
 # DSH-zhen · 交接文档（给接手实现的 AGENT）
 
+> 0113接入按项目隔离的恢复技能提供者，复用已发布SDK的来源、优先级和相对资源，保留完整配置及禁用状态；默认待审，原SDK行继续暂停。修复父Git目录和空bundle路径误扫描，明确拒绝尚未适配的恢复技能再次备份。完整1300/1300、新增24/相关136及213文件归档、公开CLI安装/卸载通过，精确CI另核。dev83精确Windows CI1276/211同包已核；本机仍为dev82，画布未改。见 docs/decisions/0113-restored-project-skill-provider.md。
+
 > 0112把所选项目的新目录同步到知识库副本，保留资料空间、引用和失效的历史授权；支持目录互换及冲突拒绝，错误建议与诊断编号分开展示。完整1276/1276、新增16/相关160及211文件归档、公开CLI安装/卸载通过，精确CI另核。dev82精确Windows CI1260/211同包已核；本机保留该版本，画布未改。 见 docs/decisions/0112-restored-knowledge-project-bindings.md。
 
 > 0111新增可选项目继续入口：公开SDK创建新会话与工作区副本，保留原历史、原组件、附件和子Agent身份，默认关闭且不激活。完整1260/1260、新增34/相关160及211文件归档通过；公开CLI安装/卸载与worker核对通过，精确CI另核。dev81精确Windows CI1226/210同包已严格核对；本机仍运行已验证dev81，画布未改。 见 docs/decisions/0111-restored-project-continuations.md。

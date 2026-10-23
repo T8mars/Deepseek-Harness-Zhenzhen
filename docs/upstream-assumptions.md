@@ -297,3 +297,7 @@ C111使用公开DomainFacility.get、Domain.global.get/table.entries和domain/ch
 ## C154–C156：恢复知识库的项目绑定
 
 Session应用回执中的原目录来自公开持久化头，组合流程用已核回执将映射传给自有KnowledgeStore逻辑装配。空间标识和路径分开，旧授权不转给新session；新增binding revision在同一事务装配，支持原子互换，未选空间保持。C154加密组件与真实存储验证原目录不可用、引用/FTS、冲突、身份、取消与高水位。C155是实际发布Owner组合的普通/继续两模式；候选使用前基线通过，用应用构造器打开后基线变化单独核对，不把正常写入的应用当只读探针。C156是生产表单处理器和默认关闭的原生details验证，非浏览器实显。未修改SDK持久化或私有profile格式。
+
+## C157–C160：恢复项目技能的 SDK 委托
+
+固定0.2.1-rc.2的 FileSystemSkillProvider 按 cwd 向父目录寻找 `.git`，并将空 bundledSkillDir 解析成 process.cwd()。C157 先复现父项目混入，再用新建候选内的查找边界及明确的缺失 bundle 路径验证隔离；边界不是 Git checkout，不写用户项目。实际公开 LocalFs/SkillRegistry/Provider 验证来源、优先级、相对资源、编辑观察、取消及读取前后清单与目录身份。每配置档完整配置及禁用状态经C158/C159真实组合和新 home Host/Owner接线；待审不读技能，测试放行不是生产批准。现有普通库存不能表达恢复入口及原启用偏好，C160明确拒绝恢复 home 的技能再次备份，不以 allDeclaredSources 掩盖缺项。再次完整备份、生产审阅、激活与完整L2继续。

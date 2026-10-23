@@ -66,3 +66,6 @@ export {prepareRestoredWorkspaces} from './restore-workspaces.ts';
 export type {WorkspaceApplicationReceipt} from './restore-workspaces.ts';
 export {prepareRestoredProjects} from './restore-projects.ts';
 export type {ProjectContinuationEntry,ProjectApplicationReceipt} from './restore-projects.ts';
+export {prepareRestoredSkillProjects,readRestoredSkillProjects} from './restored-skill-projects.ts';
+export type {RestoredSkillProjects,RestoredSkillProjectsReceipt,RestoredSkillProviderInput} from './restored-skill-projects.ts';
+export {createRestoredFilesystemProvider,registerRestoredSkillProviders} from './restored-skill-provider.ts';

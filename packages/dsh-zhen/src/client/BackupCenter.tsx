@@ -11,6 +11,10 @@ const unwrap=<T,>(value:RemoteResult<T>):T=>{if(!value.ok)throw value.error;retu
 const terminal=(job:BackupJob)=>['succeeded','failed','cancelled'].includes(job.phase);
 const phases:Record<BackupJob['phase'],string>={preparing:'准备数据',capturing:'加密备份',verifying:'校验完整性',restoring:'生成恢复候选',succeeded:'已完成',failed:'未完成',cancelled:'已取消'};
 export function backupErrorMessage(code:string|null):string{
+  if(code==='BACKUP_SKILL_PROJECT_REBACKUP_PENDING')return '恢复后的项目技能暂不支持再次备份。请保留原始备份与恢复候选，其他可用范围可单独备份。';
+  if(code==='BACKUP_SKILL_PROJECT_CONFLICT')return '项目技能的目录关联存在冲突，请为不同项目选择不同文件夹。原备份保留。';
+  if(code==='BACKUP_SKILL_PROJECT_DIRECTORY_CHANGED'||code==='BACKUP_SKILL_PROJECT_PATH_CHANGED')return '项目技能来源或工作目录已变化，请重新校验候选并选择现有目录。';
+  if(code?.startsWith('BACKUP_SKILL_PROJECT_'))return '项目技能关联未完成，请保留原备份，重新读取项目并核对来源。';
   if(code==='BACKUP_RAG_PROJECT_CONFLICT')return '知识库项目目录存在冲突。请为不同资料空间选择不同目录，或一并调整关联项目。原备份保留。';
   if(code==='BACKUP_RAG_PROJECT_DIRECTORY_CHANGED')return '知识库关联的项目文件夹已变化，请重新选择现有文件夹后生成候选。';
   if(code?.startsWith('BACKUP_RAG_PROJECT_'))return '知识库项目关联未完成。请重新读取项目并核对目录，原备份保留。';
