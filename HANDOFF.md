@@ -1,3 +1,5 @@
+> 0130：独立分支准备0.1.0-canary.1，完整1468/1468、234归档仅版本不同、正常公开CLI安装卸载和同EXAMPLE配置旧→候选→旧切换通过；原专用替换探针对版本候选的拒绝保留。基础dev100 CI/W4/W5预览及实际ZIP全部核实，W5缺项仅未发布Canary。候选精确CI/正式发布/七UTC/真人作品仍待验，见 docs/decisions/0130-canary-candidate-preparation.md 与 docs/canary-review.md。
+
 > 0129：前次全绿CI的完整检查实际26分7秒，超过分发/晋升旧build任务20分钟预算；仅两处改为有界45分钟，全部检查/权限/默认预览保持，生产234包不变。实际SDK rc3 AgentLoop+生产RAG三次真实Flash正常完成，正式事实及文件/行号引用、暂停/撤权传输前拦截通过，Shell/Native0。原CI及旧预览继续保留观察，新工作流另验，见 docs/decisions/0129-distribution-build-budget.md。
 
 > 0128：精确 dev98 CI 前置2/2、完整1468/1468及234项同包安装卸载全绿；本机经正常更新/公开CLI已换装SDK rc3。原191行、用户patch、画布自有配置、七表RAG、角色与自动更新偏好保持，唯一新增发行默认entry-customization。新版真实Flash示例文件两请求与CLI_CHANGED引导三请求正常完成，零Shell/Native写。画布仍需重新审阅，GUI/作品/canary/七UTC/stable未验。见 docs/decisions/0128-verified-sdk3-local-adoption.md。
