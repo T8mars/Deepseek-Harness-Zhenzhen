@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T05:07:45.667Z",
+  "checkedAt": "2026-10-24T08:13:57.707Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2466,7 +2466,7 @@
       "status": "implemented-local-verified",
       "from": "0.2.1-rc.2",
       "to": "0.2.1-rc.3",
-      "verification": "Published SDK0.2.1-rc.3 exact49 packages and two target/digest-bound guide/profile reviews;complete1466/1466,234-file canonical archive/public CLI install-uninstall pass.C200 rejects foreign SDK grants,C201 compares all178 unowned complete rows among191,C202 uses actual published prior/current/prior SDKs and verifies the same public profile.Local complete own-app experiment uses genuine dev93/rc2 archive then candidate/rc3 then original/rc2,234 installed bytes each stage,13 actual services,unchanged EXAMPLE session/attachment/workspace/RAG/skill/task/preferences and credential via public service only.Independent TEMP cleaned;outbound attempts0.This commit exact CI,user runtime,real GUI/Native creations,canary/observation/stable remain separate. Decision0124 uses the prior reviewed source lock for a reproducible cold-cache public SDK installation;original transition/rollback assertions remain.Independent dev94 CI failed1464/1466 and is retained;new exact CI required."
+      "verification": "Published SDK0.2.1-rc.3 exact49 packages and two target/digest-bound guide/profile reviews;complete1466/1466,234-file canonical archive/public CLI install-uninstall pass.C200 rejects foreign SDK grants,C201 compares all178 unowned complete rows among191,C202 uses actual published prior/current/prior SDKs and verifies the same public profile.Local complete own-app experiment uses genuine dev93/rc2 archive then candidate/rc3 then original/rc2,234 installed bytes each stage,13 actual services,unchanged EXAMPLE session/attachment/workspace/RAG/skill/task/preferences and credential via public service only.Independent TEMP cleaned;outbound attempts0.This commit exact CI,user runtime,real GUI/Native creations,canary/observation/stable remain separate. Decision0124 uses the prior reviewed source lock for a reproducible cold-cache public SDK installation;original transition/rollback assertions remain.Independent dev94 CI failed1464/1466 and is retained;new exact CI required. Decision0125 preserves the exact reviewed prior source751-package lock,actual published rc2→rc3→rc2 SDKs,registry integrity,original lock bytes,180s,empty credential configs and disabled scripts.Standard npm integrity-checked cache/prefer-offline replaces mandatory empty cache;receipt explicitly freshOwnedPackageCache:false.All original190→191→190/user-patch/metadata/complete-rollback assertions pass in actual C2021/1:install19237ms,total29.4s;646cache-hit/97fetch messages recorded without URLs/raw logs.Dev95 exact CI40065224469 failed1466/1467 only during oldSDK install and is preserved;this commit full exact CI pending.Production234-file payload unchanged from dev95;no new whole local check or install claimed.User dev93 retained,Native/model0,original objective incomplete."
     },
     "recoveryConfirmedShutdown": {
       "status": "implemented-local-verified",
