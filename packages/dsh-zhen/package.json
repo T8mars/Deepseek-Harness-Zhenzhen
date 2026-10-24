@@ -1,6 +1,6 @@
 {
   "name": "dsh-zhen",
-  "version": "0.1.0",
+  "version": "0.1.0-canary.1",
   "description": "DSH-zhen community creator workspace bundle",
   "type": "module",
   "main": "./lib/index.js",
