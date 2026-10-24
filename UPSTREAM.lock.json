@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T11:24:25.641Z",
+  "checkedAt": "2026-10-24T14:48:26.142Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -43,7 +43,7 @@
       "schemaVersion": 1,
       "maxCandidates": 8,
       "automaticActivation": false,
-      "verification": "Six units and C24 cover inert installer/marker discovery, whole-tree fingerprints, canonical duplicates, metadata/path/link refusal, stale reviewed pins and previous-config preservation. Actual local installed/source inventories were read; new UI and real paired handshake remain unverified."
+      "verification": "Six units and C24 cover inert installer/marker discovery, whole-tree fingerprints, canonical duplicates, metadata/path/link refusal, stale reviewed pins and previous-config preservation. Actual local installed/source inventories were read; new UI and real paired handshake remain unverified. Decision0131: actual browser showed only a managed backup and no running-desktop candidate; add explicit no-desktop-detected/re-detect guidance without automatically trusting or pairing. C55 covers backup-only, mixed and empty discovery; new installed rendering remains separate."
     },
     "canvasDevelopmentReplayFix": {
       "status": "historical-source-verification; adopted-by-native-agent-in-v3.3.7",
@@ -85,7 +85,7 @@
     "ragSchema": 3,
     "ragVerification": "Text-layer PDF import and actual page citations are implemented through pinned pdfjs-dist6.4.299 in a fixed local child; no OCR/cloud parser. Schema2 to3 transaction adds optional page and preserves existing text IDs, bindings and grants. C47 actual published Host/Gateway/ToolRuntime and SSR, six decoder and six knowledge tests pass; full348. Same1007-document corpus and unchanged fixed10-question/top5/80% owner-adopted baseline remain8/10. Standard W3C PDF verified locally. Installed decoder/startup are separate probes; browser/live-model/general creative quality/fullM3 remain unverified.",
     "artManifestSchema": 1,
-    "artVerification": "Original community reference rendered locally; later explicit user authorization produced two built-in imagegen PNGs and a verified separate local ZIP. New generated-set Web rendering remains unverified after browser policy refusal.",
+    "artVerification": "Original community reference rendered locally; later explicit user authorization produced two built-in imagegen PNGs and a verified separate local ZIP. New generated-set Web rendering remains unverified after browser policy refusal. Decision0131: actual running Web home displayed separate light/dark community illustrations at1280x720 through normal browser UI; original light theme restored. Narrow viewport and full accessibility remain separate.",
     "skillStoreSchema": 3,
     "skillAutoUpdatePolicy": {
       "scope": "first-party-text-v1",

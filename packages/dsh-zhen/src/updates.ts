@@ -77,7 +77,16 @@ export class UpdateMonitor {
   constructor(private readonly filename: string, private readonly baseline: UpdateBaseline, private readonly fetcher: Fetcher = fetch, private readonly github?: GithubAccess) {}
   snapshot(): UpdateReport {
     if (!existsSync(this.filename)) return { checkedAt: '', automatic: true, sources: [] };
-    try { const value = readFileSync(this.filename); if (value.length > 65536) throw new Error(); return updateReportSchema.parse(JSON.parse(value.toString('utf8'))); }
+    try {
+      const value = readFileSync(this.filename); if (value.length > 65536) throw new Error();
+      const report = updateReportSchema.parse(JSON.parse(value.toString('utf8')));
+      // A cached report describes its original bundle, not the newly installed one.
+      // Keep the owner's schedule choice and re-check through the ordinary path.
+      if (report.sources.some(source => source.current !== (source.id === 'gateway' ? this.baseline.gateway.toLowerCase() : this.baseline[source.id]))) {
+        return { checkedAt: '', automatic: report.automatic, sources: [] };
+      }
+      return report;
+    }
     catch { return { checkedAt: '', automatic: false, sources: [] }; }
   }
   private save(value: UpdateReport): void {

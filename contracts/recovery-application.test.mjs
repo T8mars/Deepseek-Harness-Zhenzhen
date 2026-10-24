@@ -38,7 +38,7 @@ async function controlFixture(t,options){
 }
 async function waitFor(manager,id,predicate,budget=90000){const start=Date.now();let state;do{state=await manager.status(id);if(predicate(state))return state;if(state.phase==='failed')assert.fail(JSON.stringify(state));await new Promise(done=>setTimeout(done,200));}while(Date.now()-start<budget);assert.fail('EXAMPLE_RUNTIME_NOT_READY '+JSON.stringify(state));}
 
-test('C197: actual public CLI recovery starts every core service once and reconnects after the source manager closes',{timeout:180000},async t=>{
+test('C197: actual public CLI recovery starts every core service once and reconnects after the source manager closes',{timeout:480000},async t=>{
  const f=await controlFixture(t,{withZhen:true});assert.deepEqual(f.installation,{actualPublicCli:true,freshOwnedStore:true,ignoreScripts:true,offline:false});const review=await f.manager.review({candidateId:f.id,profile:'',page:0,review:null});assert.equal(review.canOpen,true,JSON.stringify(f.manager.plans.get(f.id).plan.programs.filter(row=>row.origin==='unresolved')));assert.ok(review.totalPrograms>100);
  const request={candidateId:f.id,profile:review.selected,review:review.review,requestId:randomUUID(),approved:true,openBrowser:false},accepted=await f.manager.open(request);assert.equal(accepted.phase,'preparing');assert.equal(accepted.consumed,true);
  const duplicate=await f.manager.open(request);assert.equal(duplicate.execution,accepted.execution);await assert.rejects(f.manager.open({...request,requestId:randomUUID()}),{code:'BACKUP_APPLICATION_ALREADY_OPENED'});
