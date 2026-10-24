@@ -1,4 +1,4 @@
-> 0130：独立分支准备0.1.0-canary.1，完整1468/1468、234归档仅版本不同、正常公开CLI安装卸载和同EXAMPLE配置旧→候选→旧切换通过；原专用替换探针对版本候选的拒绝保留。基础dev100 CI/W4/W5预览及实际ZIP全部核实，W5缺项仅未发布Canary。候选精确CI/正式发布/七UTC/真人作品仍待验，见 docs/decisions/0130-canary-candidate-preparation.md 与 docs/canary-review.md。
+> 0132：草稿0.1.0-canary.1同步dev102，完整1472/1472、234归档与main仅manifest版本不同；公开CLI正常Host安装/停止/卸载与同EXAMPLE配置main→候选→main通过。新精确CI、真实UI/画布及正式发布仍待验，负责人选择先完成验收。见 docs/decisions/0132-canary-dev102-sync.md 与 docs/canary-review.md。
 
 > 0129：包含完整契约检查的build任务限时为45分钟，替代旧20分钟。依据精确全绿Windows检查实测26分7秒；未缩减测试、改变权限或自动开启发布。具体证据及未验证项见 `decisions/0129-distribution-build-budget.md`。
 

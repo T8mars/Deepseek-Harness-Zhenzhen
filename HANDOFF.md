@@ -1,4 +1,8 @@
-> 0130：独立分支准备0.1.0-canary.1，完整1468/1468、234归档仅版本不同、正常公开CLI安装卸载和同EXAMPLE配置旧→候选→旧切换通过；原专用替换探针对版本候选的拒绝保留。基础dev100 CI/W4/W5预览及实际ZIP全部核实，W5缺项仅未发布Canary。候选精确CI/正式发布/七UTC/真人作品仍待验，见 docs/decisions/0130-canary-candidate-preparation.md 与 docs/canary-review.md。
+> 0132：草稿0.1.0-canary.1同步dev102，完整1472/1472、234归档与main仅manifest版本不同；公开CLI正常Host安装/停止/卸载与同EXAMPLE配置main→候选→main通过。新精确CI、真实UI/画布及正式发布仍待验，负责人选择先完成验收。见 docs/decisions/0132-canary-dev102-sync.md 与 docs/canary-review.md。
+
+> 0131：负责人选择先界面与画布验收，Canary保持草稿。真实浏览器已核浅深角色首页、本地EXAMPLE资料导入诊断/检索/出处及GitHub十五项候选检查和技能预览；本次成功验收流程未调用模型或Native业务。补充备用连接工具提示并修复更新页旧版本缓存。完整1472/1472、234文件归档、公开CLI同版本替换/Host/卸载通过；精确远端CI、用户换装和真实作品另验。见 docs/decisions/0131-real-ui-and-backup-only-canvas-guidance.md。
+
+> 历史0130：独立分支以dev100准备首个0.1.0-canary.1；原1468项、234包及安装回退证据仅对应旧候选，见 docs/decisions/0130-canary-candidate-preparation.md。同步dev102后的当前候选必须重新验证，不能沿用旧绿色结果，当前材料见 docs/canary-review.md。
 
 > 0129：前次全绿CI的完整检查实际26分7秒，超过分发/晋升旧build任务20分钟预算；仅两处改为有界45分钟，全部检查/权限/默认预览保持，生产234包不变。实际SDK rc3 AgentLoop+生产RAG三次真实Flash正常完成，正式事实及文件/行号引用、暂停/撤权传输前拦截通过，Shell/Native0。原CI及旧预览继续保留观察，新工作流另验，见 docs/decisions/0129-distribution-build-budget.md。
 

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { UpdateMonitor, discoverUpdates, readPublic } from '../lib/updates.js';
@@ -57,5 +57,36 @@ test('automatic metadata checks are daily, single-flight, user-disableable, and 
     monitor.setAutomatic(false);
     assert.equal(new UpdateMonitor(file, baseline).snapshot().automatic, false);
     await monitor.automaticCheck(); assert.equal(calls, 5);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('bundle baseline changes invalidate cached versions without writing files or enabling automatic checks', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dsh-zhen-updates-EXAMPLE-')), file = join(root, 'updates.json');
+  try {
+    const original = new UpdateMonitor(file, baseline, fixtureFetch());
+    await original.check(); original.setAutomatic(false);
+    const bytes = readFileSync(file);
+    for (const change of [{ dsh: '0.2.1-rc.3' }, { canvas: '3.4.0' }, { zhen: '0.1.0-canary.1' }, { gateway: 'a'.repeat(64) }]) {
+      let requests = 0;
+      const monitor = new UpdateMonitor(file, { ...baseline, ...change }, fixtureFetch(() => { requests++; }));
+      assert.deepEqual(monitor.snapshot(), { checkedAt: '', automatic: false, sources: [] });
+      await monitor.automaticCheck(); assert.equal(requests, 0);
+      assert.deepEqual(readFileSync(file), bytes, 'reading stale metadata must preserve the original receipt');
+    }
+    assert.equal(new UpdateMonitor(file, baseline).snapshot().sources.length, 4, 'an unchanged bundle retains its valid cache');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('an already enabled daily check refreshes a changed baseline once and saves current versions', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'dsh-zhen-updates-EXAMPLE-')), file = join(root, 'updates.json');
+  try {
+    await new UpdateMonitor(file, baseline, fixtureFetch()).check();
+    let requests = 0;
+    const next = { ...baseline, dsh: '0.2.1-rc.3' }, monitor = new UpdateMonitor(file, next, fixtureFetch(() => { requests++; }));
+    assert.deepEqual(monitor.snapshot(), { checkedAt: '', automatic: true, sources: [] });
+    await Promise.all([monitor.automaticCheck(), monitor.automaticCheck()]);
+    assert.equal(requests, 5); assert.equal(monitor.snapshot().sources.find(source => source.id === 'dsh').current, next.dsh);
+    assert.equal(monitor.snapshot().automatic, true); assert.notEqual(monitor.snapshot().checkedAt, '');
+    await monitor.automaticCheck(); assert.equal(requests, 5);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

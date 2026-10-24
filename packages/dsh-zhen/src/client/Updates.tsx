@@ -19,7 +19,7 @@ export function Updates({ api }: { api: ZhenRemote }): React.ReactElement {
       <p>分别跟进 DSH 上游、DSH-zhen、画布与网关文档，先确认变化，再验证兼容。</p>
       <label className="zhen-checkbox"><input type="checkbox" disabled={busy || !report} checked={report?.automatic ?? false} onChange={event => { const enabled = event.target.checked; void action(async current => { unwrap(await api.updatesAutomatic(enabled)); if (!current()) return; const next = unwrap(await api.updatesSnapshot()); if (current()) setReport(next); }); }}/><span>每天自动检查版本信息</span></label>
       <p className="zhen-muted">检查访问 GitHub、npm 注册表与 Seedance 文档，不发送会话或本地资料。当前阶段仅发现候选更新；安装包签名与自动激活流程仍在建设中。</p>
-      <p className="zhen-muted">{report?.checkedAt ? `最近检查：${new Date(report.checkedAt).toLocaleString()}` : '尚未完成首次检查。'}</p>
+      <p className="zhen-muted">{report?.checkedAt ? `最近检查：${new Date(report.checkedAt).toLocaleString()}` : '尚无适用于当前版本的检查记录，请点击“检查更新”。'}</p>
     </section>
     {notice && <div className="zhen-notice" role="status">{notice}</div>}
     {report?.sources.map(source => <section key={source.id} className="zhen-card">
