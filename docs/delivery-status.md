@@ -1,5 +1,7 @@
 # DSH-zhen 当前交付状态
 
+> 0124修复恢复应用过早允许重开：等待实际进程退出，清理原PID和跟踪后才允许明确重开；旧记录与原请求去重保留。C203先红后绿，完整npm run check为1467/1467；234文件正式归档与公开CLI临时安装、正常Host及卸载通过。C202以真实前版完整锁图和独立空缓存执行原rc.2→rc.3→rc.2验收，保持180秒上限。dev94独立CI40057972230的1464/1466失败保留；本提交精确CI另核。用户仍dev93，画布未改。见 docs/decisions/0124-confirmed-shutdown-and-locked-legacy-sdk.md。
+
 > 0123完成已发布SDK rc.3的本地适配：49个确切发行包、两项固定摘要审阅、完整1466/1466和234文件归档/公开CLI安装卸载通过。真实旧包/SDK rc.2→新包/SDK rc.3→旧包/SDK rc.2在同一独立TEMP完成三次普通CLI启动、13核心服务与示例数据/设置/凭据读回；每次234载荷字节相符。C200拒绝外版本授权，C201完整继承178个未覆盖行，C202验证公开profile升级回退。用户实例仍dev93/rc.2，本提交精确CI、真实GUI/Native作品及canary/稳定晋升另验。见 docs/decisions/0123-upstream-rc3-adaptation.md。
 
 > 0122修复打开回执丢失后检查状态仍不解除等待：当前候选已由Host确认时清除旧等待，未确认时只查询，明确重开才发出新编号请求。生产handler先红后绿，相关96/最终UI9、build与clean types通过；完整1464/1464、234文件归档及公开CLI临时安装卸载已核，精确CI另核。dev92已备份，前版CI40042200654在C197夹具离线安装阶段失败；现改为独立空缓存正常安装并保留原运行时断言，专项16/16通过；用户未换装，Native/model0。见 docs/decisions/0122-recovery-receipt-status.md。

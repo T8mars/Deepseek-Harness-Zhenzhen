@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T00:06:42.289Z",
+  "checkedAt": "2026-10-24T05:07:45.667Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2466,7 +2466,11 @@
       "status": "implemented-local-verified",
       "from": "0.2.1-rc.2",
       "to": "0.2.1-rc.3",
-      "verification": "Published SDK0.2.1-rc.3 exact49 packages and two target/digest-bound guide/profile reviews;complete1466/1466,234-file canonical archive/public CLI install-uninstall pass.C200 rejects foreign SDK grants,C201 compares all178 unowned complete rows among191,C202 uses actual published prior/current/prior SDKs and verifies the same public profile.Local complete own-app experiment uses genuine dev93/rc2 archive then candidate/rc3 then original/rc2,234 installed bytes each stage,13 actual services,unchanged EXAMPLE session/attachment/workspace/RAG/skill/task/preferences and credential via public service only.Independent TEMP cleaned;outbound attempts0.This commit exact CI,user runtime,real GUI/Native creations,canary/observation/stable remain separate."
+      "verification": "Published SDK0.2.1-rc.3 exact49 packages and two target/digest-bound guide/profile reviews;complete1466/1466,234-file canonical archive/public CLI install-uninstall pass.C200 rejects foreign SDK grants,C201 compares all178 unowned complete rows among191,C202 uses actual published prior/current/prior SDKs and verifies the same public profile.Local complete own-app experiment uses genuine dev93/rc2 archive then candidate/rc3 then original/rc2,234 installed bytes each stage,13 actual services,unchanged EXAMPLE session/attachment/workspace/RAG/skill/task/preferences and credential via public service only.Independent TEMP cleaned;outbound attempts0.This commit exact CI,user runtime,real GUI/Native creations,canary/observation/stable remain separate. Decision0124 uses the prior reviewed source lock for a reproducible cold-cache public SDK installation;original transition/rollback assertions remain.Independent dev94 CI failed1464/1466 and is retained;new exact CI required."
+    },
+    "recoveryConfirmedShutdown": {
+      "status": "implemented-local-verified",
+      "verification": "C203 first reproduces premature reopening through an actual authenticated own channel and live owned Node process,then verifies stopping until actual child close or confirmed absent PID clears existing nullable pid/port and tracking.Legacy v1 and original-request dedup remain;no credential schema/layout change.Complete npm run check1467/1467 includes strengthened actual graceful exits and C203.Formal234-file archive and actual public CLI TEMP install/normal Host/uninstall pass.Same SHA256 56bf3d792a79b97ab8f7ea0bc434726207eea6c9fe0625c90a1023d0db200048.Only lib/index.js differs from dev94;other233 payloads are byte-identical.C202 uses the exact reviewed prior source lock and fresh owned cache,retains180s and original rc2→rc3→rc2/190→191→190/settings/rollback assertions.Dev94 exact CI40057972230 failed1464/1466 and is preserved;this commit exact CI pending.User dev93 retained,no Native/model requests;GUI and whole objective incomplete."
     }
   }
 }

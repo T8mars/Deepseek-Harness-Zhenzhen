@@ -27,7 +27,10 @@ const key=(id:string)=>credentialKey('dsh-zhen','recovery-'+z.uuid().parse(id).t
 function failure(code:string):never{throw new BackupError(code);}
 function decode(value:CredentialRecord|undefined,parentHome:string,id:string):Grant|undefined{if(value===undefined)return;const parsed=value.kind==='grant'?grantSchema.safeParse(value.payload):undefined;if(!parsed?.success||parsed.data.parentHome!==parentHome||parsed.data.candidateId!==id)failure('BACKUP_APPLICATION_RECORD_INVALID');return parsed.data;}
 function empty(candidateId:string):RecoveryApplicationStatus{return{candidateId,consumed:false,requestId:null,execution:null,profile:null,title:null,phase:null,ready:false,pid:null,port:null,browserRequested:false,canReopen:false,error:null};}
-function publicStatus(record:Grant,override:Partial<RecoveryApplicationStatus>={}):RecoveryApplicationStatus{return recoveryApplicationStatusSchema.parse({candidateId:record.candidateId,consumed:true,requestId:record.requestId,execution:record.execution,profile:record.profile,title:record.title,phase:record.phase==='exited'&&record.error?'failed':record.phase,ready:record.ready,pid:record.pid,port:record.port,browserRequested:record.browserRequested,canReopen:record.phase==='exited'&&!!record.adopted,error:record.error,...override});}
+function publicStatus(record:Grant,override:Partial<RecoveryApplicationStatus>={}):RecoveryApplicationStatus{return recoveryApplicationStatusSchema.parse({candidateId:record.candidateId,consumed:true,requestId:record.requestId,execution:record.execution,profile:record.profile,title:record.title,phase:record.phase==='exited'&&record.error?'failed':record.phase,ready:record.ready,pid:record.pid,port:record.port,browserRequested:record.browserRequested,canReopen:record.phase==='exited'&&record.pid===null&&!!record.adopted,error:record.error,...override});}
+// Runtime disposal can finish before its process exits. Only an observed child
+// close or a confirmed absent PID clears the existing PID and admits reopening.
+function observedState(state:RecoveryRuntimeState):RecoveryRuntimeState{return state.phase==='exited'?{...state,phase:'stopping',ready:false}:state;}
 /** Owner UI lifecycle. Approval and IPC secrets live only in ctx.credentials;
  * this service never reads/writes credential files, emits Agent tools, transfers
  * old grants, logs child output, or infers shutdown from an observation timeout. */
@@ -41,13 +44,20 @@ export class RecoveryApplication {
  private async writable(id:string):Promise<void>{try{if((await this.credentials().describeRecord(key(id))).writable)return;}catch{/* Fail before recording intent or modifying the application copy. */}failure('BACKUP_APPLICATION_AUTHORIZATION_UNAVAILABLE');}
  private async read(id:string):Promise<Grant|undefined>{return decode(await this.credentials().readRecord(key(id)),this.parentHome,id);}
  private async change(id:string,execution:string,change:(current:Grant)=>Grant):Promise<void>{await this.credentials().modifyRecord(key(id),async current=>{const value=decode(current,this.parentHome,id);if(!value||value.execution!==execution)return current;return{kind:'grant',payload:grantSchema.parse(change(value))};});}
- private async state(record:Grant,state:RecoveryRuntimeState):Promise<void>{await this.change(record.candidateId,record.execution,current=>({...current,phase:state.phase,pid:state.pid,port:state.port,ready:state.ready,browserRequested:state.browserRequested,error:state.error}));}
+ private async state(record:Grant,state:RecoveryRuntimeState):Promise<void>{
+  if(state.execution!==record.execution)return;const observed=observedState(state);
+  await this.change(record.candidateId,record.execution,current=>{
+   if(current.phase==='exited'&&current.pid===null)return current;
+   if(current.pid!==null&&current.pid!==observed.pid)return current;
+   return{...current,phase:observed.phase,pid:observed.pid,port:observed.port,ready:observed.ready,browserRequested:observed.browserRequested,error:observed.error};
+  });
+ }
  async status(candidateId:string):Promise<RecoveryApplicationStatus>{
   this.active();z.uuid().parse(candidateId);const record=await this.read(candidateId);if(!record)return empty(candidateId);
-  if(record.pid!==null&&record.phase!=='exited'){
-   const current=await queryRecoveryRuntime(record.execution,record.secret);if(current&&current.pid===record.pid){await this.state(record,current);return publicStatus({...record,...current});}
+  if(record.pid!==null){
+   const current=await queryRecoveryRuntime(record.execution,record.secret);if(current&&current.pid===record.pid){const observed=observedState(current);await this.state(record,observed);return publicStatus({...record,...observed});}
    let alive=true;try{process.kill(record.pid,0);}catch(error){alive=(error as NodeJS.ErrnoException).code!=='ESRCH';}
-   if(!alive){await this.change(candidateId,record.execution,value=>({...value,phase:'exited',ready:false}));return publicStatus({...record,phase:'exited',ready:false});}
+   if(!alive){this.children.delete(record.execution);await this.change(candidateId,record.execution,value=>({...value,phase:'exited',pid:null,port:null,ready:false}));return publicStatus({...record,phase:'exited',pid:null,port:null,ready:false});}
    return publicStatus(record,{phase:'unknown',ready:false,canReopen:false,error:'BACKUP_APPLICATION_STATE_UNKNOWN'});
   }
   if(record.pid===null&&record.phase!=='exited'&&record.phase!=='failed'&&!this.jobs.has(record.execution))return publicStatus(record,{phase:'unknown',ready:false,canReopen:false,error:'BACKUP_APPLICATION_STATE_UNKNOWN'});
@@ -83,7 +93,7 @@ export class RecoveryApplication {
   this.jobs.set(record.execution,{controller,done});await acknowledgment;return publicStatus(record);
  }
  private async reopen(request:RecoveryApplicationOpenRequest):Promise<RecoveryApplicationStatus>{
-  let record!:Grant;await this.credentials().modifyRecord(key(request.candidateId),async current=>{const prior=decode(current,this.parentHome,request.candidateId);if(!prior||prior.phase!=='exited'||!prior.adopted||prior.requests.includes(request.requestId))failure('BACKUP_APPLICATION_ALREADY_OPENED');if(prior.requests.length>=1024)failure('BACKUP_APPLICATION_REQUEST_LIMIT');record={...prior,requestId:request.requestId,requests:[...prior.requests,request.requestId],execution:randomUUID(),secret:randomBytes(32).toString('hex'),phase:'starting',pid:null,port:null,ready:false,browserRequested:false,error:null,startedAt:new Date().toISOString()};return{kind:'grant',payload:record};});
+  let record!:Grant;await this.credentials().modifyRecord(key(request.candidateId),async current=>{const prior=decode(current,this.parentHome,request.candidateId);if(!prior||prior.phase!=='exited'||prior.pid!==null||!prior.adopted||prior.requests.includes(request.requestId))failure('BACKUP_APPLICATION_ALREADY_OPENED');if(prior.requests.length>=1024)failure('BACKUP_APPLICATION_REQUEST_LIMIT');record={...prior,requestId:request.requestId,requests:[...prior.requests,request.requestId],execution:randomUUID(),secret:randomBytes(32).toString('hex'),phase:'starting',pid:null,port:null,ready:false,browserRequested:false,error:null,startedAt:new Date().toISOString()};return{kind:'grant',payload:record};});
   try{await this.launch(record,request.openBrowser);}catch(error){await this.change(record.candidateId,record.execution,current=>({...current,phase:'failed',error:error instanceof BackupError?error.code:'BACKUP_APPLICATION_START_FAILED'}));}return this.status(request.candidateId);
  }
  private async launch(record:Grant,openBrowser:boolean):Promise<void>{
@@ -96,7 +106,7 @@ export class RecoveryApplication {
   const child=spawn(process.execPath,[cli,'--profile',adopted.profile,'--patch',overlay,'--host','127.0.0.1','--port','0','--no-open'],{cwd:adopted.cwd,env:mcpChildEnvironment({DSH_HOME:adopted.home,DSH_AGENTS_HOME:adopted.agentsHome,DSH_TELEMETRY_DISABLED:'1'}),windowsHide:true,detached:true,stdio:['ignore','ignore','ignore','ipc']});this.children.set(record.execution,child);
   let initial=false,acceptPid!:()=>void;const pidRecorded=new Promise<void>(resolve=>{acceptPid=resolve;});
   child.on('message',message=>{const hello=z.object({kind:z.literal('recovery/init'),execution:z.literal(record.execution)}).strict().safeParse(message);if(hello.success&&!initial){initial=true;void pidRecorded.then(()=>{if(child.connected)child.send({execution:record.execution,secret},()=>{});});return;}const parsed=z.object({execution:z.literal(record.execution),state:recoveryRuntimeState}).strict().safeParse(message);if(parsed.success)void this.state(record,parsed.data.state).catch(()=>{});});
-  child.once('close',code=>{this.children.delete(record.execution);void this.change(record.candidateId,record.execution,current=>({...current,phase:'exited',ready:false,error:current.error??(code===0?null:'BACKUP_APPLICATION_START_FAILED')})).catch(()=>{});});
+  child.once('close',code=>{this.children.delete(record.execution);void this.change(record.candidateId,record.execution,current=>({...current,phase:'exited',pid:null,port:null,ready:false,error:current.error??(code===0?null:'BACKUP_APPLICATION_START_FAILED')})).catch(()=>{});});
   await new Promise<void>((resolve,reject)=>{child.once('error',()=>reject(new BackupError('BACKUP_APPLICATION_START_FAILED')));child.once('spawn',()=>resolve());});if(!child.pid)failure('BACKUP_APPLICATION_START_FAILED');
   await this.change(record.candidateId,record.execution,current=>({...current,pid:child.pid!,phase:'starting'}));
   acceptPid();child.unref();child.channel?.unref();
@@ -104,7 +114,7 @@ export class RecoveryApplication {
  async control(input:RecoveryApplicationControlRequest):Promise<RecoveryApplicationStatus>{
   this.active();const request=recoveryApplicationControlRequest.parse(input),record=await this.read(request.candidateId);if(!record)failure('BACKUP_APPLICATION_NOT_OPENED');if(record.execution!==request.execution)failure('BACKUP_APPLICATION_EXECUTION_CHANGED');const pending=this.jobs.get(record.execution);
   if(request.operation==='stop'&&pending){pending.controller.abort();await this.change(record.candidateId,record.execution,value=>({...value,phase:'stopping',ready:false}));return this.status(request.candidateId);}
-  if(record.pid===null)return this.status(request.candidateId);const result=await queryRecoveryRuntime(record.execution,record.secret,request.operation);if(result&&result.pid===record.pid){await this.state(record,result);return publicStatus({...record,...result});}return publicStatus(record,{phase:'unknown',ready:false,canReopen:false,error:'BACKUP_APPLICATION_STATE_UNKNOWN'});
+  if(record.pid===null)return this.status(request.candidateId);const result=await queryRecoveryRuntime(record.execution,record.secret,request.operation);if(result&&result.pid===record.pid){const observed=observedState(result);await this.state(record,observed);return publicStatus({...record,...observed});}return publicStatus(record,{phase:'unknown',ready:false,canReopen:false,error:'BACKUP_APPLICATION_STATE_UNKNOWN'});
  }
  async close():Promise<void>{this.closed=true;for(const job of this.jobs.values())job.controller.abort();await Promise.allSettled([...this.jobs.values()].map(job=>job.done));for(const child of this.children.values())if(child.connected)child.disconnect();this.children.clear();this.plans.clear();}
 }

@@ -5,6 +5,8 @@ import {join,resolve} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {createHash} from 'node:crypto';
+import {spawn} from 'node:child_process';
+import {credentialKey} from '@deepseek-ai/dsh-credentials';
 import {Context} from '@deepseek-ai/cordis';
 import LocalFs from '@deepseek-ai/dsh-fs-local';
 import SkillRegistry from '@deepseek-ai/dsh-skill';
@@ -21,6 +23,8 @@ import {RecoveryApplication} from '../packages/dsh-zhen/lib/recovery-application
 import {inspectRecoveryApplication,adoptRecoveryApplication} from '../packages/dsh-zhen/lib/recovery-application-config.js';
 import {RecoveryCatalog,BackupCenter} from '../packages/dsh-zhen/lib/backup.js';
 import {fixture} from './fixtures/recovery-application-config.mjs';
+import {serveRecoveryRuntime} from '../packages/dsh-zhen/lib/recovery-application-channel.js';
+import {mcpChildEnvironment} from '../packages/dsh-zhen/lib/mcp-market.js';
 
 const anchor=createRequire(import.meta.url).resolve('@deepseek-ai/dsh/package.json');
 function credentials(){
@@ -42,12 +46,36 @@ test('C197: actual public CLI recovery starts every core service once and reconn
  const child=f.manager.children.get(first.execution);assert.ok(child);f.dispose(async()=>{if(child.exitCode===null)child.kill();});
  const records=[...f.provider.records.values()];assert.equal(records.length,1);const grant=records[0].payload,launch=await readFile(join(grant.adopted.bundleDirectory,'launch-'+first.execution+'.json'),'utf8');assert.equal(launch.includes(grant.secret),false);assert.equal(child.spawnargs.join(' ').includes(grant.secret),false);
  await f.manager.close();const second=new RecoveryApplication(f.sourceHome,anchor,()=>f.provider,f.center);f.dispose(()=>second.close());const connected=await second.status(f.id);assert.equal(connected.execution,first.execution);assert.equal(connected.pid,first.pid);assert.equal(connected.ready,true);
- const stopping=await second.control({candidateId:f.id,execution:first.execution,operation:'stop'});assert.equal(stopping.phase,'stopping');const exited=await waitFor(second,f.id,value=>value.canReopen,20000);assert.equal(exited.ready,false);
+ const stopping=await second.control({candidateId:f.id,execution:first.execution,operation:'stop'});assert.equal(stopping.phase,'stopping');const exited=await waitFor(second,f.id,value=>value.canReopen,20000);assert.equal(exited.ready,false);assert.equal(exited.phase,'exited');assert.equal(exited.error,null);
  const reopened=await second.open({...request,requestId:randomUUID()}),third=await waitFor(second,f.id,value=>value.ready);assert.notEqual(third.execution,first.execution);assert.equal(reopened.execution,third.execution);assert.notEqual(third.pid,first.pid);
  await assert.rejects(second.control({candidateId:f.id,execution:first.execution,operation:'stop'}),{code:'BACKUP_APPLICATION_EXECUTION_CHANGED'});assert.equal((await second.status(f.id)).ready,true);
- await second.control({candidateId:f.id,execution:third.execution,operation:'stop'});await waitFor(second,f.id,value=>value.canReopen,20000);
+ await second.control({candidateId:f.id,execution:third.execution,operation:'stop'});const finalExit=await waitFor(second,f.id,value=>value.canReopen,20000);assert.equal(finalExit.phase,'exited');assert.equal(finalExit.error,null);
  const replay=await second.open(request);assert.equal(replay.execution,third.execution);assert.equal(replay.canReopen,true);assert.equal(second.children.size,0);
  console.log(JSON.stringify({contract:'C197',actualPublishedCli:true,freshOwnedPackageStore:true,dependencyDownloadsAllowed:true,packageLifecycleScriptsDisabled:true,fullCoreReadiness:true,sameRequestSingleExecution:true,anotherRequestRefusedWhileRunning:true,sourceManagerClosedChildSurvives:true,authenticatedReconnect:true,actualGracefulStop:true,explicitReopen:true,secretAbsentFromLaunchFileAndArguments:true,browserOpened:false,nativeRequests:0,modelRequests:0}));
+});
+
+test('C203: an authenticated shutdown announcement cannot reopen a live process, including a retained old exited record',{timeout:90000},async t=>{
+ const f=await controlFixture(t),review=await f.manager.review({candidateId:f.id,profile:'',page:0,review:null}),plan=f.manager.plans.get(f.id).plan;
+ const adopted=await adoptRecoveryApplication(plan,review.review),bundleDigest=createHash('sha256').update(await readFile(join(adopted.bundleDirectory,'cordis.patch.yml'))).digest('hex');
+ const execution=randomUUID(),requestId=randomUUID(),secret='e'.repeat(64),recordKey=credentialKey('dsh-zhen','recovery-'+f.id);
+ const child=spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{cwd:f.root,env:mcpChildEnvironment({}),windowsHide:true,stdio:'ignore'});
+ const closed=new Promise(done=>child.once('close',done));let server;
+ try{
+  await new Promise((done,reject)=>{child.once('spawn',done);child.once('error',reject);});assert.ok(child.pid);
+  const record={schema:'dsh-zhen-recovery-application-v1',parentHome:f.sourceHome,candidateId:f.id,root:plan.root,baseline:plan.baseline.sha256,profile:plan.profile,title:'EXAMPLE controlled shutdown',review:review.review,requestId,requests:[requestId],execution,secret,phase:'running',pid:child.pid,port:null,ready:true,browserRequested:false,error:null,adopted:{...adopted,bundleDigest},startedAt:new Date().toISOString()};
+  await f.provider.modifyRecord(recordKey,async()=>({kind:'grant',payload:record}));f.manager.children.set(execution,child);
+  server=await serveRecoveryRuntime(execution,secret,async()=>({execution,phase:'exited',pid:child.pid,port:null,ready:false,browserRequested:false,error:null}));
+  const announced=await f.manager.status(f.id);assert.equal(announced.canReopen,false);assert.equal(announced.phase,'stopping');assert.equal(announced.pid,child.pid);assert.equal(f.manager.children.size,1);
+  const request={candidateId:f.id,profile:plan.profile,review:review.review,requestId:randomUUID(),approved:true,openBrowser:false};
+  await assert.rejects(f.manager.open(request),{code:'BACKUP_APPLICATION_ALREADY_OPENED'});
+  await f.provider.modifyRecord(recordKey,async current=>({...current,payload:{...current.payload,phase:'exited'}}));
+  const legacy=await f.manager.status(f.id);assert.equal(legacy.canReopen,false);assert.equal(legacy.phase,'stopping');assert.equal(legacy.pid,child.pid);
+  await new Promise(done=>server.close(done));server=undefined;child.kill();await closed;
+  const stopped=await f.manager.status(f.id);assert.equal(stopped.canReopen,true);assert.equal(stopped.phase,'exited');assert.equal(stopped.pid,null);assert.equal(stopped.port,null);assert.equal(f.manager.children.size,0);
+  const replay=await f.manager.open({...request,requestId});assert.equal(replay.execution,execution);assert.equal(replay.canReopen,true);assert.equal(f.manager.children.size,0);
+  const saved=await f.provider.readRecord(recordKey);assert.deepEqual(saved.payload.requests,[requestId]);
+  console.log(JSON.stringify({contract:'C203',actualAuthenticatedLocalChannel:true,actualOwnedNodeProcess:true,liveShutdownAnnouncementCannotReopen:true,legacyExitedPidStillChecked:true,confirmedExitClearsTrackedProcess:true,retainedGrantUsesExistingNullablePid:true,originalRequestNeverRespawned:true,controlledCredentialProvider:true,nativeRequests:0,modelRequests:0}));
+ }finally{if(server)await new Promise(done=>server.close(done));if(child.exitCode===null)child.kill();await closed;f.manager.children.delete(execution);}
 });
 
 test('C197: the actual published Owner gateway exposes only bounded review/status and denies all four anonymous operations',async t=>{
