@@ -9,3 +9,11 @@ export function npmCacheDirectory(npm,{cwd=process.cwd(),env=process.env,flags=[
  assert.ok(value.length>0&&value.length<=4096&&isAbsolute(value)&&!/[\u0000-\u001f\u007f]/.test(value),'EXAMPLE_NPM_CACHE_DIRECTORY_INVALID');return value;
 }
 export function sameNpmCache(a,b){const first=resolve(a),second=resolve(b);return process.platform==='win32'?first.toLowerCase()===second.toLowerCase():first===second;}
+
+/** Trusted npm alone needs the runner's proxy/CA routing. Do not pass registry
+ * tokens, application secrets or this environment to the old SDK itself. */
+export function npmInstallEnvironment(base,parent=process.env){
+ const environment={...base},transportKeys=[];
+ for(const[name,value]of Object.entries(parent))if(/^(?:https?_proxy|all_proxy|no_proxy|node_extra_ca_certs|ssl_cert_file|ssl_cert_dir)$/i.test(name)&&value!==undefined){environment[name]=value;transportKeys.push(name);}
+ return{environment,transportKeys:transportKeys.sort()};
+}

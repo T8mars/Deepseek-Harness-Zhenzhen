@@ -14,7 +14,7 @@ import {profileFacts} from '../scripts/upstream-policy.mjs';
 import {ownedTempCleanup,withOwnedTempCleanup} from './fixtures/owned-temp-cleanup.mjs';
 import {PINNED_DSH_VERSION} from './fixtures/pinned-runtime.mjs';
 import {previousRuntimeProject} from './fixtures/previous-runtime-project.mjs';
-import {npmCacheDirectory,sameNpmCache} from './fixtures/npm-install-cache.mjs';
+import {npmCacheDirectory,sameNpmCache,npmInstallEnvironment} from './fixtures/npm-install-cache.mjs';
 
 const require=createRequire(import.meta.url),currentAnchor=require.resolve('@deepseek-ai/dsh/package.json');
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -22,10 +22,12 @@ const json=async path=>JSON.parse(await readFile(path,'utf8'));
 function installDiagnostics(stdout,stderr,started){
  const output=String(stdout??'')+'\n'+String(stderr??'');
  const phases=Object.fromEntries([...output.matchAll(/npm timing (idealTree|reify|command:ci|npm) Completed in (\d+)ms/g)].map(row=>[row[1],Number(row[2])]));
- return{elapsedMs:Math.round(performance.now()-started),installMode:'ci',cacheMode:'standard-integrity-checked',freshOwnedCache:false,preferOffline:true,codes:[...new Set([...output.matchAll(/npm error code ([A-Z0-9_]+)/g)].map(row=>row[1]))],stdoutBytes:Buffer.byteLength(stdout??''),stderrBytes:Buffer.byteLength(stderr??''),httpFetchMessages:(output.match(/npm http fetch/g)??[]).length,cacheHitMessages:(output.match(/cache hit/g)??[]).length,phases};
+ const registryEvents=[];for(const line of output.split(/\r?\n/)){if(!/^npm http (?:fetch|cache) /.test(line))continue;const match=/https:\/\/[^\s)]+/.exec(line);if(!match)continue;try{const url=new URL(match[0]);if(url.origin==='https://registry.npmjs.org'&&!url.username&&!url.password&&!url.search&&!url.hash&&url.pathname.length<=512)registryEvents.push({kind:line.startsWith('npm http cache ')?'cache':'fetch',path:url.pathname,status:Number(/\b(?:GET|POST|HEAD) (\d{3})\b/.exec(line)?.[1])||null,elapsedMs:Number(/\b(\d+)ms\b/.exec(line)?.[1])||null});}catch{}}
+ const packages=[...output.matchAll(/npm timing reifyNode:node_modules\/([A-Za-z0-9@._/-]+) Completed in (\d+)ms/g)].map(x=>({package:x[1],elapsedMs:Number(x[2])})).sort((a,b)=>b.elapsedMs-a.elapsedMs).slice(0,8);
+ return{elapsedMs:Math.round(performance.now()-started),installMode:'ci',cacheMode:'standard-integrity-checked',freshOwnedCache:false,preferOffline:true,codes:[...new Set([...output.matchAll(/npm error code ([A-Z0-9_]+)/g)].map(row=>row[1]))],stdoutBytes:Buffer.byteLength(stdout??''),stderrBytes:Buffer.byteLength(stderr??''),httpFetchMessages:(output.match(/npm http fetch/g)??[]).length,cacheHitMessages:(output.match(/cache hit/g)??[]).length,phases,lastRegistryEvents:registryEvents.slice(-12),longestCompletedPackages:packages};
 }
 
-test('C202: an existing public profile retains its original settings through the reviewed SDK transition and rollback',{timeout:360000},async()=>{
+test('C202: an existing public profile retains its original settings through the reviewed SDK transition and rollback',{timeout:600000},async()=>{
  const base=await realpath(tmpdir()),root=await realpath(await mkdtemp(join(base,'dsh-sdk-transition-EXAMPLE-'))),lease=ownedTempCleanup(base,root,'dsh-sdk-transition-EXAMPLE-',{budgetMs:30000});
  await withOwnedTempCleanup(lease,async()=>{
   const lock=await json('UPSTREAM.lock.json'),baseline=await json('contracts/upstream-baseline.json');
@@ -43,7 +45,8 @@ test('C202: an existing public profile retains its original settings through the
    // This contract checks the real old/current/old SDKs, not cold-network speed.
    // npm still verifies the reviewed lock integrities when reusing its cache;
    // missing packages can download normally, with no separate retry or script.
-   const result=spawnSync(process.execPath,[npm,'ci','--omit=dev','--ignore-scripts','--no-audit','--no-fund','--no-update-notifier','--workspaces=false','--registry','https://registry.npmjs.org/',...configFlags,'--cache',cache,'--prefer-offline','--timing','--loglevel=http'],{cwd:legacy,env,windowsHide:true,stdio:'pipe',timeout:180000,maxBuffer:4*1024**2});installation={...installDiagnostics(result.stdout,result.stderr,started),cacheLocationSource:'parent-npm-config',cacheMatchesParent:true,defaultScrubbedCacheMatchesParent:sameNpmCache(defaultChildCache,cache),omitDevelopmentOnly:true};
+   const {environment:installEnv,transportKeys}=npmInstallEnvironment(env);
+   const result=spawnSync(process.execPath,[npm,'ci','--omit=dev','--ignore-scripts','--no-audit','--no-fund','--no-update-notifier','--workspaces=false','--registry','https://registry.npmjs.org/',...configFlags,'--cache',cache,'--prefer-offline','--timing','--loglevel=http'],{cwd:legacy,env:installEnv,windowsHide:true,stdio:'pipe',timeout:360000,maxBuffer:4*1024**2});installation={...installDiagnostics(result.stdout,result.stderr,started),installBudgetMs:360000,transportEnvironmentKeys:transportKeys,sdkEnvironmentStillScrubbed:true,cacheLocationSource:'parent-npm-config',cacheMatchesParent:true,defaultScrubbedCacheMatchesParent:sameNpmCache(defaultChildCache,cache),omitDevelopmentOnly:true};
    if(result.error||result.status!==0)throw new Error('EXAMPLE_LEGACY_SDK_INSTALL_FAILED '+JSON.stringify({exit:typeof result.status==='number'?result.status:null,timedOut:result.error?.code==='ETIMEDOUT',lockedSourceCommit:priorSource.sourceCommit,...installation}));
    assert.equal(hash(await readFile(join(legacy,'package-lock.json'))),priorSource.lockSha256,'Previous dependency graph changed during installation.');
    const installed=await json(join(legacy,'package-lock.json')),entry=installed.packages['node_modules/@deepseek-ai/dsh'];assert.equal(entry.version,prior.version);assert.equal(entry.integrity,prior.registryIntegrity);previousAnchor=join(legacy,'node_modules/@deepseek-ai/dsh/package.json');

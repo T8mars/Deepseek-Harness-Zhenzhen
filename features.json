@@ -561,6 +561,11 @@
       "id": "published-sdk-install-cache",
       "status": "implemented-local-verified",
       "verification": "Decision0126 C204 actual npm config/TEMP regression reproduces a configured parent cache lost by scrubbed child env;only the effective cache directory is forwarded,not auth/env.Config lookup is offline and paths/config remain unprinted.C202 observes default child cache differs locally,verifies explicit parent match,retains original751-entry source lock bytes,actual published SDKs/integrity and180s,--ignore-scripts/empty credential configs.--omit=dev removes54devOnly;all619required nonoptional runtime package files verified.Original190→191→190/user patch/metadata/full rollback assertions pass.Final2/2,install12921ms,total24099ms.CI now preflights both then still runs full1468/pack/publicCLI install-uninstall.Dev96 exact CI40077436150 failed1466/1467 and is retained;new exact CI pending.Production234-file payload unchanged;user dev93 retained,no Native/model writes/calls,original goal incomplete."
+    },
+    {
+      "id": "published-sdk-install-transport",
+      "status": "implemented-local-verified",
+      "verification": "Decision0127 preserves only proxy/CA routing for trusted npm installation;old SDK execution remains scrubbed,with empty credential configs.C204 uses actual npm through an owned loopback proxy,one EXAMPLE registry read,without application secrets/Authorization.C202 keeps original source lock/integrity,619 required runtime/54 devOnly and all190→191→190/settings/rollback assertions;explicit cold-install budget360s and whole test600s replaces180/360s.Safe progress records only bounded public npmjs paths/package phases and network variable names.Actual2/2,total24449ms,install12850ms pass locally;this is not a runner timing guarantee.Dev97 only preflight1/2 failed;whole1468 never ran and failure preserved.New exact preflight/full CI pending.Production234-file payload unchanged,user dev93 retained,Native/model0,whole goal incomplete."
     }
   ]
 }
