@@ -1,3 +1,5 @@
+> 0129：包含完整契约检查的build任务限时为45分钟，替代旧20分钟。依据精确全绿Windows检查实测26分7秒；未缩减测试、改变权限或自动开启发布。具体证据及未验证项见 `decisions/0129-distribution-build-budget.md`。
+
 # 候选包、Git 快照和分发索引
 
 W4 `release.yml` 已实现默认预览、不可变编译快照、隔离安装验证、Canary Release、

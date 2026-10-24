@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T10:57:41.532Z",
+  "checkedAt": "2026-10-24T11:24:25.641Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2505,6 +2505,31 @@
       "exampleCanvasChangedHelpRequests": 3,
       "shellAttempts": 0,
       "scope": "Actual published SDK AgentLoop and default selection in independent EXAMPLE TEMP;real fixed-file tool roundtrip and CLI_CHANGED example-result help card pass.No user sessions/project data,Native request or browser inspection."
+    },
+    "distributionBuildBudget": {
+      "decision": "0129",
+      "referenceRun": 40083995103,
+      "referenceCommit": "7f465f6b1f27abfb3a81b95808098260d89b025c",
+      "successfulWholeCheckMs": 1567000,
+      "buildMinutes": 45,
+      "workflows": [
+        "release.yml",
+        "promote.yml"
+      ],
+      "otherWorkflowSemanticsUnchanged": true,
+      "newRemoteWorkflowVerified": false
+    },
+    "sdk3RealAgentRag": {
+      "decision": "0129",
+      "sdk": "0.2.1-rc.3",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "requests": 3,
+      "actualPublishedAgentLoop": true,
+      "productionRagTools": true,
+      "relativeSourceAndLine": true,
+      "pauseAndRevocationBeforeTransport": true,
+      "shellAttempts": 0,
+      "scope": "Independent EXAMPLE TEMP with two synthetic documents and original production RAG;normal completion,no user session/project or browser/Native request."
     }
   }
 }
