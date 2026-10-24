@@ -346,3 +346,10 @@ C191为测试自有临时资源的清理契约：dev88 CI1416/1417中的C63报�
 
 
 0122 CI fixture correction: the public CLI forwards pnpm arguments unchanged. A new runner cannot install missing dependency tarballs with --offline; an owned empty store reproduced ERR_PNPM_NO_OFFLINE_TARBALL, then normal download succeeded. C197 now explicitly selects a fresh TEMP store and --ignore-scripts, retaining all real-process assertions. The original failed CI runner did not retain the underlying pnpm output; its proven boundary is fixture installation before recovery launch. No published SDK or runtime adoption code changed.
+
+
+## C200–C202 · 确切SDK授权与跨版本公开配置
+
+正向测试包和源授权必须与当前已安装、项目锁及确切依赖一致；公开SDK拒绝为另一个运行时授予豁免。C200验证拒绝发生在源文件变更或包执行前，恢复后的历史授权仍待审。C201经两次真实公开CLI比较191行中的全部178个未覆盖行完整值，包括新增entry-customization；没有修改上游行或引导内核。C202按已审阅升级计划安装真实前版发布SDK，校验registry integrity，在同一公开profile执行旧→新→旧并核对覆盖设置、公开manifest metadata和完整回退行。默认base bundle名字由当前公开CLI解析，不以私有布局推断需要手工改写。
+
+0123另以真实前后两份自有归档完成三次普通CLI完整启动及EXAMPLE会话、附件、工作区、RAG、技能偏好、已有任务、公开设置和凭据读回；每次234载荷逐项一致、13服务就绪，外网尝试0。此本地演练与C202范围分开，不能据此宣称真实GUI、个人全部数据、官方Desktop或任意其他版本的回退已验证。

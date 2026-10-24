@@ -1,3 +1,5 @@
+// Positive EXAMPLE bundles target the reviewed pin; incompatible fixtures stay explicit.
+import {PINNED_DSH_VERSION} from './fixtures/pinned-runtime.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,realpath,writeFile,readFile,rename,readdir,rm} from 'node:fs/promises';
@@ -75,7 +77,7 @@ async function fixture(t,{patchChange,metadataChange,onlyEnvironment=false,direc
     {id:'EXAMPLE_probe',name:bundle,config:{EXAMPLE:'preserved'}},
   ]}];
   patchChange?.(patch,root);
-  const bundleManifest={name:bundle,version:'1.0.0',type:'module',exports:{'.':'./EXAMPLE-probe.mjs'},engines:{dsh:'0.2.1-rc.2'},dsh:{bundle:{patch:'./EXAMPLE.patch.json'}},scripts:{postinstall:'node EXAMPLE-must-not-run.cjs'}};
+  const bundleManifest={name:bundle,version:'1.0.0',type:'module',exports:{'.':'./EXAMPLE-probe.mjs'},engines:{dsh:PINNED_DSH_VERSION},dsh:{bundle:{patch:'./EXAMPLE.patch.json'}},scripts:{postinstall:'node EXAMPLE-must-not-run.cjs'}};
   metadataChange?.(bundleManifest,root);await put(join(sourcePackage,'package.json'),JSON.stringify(bundleManifest));
   await put(join(sourcePackage,'EXAMPLE.patch.json'),JSON.stringify(patch));
   await put(join(sourcePackage,'EXAMPLE-must-not-run.cjs'),"throw Error('EXAMPLE_INSTALL_SCRIPT_MUST_NOT_RUN');");

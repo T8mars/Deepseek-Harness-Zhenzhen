@@ -2,7 +2,7 @@
 
 These notices cover code embedded in client.js. External runtime dependencies retain their own licenses. No third-party character artwork or fonts are included.
 
-## @deepseek-ai/dsh-typert-protocol 0.2.1-rc.2
+## @deepseek-ai/dsh-typert-protocol 0.2.1-rc.3
 
 MIT License
 

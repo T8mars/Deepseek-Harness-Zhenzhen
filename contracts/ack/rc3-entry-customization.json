@@ -1,0 +1,8 @@
+{
+  "targetCommit": "1f81c047fc48fa190a683e469daa699857e9afe8",
+  "decision": "handled",
+  "type": "profile",
+  "id": "entry-customization",
+  "digest": "8ca42daeb375c901921bc017402e3efce2fd3cd6a756c9fabfc3b8276f10f41d",
+  "rationale": "AGENT技术核对固定发行模块及README：新增entry-customization行提供三个More菜单，浏览插件或创建cordis预设的未发送草稿，无本地存储或自动模型请求。客户端只可选调用productAnalytics；本项目原九项上报禁用继续由C1/C8验证，不另开上报。自身patch不覆盖此行；C201实际公开CLI读取191行并比较全部178个未覆盖行的完整值，新行完整继承，C6公开槽位检查通过。未更改上游、引导内核或Desktop协议；真实菜单渲染和十五分钟实网仍未验证。"
+}

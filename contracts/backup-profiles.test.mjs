@@ -10,6 +10,7 @@ import Credentials from '@deepseek-ai/dsh-credentials-local';
 import {credentialRef} from '@deepseek-ai/dsh-credentials';
 import {initProfile,readProfileManifest,writeProfileManifest,resolveProfileDir,PROFILE_PATCH_FILENAME,PROFILE_COMPATIBILITY_FILENAME,PROFILES_DIR,setProfileVersionExemption} from '@deepseek-ai/dsh-app-boot';
 import {writeProfileBackup,readProfileBackup,profileBackupRecords,writeBackupArchive,openBackupArchive,prepareProfileBackup,BackupError} from '../packages/dsh-zhen/lib/backup.js';
+import {PINNED_DSH_VERSION} from './fixtures/pinned-runtime.mjs';
 
 const password='EXAMPLE profile snapshot password',anchor=createRequire(import.meta.url).resolve('@deepseek-ai/dsh/package.json');
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -23,7 +24,9 @@ async function fixture(t){
   await writeFile(join(alpha,PROFILE_PATCH_FILENAME),'- id: EXAMPLE_row\n  config:\n    providers:\n      EXAMPLE_z: { model: EXAMPLE_z }\n      EXAMPLE_a: { model: EXAMPLE_a }\n    expression: !!js "globalThis.EXAMPLE_BACKUP_EXPRESSION_EXECUTED = true"\n    constructor: EXAMPLE_LITERAL\n');
   await unlink(join(beta,PROFILE_PATCH_FILENAME));
   await writeFile(join(home,PROFILE_PATCH_FILENAME),'- id: EXAMPLE_machine\n  disabled: true\n');
-  await setProfileVersionExemption(alpha,'@example/backup-fixture@1.2.3','0.2.1-rc.2',true,true);
+  // The source grant is made through the public API for this exact runtime.
+  // Recovery still treats it as historical data, never as a new-home approval.
+  await setProfileVersionExemption(alpha,'@example/backup-fixture@1.2.3',PINNED_DSH_VERSION,true,true);
   const ctx=new Context();await ctx.plugin(Credentials,{dshHome:home,watch:false});await ctx.credentials.set(credentialRef('EXAMPLE_BACKUP_REFERENCE'),'EXAMPLE_CREDENTIAL_CANARY_PRIVATE');
   t.after(async()=>{await ctx.fiber.dispose();const part=relative(base,await realpath(root));assert.ok(part&&!isAbsolute(part)&&!part.startsWith('..')&&!/[\\/]/.test(part)&&part.startsWith('dsh-profile-backup-EXAMPLE-'));await rm(root,{recursive:true,force:true,maxRetries:3,retryDelay:100});});
   const source={home,installAnchor:anchor,active:{name:'EXAMPLE_alpha',dir:alpha,cwd:root,startedBundles:['@example/backup-fixture'],overlays:[{id:'EXAMPLE_overlay',disabled:true}],telemetryDisabledEnv:'EXAMPLE_DISABLED'}};
@@ -42,10 +45,18 @@ test('C91: public profile readers preserve every named profile, machine layer, o
   assert.deepEqual(result.profiles.map(value=>value.name),['EXAMPLE_alpha','EXAMPLE_beta']);const alpha=result.profiles[0],beta=result.profiles[1];
   assert.equal(alpha.manifest.exampleMarker,'EXAMPLE_MANIFEST');assert.deepEqual(alpha.dependencies,[{name:'@example/backup-fixture',version:'1.2.3',bundle:true,enabled:true}]);assert.deepEqual(Object.keys(alpha.patch.patches[0].config.providers),['EXAMPLE_z','EXAMPLE_a']);
   assert.equal(alpha.patch.patches[0].config.expression.__jsExpr,'globalThis.EXAMPLE_BACKUP_EXPRESSION_EXECUTED = true');assert.equal(alpha.patch.patches[0].config.constructor,'EXAMPLE_LITERAL');
-  assert.equal(beta.patch.present,false);assert.equal(alpha.compatibility.present,true);assert.equal(beta.compatibility.present,false);assert.deepEqual(alpha.compatibility.exemptions,{'@example/backup-fixture@1.2.3':['0.2.1-rc.2']});
+  assert.equal(beta.patch.present,false);assert.equal(alpha.compatibility.present,true);assert.equal(beta.compatibility.present,false);assert.deepEqual(alpha.compatibility.exemptions,{'@example/backup-fixture@1.2.3':[PINNED_DSH_VERSION]});
   assert.deepEqual(result.machine,{present:true,patches:[{id:'EXAMPLE_machine',disabled:true}]});assert.deepEqual(result.active.overlays,f.source.active.overlays);assert.equal(result.active.telemetryDisabled,true);
   assert.equal(result.coverage.restoreImplemented,false);assert.equal(result.coverage.packageManagerFiles,false);assert.equal(result.coverage.packageArtifacts,false);assert.equal(globalThis.EXAMPLE_BACKUP_PACKAGE_EXECUTED,undefined);assert.equal(globalThis.EXAMPLE_BACKUP_EXPRESSION_EXECUTED,undefined);
   assert.deepEqual(await Promise.all(f.files.map(async path=>digest(await readFile(path)))),f.before);
+});
+
+test('C200: a grant for another SDK is rejected before changing the original EXAMPLE profile',async t=>{
+  const f=await fixture(t);
+  await assert.rejects(async()=>setProfileVersionExemption(f.alpha,'@example/backup-fixture@1.2.3','0.0.0',true,true),error=>error.message.includes('Cannot approve DSH 0.0.0'));
+  assert.deepEqual(await Promise.all(f.files.map(async path=>digest(await readFile(path)))),f.before);
+  assert.equal(globalThis.EXAMPLE_BACKUP_PACKAGE_EXECUTED,undefined);
+  console.log(JSON.stringify({contract:'C200',actualPublishedExemptionApi:true,pinnedRuntimeMatchesInstalledSdk:true,foreignRuntimeGrantRefused:true,originalProfileBytesPreserved:true,noPackageExecution:true,nativeRequests:0,modelRequests:0}));
 });
 
 test('C91: credential-store values remain excluded and rotations do not invalidate unrelated logical profile data',async t=>{

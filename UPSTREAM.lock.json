@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "checkedAt": "2026-10-24T00:06:42.289Z",
   "dsh": {
-    "tag": "dsh-v0.2.1-rc.2",
-    "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
-    "version": "0.2.1-rc.2",
-    "registryIntegrity": "sha512-tvY+yhfKRifthbqPe/OK0AYxM5ZkvqfYq/jMYgJcEUxiRRL1Vwra3Ti5TB6AXgSWQdiPHYh/Vp6SJa9yHwMNuw==",
+    "tag": "dsh-v0.2.1-rc.3",
+    "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
+    "version": "0.2.1-rc.3",
+    "registryIntegrity": "sha512-H+E9HLnHf7fJqzen84Z9Bq8ggb5xbrcbyhZjXTJLE9NabHr3zteGvTRvdvGkxPl4ov80is4WLglFmSo+/olJjg==",
     "discoveryTag": "next",
     "runtimeVerified": true,
-    "runtimeVerificationScope": "Windows, Node 22.19.0, published Web profile + DSH-zhen plugin, public web branding, skill provider and slash discovery after refresh; no paid chat"
+    "runtimeVerificationScope": "Windows Node22.19.0 published Web SDK0.2.1-rc.2→0.2.1-rc.3→0.2.1-rc.2 with genuine old/new/original DSH-zhen archives in one independent EXAMPLE TEMP profile;three ordinary public CLI boots,13 services,234 installed payloads each stage and example data/settings/credential readback.All local1466 contracts and public CLI installation/uninstallation pass.No real user home,browser,Native or model request;exact CI and release/canary remain separate."
   },
   "cordis": {
     "version": "4.0.5",
@@ -2461,6 +2461,12 @@
       "verification": "C199 production handlers first reproduce and fix contradictory closed/waiting status after a lost opening response.Confirmed current Host status clears only the UI wait;original opening is never resubmitted and explicit reopen uses a fresh request ID.Related96/final UI9 and cold-store runtime/UI16 pass;build and clean types pass;complete1464/1464,234-file formal archive/public CLI temporary install-uninstall and all payload/worker checks pass.Only client payload changes;backend/runtime match the completed dev92 pure EXAMPLE recovery experiment.Dev92 exact CI40042200654 failed1462/1463 during C197 offline fixture installation before launch;runner underlying pnpm output was not retained.Fresh owned store locally reproduced ERR_PNPM_NO_OFFLINE_TARBALL and normal download succeeded.C197 now uses a fresh store with scripts disabled and original runtime assertions unchanged.This commit exact CI separately required.User runtime unchanged,Native/model0;browser and whole original objective incomplete.",
       "freshOwnedPackageStore": true,
       "previousCiConclusion": "failure"
+    },
+    "publishedSdkUpgrade": {
+      "status": "implemented-local-verified",
+      "from": "0.2.1-rc.2",
+      "to": "0.2.1-rc.3",
+      "verification": "Published SDK0.2.1-rc.3 exact49 packages and two target/digest-bound guide/profile reviews;complete1466/1466,234-file canonical archive/public CLI install-uninstall pass.C200 rejects foreign SDK grants,C201 compares all178 unowned complete rows among191,C202 uses actual published prior/current/prior SDKs and verifies the same public profile.Local complete own-app experiment uses genuine dev93/rc2 archive then candidate/rc3 then original/rc2,234 installed bytes each stage,13 actual services,unchanged EXAMPLE session/attachment/workspace/RAG/skill/task/preferences and credential via public service only.Independent TEMP cleaned;outbound attempts0.This commit exact CI,user runtime,real GUI/Native creations,canary/observation/stable remain separate."
     }
   }
 }

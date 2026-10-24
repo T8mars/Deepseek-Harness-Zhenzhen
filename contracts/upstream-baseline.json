@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "observationsOnly": true,
   "dsh": {
-    "version": "0.2.1-rc.2",
-    "tag": "dsh-v0.2.1-rc.2",
-    "commit": "687f282e8625c6b8d11ff58211a90524be2e4317"
+    "version": "0.2.1-rc.3",
+    "tag": "dsh-v0.2.1-rc.3",
+    "commit": "1f81c047fc48fa190a683e469daa699857e9afe8"
   },
   "guides": [
     {
@@ -174,6 +174,10 @@
     {
       "path": "docs/upgrade-guide/v0.2.1-alpha.4/account-notification-fields/guide.md",
       "sha": "b7724e5247b054c48ffd6c781653082f47c56bde"
+    },
+    {
+      "path": "docs/upgrade-guide/v0.2.1-rc.2/new-session-blank-reuse/guide.md",
+      "sha": "ffaca9e16ad6d79132949987f30d31917f9a2e7e"
     }
   ],
   "webRows": [
@@ -361,6 +365,12 @@
     {
       "id": "directory-picker",
       "name": "@deepseek-ai/dsh-host-directory-picker-auto",
+      "keys": [],
+      "configDigest": "eb1a9a49b5598684c8ff07019abee0c04cb5b5bad93a5cddc66a86a61973f166"
+    },
+    {
+      "id": "entry-customization",
+      "name": "@deepseek-ai/dsh-client-ui-entry-customization",
       "keys": [],
       "configDigest": "eb1a9a49b5598684c8ff07019abee0c04cb5b5bad93a5cddc66a86a61973f166"
     },

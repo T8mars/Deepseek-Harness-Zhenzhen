@@ -17,8 +17,9 @@ import {candidateWorkflowContext,prepareCandidateSmoke} from '../scripts/prepare
 import {exportCandidateObservation} from '../scripts/export-candidate-observation.mjs';
 import {candidateIdentity,verifyCandidateObservation} from '../scripts/promotion-policy.mjs';
 import {runGatewaySmoke} from '../scripts/gateway-smoke-core.mjs';
+import {PINNED_DSH_VERSION} from './fixtures/pinned-runtime.mjs';
 
-const source='1'.repeat(40),observer='3'.repeat(40),timestamp=1700000000,upstream={version:'0.2.1-rc.2',commit:'2'.repeat(40)},sha=b=>createHash('sha256').update(b).digest('hex');
+const source='1'.repeat(40),observer='3'.repeat(40),timestamp=1700000000,upstream={version:PINNED_DSH_VERSION,commit:'2'.repeat(40)},sha=b=>createHash('sha256').update(b).digest('hex');
 const productionPatch=readFileSync(new URL('../packages/dsh-zhen/cordis.patch.yml',import.meta.url));
 const required=['LICENSE','NOTICE.md','THIRD_PARTY_NOTICES.md','lib/index.js','lib/client.js','lib/remote.js','lib/typert.js','lib/canvas-server.js','lib/mcp-server.js','lib/pdf-text-worker.js','lib/docx-text-worker.js','catalog/skills.json'];
 function bundle(version='0.1.0',patch=productionPatch){

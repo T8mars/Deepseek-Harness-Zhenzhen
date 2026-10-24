@@ -1,0 +1,8 @@
+{
+  "targetCommit": "1f81c047fc48fa190a683e469daa699857e9afe8",
+  "decision": "handled",
+  "type": "guide",
+  "id": "docs/upgrade-guide/v0.2.1-rc.2/new-session-blank-reuse/guide.md",
+  "digest": "ffaca9e16ad6d79132949987f30d31917f9a2e7e",
+  "rationale": "AGENT技术核对固定Git blob：新会话会复用未开始且未归档的空会话，有预设时不接管其他预设的草稿。本扩展源码无startSession/openWorkspace/connectWorkspace精确调用；自己的内容创作入口使用独立主面板，正常bundle升级会重启Host，使恢复的空会话重新组合当前定义。新增官方菜单明确传cordis预设并append未发送草稿，不自动提交。C1/C2/C6/C8及C201在已发布rc.3上核对默认Flash、九项禁用和完整配置继承；真实浏览器草稿交互仍待验，不以此宣称全里程碑或发布完成。"
+}

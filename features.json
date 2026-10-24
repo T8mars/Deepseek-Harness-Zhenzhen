@@ -546,6 +546,11 @@
       "id": "recovery-receipt-status-ui",
       "status": "implemented-local-verified",
       "verification": "C199 production handlers first reproduce and fix contradictory closed/waiting status after a lost opening response.Confirmed current Host status clears only the UI wait;original opening is never resubmitted and explicit reopen uses a fresh request ID.Related96/final UI9 and cold-store runtime/UI16 pass;build and clean types pass;complete1464/1464,234-file formal archive/public CLI temporary install-uninstall and all payload/worker checks pass.Only client payload changes;backend/runtime match the completed dev92 pure EXAMPLE recovery experiment.Dev92 exact CI40042200654 failed1462/1463 during C197 offline fixture installation before launch;runner underlying pnpm output was not retained.Fresh owned store locally reproduced ERR_PNPM_NO_OFFLINE_TARBALL and normal download succeeded.C197 now uses a fresh store with scripts disabled and original runtime assertions unchanged.This commit exact CI separately required.User runtime unchanged,Native/model0;browser and whole original objective incomplete."
+    },
+    {
+      "id": "published-sdk-upgrade-rollback",
+      "status": "implemented-local-verified",
+      "verification": "Published SDK0.2.1-rc.3 exact49 packages and two target/digest-bound guide/profile reviews;complete1466/1466,234-file canonical archive/public CLI install-uninstall pass.C200 rejects foreign SDK grants,C201 compares all178 unowned complete rows among191,C202 uses actual published prior/current/prior SDKs and verifies the same public profile.Local complete own-app experiment uses genuine dev93/rc2 archive then candidate/rc3 then original/rc2,234 installed bytes each stage,13 actual services,unchanged EXAMPLE session/attachment/workspace/RAG/skill/task/preferences and credential via public service only.Independent TEMP cleaned;outbound attempts0.This commit exact CI,user runtime,real GUI/Native creations,canary/observation/stable remain separate."
     }
   ]
 }

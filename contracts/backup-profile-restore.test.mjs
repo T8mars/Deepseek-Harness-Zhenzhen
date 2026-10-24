@@ -1,3 +1,4 @@
+import {PINNED_DSH_VERSION} from './fixtures/pinned-runtime.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,realpath,rm,mkdir,readFile,writeFile,unlink,readdir} from 'node:fs/promises';
@@ -16,7 +17,7 @@ import {mcpChildEnvironment} from '../packages/dsh-zhen/lib/mcp-market.js';
 const password='EXAMPLE portable profile restore password',anchor=createRequire(import.meta.url).resolve('@deepseek-ai/dsh/package.json'),cli=resolve('node_modules/@deepseek-ai/dsh/lib/bin.js'),packageName='@example/profile-restore-fixture',sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 async function packageFixture(folder){
   await mkdir(folder,{recursive:true});
-  await writeFile(join(folder,'package.json'),JSON.stringify({name:packageName,version:'1.2.3',type:'module',exports:{'.':'./EXAMPLE.mjs'},engines:{dsh:'0.2.1-rc.2'},dsh:{bundle:{patch:'./EXAMPLE.patch.json'}}}));
+  await writeFile(join(folder,'package.json'),JSON.stringify({name:packageName,version:'1.2.3',type:'module',exports:{'.':'./EXAMPLE.mjs'},engines:{dsh:PINNED_DSH_VERSION},dsh:{bundle:{patch:'./EXAMPLE.patch.json'}}}));
   await writeFile(join(folder,'EXAMPLE.patch.json'),JSON.stringify([{insert:[{id:'EXAMPLE_target',name:packageName,config:{EXAMPLE:'base'}},{id:'EXAMPLE_disabled',name:'EXAMPLE_MODULE_MUST_NOT_BE_IMPORTED'}]}]));
   await writeFile(join(folder,'EXAMPLE.mjs'),`import{writeFile}from'node:fs/promises';export function apply(ctx,config){ctx.effect(async()=>{await writeFile(process.env.EXAMPLE_RECEIPT,JSON.stringify({config,expressionExecuted:globalThis.EXAMPLE_PROFILE_EXPR_EXECUTED===true}));const timer=setTimeout(()=>{void ctx.loader.ctx.fiber.dispose();},25);return()=>clearTimeout(timer);});}`);
 }
@@ -25,7 +26,7 @@ async function fixture(t){
   t.after(async()=>{delete globalThis.EXAMPLE_PROFILE_EXPR_EXECUTED;const part=relative(temp,await realpath(root));assert.ok(part&&!isAbsolute(part)&&!part.startsWith('..')&&!/[\\/]/.test(part)&&part.startsWith('dsh-profile-restore-EXAMPLE-'));await rm(root,{recursive:true,force:true,maxRetries:3,retryDelay:100});});
   const alpha=resolveProfileDir('EXAMPLE_alpha',home),beta=resolveProfileDir('EXAMPLE_beta',home);initProfile(alpha,[]);initProfile(beta,[]);const manifest=readProfileManifest('EXAMPLE',alpha);manifest.dependencies={[packageName]:'^1.0.0'};manifest.devDependencies={'@example/dev-only':'file:EXAMPLE_ORIGIN_PATH'};manifest.optionalDependencies={'@example/optional-only':'workspace:*'};manifest.peerDependencies={'@example/peer-only':'^2.0.0'};manifest.dsh.profile.bundles=[packageName];manifest.exampleMetadata={constructor:'EXAMPLE_LITERAL',values:[1,false,null,'EXAMPLE']};writeProfileManifest(alpha,manifest);await packageFixture(join(alpha,'node_modules','@example','profile-restore-fixture'));await unlink(join(beta,PROFILE_PATCH_FILENAME));
   const profile=[{id:'EXAMPLE_target',config:{EXAMPLE:'profile'}}],machine=[{id:'EXAMPLE_target',config:{EXAMPLE:'machine'}}],overlays=[{id:'EXAMPLE_target',config:{EXAMPLE:'active',constructor:'EXAMPLE_LITERAL',expression:{__jsExpr:'(globalThis.EXAMPLE_PROFILE_EXPR_EXECUTED=true,"EXAMPLE_INTERPOLATED")'}}},{id:'EXAMPLE_disabled',disabled:true}];
-  await writeFile(join(alpha,PROFILE_PATCH_FILENAME),JSON.stringify(profile));await writeFile(join(home,PROFILE_PATCH_FILENAME),JSON.stringify(machine));await setProfileVersionExemption(alpha,packageName+'@1.2.3','0.2.1-rc.2',true,true);
+  await writeFile(join(alpha,PROFILE_PATCH_FILENAME),JSON.stringify(profile));await writeFile(join(home,PROFILE_PATCH_FILENAME),JSON.stringify(machine));await setProfileVersionExemption(alpha,packageName+'@1.2.3',PINNED_DSH_VERSION,true,true);
   const source={home,installAnchor:anchor,active:{name:'EXAMPLE_alpha',dir:alpha,cwd,startedBundles:[packageName],overlays,telemetryDisabledEnv:undefined}},path=join(root,'EXAMPLE.encrypted'),files=[join(alpha,'package.json'),join(alpha,PROFILE_PATCH_FILENAME),join(home,PROFILE_PATCH_FILENAME),join(beta,'package.json')],before=await Promise.all(files.map(async path=>sha(await readFile(path))));await writeProfileBackup(path,password,()=>source);
   return {root,home,parent,cwd,alpha,beta,source,path,files,before,profile,machine,overlays};
 }
@@ -49,7 +50,7 @@ test('C96: missing and empty source layers remain distinguishable in restoration
 });
 
 test('C96: historical compatibility exemptions remain pending data without automatically granting a new profile',async t=>{
-  const f=await fixture(t),result=await restoreProfileBackup(f.path,password,f.parent),profile=result.profiles.find(row=>row.wasActive);assert.deepEqual(profile.pendingCompatibility,{present:true,exemptions:{[packageName+'@1.2.3']:['0.2.1-rc.2']}});assert.deepEqual(readProfileCompatibility(profile.directory).exemptions,{});assert.equal(result.coverage.compatibilityGrants,false);assert.equal(Object.keys(readProfileCompatibility(f.alpha).exemptions).length,1);
+  const f=await fixture(t),result=await restoreProfileBackup(f.path,password,f.parent),profile=result.profiles.find(row=>row.wasActive);assert.deepEqual(profile.pendingCompatibility,{present:true,exemptions:{[packageName+'@1.2.3']:[PINNED_DSH_VERSION]}});assert.deepEqual(readProfileCompatibility(profile.directory).exemptions,{});assert.equal(result.coverage.compatibilityGrants,false);assert.equal(Object.keys(readProfileCompatibility(f.alpha).exemptions).length,1);
 });
 
 test('C96: restoration and public overlay reads preserve expression data without running it',async t=>{

@@ -1,4 +1,4 @@
 /** Exact runtime pin and reviewed instruction-only compatibility lineage.
  * Adding a candidate here does not authorize execution or data downgrade. */
-export const SUPPORTED_DSH = '0.2.1-rc.2';
-export const INSTRUCTION_HOSTS: readonly string[] = ['0.2.1-rc.2'];
+export const SUPPORTED_DSH = '0.2.1-rc.3';
+export const INSTRUCTION_HOSTS: readonly string[] = ["0.2.1-rc.2","0.2.1-rc.3"];

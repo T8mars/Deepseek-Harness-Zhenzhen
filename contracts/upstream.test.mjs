@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { readFileSync, mkdtempSync, rmSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -12,14 +12,18 @@ import ZhenService from '../packages/dsh-zhen/lib/index.js';
 import { TYPERT } from '../packages/dsh-zhen/lib/typert.js';
 import { TYPERT_REMOTE } from '../packages/dsh-zhen/lib/remote.js';
 import { redactLauncherLine } from '../scripts/log-output.mjs';
+import {ownedTempCleanup,withOwnedTempCleanup} from './fixtures/owned-temp-cleanup.mjs';
+import {PINNED_DSH_VERSION} from './fixtures/pinned-runtime.mjs';
 
-test('C1/C8: actual DSH composition applies default model and disables outbound collectors', () => {
-  const home = mkdtempSync(join(tmpdir(), 'dsh-zhen-composition-'));
-  try {
-    const output = execFileSync(process.execPath, [resolve('node_modules/@deepseek-ai/dsh/lib/bin.js'), '--profile', 'example', '--from-default-profile', 'web', '--patch', resolve('packages/dsh-zhen/cordis.patch.yml'), '--dump-config'], { env: { ...process.env, DSH_HOME: home }, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 });
-    const doc = parseDocument(output, { customTags: [{ tag: 'tag:yaml.org,2002:js', resolve: value => value }] });
-    assert.equal(doc.errors.length, 0);
-    const rows = new Map(doc.toJS().map(row => [row.id, row]));
+test('C1/C8: actual DSH composition applies default model and disables outbound collectors', async () => {
+  const base=realpathSync.native(tmpdir()),home=realpathSync.native(mkdtempSync(join(base,'dsh-upstream-composition-EXAMPLE-')));
+  const lease=ownedTempCleanup(base,home,'dsh-upstream-composition-EXAMPLE-',{budgetMs:30000});
+  await withOwnedTempCleanup(lease,async()=>{
+    const run=patches=>execFileSync(process.execPath,[resolve('node_modules/@deepseek-ai/dsh/lib/bin.js'),'--profile','example','--from-default-profile','web',...patches,'--dump-config'],{env:{...process.env,DSH_HOME:home},encoding:'utf8',maxBuffer:4*1024*1024});
+    const readRows=output=>{const doc=parseDocument(output,{customTags:[{tag:'tag:yaml.org,2002:js',resolve:value=>value}]});assert.equal(doc.errors.length,0);const rows=doc.toJS();assert.ok(Array.isArray(rows));return new Map(rows.map(row=>[row.id,row]));};
+    const original=readRows(run([])),rows=readRows(run(['--patch',resolve('packages/dsh-zhen/cordis.patch.yml')]));
+    const overrides=new Set(parse(readFileSync('packages/dsh-zhen/cordis.patch.yml','utf8')).map(row=>row.id).filter(Boolean));let preserved=0;
+    for(const[id,row]of original)if(!overrides.has(id)){assert.deepEqual(rows.get(id),row,'Unowned shipped row changed: '+id);preserved++;}
     assert.deepEqual(rows.get('agent-default-model').config, { provider: 'seedance', model: 'deepseek/deepseek-v4.1-flash' });
     for (const id of ['session-log-deepseek', 'plugin-package-inventory-deepseek', 'deepseek-llm-api-extensions', 'otel', 'session-telemetry-otel', 'product-analytics', 'desktop-product-telemetry', 'ui-brand-official', 'ui-deepseek-model-label-1017']) assert.equal(rows.get(id).disabled, true, id);
     assert.deepEqual(rows.get('ui-settings-models').config, { credentialOnboarding: false });
@@ -27,7 +31,8 @@ test('C1/C8: actual DSH composition applies default model and disables outbound 
     assert.equal(rows.has('attachment-local'), true);
     assert.notEqual(rows.get('attachment-local').disabled, true);
     assert.deepEqual(rows.get('skill-filesystem').inject,['skills','zhenSkillBackupSources']);
-  } finally { rmSync(home, { recursive: true, force: true }); }
+    console.log(JSON.stringify({contract:'C201',sdk:PINNED_DSH_VERSION,actualPublishedCliComposition:true,shippedRows:original.size,unownedRowsPreserved:preserved,completeRowValuesCompared:true,newEntryCustomizerInherited:original.has('entry-customization'),defaultFlashPreserved:true,collectorsDisabled:true,nativeRequests:0,modelRequests:0}));
+  });
 });
 
 test('C2: published adapter validates the complete Seedance provider profile', async () => {
