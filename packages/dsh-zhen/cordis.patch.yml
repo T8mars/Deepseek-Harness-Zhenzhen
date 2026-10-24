@@ -198,3 +198,15 @@
   inject:
     - skills
     - zhenSkillBackupSources
+
+# Source: dsh-v0.2.1-rc.3 web-app directory-picker row and the published
+# dsh-host-directory-picker-auto public composition seam. Pin both browse
+# faces so a loopback Windows Web client sees its chooser in the page.
+# The disabled auto row has no config; no upstream source or Desktop IPC changes.
+- id: directory-picker
+  disabled: true
+- insert:
+    - id: zhen-directory-picker-browse
+      name: '@deepseek-ai/dsh-host-directory-picker-browse'
+    - id: zhen-ui-directory-picker-browse
+      name: '@deepseek-ai/dsh-client-ui-directory-picker-browse'

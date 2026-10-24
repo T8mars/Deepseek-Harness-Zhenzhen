@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T14:48:26.142Z",
+  "checkedAt": "2026-10-24T21:23:22.800Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2530,6 +2530,12 @@
       "pauseAndRevocationBeforeTransport": true,
       "shellAttempts": 0,
       "scope": "Independent EXAMPLE TEMP with two synthetic documents and original production RAG;normal completion,no user session/project or browser/Native request."
+    },
+    "webDirectoryPicker": {
+      "sdk": "0.2.1-rc.3",
+      "backend": "browse",
+      "composition": "published-host-and-web-client-pair",
+      "verification": "C206 published CLI/exact peer/51-package review/SRI and actual browse Host pass;C69 explicit unbind handlers pass. First C83 full failure retained;corrected1477 full,234 archive and actual public CLI replacement/Host/uninstall pass.177 unowned rows remain identical;installed GUI and exact CI pending. No upstream/Desktop IPC/Native modifications."
     }
   }
 }

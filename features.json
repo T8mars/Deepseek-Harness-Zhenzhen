@@ -566,6 +566,11 @@
       "id": "published-sdk-install-transport",
       "status": "implemented-local-verified",
       "verification": "Decision0127 preserves only proxy/CA routing for trusted npm installation;old SDK execution remains scrubbed,with empty credential configs.C204 uses actual npm through an owned loopback proxy,one EXAMPLE registry read,without application secrets/Authorization.C202 keeps original source lock/integrity,619 required runtime/54 devOnly and all190→191→190/settings/rollback assertions;explicit cold-install budget360s and whole test600s replaces180/360s.Safe progress records only bounded public npmjs paths/package phases and network variable names.Actual2/2,total24449ms,install12850ms pass locally;this is not a runner timing guarantee.Dev97 only preflight1/2 failed;whole1468 never ran and failure preserved.New exact preflight/full CI pending.Production234-file payload unchanged,user dev93 retained,Native/model0,whole goal incomplete. Decision0128: exact dev98 Windows preflight2/2 and full1468/1468 plus234-file pack/public CLI install-uninstall succeeded.Actual owned DSH upgraded through the public source updater/CLI to SDK rc3;all prior191 rows/patch/own Canvas config/seven-table RAG/art/automatic preference preserved,only reviewed published entry-customization added.All234 installed payloads match.No Native write or browser/creation claim."
+    },
+    {
+      "id": "in-page-workspace-directory-picker",
+      "status": "implemented-local-verified",
+      "verification": "Decision0133: published SDK rc3 browse Host/Web pair replaces disabled auto row;177 unowned complete rows retained. C69 explicit binding actions preserve drafts and scope. New5/focused20 and publication review27 pass. First full1476/1477 C83 refusal retained;official npm version/source/MIT/SRI verified and only two packages added to reviewed51,prior49 and guide approvals unchanged. Corrected full1477/1477,234-file archive and public CLI previous archive replacement/normal Host/uninstall pass. Exact CI and installed GUI/Native creations remain separate. No user runtime replacement,upstream/native modification,model request or Canary publication."
     }
   ]
 }
