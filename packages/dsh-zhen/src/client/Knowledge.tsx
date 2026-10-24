@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { KnowledgeSpaces } from './KnowledgeSpaces.tsx';
 import type { ZhenRemote } from 'dsh-zhen/remote';
 import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, KnowledgeBinding } from 'dsh-zhen';
 import type {KnowledgeImportReport} from 'dsh-zhen';
@@ -67,7 +68,8 @@ export function Knowledge({ api }: { api: ZhenRemote }): React.ReactElement {
   return <div className="zhen-settings">
     <RagBackendSettings api={api}/>
     <section className="zhen-card"><h2>你的资料，留在本地</h2><p className="zhen-muted">导入 Markdown、TXT、CSV、JSON、DOCX 正文或带文字层的 PDF，按中文关键词查找。单文件上限 2 MiB，每次原文件和提取文本分别最多 32 MiB。PDF 最多 200 页、提取文字最多 2 MiB，单次解析限时 30 秒；无文字扫描件会跳过，密码保护或解析失败的文件计入失败，当前不做 OCR。Word 提取正文段落及表格，引用为提取文本行；不还原页码、自动编号、脚注、页眉页脚、文本框或图片，旧版 DOC 和加密文档暂不支持。</p>
-      <label className="zhen-label" htmlFor="zhen-project">资料所属空间</label><input className="zhen-input" id="zhen-project" value={project} disabled={busy} maxLength={200} onChange={event => setProject(event.target.value)}/>
+      <KnowledgeSpaces api={api} value={project} disabled={busy} onChoose={setProject}/>
+      <label className="zhen-label" htmlFor="zhen-project">资料所属空间（可填写新名称）</label><input className="zhen-input" id="zhen-project" value={project} disabled={busy} maxLength={200} onChange={event => setProject(event.target.value)}/>
       <form onSubmit={event => { event.preventDefault(); void action(async current => { const draft = draftRevision.current; setReport(null); const collection = unwrap(await api.createKnowledge(project, name, folder)); if (!current()) return; const result = unwrap(await api.indexKnowledge(project, collection.id)); if (!current()) return; if (draftRevision.current === draft) { setName(''); setFolder(''); } setNotice(`导入完成：${result.indexed} 个文件，跳过 ${result.skipped} 个，读取失败 ${result.failed} 个。`); await readReport(collection.id, current, true); }); }}>
         <div className="zhen-input-pair"><label className="zhen-label">集合名称<input className="zhen-input" value={name} onChange={event => { const value = event.currentTarget.value; draftRevision.current++; setName(value); }} maxLength={100} required placeholder="例如：分镜参考"/></label><div><label className="zhen-label" htmlFor="zhen-knowledge-folder">本机资料文件夹</label><input id="zhen-knowledge-folder" className="zhen-input" value={folder} onChange={event => { const value = event.currentTarget.value; draftRevision.current++; setFolder(value); }} maxLength={4096} required placeholder="粘贴完整文件夹路径"/><DirectoryChooser api={api} value={folder} scopeKey={project} disabled={busy} onChoose={path=>{draftRevision.current++;setFolder(path);}}/></div></div>
         <button className="zhen-primary" disabled={busy || !project.trim()}>授权此文件夹并在本地索引</button>

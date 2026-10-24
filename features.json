@@ -571,6 +571,11 @@
       "id": "in-page-workspace-directory-picker",
       "status": "implemented-local-verified",
       "verification": "Decision0133: published SDK rc3 browse Host/Web pair replaces disabled auto row;177 unowned complete rows retained. C69 explicit binding actions preserve drafts and scope. New5/focused20 and publication review27 pass. First full1476/1477 C83 refusal retained;official npm version/source/MIT/SRI verified and only two packages added to reviewed51,prior49 and guide approvals unchanged. Corrected full1477/1477,234-file archive and public CLI previous archive replacement/normal Host/uninstall pass. Exact CI and installed GUI/Native creations remain separate. No user runtime replacement,upstream/native modification,model request or Canary publication."
+    },
+    {
+      "id": "knowledge-space-discovery",
+      "status": "implemented-local-verified",
+      "verification": "Decision0134: existing knowledge-space picker with bounded50-name cursor pages,explicit selection and refresh,manual new-name draft retained;no binding or permission mutation.C207 actual published Host/Owner Gateway and production handlers cover52 unique spaces,revoked/binding-only entries,anonymous/extra-input refusal,duplicate clicks,stale connections and explicit recovery.Focused23/build/clean types pass;full/package/public CLI/exact CI/installed GUI remain separate.Empty RAG results first suggest shorter queries;algorithm and authorization unchanged.Native not modified,Canary not published. First full1481/1482 C76 public-untracked-source omission retained;source-copy fixture fixed without weakening two-version build/byte comparison/actual installation assertions.Focused6/6 and corrected full1482/1482,235-file canonical archive/public CLI old-to-new replacement,normal Host/uninstall pass;exact remote CI and installed GUI separate."
     }
   ]
 }

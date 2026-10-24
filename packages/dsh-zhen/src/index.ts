@@ -51,7 +51,7 @@ import {ragBackendMessages} from './rag-backend-schema.ts';
 export {ZhenRag} from './rag-service.ts';
 export type {RagSearchProvider,RagProviderScope,RagContext} from './rag-service.ts';
 export type {RagBackendStatus} from './rag-backend-schema.ts';
-import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
+import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, KnowledgeSpacePage, ImportResult } from './knowledge.ts';
 import type {KnowledgeImportReport} from './knowledge-import-schema.ts';
 import type {} from '@deepseek-ai/dsh-host-webserver';
 import type {} from '@deepseek-ai/dsh-skill';
@@ -157,7 +157,7 @@ export type { GithubAccessInfo } from './github-access-schema.ts';
 export type { KnowledgeBinding } from './knowledge.ts';
 export type { McpMarketView } from './mcp-market-schema.ts';
 export type { CapabilityCatalog, CapabilityItem, CapabilityCheck } from './capability-schema.ts';
-export type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
+export type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, KnowledgeSpacePage, ImportResult } from './knowledge.ts';
 export type {KnowledgeImportReport, KnowledgeImportIssue} from './knowledge-import-schema.ts';
 export type { GatewayCheckPreview, GatewayCheckReceipt } from './gateway-check-schema.ts';
 export type { LocalSkillDraft, LocalSkillView, LocalSkillBody, LocalSkillMode } from './local-skills-schema.ts';
@@ -902,6 +902,8 @@ export default class ZhenService extends TypertRemoteService {
   ragBackendConfigure(selected:string,enabled:boolean,expectedRevision:string):RagBackendStatus{
     try{return this.rag.configure(selected,enabled,expectedRevision);}catch(error){const proposed=error&&typeof error==='object'&&'code'in error?String(error.code):'';const code=Object.hasOwn(ragBackendMessages,proposed)?proposed as keyof typeof ragBackendMessages:'RAG_CONFIGURATION_INVALID';throw new RemoteError('zhen/refused',ragBackendMessages[code],{reason:code});}
   }
+  @Remote
+  knowledgeSpaces(after: string): KnowledgeSpacePage { return this.knowledge().spaces(after); }
   @Remote
   knowledgeCollections(project: string): KnowledgeCollection[] { return this.knowledge().list(project); }
 

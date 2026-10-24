@@ -21,6 +21,7 @@ export interface KnowledgeBinding { project: string; root: string; epoch: number
 export interface KnowledgeRetrievalScope { readonly project:string;readonly root:string;readonly bindingEpoch:number;readonly collections:readonly {readonly id:string;readonly epoch:number}[]; }
 export interface KnowledgeSelection { readonly id:string;readonly epoch:number; }
 export interface KnowledgeIndexPage{items:KnowledgeHit[];next:string|null;}
+export interface KnowledgeSpacePage { items: string[]; next: string | null; }
 interface CollectionRow { id: string; project: string; name: string; root: string; epoch: number; enabled: number; cloud_provider: string; agent_enabled: number; }
 const allowedExtensions = new Set(['.md', '.txt', '.csv', '.json', '.pdf', '.docx']);
 const excludedDirectories = new Set(['node_modules', 'vendor', 'dist', 'lib', 'coverage']);
@@ -222,6 +223,13 @@ export class KnowledgeStore {
     const id = randomUUID();
     this.db.prepare('INSERT INTO collections(id,project,name,root) VALUES(?,?,?,?)').run(id, project, name.trim(), root);
     return this.list(project).find(item => item.id === id)!;
+  }
+  /** Owner-only discovery metadata: never reads files, grants access or binds a workspace. */
+  spaces(after: string): KnowledgeSpacePage {
+    if (typeof after !== 'string' || after.length > 200) throw new Error('资料空间分页位置无效，请刷新列表。');
+    const rows = this.db.prepare('SELECT project FROM (SELECT project FROM collections UNION SELECT project FROM workspace_bindings) WHERE project COLLATE BINARY > ? ORDER BY project COLLATE BINARY LIMIT 51').all(after);
+    const items = rows.slice(0, 50).map(row => String(row.project));
+    return { items, next: rows.length > 50 ? items.at(-1)! : null };
   }
   list(project: string): KnowledgeCollection[] {
     const rows = this.db.prepare('SELECT c.*, (SELECT COUNT(*) FROM documents d WHERE d.collection_id=c.id) AS documents FROM collections c WHERE project=? ORDER BY name').all(project);

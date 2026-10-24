@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T21:23:22.800Z",
+  "checkedAt": "2026-10-24T23:58:17.474Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2536,6 +2536,11 @@
       "backend": "browse",
       "composition": "published-host-and-web-client-pair",
       "verification": "C206 published CLI/exact peer/51-package review/SRI and actual browse Host pass;C69 explicit unbind handlers pass. First C83 full failure retained;corrected1477 full,234 archive and actual public CLI replacement/Host/uninstall pass.177 unowned rows remain identical;installed GUI and exact CI pending. No upstream/Desktop IPC/Native modifications."
+    },
+    "knowledgeSpaceDiscovery": {
+      "schemaVersion": 1,
+      "pageSize": 50,
+      "verification": "C207 actual published Host/Owner Gateway: read-only unique names from collections and bindings,strict input/result,bounded binary cursor pages;no paths,contents,credential or network reads.No grants or bindings changed.Five new and23 related checks plus build/types pass.Installed GUI and exact CI separate. First C76 fixture failure retained;focused6/6 and corrected complete1482/1482,235-file canonical archive and actual public CLI replacement/start/uninstall passed;no user runtime replacement or Native write."
     }
   }
 }
