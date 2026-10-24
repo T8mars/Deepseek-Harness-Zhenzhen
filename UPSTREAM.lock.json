@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T09:49:07.178Z",
+  "checkedAt": "2026-10-24T10:57:41.532Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2479,6 +2479,32 @@
     "publishedSdkInstallTransport": {
       "status": "implemented-local-verified",
       "verification": "Decision0127 preserves only proxy/CA routing for trusted npm installation;old SDK execution remains scrubbed,with empty credential configs.C204 uses actual npm through an owned loopback proxy,one EXAMPLE registry read,without application secrets/Authorization.C202 keeps original source lock/integrity,619 required runtime/54 devOnly and all190→191→190/settings/rollback assertions;explicit cold-install budget360s and whole test600s replaces180/360s.Safe progress records only bounded public npmjs paths/package phases and network variable names.Actual2/2,total24449ms,install12850ms pass locally;this is not a runner timing guarantee.Dev97 only preflight1/2 failed;whole1468 never ran and failure preserved.New exact preflight/full CI pending.Production234-file payload unchanged,user dev93 retained,Native/model0,whole goal incomplete."
+    },
+    "sdk3LocalAdoption": {
+      "decision": "0128",
+      "checkpoint": "v0.1.0-dev.98",
+      "sdk": "0.2.1-rc.3",
+      "artifactSha256": "56bf3d792a79b97ab8f7ea0bc434726207eea6c9fe0625c90a1023d0db200048",
+      "packageFiles": 234,
+      "previousPublicRows": 191,
+      "newPublishedDefaultRows": [
+        "entry-customization"
+      ],
+      "existingSettingsAndRagPreserved": true,
+      "exactCiRun": 40083995103,
+      "exactCiTests": 1468,
+      "browserVerified": false,
+      "nativeWrites": 0,
+      "scope": "Actual public source updater and CLI installation into the owned DSH profile;ordinary launcher and all installed payload bytes verified.No real Native creation or user-profile rollback claimed."
+    },
+    "sdk3RealDefaultFlash": {
+      "decision": "0128",
+      "model": "deepseek/deepseek-v4.1-flash",
+      "requests": 5,
+      "fileToolRequests": 2,
+      "exampleCanvasChangedHelpRequests": 3,
+      "shellAttempts": 0,
+      "scope": "Actual published SDK AgentLoop and default selection in independent EXAMPLE TEMP;real fixed-file tool roundtrip and CLI_CHANGED example-result help card pass.No user sessions/project data,Native request or browser inspection."
     }
   }
 }

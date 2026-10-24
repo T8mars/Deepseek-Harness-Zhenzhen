@@ -1,3 +1,5 @@
+> 0128：精确 dev98 CI 前置2/2、完整1468/1468及234项同包安装卸载全绿；本机经正常更新/公开CLI已换装SDK rc3。原191行、用户patch、画布自有配置、七表RAG、角色与自动更新偏好保持，唯一新增发行默认entry-customization。新版真实Flash示例文件两请求与CLI_CHANGED引导三请求正常完成，零Shell/Native写。画布仍需重新审阅，GUI/作品/canary/七UTC/stable未验。见 docs/decisions/0128-verified-sdk3-local-adoption.md。
+
 # DSH-zhen · 交接文档（给接手实现的 AGENT）
 
 > 0127为可信npm安装保留代理/CA网络配置，SDK本身继续使用清理环境；C204实际npm经自有回环代理读取示例目录且不传应用密钥。C202补公开注册表路径/阶段进度诊断，将安装预算明确改为360秒、整项600秒，完整锁图/619运行依赖/原升级回退断言不变。实际两项通过，安装约12.9秒；远端新CI另核，不宣称已消除runner耗时。dev97仅前置2项中1过1超时，完整1468未执行，原失败保留。生产包不变，用户仍dev93，画布未改。见 docs/decisions/0127-npm-install-transport-and-budget.md。
