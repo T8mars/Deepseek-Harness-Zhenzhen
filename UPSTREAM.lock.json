@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T08:13:57.707Z",
+  "checkedAt": "2026-10-24T09:03:08.690Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2471,6 +2471,10 @@
     "recoveryConfirmedShutdown": {
       "status": "implemented-local-verified",
       "verification": "C203 first reproduces premature reopening through an actual authenticated own channel and live owned Node process,then verifies stopping until actual child close or confirmed absent PID clears existing nullable pid/port and tracking.Legacy v1 and original-request dedup remain;no credential schema/layout change.Complete npm run check1467/1467 includes strengthened actual graceful exits and C203.Formal234-file archive and actual public CLI TEMP install/normal Host/uninstall pass.Same SHA256 56bf3d792a79b97ab8f7ea0bc434726207eea6c9fe0625c90a1023d0db200048.Only lib/index.js differs from dev94;other233 payloads are byte-identical.C202 uses the exact reviewed prior source lock and fresh owned cache,retains180s and original rc2→rc3→rc2/190→191→190/settings/rollback assertions.Dev94 exact CI40057972230 failed1464/1466 and is preserved;this commit exact CI pending.User dev93 retained,no Native/model requests;GUI and whole objective incomplete."
+    },
+    "publishedSdkInstallCache": {
+      "status": "implemented-local-verified",
+      "verification": "Decision0126 C204 actual npm config/TEMP regression reproduces a configured parent cache lost by scrubbed child env;only the effective cache directory is forwarded,not auth/env.Config lookup is offline and paths/config remain unprinted.C202 observes default child cache differs locally,verifies explicit parent match,retains original751-entry source lock bytes,actual published SDKs/integrity and180s,--ignore-scripts/empty credential configs.--omit=dev removes54devOnly;all619required nonoptional runtime package files verified.Original190→191→190/user patch/metadata/full rollback assertions pass.Final2/2,install12921ms,total24099ms.CI now preflights both then still runs full1468/pack/publicCLI install-uninstall.Dev96 exact CI40077436150 failed1466/1467 and is retained;new exact CI pending.Production234-file payload unchanged;user dev93 retained,no Native/model writes/calls,original goal incomplete."
     }
   }
 }

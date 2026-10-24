@@ -19,6 +19,10 @@ jobs:
           cache: npm
       - run: node scripts/check-private.mjs
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build SDK transition preflight
+        run: npm run build
+      - name: Check locked published SDK transition
+        run: node --test --test-concurrency=1 contracts/npm-install-cache.test.mjs contracts/runtime-profile-upgrade.test.mjs
       - run: npm run check
       - run: npm run pack:bundle
       - run: npm run smoke:install
