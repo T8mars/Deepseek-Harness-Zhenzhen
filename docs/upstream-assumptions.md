@@ -339,3 +339,10 @@ C191为测试自有临时资源的清理契约：dev88 CI1416/1417中的C63报�
 ## C195–C198 · 恢复应用沿公开启动与配置接缝
 
 固定SDK0.2.1-rc.2的公开RuntimeResolution刻意省略所选bundle自身；审阅必须结合公开Profile.layers及实际模块目录，不能以命名空间当信任。公开writeProfileManifest与标准Node投影负责自有无依赖快照bundle，不重装已还原依赖图。公开user patch的效果已进入完整快照，必须保留原字节并经钉死的公开writeFileAtomic清空新用户层，避免insert重复及安全默认被覆写；不改SDK私有文件。整树CLI overlay会阻止ConfigEditor保存，窄监听/monitor覆盖不会。C195实际两次完整Web启动及真实ConfigEditor验证这一区别与目录来源、变化拒绝、旧monitor剔除。自有普通插件等待公开appReady.onReady，再核11核心服务；不改客户端bootstrap、Desktop IPC或Native协议。C196/C197验证本机认证通道、公开CLI真实进程生命周期、ctx.credentials自有grant绑定及Owner边界；C198是生产事件处理器测试，非浏览器验收。原组件/加密备份保留，运行应用副本正常写入后不再沿用原seal作为活跃状态证明。
+
+## C199 · 当前候选的确认状态解除客户端等待
+
+自有Owner状态中的consumed来自已有持久化打开记录。生产处理器确认当前候选的状态后可解除旧等待，不必重发打开；未确认时保持查询，明确重开生成新请求编号。C199先复现旧等待/关闭提示冲突，再验证一次原打开、一次状态查询和之后明确的新打开。没有新SDK假设或协议/授权变更；现有连接及候选guard保留，非浏览器验收。
+
+
+0122 CI fixture correction: the public CLI forwards pnpm arguments unchanged. A new runner cannot install missing dependency tarballs with --offline; an owned empty store reproduced ERR_PNPM_NO_OFFLINE_TARBALL, then normal download succeeded. C197 now explicitly selects a fresh TEMP store and --ignore-scripts, retaining all real-process assertions. The original failed CI runner did not retain the underlying pnpm output; its proven boundary is fixture installation before recovery launch. No published SDK or runtime adoption code changed.

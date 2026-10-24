@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-23T23:23:42.935Z",
+  "checkedAt": "2026-10-24T00:06:42.289Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.2",
     "commit": "687f282e8625c6b8d11ff58211a90524be2e4317",
@@ -2451,6 +2451,16 @@
       "userPatch": "original-bytes-retained-public-atomic-writer-empty-new-layer",
       "fullExampleReadbackVerified": true,
       "fullExampleScope": "pure-EXAMPLE-six-selected-scopes;191-reviewed-programs;actual-open-stop-second-boot;13-services;session-and-attachment-hash;not-all-components-nonempty-or-GUI"
+    },
+    "recoveryReceiptStatusUi": {
+      "status": "implemented-local-verified",
+      "authoritativeStatusOnly": true,
+      "unknownOpeningResubmitted": false,
+      "explicitReopenFreshRequest": true,
+      "backendChanged": false,
+      "verification": "C199 production handlers first reproduce and fix contradictory closed/waiting status after a lost opening response.Confirmed current Host status clears only the UI wait;original opening is never resubmitted and explicit reopen uses a fresh request ID.Related96/final UI9 and cold-store runtime/UI16 pass;build and clean types pass;complete1464/1464,234-file formal archive/public CLI temporary install-uninstall and all payload/worker checks pass.Only client payload changes;backend/runtime match the completed dev92 pure EXAMPLE recovery experiment.Dev92 exact CI40042200654 failed1462/1463 during C197 offline fixture installation before launch;runner underlying pnpm output was not retained.Fresh owned store locally reproduced ERR_PNPM_NO_OFFLINE_TARBALL and normal download succeeded.C197 now uses a fresh store with scripts disabled and original runtime assertions unchanged.This commit exact CI separately required.User runtime unchanged,Native/model0;browser and whole original objective incomplete.",
+      "freshOwnedPackageStore": true,
+      "previousCiConclusion": "failure"
     }
   }
 }
