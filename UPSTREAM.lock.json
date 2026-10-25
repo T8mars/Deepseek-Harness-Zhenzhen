@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-25T13:14:19.989Z",
+  "checkedAt": "2026-10-25T18:35:38.705Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2568,6 +2568,19 @@
         "tag": "v3.4.0",
         "commit": "f482ccce24cef89662682e207b37266e945c0f23"
       }
+    },
+    "communityRecoveryStatus": {
+      "status": "local-validated-batch-pending-exact-ci",
+      "upstreamSourceModified": false,
+      "nativeSourceModified": false,
+      "verification": "Decision0141: community welcome uses the published root list-cell priority seam and public ConfigForms acknowledgement;restored skill selections,paused/unknown management,automatic preferences and retained pending versions are explicit;compatible re-detection rereads pairing and failed checks remove stale paired state. Complete1504/1504 before the final pending-copy refinement;final related130/130 plus build/clean types pass. Final237-file529e archive matches all canonical local payloads;ordinary public CLI old923→new replacement,normal Host/workers/uninstall restores the full SDK baseline. Actual installed EXAMPLE light/dark welcome and real acknowledgement reload passed;welcome/CSS remain byte-identical after the last Market wording change.Production component memory preview760/320 light/dark,review-anchor focus,readable details,disabled writes and retained-pending review message pass.No user runtime replacement,Native modifications/model calls or formal release;exact final CI remains separate.",
+      "artifactSha256": "529e7cc6c8fabd31da26ef03b9cb7f1440d05947113f31fcecf1a4d879a2c632",
+      "packageFiles": 237,
+      "newContracts": 14,
+      "fullLocalBaselineTests": 1504,
+      "finalRelatedTests": 130,
+      "finalFullLocalRerunClaim": false,
+      "installedExampleLightDarkWelcomeVerified": true
     }
   }
 }

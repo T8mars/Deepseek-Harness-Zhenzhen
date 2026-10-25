@@ -5,7 +5,7 @@ import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol';
 const labels: Record<string, string> = { 'canvas:read': '读取画布', 'run:read': '查询任务', 'asset:read': '读取素材', 'asset:transfer': '素材交接', 'browser:handoff': '浏览器移交', 'canvas:write': '修改画布', 'run:execute': '执行生成' };
 function unwrap<T>(result: RemoteResult<T>): T { if (!result.ok) throw result.error; return result.value; }
 
-export function CanvasPairingPanel({ api, online, onPairedChange }: { api: ZhenRemote; online: boolean; onPairedChange?: (paired:boolean)=>void }): React.ReactElement {
+export function CanvasPairingPanel({ api, online, refreshRevision=0, onPairedChange }: { api: ZhenRemote; online: boolean; refreshRevision?:number; onPairedChange?: (paired:boolean)=>void }): React.ReactElement {
   const [pairing, setPairing] = useState<CanvasPairingView>();
   const [handoff, setHandoff] = useState(false);
   const [writable, setWritable] = useState(false);
@@ -15,17 +15,18 @@ export function CanvasPairingPanel({ api, online, onPairedChange }: { api: ZhenR
   const [notice, setNotice] = useState('');
   const generation = useRef(0);
   useEffect(()=>{onPairedChange?.(online&&pairing?.state==='paired');},[online,pairing?.state,onPairedChange]);
-  useEffect(() => { let active = true; const version = ++generation.current; setBusy(false);setPairing(undefined);setNotice('');
-    if (online) api.canvasPairingSnapshot().then(result => { if (active && generation.current === version) setPairing(unwrap(result)); }).catch(error => { if (active && generation.current === version) setNotice(error instanceof Error?error.message:'配对状态尚未确认，请点击“刷新配对状态”。'); });
+  useEffect(() => { let active = true; const version = ++generation.current; setBusy(online);setPairing(undefined);setNotice('');
+    if (online) api.canvasPairingSnapshot().then(result => { if (active && generation.current === version) setPairing(unwrap(result)); }).catch(error => { if (active && generation.current === version) setNotice(error instanceof Error?error.message:'配对状态尚未确认，请点击“刷新配对状态”。'); }).finally(()=>{if(active&&generation.current===version)setBusy(false);});
     else setPairing(undefined);
     return () => { active = false; generation.current++; };
-  }, [api, online]);
+  }, [api, online, refreshRevision]);
   async function action(work: () => Promise<RemoteResult<CanvasPairingView>>): Promise<void> {
     const version = ++generation.current;
-    setBusy(true); setNotice(''); try { const result = unwrap(await work()); if (generation.current === version) setPairing(result); } catch (error) { if (generation.current === version) setNotice(error instanceof Error ? error.message : '配对未完成，请检查画布窗口。'); } finally { if (generation.current === version) setBusy(false); }
+    setBusy(true); setNotice(''); try { const result = unwrap(await work()); if (generation.current === version) setPairing(result); } catch (error) { if (generation.current === version) {setPairing(undefined);setNotice(error instanceof Error ? error.message : '配对未完成，请检查画布窗口。');} } finally { if (generation.current === version) setBusy(false); }
   }
   return <section className="zhen-margin" aria-label="画布窗口配对">
     <h3>{pairing?.state==='paired'?'画布已连接':'完成画布连接'}</h3>
+    {busy&&<p role="status">正在核对配对状态，请稍候…</p>}
     <p className="zhen-muted">在这里发起请求，到配套的 Electron 桌面画布窗口核对验证码并批准，再返回完成配对。无需手动运行命令。</p>
     <details><summary>画布没有出现批准窗口？</summary><p className="zhen-muted">请打开正在连接的桌面画布窗口，而非浏览器页面。多个画布时，回到上方选择正确窗口。若刚更新过画布，请重新检测连接工具；已有验证码时先刷新配对状态，不要重复发起。</p></details>
     <p className="zhen-muted">默认只申请读取画布、任务和素材。修改工作流与执行生成分别申请，每次运行仍需独立核对和画布窗口批准。</p>

@@ -581,6 +581,15 @@
       "id": "first-use-connection-entry",
       "status": "implemented-local-verified",
       "verification": "Decision0136 C208 production async lifecycle/published root seat and C6/C7 pass7/7. Complete1487/1487;236-file canonical archive da86343904e6160315df36466a8ae18528e827f8b9e064a78afd939bf964517d and actual public CLI old-to-new replacement/normal Host/uninstall pass. Exact archive installed in fresh EXAMPLE Web profile;actual first-screen light/dark entry,keyboard/mouse settings navigation and reload verified;measured text/four-surface contrasts pass.No real credential/model/Native calls;user instance and exact remote CI separate;formal product not published."
+    },
+    {
+      "id": "community-recovery-status-ui",
+      "status": "implemented-local-verified-pending-ci",
+      "verification": "Decision0141: community welcome uses the published root list-cell priority seam and public ConfigForms acknowledgement;restored skill selections,paused/unknown management,automatic preferences and retained pending versions are explicit;compatible re-detection rereads pairing and failed checks remove stale paired state. Complete1504/1504 before the final pending-copy refinement;final related130/130 plus build/clean types pass. Final237-file529e archive matches all canonical local payloads;ordinary public CLI old923→new replacement,normal Host/workers/uninstall restores the full SDK baseline. Actual installed EXAMPLE light/dark welcome and real acknowledgement reload passed;welcome/CSS remain byte-identical after the last Market wording change.Production component memory preview760/320 light/dark,review-anchor focus,readable details,disabled writes and retained-pending review message pass.No user runtime replacement,Native modifications/model calls or formal release;exact final CI remains separate.",
+      "liveVerified": false,
+      "wholeApplicationRestore": false,
+      "installedExampleWelcomeUiVerified": true,
+      "restoredStateMemoryPreviewVerified": true
     }
   ]
 }

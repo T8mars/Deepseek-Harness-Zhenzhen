@@ -20,6 +20,7 @@ test('C106: actual client slot and help-button handler select the existing conne
   const client=await ui(t,true),slots=[],panels=[];let mounted=0;
   const api=new Proxy({},{get(){return()=>{throw Error('EXAMPLE_NO_REMOTE_ACTION');};}});
   const ctx={
+    configForms:{get:()=>({})},
     remote:{$mount:async()=>{mounted++;return()=>{};},zhen:api},effect:()=>{},
     inject(_names,run){return run(ctx);},layout:{selectPanel:id=>panels.push(id)},
     slots:{inject(_name,run){return run();},register(spec,component){slots.push({spec,component});}},
