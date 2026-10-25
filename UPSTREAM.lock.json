@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-25T00:37:22.540Z",
+  "checkedAt": "2026-10-24T23:58:17.474Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2549,23 +2549,35 @@
       "pageSize": 50,
       "verification": "C207 actual published Host/Owner Gateway: read-only unique names from collections and bindings,strict input/result,bounded binary cursor pages;no paths,contents,credential or network reads.No grants or bindings changed.Five new and23 related checks plus build/types pass.Installed GUI and exact CI separate. First C76 fixture failure retained;focused6/6 and corrected complete1482/1482,235-file canonical archive and actual public CLI replacement/start/uninstall passed;no user runtime replacement or Native write."
     },
+    "firstUseConnectionEntry": {
+      "sdk": "0.2.1-rc.3",
+      "slot": "conversation.header.leading",
+      "readOnlyStatus": true,
+      "navigationOnly": true,
+      "verification": "C208 five production lifecycle/public root-seat cases plus C6/C7 pass7/7;complete1487,236-file same archive/public CLI replacement/Host/uninstall and actual fresh Web light/dark/key/mouse/reload pass. Exact CI/user instance/official Desktop/Native artwork remain separate.",
+      "fullTests": 1487,
+      "packageFiles": 236,
+      "artifactSha256": "da86343904e6160315df36466a8ae18528e827f8b9e064a78afd939bf964517d",
+      "installedExampleUiVerified": true
+    },
     "canaryPreparation": {
-      "decision": "0135",
+      "decision": "0137",
       "version": "0.1.0-canary.1",
       "branch": "codex/canary-readiness",
-      "baseCommit": "24d2baa1e4a68c553e2d2717ba870d676452f27f",
-      "previousPreparationCommit": "e8fa81f3a2d0df398ac271de30f3b61b936ae93c",
-      "status": "locally-verified-not-published",
+      "baseCommit": "4e3bf11ea5e373d80030009dd2be6cf728acfced",
+      "previousPreparationCommit": "13c971f4f5c7c69d995b9ba3d414075724384849",
+      "status": "prepared-unverified",
       "candidateExactCiVerified": false,
       "productPublished": false,
-      "scope": "Refreshed draft from dev105;complete1482/235-file archive,all234 nonmanifest payloads/modes match main,public CLI fresh install/normal Host/stop/uninstall and same EXAMPLE profile main→canary→main preserve194 public rows and synthetic files.No real user-session/database downgrade,GUI/Native or publication claim.",
-      "archiveSha256": "2a79352805ff3305fc64506f9fba55c2e57b92b2973f6a5fdd3f1cd1fe59e178",
-      "payloadSha256": "f24e1be6a85a29d3a26f2c3fbc833f06f60950f24161c5b2a8c16ade4b917e40",
-      "packageFiles": 235,
-      "other234PayloadFilesAndModesIdentical": true,
-      "localFullTests": 1482,
-      "publicCliFreshInstallAndUninstallVerified": true,
-      "sameExampleProfileOldCanaryOldVerified": true
+      "previousValidation": {
+        "commit": "13c971f4f5c7c69d995b9ba3d414075724384849",
+        "fullTests": 1482,
+        "packageFiles": 235,
+        "archiveSha256": "2a79352805ff3305fc64506f9fba55c2e57b92b2973f6a5fdd3f1cd1fe59e178",
+        "ciRun": 40147452124,
+        "scope": "Historical dev106 precise CI and package/install proof;not proof of current source."
+      },
+      "scope": "Draft includes dev107 first-use connection entry.No upstream merge or product publication.New complete/package/public CLI/same-profile checks and exact CI required.User runtime and Native unchanged."
     }
   }
 }

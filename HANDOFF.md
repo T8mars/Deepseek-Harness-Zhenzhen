@@ -1,3 +1,7 @@
+> 0137：草稿候选同步dev107首启连接入口，保留0.1.0-canary.1及旧dev106验证记录。新1487/236归档、公开CLI与同配置往返及精确CI分别验证，尚未发布。负责人先界面/画布验收。见 docs/decisions/0137-canary-dev107-sync.md。
+
+> 0136：无密钥首启会话顶部直达Seedance设置，已有凭据时隐藏，读取失败不误报或重试。新增5项/专项7项及完整1487/1487通过，236文件归档和公开CLI替换/启动/卸载通过；同包真实首启浅深、键鼠和刷新实显已核。精确CI与用户换装另验，画布作品及正式发布仍未验。见 docs/decisions/0136-first-use-connection-entry.md。
+
 > 0135：草稿0.1.0-canary.1同步dev105，完整1482/1482、235文件归档与main仅manifest版本不同；公开CLI正常Host安装/停止/卸载及同EXAMPLE配置main→候选→main通过，194行设置和合成文件保持。新精确CI及真实画布另验，负责人先验收，未正式发布。见 docs/decisions/0135-canary-dev105-sync.md 与 docs/canary-review.md。
 
 > 0134：新增已有资料空间选择与50项分页，手填新名称保留，切换不改变授权；空检索结果先引导缩短关键词。新增5项及相关23项、build与clean types通过，完整检查/归档/精确CI/新版GUI另验。dev104已完成精确CI与实际换装，真实GUI RAG来源、暂停、恢复与撤权已核，临时授权恢复。画布作品和正式发布仍未验。见 docs/decisions/0134-knowledge-space-discovery.md。
