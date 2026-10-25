@@ -32,7 +32,7 @@ import type { Wallet, ZhenStatus } from './index.ts';
 import { credentialSources } from './client/credential-source.ts';
 import { githubAccessSchema, githubCredentialValue } from './github-access-schema.ts';
 import type { GithubAccessInfo } from './github-access-schema.ts';
-import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, ImportResult } from './knowledge.ts';
+import type { KnowledgeCollection, KnowledgeHit, KnowledgeSource, KnowledgeSpacePage, ImportResult } from './knowledge.ts';
 import {knowledgeImportReportSchema} from './knowledge-import-schema.ts';
 import type {KnowledgeImportReport} from './knowledge-import-schema.ts';
 import { ragSourceSchema } from './rag-schema.ts';
@@ -241,6 +241,7 @@ export interface ZhenRemote {
   bindKnowledge(project: string, directory: string): Promise<RemoteResult<KnowledgeBinding | null>>;
   setKnowledgeAgentAccess(project: string, collectionId: string, enabled: boolean): Promise<RemoteResult<void>>;
   knowledgeCollections(project: string): Promise<RemoteResult<KnowledgeCollection[]>>;
+  knowledgeSpaces(after: string): Promise<RemoteResult<KnowledgeSpacePage>>;
   ragBackendStatus():Promise<RemoteResult<RagBackendStatus>>;
   ragBackendConfigure(selected:string,enabled:boolean,expectedRevision:string):Promise<RemoteResult<RagBackendStatus>>;
   createKnowledge(project: string, name: string, folder: string): Promise<RemoteResult<KnowledgeCollection>>;
@@ -426,6 +427,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/bindKnowledge': method('bindKnowledge', bindingSchema, 'Bind a local knowledge space to an exact working directory.', [['project', projectInput], ['directory', z.string().max(4096)]]),
   'zhen/setKnowledgeAgentAccess': method('setKnowledgeAgentAccess', z.void(), 'Set the separate permission for agent retrieval.', [['project', projectInput], ['collectionId', z.string().uuid()], ['enabled', z.boolean()]]),
   'zhen/knowledgeCollections': method('knowledgeCollections', z.array(collectionSchema), 'List local collections.', [['project', projectInput]]),
+  'zhen/knowledgeSpaces': method('knowledgeSpaces', z.object({ items: z.array(projectInput).max(50), next: projectInput.nullable() }).strict(), 'Owner read only: page existing knowledge-space names; no document contents, paths, binding or permission changes.', [['after', z.string().max(200)]]),
   'zhen/ragBackendStatus':method('ragBackendStatus',ragBackendStatusSchema,'Read local retrieval backend availability.'),
   'zhen/ragBackendConfigure':method('ragBackendConfigure',ragBackendStatusSchema,'Choose or pause a local retrieval backend without changing collection grants.',[['selected',ragBackendId],['enabled',z.boolean()],['expectedRevision',z.uuid()]]),
   'zhen/createKnowledge': method('createKnowledge', collectionSchema, 'Authorize a local folder.', [['project', projectInput], ['name', z.string().min(1).max(100)], ['folder', z.string().min(1).max(4096)]]),

@@ -68,6 +68,11 @@
       "integrity": "sha512-S76D4VjvYyVf56mYMFnnoUjOgsywfVvIKaG5UP7uNSFP7GN7ZxW6BC6Vkraef5zGdG+0FYvP+tpfx0jhBo6sjg=="
     },
     {
+      "name": "@deepseek-ai/dsh-client-ui-directory-picker-browse",
+      "version": "0.2.1-rc.3",
+      "integrity": "sha512-H1RPsOgPXq0FSGktlOUto93K16O34YTNeuVkx7BSgMbgpcxB9aTYfHTlJAjwJMZwbhWrPE+2EEbgmOlC7mM8dQ=="
+    },
+    {
       "name": "@deepseek-ai/dsh-client-ui-layout",
       "version": "0.2.1-rc.3",
       "integrity": "sha512-paMhkX7ojTT2UipKy8LMO9PUAdJsMcwDI9EIuic0yNrbpKqGJpGFjwHjm4Ps9GoFAEWzTBnwG94NxH25agphGQ=="
@@ -121,6 +126,11 @@
       "name": "@deepseek-ai/dsh-host-directory-picker",
       "version": "0.2.1-rc.3",
       "integrity": "sha512-L9pmEC9fJWatV49Ie72F4YSWV2Q0rib9AW86Riwa0mtCJT9kfLuXLoVm19isMy5SjFxo+yUoSCDXvBMDuOphtw=="
+    },
+    {
+      "name": "@deepseek-ai/dsh-host-directory-picker-browse",
+      "version": "0.2.1-rc.3",
+      "integrity": "sha512-i3veJ6+PAT3eyN+ilLj+GOc1nctf3o9giSwzHytv1fU8InHpYTmqIm7fJh72FOm6NbCiHzlrnUkFX+CW5Ep7Xw=="
     },
     {
       "name": "@deepseek-ai/dsh-host-webserver",

@@ -5,6 +5,7 @@ import {pathToFileURL} from 'node:url';
 import {readReleaseArchive} from '../scripts/release-archive.mjs';
 import {canonicalPackageText} from '../scripts/package-stage.mjs';
 import {readLaunchArtifact} from '../scripts/launch-artifact.mjs';
+import {checkPackList} from '../scripts/check-private.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 
 test('C76: actual canary and stable builds differ only in manifest version, and installed status reads each real version', {timeout:180000},t=>{
@@ -17,7 +18,10 @@ test('C76: actual canary and stable builds differ only in manifest version, and 
   const reference=new Map(preview.files.map(f=>{let bytes=readFileSync(join(workspace,'packages/dsh-zhen',f.path));if(canonicalPackageText(f.path))bytes=Buffer.from(bytes.toString('utf8').replace(/\r\n/g,'\n'));return[f.path,bytes];}));
   const copy=(path,source=join(workspace,path))=>{const target=join(root,path);mkdirSync(dirname(target),{recursive:true});copyFileSync(source,target);};
   for(const f of preview.files)copy('packages/dsh-zhen/'+f.path);
-  const raw=run('git',['ls-files','-z','--','packages/dsh-zhen'],workspace).split('\0').filter(Boolean);for(const path of raw){assert.ok(path.startsWith('packages/dsh-zhen/')&&!path.split('/').includes('..'));assert.equal(lstatSync(join(workspace,path)).isSymbolicLink(),false);copy(path);}
+  // A new public source must be exercised before its first commit too. Git's
+  // normal exclusion rules keep ignored runtime/private files out of this set.
+  const raw=[...new Set(run('git',['ls-files','-z','--cached','--others','--exclude-standard','--','packages/dsh-zhen'],workspace).split('\0').filter(Boolean))].sort();checkPackList(raw);
+  for(const path of raw){assert.ok(path.startsWith('packages/dsh-zhen/')&&!path.split('/').includes('..'));assert.equal(lstatSync(join(workspace,path)).isSymbolicLink(),false);assert.equal(realpathSync.native(join(workspace,path)).toLowerCase(),resolve(workspace,path).toLowerCase(),'Version fixture source cannot traverse an alias.');copy(path);}
   copy('UPSTREAM.lock.json');copy('tsconfig.base.json');writeFileSync(join(root,'package.json'),JSON.stringify({name:'example-version-contract',version:'0.0.0',private:true,type:'module'}));
   // These are the exact reviewed packages consumed by the production browser
   // build and license collector; no dependency installation or user data copy.

@@ -1,3 +1,5 @@
+> 0135：草稿0.1.0-canary.1同步dev105，完整1482/1482、235文件归档与main仅manifest版本不同；公开CLI正常Host安装/停止/卸载及同EXAMPLE配置main→候选→main通过，194行设置和合成文件保持。新精确CI及真实画布另验，负责人先验收，未正式发布。见 docs/decisions/0135-canary-dev105-sync.md 与 docs/canary-review.md。
+
 > 0132：草稿0.1.0-canary.1同步dev102，完整1472/1472、234归档与main仅manifest版本不同；公开CLI正常Host安装/停止/卸载与同EXAMPLE配置main→候选→main通过。新精确CI、真实UI/画布及正式发布仍待验，负责人选择先完成验收。见 docs/decisions/0132-canary-dev102-sync.md 与 docs/canary-review.md。
 
 > 0129：包含完整契约检查的build任务限时为45分钟，替代旧20分钟。依据精确全绿Windows检查实测26分7秒；未缩减测试、改变权限或自动开启发布。具体证据及未验证项见 `decisions/0129-distribution-build-budget.md`。

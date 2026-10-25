@@ -15,7 +15,7 @@ import { redactLauncherLine } from '../scripts/log-output.mjs';
 import {ownedTempCleanup,withOwnedTempCleanup} from './fixtures/owned-temp-cleanup.mjs';
 import {PINNED_DSH_VERSION} from './fixtures/pinned-runtime.mjs';
 
-test('C1/C8: actual DSH composition applies default model and disables outbound collectors', async () => {
+test('C1/C8/C206: actual DSH composition preserves unowned rows, privacy and one in-page directory-picker pair', async () => {
   const base=realpathSync.native(tmpdir()),home=realpathSync.native(mkdtempSync(join(base,'dsh-upstream-composition-EXAMPLE-')));
   const lease=ownedTempCleanup(base,home,'dsh-upstream-composition-EXAMPLE-',{budgetMs:30000});
   await withOwnedTempCleanup(lease,async()=>{
@@ -31,6 +31,10 @@ test('C1/C8: actual DSH composition applies default model and disables outbound 
     assert.equal(rows.has('attachment-local'), true);
     assert.notEqual(rows.get('attachment-local').disabled, true);
     assert.deepEqual(rows.get('skill-filesystem').inject,['skills','zhenSkillBackupSources']);
+    assert.equal(rows.get('directory-picker').disabled,true);
+    assert.deepEqual(rows.get('directory-picker').config,original.get('directory-picker').config);
+    const pickerRows=[...rows.values()].filter(row=>row.disabled!==true&&/dsh-(?:host|client-ui)-directory-picker-(?:auto|native|browse)$/.test(row.name??''));
+    assert.deepEqual(pickerRows.map(row=>row.name).sort(),['@deepseek-ai/dsh-client-ui-directory-picker-browse','@deepseek-ai/dsh-host-directory-picker-browse']);
     console.log(JSON.stringify({contract:'C201',sdk:PINNED_DSH_VERSION,actualPublishedCliComposition:true,shippedRows:original.size,unownedRowsPreserved:preserved,completeRowValuesCompared:true,newEntryCustomizerInherited:original.has('entry-customization'),defaultFlashPreserved:true,collectorsDisabled:true,nativeRequests:0,modelRequests:0}));
   });
 });

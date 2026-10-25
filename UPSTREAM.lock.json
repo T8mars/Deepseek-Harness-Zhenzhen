@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T19:30:16.321Z",
+  "checkedAt": "2026-10-25T00:37:22.540Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2517,10 +2517,14 @@
         "promote.yml"
       ],
       "otherWorkflowSemanticsUnchanged": true,
-      "newRemoteWorkflowVerified": true,
-      "verificationScope": "Exact dev100 W4/W5 default previews complete1468 plus archive/install/profile/artifact readbacks;all publication jobs skipped.",
-      "releasePreviewRun": 40090006016,
-      "promotionPreviewRun": 40091023154
+      "newRemoteWorkflowVerified": false,
+      "previousPreviewVerification": {
+        "recordedInCommit": "e8fa81f3a2d0df398ac271de30f3b61b936ae93c",
+        "newRemoteWorkflowVerified": true,
+        "releasePreviewRun": 40090006016,
+        "promotionPreviewRun": 40091023154,
+        "verificationScope": "Exact dev100 W4/W5 default previews complete1468 plus archive/install/profile/artifact readbacks;all publication jobs skipped."
+      }
     },
     "sdk3RealAgentRag": {
       "decision": "0129",
@@ -2534,22 +2538,34 @@
       "shellAttempts": 0,
       "scope": "Independent EXAMPLE TEMP with two synthetic documents and original production RAG;normal completion,no user session/project or browser/Native request."
     },
+    "webDirectoryPicker": {
+      "sdk": "0.2.1-rc.3",
+      "backend": "browse",
+      "composition": "published-host-and-web-client-pair",
+      "verification": "C206 published CLI/exact peer/51-package review/SRI and actual browse Host pass;C69 explicit unbind handlers pass. First C83 full failure retained;corrected1477 full,234 archive and actual public CLI replacement/Host/uninstall pass.177 unowned rows remain identical;installed GUI and exact CI pending. No upstream/Desktop IPC/Native modifications."
+    },
+    "knowledgeSpaceDiscovery": {
+      "schemaVersion": 1,
+      "pageSize": 50,
+      "verification": "C207 actual published Host/Owner Gateway: read-only unique names from collections and bindings,strict input/result,bounded binary cursor pages;no paths,contents,credential or network reads.No grants or bindings changed.Five new and23 related checks plus build/types pass.Installed GUI and exact CI separate. First C76 fixture failure retained;focused6/6 and corrected complete1482/1482,235-file canonical archive and actual public CLI replacement/start/uninstall passed;no user runtime replacement or Native write."
+    },
     "canaryPreparation": {
-      "decision": "0132",
+      "decision": "0135",
       "version": "0.1.0-canary.1",
       "branch": "codex/canary-readiness",
-      "baseCommit": "d1be543f3ceef4e4896163ad953441cb515a526d",
-      "previousPreparationCommit": "12b91aee46b58c26f257d96c044edfe1a481d948",
-      "archiveSha256": "608ad050d77ad60c7606f1bef2697592f477e215f4d7ad4630c63ee036fbd24b",
-      "payloadSha256": "f3b9b868dbb7df2c78ccffbd1424bb3fd59aa26b05b969e6677612b58560e014",
-      "packageFiles": 234,
-      "other233PayloadFilesAndModesIdentical": true,
-      "localFullTests": 1472,
-      "publicCliFreshInstallAndUninstallVerified": true,
-      "sameExampleProfileOldCanaryOldVerified": true,
+      "baseCommit": "24d2baa1e4a68c553e2d2717ba870d676452f27f",
+      "previousPreparationCommit": "e8fa81f3a2d0df398ac271de30f3b61b936ae93c",
+      "status": "locally-verified-not-published",
       "candidateExactCiVerified": false,
       "productPublished": false,
-      "scope": "Refreshed draft from dev102;complete1472,234-file canonical archive,public CLI fresh install/normal Host/uninstall and same EXAMPLE profile dev102→candidate→dev102 passed.No user session/database rollback,real GUI/Native or product publication claim."
+      "scope": "Refreshed draft from dev105;complete1482/235-file archive,all234 nonmanifest payloads/modes match main,public CLI fresh install/normal Host/stop/uninstall and same EXAMPLE profile main→canary→main preserve194 public rows and synthetic files.No real user-session/database downgrade,GUI/Native or publication claim.",
+      "archiveSha256": "2a79352805ff3305fc64506f9fba55c2e57b92b2973f6a5fdd3f1cd1fe59e178",
+      "payloadSha256": "f24e1be6a85a29d3a26f2c3fbc833f06f60950f24161c5b2a8c16ade4b917e40",
+      "packageFiles": 235,
+      "other234PayloadFilesAndModesIdentical": true,
+      "localFullTests": 1482,
+      "publicCliFreshInstallAndUninstallVerified": true,
+      "sameExampleProfileOldCanaryOldVerified": true
     }
   }
 }
