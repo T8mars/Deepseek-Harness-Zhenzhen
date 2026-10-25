@@ -1,5 +1,7 @@
 # Upstream contracts
 
+Decision0141: published rc.3 `settings.onboarding` supports priority-based shadowing of only the `welcome-notice` cell. C211 exercises actual SlotCore election/disposal and checks the documented slot plus the existing welcome id/order; the credential cell stays intact. The public string `ui-settings-general.welcomeNoticeVersion` is written through ConfigForms only after explicit acknowledgement; the original upstream notice is not implicitly acknowledged. Locale namespaces have one owner and are not overwritten. The blank-session headline has no independent documented text slot in this pin and remains unchanged.
+
 Canvas creative-plan text: v3.4.0 `agentControlCreative.js` `text()` and
 `creativeBrief()` return NFKC text with NUL removed and outer whitespace trimmed.
 C209 checks the production preview, exact expected return, unchanged outbound

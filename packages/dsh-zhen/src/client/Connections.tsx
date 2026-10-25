@@ -13,6 +13,7 @@ export function Connections({api}:{api:ZhenRemote}):React.ReactElement{
   const [status,setStatus]=useState<CanvasConnection>(),[check,setCheck]=useState<CanvasConnectionCheck>();
   const [root,setRoot]=useState(''),[instance,setInstance]=useState('');
   const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[paired,setPaired]=useState(false);
+  const [pairingRevision,setPairingRevision]=useState(0);
   const [catalog,setCatalog]=useState<CanvasToolCatalog>(),[discovery,setDiscovery]=useState<CanvasSetupDiscovery>();
   const alive=useRef(true),working=useRef(false),generation=useRef(0);
   const activeApi=useRef(api);activeApi.current=api;
@@ -25,7 +26,7 @@ export function Connections({api}:{api:ZhenRemote}):React.ReactElement{
     let diagnosis=unwrap(results[1]);
     const binding=diagnosis.binding;
     if(value.configured?(!binding||value.root!==binding.root||value.digest!==binding.digest||(value.instance??'')!==binding.instance):binding!==null)diagnosis={...diagnosis,state:'error',code:'CONNECTION_CHANGED',message:'连接在检查期间发生变化，请重新检测，确认当前画布。',instances:[]};
-    setCheck(diagnosis);if(diagnosis.state!=='ready')setPaired(false);
+    setCheck(diagnosis);if(diagnosis.state!=='ready')setPaired(false);setPairingRevision(value=>value+1);
     if(results[2])setDiscovery(unwrap(results[2]));
   }
   async function action(task:()=>Promise<void>):Promise<void>{
@@ -61,7 +62,7 @@ export function Connections({api}:{api:ZhenRemote}):React.ReactElement{
           <button className="zhen-secondary zhen-margin" disabled={busy||!root.trim()}>信任并使用指定目录</button>
         </form>
       </details>
-      {status?.configured&&<CanvasPairingPanel key={`${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible} onPairedChange={setPaired}/>}
+      {status?.configured&&<CanvasPairingPanel key={`${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible} refreshRevision={pairingRevision} onPairedChange={setPaired}/>}
       {paired&&status&&<><CanvasWorkflowPanel key={`workflow:${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible}/><CanvasRunPanel key={`run:${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible}/></>}
       {status?.configured&&<div className="zhen-actions zhen-wrap zhen-margin">
         <button type="button" className="zhen-secondary" disabled={busy||!paired} onClick={()=>void action(async()=>setCatalog(unwrap(await api.canvasTools())??undefined))}>查看创作能力</button>

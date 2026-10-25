@@ -6,6 +6,8 @@ import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client';
 import type {} from '@deepseek-ai/dsh-client-ui-theme/client';
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client';
 import React, { useEffect, useState,useSyncExternalStore } from 'react';
+import type {} from '@deepseek-ai/dsh-client-ui-settings/client';
+import {CommunityWelcome} from './CommunityWelcome.tsx';
 import { GatewayCheck } from './GatewayCheck.tsx';
 import { TaskCenter } from './TaskCenter.tsx';
 import zhenRemote from 'dsh-zhen/remote';
@@ -115,6 +117,12 @@ function Workspace({ ctx,navigation }: { ctx: Context;navigation:WorkspaceNaviga
 }
 
 export async function apply(ctx: Context): Promise<void> {
+  // Published rc.3 settings.onboarding is a list with priority-based cell shadowing.
+  // Keep the Models editor and its credential flow; replace only its public welcome-notice cell.
+  if(!('dshDesktop' in globalThis))ctx.inject(['configForms'],inner=>{
+    const form=inner.configForms.get<{welcomeNoticeVersion?:string}>('ui-settings-general');
+    inner.slots.inject('settings.onboarding',()=>inner.slots.register({name:'settings.onboarding',id:'welcome-notice',order:-100,priority:-100,inject:()=>({form})},CommunityWelcome));
+  });
   const navigation=createWorkspaceNavigation();
   ctx.effect(()=>()=>navigation.dispose(),'zhen: workspace navigation');
   const unmount = await ctx.remote.$mount(zhenRemote);

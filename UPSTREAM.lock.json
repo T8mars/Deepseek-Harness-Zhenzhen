@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-25T13:39:08.718Z",
+  "checkedAt": "2026-10-25T18:53:39.827Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2560,29 +2560,6 @@
       "artifactSha256": "da86343904e6160315df36466a8ae18528e827f8b9e064a78afd939bf964517d",
       "installedExampleUiVerified": true
     },
-    "canaryPreparation": {
-      "decision": "0140",
-      "version": "0.1.0-canary.1",
-      "branch": "codex/canary-readiness",
-      "baseCommit": "a4396e9d297de0fbe90a573ec8e54d0187463bf3",
-      "previousPreparationCommit": "453e02c379924a983ec287c0a38dae3bc2bd31ac",
-      "status": "local-batch-verified-not-published",
-      "candidateExactCiVerified": false,
-      "productPublished": false,
-      "previousValidation": {
-        "commit": "13c971f4f5c7c69d995b9ba3d414075724384849",
-        "fullTests": 1482,
-        "packageFiles": 235,
-        "archiveSha256": "2a79352805ff3305fc64506f9fba55c2e57b92b2973f6a5fdd3f1cd1fe59e178",
-        "ciRun": 40147452124,
-        "scope": "Historical dev106 precise CI and package/install proof;not proof of current source."
-      },
-      "scope": "当前候选完整1490/1490、236文件归档与主线仅manifest版本不同（其余235文件与所有模式一致）、公开CLI正常Host安装/停止/卸载和同EXAMPLE配置main→候选→main完整载荷/194行设置/合成文件保留均通过；三阶段安装不冒充三次Host启动。精确CI和正式发布分别核对。",
-      "fullTests": 1490,
-      "packageFiles": 236,
-      "archiveSha256": "b2f6fac7a485a45c3aa17d8cefb24c3286dbf7082f81f0e7e63ed55b7d68ef73",
-      "manifestOnlyDifference": true
-    },
     "marketBrowseUi": {
       "status": "local-archive-and-installed-version-ui-verified-pending-final-batch",
       "verification": "Decision0138: production Market/CSS in independent EXAMPLE browser at760/320px and light/dark;list before update/source forms,no horizontal overflow,keyboard detail focus and return,in-memory enable/disable.MCP metadata disclosure and visible download verified without full Connections parent.Context is not an installed new bundle or real market/network/program proof.Build/types and26 existing lifecycle/slot/contrast/CSS checks pass.New final full/package/CLI/installed GUI and candidate CI remain separate. Decision0139: final layout1487/1487,236-file archive/public CLI pass; same archive independent real EXAMPLE UI manually reviewed1.0.0→1.0.1→1.0.0 across two ordinary Host restarts,old selection pauses automatic updates,owned TEMP cleaned.User runtime unchanged;all network auto-update/program/Native creation acceptance remains separate.",
@@ -2598,6 +2575,62 @@
         "tag": "v3.4.0",
         "commit": "f482ccce24cef89662682e207b37266e945c0f23"
       }
+    },
+    "canaryPreparation": {
+      "decision": "0142",
+      "version": "0.1.0-canary.1",
+      "branch": "codex/canary-readiness",
+      "baseCommit": "238b35a445266f73406e3093c1448dea55079f59",
+      "previousPreparationCommit": "366dd9ed95ce90ef27225ab660a486b610c43091",
+      "status": "local-focused-and-package-validated-pending-exact-ci-not-published",
+      "candidateExactCiVerified": false,
+      "productPublished": false,
+      "previousPreparationSnapshot": {
+        "decision": "0140",
+        "version": "0.1.0-canary.1",
+        "branch": "codex/canary-readiness",
+        "baseCommit": "a4396e9d297de0fbe90a573ec8e54d0187463bf3",
+        "previousPreparationCommit": "453e02c379924a983ec287c0a38dae3bc2bd31ac",
+        "status": "local-batch-verified-not-published",
+        "candidateExactCiVerified": false,
+        "productPublished": false,
+        "previousValidation": {
+          "commit": "13c971f4f5c7c69d995b9ba3d414075724384849",
+          "fullTests": 1482,
+          "packageFiles": 235,
+          "archiveSha256": "2a79352805ff3305fc64506f9fba55c2e57b92b2973f6a5fdd3f1cd1fe59e178",
+          "ciRun": 40147452124,
+          "scope": "Historical dev106 precise CI and package/install proof;not proof of current source."
+        },
+        "scope": "当前候选完整1490/1490、236文件归档与主线仅manifest版本不同（其余235文件与所有模式一致）、公开CLI正常Host安装/停止/卸载和同EXAMPLE配置main→候选→main完整载荷/194行设置/合成文件保留均通过；三阶段安装不冒充三次Host启动。精确CI和正式发布分别核对。",
+        "fullTests": 1490,
+        "packageFiles": 236,
+        "archiveSha256": "b2f6fac7a485a45c3aa17d8cefb24c3286dbf7082f81f0e7e63ed55b7d68ef73",
+        "manifestOnlyDifference": true
+      },
+      "scope": "候选保留0.1.0-canary.1，合入主线238b的恢复状态、社区欢迎和配对刷新。主线完整1504基线后末尾文案调整由相关130、构建和类型检查覆盖；候选构建/类型、相关130和单独原样C76通过。237文件归档仅manifest版本不同，其余236文件与模式完全一致；上一候选→新候选普通公开CLI替换、正常Host/工作器、停止及卸载还原完整SDK基线通过。原C76首次Windows子进程异常退出和错误选用相同载荷作替换源的检查拒绝均保留；未放宽断言，异常根因尚未确认。最终完整1504精确CI另验，不声称当前候选已重新完整本地检查。",
+      "focusedClientTests": 130,
+      "separateUnmodifiedVersionContractPassed": true,
+      "fullLocalRerunClaim": false,
+      "expectedFinalCiTests": 1504,
+      "packageFiles": 237,
+      "archiveSha256": "433641e6afb33026abe7fb7edc4ff4f39ed7f1c6a82427a963abd8a08aa7ff54",
+      "manifestOnlyDifference": true,
+      "otherFilesIdentical": 236,
+      "publicCliReplacementAndUninstall": true
+    },
+    "communityRecoveryStatus": {
+      "status": "local-validated-batch-pending-exact-ci",
+      "upstreamSourceModified": false,
+      "nativeSourceModified": false,
+      "verification": "Decision0141: community welcome uses the published root list-cell priority seam and public ConfigForms acknowledgement;restored skill selections,paused/unknown management,automatic preferences and retained pending versions are explicit;compatible re-detection rereads pairing and failed checks remove stale paired state. Complete1504/1504 before the final pending-copy refinement;final related130/130 plus build/clean types pass. Final237-file529e archive matches all canonical local payloads;ordinary public CLI old923→new replacement,normal Host/workers/uninstall restores the full SDK baseline. Actual installed EXAMPLE light/dark welcome and real acknowledgement reload passed;welcome/CSS remain byte-identical after the last Market wording change.Production component memory preview760/320 light/dark,review-anchor focus,readable details,disabled writes and retained-pending review message pass.No user runtime replacement,Native modifications/model calls or formal release;exact final CI remains separate.",
+      "artifactSha256": "529e7cc6c8fabd31da26ef03b9cb7f1440d05947113f31fcecf1a4d879a2c632",
+      "packageFiles": 237,
+      "newContracts": 14,
+      "fullLocalBaselineTests": 1504,
+      "finalRelatedTests": 130,
+      "finalFullLocalRerunClaim": false,
+      "installedExampleLightDarkWelcomeVerified": true
     }
   }
 }
