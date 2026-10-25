@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T23:58:17.474Z",
+  "checkedAt": "2026-10-25T13:14:19.989Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2552,6 +2552,22 @@
       "packageFiles": 236,
       "artifactSha256": "da86343904e6160315df36466a8ae18528e827f8b9e064a78afd939bf964517d",
       "installedExampleUiVerified": true
+    },
+    "marketBrowseUi": {
+      "status": "local-archive-and-installed-version-ui-verified-pending-final-batch",
+      "verification": "Decision0138: production Market/CSS in independent EXAMPLE browser at760/320px and light/dark;list before update/source forms,no horizontal overflow,keyboard detail focus and return,in-memory enable/disable.MCP metadata disclosure and visible download verified without full Connections parent.Context is not an installed new bundle or real market/network/program proof.Build/types and26 existing lifecycle/slot/contrast/CSS checks pass.New final full/package/CLI/installed GUI and candidate CI remain separate. Decision0139: final layout1487/1487,236-file archive/public CLI pass; same archive independent real EXAMPLE UI manually reviewed1.0.0→1.0.1→1.0.0 across two ordinary Host restarts,old selection pauses automatic updates,owned TEMP cleaned.User runtime unchanged;all network auto-update/program/Native creation acceptance remains separate.",
+      "upstreamSourceModified": false,
+      "permissionsChanged": false
+    },
+    "nativeCreativeGoal": {
+      "status": "local-batch-and-installed-example-ui-verified",
+      "upstreamSourceModified": false,
+      "nativeSourceModified": false,
+      "verification": "Decision0139/C209: native3.4.0 text/creativeBrief NFKC,NUL removal,trim;exact original-or-expected goal check,unchanged request,retained original and explicit UI review.3 new/21 related,build/clean types pass.Production workflow real paired desktop L0 preview succeeded once;no approval/apply/run,new installed user UI or final archive/CI claim. Final1490/1490,236-file archive/public CLI pass;the same archive actual isolated application performs one real native L0 preview,light/dark original/result review,reload retention and unselected approval;temporary Host/root removed and original user config/pair unchanged.Exact source CI/candidate and real apply/run remain separate.",
+      "reviewedNativeSource": {
+        "tag": "v3.4.0",
+        "commit": "f482ccce24cef89662682e207b37266e945c0f23"
+      }
     }
   }
 }

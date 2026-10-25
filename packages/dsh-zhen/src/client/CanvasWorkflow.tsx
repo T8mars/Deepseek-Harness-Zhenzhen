@@ -79,6 +79,7 @@ export function CanvasWorkflowPanel({ api, online }: { api: ZhenRemote; online: 
       <strong role="status">{phaseLabels[view.phase]}</strong>
       <p>画布 {targets.canvases.find(item => item.id === view.canvasId)?.name || view.canvasId} · 基于 revision {view.canvasRevision}</p>
       <p>{view.action} · {view.candidates} 个候选 · {view.operationCount} 项结构变更</p>
+      {view.requestedGoal!==undefined&&<><p role="status">画布已规范化部分标点或字符。请对照原文与方案目标，确认文字仍符合你的要求。</p><details><summary>查看本次输入原文</summary><pre className="zhen-excerpt">{view.requestedGoal}</pre></details></>}
       <details open><summary>此方案的创作目标</summary><pre className="zhen-excerpt">{view.goal}</pre></details>
       {view.models.length > 0 && <p className="zhen-muted">计划模型：{view.models.join('；')}。应用时不执行生成。</p>}
       {view.output&&<p className="zhen-muted">方案策略：{({economy:'省钱预览',balanced:'平衡创作',quality:'质量优先'} as Record<string,string>)[view.output.profile]??view.output.profile}{['create.image','create.edit-image','create.video','create.edit-video','create.story'].includes(view.action)&&view.output.ratio?` · 比例 ${view.output.ratio}`:''}{['create.video','create.edit-video','create.story'].includes(view.action)&&view.output.durationSeconds?` · 时长 ${view.output.durationSeconds} 秒`:''}。后续运行以画布报价和审批为准。</p>}
