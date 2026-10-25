@@ -16,6 +16,20 @@ async function fixture(){
 }
 function apiState(){const state={report:{canvases:[a,b],total:2,truncated:false},calls:[],transfer:null};const api={canvasWorkflowSnapshot:()=>ok(null),canvasRunSnapshot:()=>ok(null),canvasTransferSnapshot:()=>ok(state.transfer),canvasCandidates:()=>ok([]),canvasWorkspaces:()=>ok(structuredClone(state.report)),canvasWorkflowPreview:input=>{state.calls.push(input);return ok(null);},canvasTransferPreview:input=>{state.calls.push(input);return ok(null);},canvasRunNodes:(projectId,canvasId)=>{state.calls.push({projectId,canvasId});return ok({projectId,canvasId,revision:1,nodes:[],nextOffset:0});},canvasTasksList:input=>{state.calls.push(input);return ok({items:[]});}};return{state,api};}
 
+test('C209: production workflow review exposes changed characters and retained original after reload without prechecking approval',async()=>{
+ const f=await fixture();let driver;
+ try{
+  const {api}=apiState(),view={id:'EXAMPLE_PREVIEW',projectId:a.projectId,canvasId:a.id,phase:'preview',ready:true,action:'create.image',goal:'EXAMPLE: A1 <script>EXAMPLE</script>',requestedGoal:'EXAMPLE：Ａ① <script>EXAMPLE</script>',canvasRevision:1,candidates:1,operationCount:3,models:[],questions:[],planId:'EXAMPLE_PLAN',planDigest:'a'.repeat(64)};
+  api.canvasWorkflowSnapshot=()=>ok(view);
+  driver=clientHooks(f.modules.CanvasWorkflow.CanvasWorkflowPanel,{api,online:true});driver.render();await driver.settle();
+  const tree=driver.render(),all=nodes(tree),notice=all.find(node=>node.props?.role==='status'&&text(node).includes('画布已规范化'));
+  assert.ok(notice);assert.ok(all.some(node=>node.type==='pre'&&text(node)===view.goal));assert.ok(all.some(node=>node.type==='pre'&&text(node)===view.requestedGoal));
+  const confirmation=all.find(node=>node.type==='input'&&node.props.type==='checkbox');assert.equal(confirmation.props.checked,false);assert.equal(button(tree,'送到画布窗口确认').props.disabled,true);
+  const original=all.find(node=>node.type==='details'&&text(node).startsWith('查看本次输入原文'));assert.ok(original);assert.equal(original.props.open,undefined);
+  const html=renderToStaticMarkup(original);assert.equal(html.includes('<script>'),false);assert.ok(html.includes('&lt;script&gt;'));
+ }finally{driver?.dispose();f.dispose();}
+});
+
 test('C65: actual workflow/run/transfer/task handlers preserve project-qualified choices and stop after the selected canvas disappears',async()=>{
  const f=await fixture();
  try{

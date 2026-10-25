@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-24T23:58:17.474Z",
+  "checkedAt": "2026-10-25T13:39:08.718Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2561,12 +2561,12 @@
       "installedExampleUiVerified": true
     },
     "canaryPreparation": {
-      "decision": "0137",
+      "decision": "0140",
       "version": "0.1.0-canary.1",
       "branch": "codex/canary-readiness",
-      "baseCommit": "4e3bf11ea5e373d80030009dd2be6cf728acfced",
-      "previousPreparationCommit": "13c971f4f5c7c69d995b9ba3d414075724384849",
-      "status": "prepared-unverified",
+      "baseCommit": "a4396e9d297de0fbe90a573ec8e54d0187463bf3",
+      "previousPreparationCommit": "453e02c379924a983ec287c0a38dae3bc2bd31ac",
+      "status": "local-batch-verified-not-published",
       "candidateExactCiVerified": false,
       "productPublished": false,
       "previousValidation": {
@@ -2577,7 +2577,27 @@
         "ciRun": 40147452124,
         "scope": "Historical dev106 precise CI and package/install proof;not proof of current source."
       },
-      "scope": "Draft includes dev107 first-use connection entry.No upstream merge or product publication.New complete/package/public CLI/same-profile checks and exact CI required.User runtime and Native unchanged."
+      "scope": "当前候选完整1490/1490、236文件归档与主线仅manifest版本不同（其余235文件与所有模式一致）、公开CLI正常Host安装/停止/卸载和同EXAMPLE配置main→候选→main完整载荷/194行设置/合成文件保留均通过；三阶段安装不冒充三次Host启动。精确CI和正式发布分别核对。",
+      "fullTests": 1490,
+      "packageFiles": 236,
+      "archiveSha256": "b2f6fac7a485a45c3aa17d8cefb24c3286dbf7082f81f0e7e63ed55b7d68ef73",
+      "manifestOnlyDifference": true
+    },
+    "marketBrowseUi": {
+      "status": "local-archive-and-installed-version-ui-verified-pending-final-batch",
+      "verification": "Decision0138: production Market/CSS in independent EXAMPLE browser at760/320px and light/dark;list before update/source forms,no horizontal overflow,keyboard detail focus and return,in-memory enable/disable.MCP metadata disclosure and visible download verified without full Connections parent.Context is not an installed new bundle or real market/network/program proof.Build/types and26 existing lifecycle/slot/contrast/CSS checks pass.New final full/package/CLI/installed GUI and candidate CI remain separate. Decision0139: final layout1487/1487,236-file archive/public CLI pass; same archive independent real EXAMPLE UI manually reviewed1.0.0→1.0.1→1.0.0 across two ordinary Host restarts,old selection pauses automatic updates,owned TEMP cleaned.User runtime unchanged;all network auto-update/program/Native creation acceptance remains separate.",
+      "upstreamSourceModified": false,
+      "permissionsChanged": false
+    },
+    "nativeCreativeGoal": {
+      "status": "local-batch-and-installed-example-ui-verified",
+      "upstreamSourceModified": false,
+      "nativeSourceModified": false,
+      "verification": "Decision0139/C209: native3.4.0 text/creativeBrief NFKC,NUL removal,trim;exact original-or-expected goal check,unchanged request,retained original and explicit UI review.3 new/21 related,build/clean types pass.Production workflow real paired desktop L0 preview succeeded once;no approval/apply/run,new installed user UI or final archive/CI claim. Final1490/1490,236-file archive/public CLI pass;the same archive actual isolated application performs one real native L0 preview,light/dark original/result review,reload retention and unselected approval;temporary Host/root removed and original user config/pair unchanged.Exact source CI/candidate and real apply/run remain separate.",
+      "reviewedNativeSource": {
+        "tag": "v3.4.0",
+        "commit": "f482ccce24cef89662682e207b37266e945c0f23"
+      }
     }
   }
 }

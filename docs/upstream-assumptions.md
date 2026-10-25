@@ -1,5 +1,12 @@
 # Upstream contracts
 
+Canvas creative-plan text: v3.4.0 `agentControlCreative.js` `text()` and
+`creativeBrief()` return NFKC text with NUL removed and outer whitespace trimmed.
+C209 checks the production preview, exact expected return, unchanged outbound
+request, retained original/Remote/restart review, mismatched goals/targets and
+unselected approval. A real paired desktop L0 preview also passed. No native
+source change, actual apply/run or new installed-user-UI acceptance is implied.
+
 Baseline: DSH `dsh-v0.2.1-rc.2`, commit
 `687f282e8625c6b8d11ff58211a90524be2e4317`.
 

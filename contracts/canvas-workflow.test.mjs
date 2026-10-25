@@ -38,3 +38,49 @@ test('C27: published codecs preserve read-only pairing default and opt-in struct
   const preview = TYPERT_REMOTE.methods['zhen/canvasWorkflowPreview'].parameters[0].strictCodec.create();
   assert.equal(preview.safeParse({ projectId: 'EXAMPLE_PROJECT', canvasId: 'EXAMPLE_CANVAS', kind: 'image', prompt: 'EXAMPLE', run: true }).success, false);
 });
+
+test('C209: native normalized goals preserve the original request, exact displayed result and restart review without approvals', async t => {
+  const f = await canvasWorkflowFixture({writable:false}); t.after(()=>f.dispose());
+  const scope = {projectId:'EXAMPLE_PROJECT',canvasId:'EXAMPLE_CANVAS',kind:'image'};
+  const cases = [
+    ['EXAMPLE：蓝色小鸟，柔和自然光。','EXAMPLE:蓝色小鸟,柔和自然光。'],
+    ['EXAMPLE：海报文字“Ａ①㎏𝒜”','EXAMPLE:海报文字“A1kgA”'],
+    ['EXAMPLE：第一行\n第二行\u0000','EXAMPLE:第一行\n第二行'],
+  ];
+  for(const [prompt,goal] of cases){
+    f.flowState.afterPlan=plan=>{plan.brief.goal=goal;};
+    const view=await f.workflow.preview({...scope,prompt});
+    assert.equal(f.flowState.lastInput.prompt,prompt,'send the original creative input once');
+    assert.equal(view.goal,goal);assert.equal(view.requestedGoal,prompt);
+    const codec=TYPERT_REMOTE.methods['zhen/canvasWorkflowPreview'].result.create();
+    assert.deepEqual(codec.parse(view),view);
+    const {CanvasWorkflow}=await import('../packages/dsh-zhen/lib/canvas-workflow.js');
+    const restarted=new CanvasWorkflow(f.file,f.config);
+    try{assert.deepEqual(restarted.snapshot(),view);}finally{restarted.close();}
+  }
+  f.flowState.afterPlan=undefined;
+  const unchanged=await f.workflow.preview({...scope,prompt:'EXAMPLE unchanged'});
+  assert.equal(unchanged.goal,'EXAMPLE unchanged');assert.equal(unchanged.requestedGoal,undefined);
+  assert.equal(f.flowState.plans,4);assert.equal(f.flowState.requests,0);assert.equal(f.flowState.mutations,0);
+});
+
+test('C209: normalized text never accepts another goal, target, action, kind or expiry', async t => {
+  const f=await canvasWorkflowFixture({writable:false});t.after(()=>f.dispose());
+  const input={projectId:'EXAMPLE_PROJECT',canvasId:'EXAMPLE_CANVAS',kind:'image',prompt:'EXAMPLE：蓝色小鸟，文字“A①”'};
+  const canonical='EXAMPLE:蓝色小鸟,文字“A1”';
+  const changes=[
+    plan=>{plan.brief.goal='EXAMPLE:红色小鸟,文字“A1”';},
+    plan=>{plan.brief.goal=canonical+' ';},
+    plan=>{plan.brief.goal=canonical.replace('蓝色小鸟','蓝色  小鸟');},
+    plan=>{plan.brief.goal=canonical.replace('A1','Ａ①');},
+    plan=>{plan.projectId='EXAMPLE_OTHER';},plan=>{plan.canvasId='EXAMPLE_OTHER';},
+    plan=>{plan.action='create.video';},plan=>{plan.kind='video';},
+    plan=>{plan.expiresAt=new Date(Date.now()-1000).toISOString();},
+    plan=>{plan.expiresAt=new Date(Date.now()+32*60*1000).toISOString();},
+  ];
+  for(const change of changes){f.flowState.afterPlan=plan=>{plan.brief.goal=canonical;change(plan);};
+    await assert.rejects(f.workflow.preview(input),error=>error.code==='WORKFLOW_PLAN_MISMATCH');
+    assert.equal(f.workflow.snapshot(),null);
+  }
+  assert.equal(f.flowState.plans,changes.length);assert.equal(f.flowState.requests,0);assert.equal(f.flowState.mutations,0);
+});

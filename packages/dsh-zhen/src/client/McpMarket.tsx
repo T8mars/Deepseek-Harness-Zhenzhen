@@ -57,11 +57,13 @@ export function McpMarket({ api }: { api: ZhenRemote }): React.ReactElement {
           const incompatible = view.incompatible.includes(`${recipe.id}@${release.version}`);
           return <details key={release.version} className="zhen-margin" open={release.version === recipe.version}>
             <summary>{release.version}{local ? ' · 已校验下载' : ' · 可下载'}{active ? ' · 当前启用' : ''}{selected?.pending === release.version ? ' · 待重启' : ''}</summary>
-            <p className="zhen-muted">Node 要求：{release.node || '发布包未声明，需在本机加载验证'}</p>
             {incompatible && <p role="status">当前 Node 不满足此版本要求，请先更新运行环境。</p>}
+            <details className="zhen-margin"><summary>来源与校验信息</summary>
+            <p className="zhen-muted">Node 要求：{release.node || '发布包未声明，需在本机加载验证'}</p>
             <p className="zhen-source-path">SHA-512：{release.integrity}</p>
             {local && <p className="zhen-source-path">本机程序 SHA-256：{local.digest} · {local.packages} 项固定依赖</p>}
             <p className="zhen-muted">许可：{local?.release.license || release.license || '安装时保存来源提交的完整许可'} · <a href={`https://github.com/modelcontextprotocol/servers/blob/${local?.release.gitHead || release.gitHead || 'main'}/LICENSE`} target="_blank" rel="noreferrer">查看来源许可 ↗</a></p>
+            </details>
             <div className="zhen-actions zhen-wrap">
               {!local && <button type="button" className="zhen-secondary" disabled={busy || incompatible} onClick={() => void act(async current => { unwrap(await api.mcpInstall(recipe.id, release.version, release.integrity)); if (!current()) return; setNotice('程序已下载并校验。请确认项目目录与访问范围后启用。'); })}>下载并校验此版本</button>}
               {local && <><button type="button" className="zhen-primary" disabled={busy || recipe.maintenance || incompatible || active || selected?.pending === release.version || !(workspace[recipe.id] ?? '').trim()} onClick={() => void act(async current => { unwrap(await api.mcpSelect(recipe.id, release.version, workspace[recipe.id]!)); if (!current()) return; setNotice(selected?.active && selected.active !== release.version ? '版本已安排下次 Host 启动启用。' : '已保存授权，请核对加载状态；在绑定项目的新会话中调用。'); })}>{active ? '当前版本' : selected?.active && selected.active !== release.version ? '信任并安排下次启动' : '信任程序并启用'}</button><button type="button" className="zhen-secondary" disabled={busy || recipe.maintenance || incompatible} onClick={() => setConfirm({ id: recipe.id, version: release.version })}>重新下载并校验</button></>}

@@ -20,6 +20,10 @@ import type {CanvasActiveTargets} from './canvas-active-schema.ts';
 import {readCanvasActiveContext,parseCanvasActiveContext} from './canvas-active-context.ts';
 
 const digest = z.string().regex(/^[a-f0-9]{64}$/);
+// Native v3.4.0 agentControlCreative.js text()/creativeBrief(): NFKC, remove
+// NUL, trim. Compare the returned value exactly; never normalize a returned
+// goal into a match or rewrite the original request/plan digest.
+const nativeCreativeGoal = (prompt: string): string => prompt.normalize('NFKC').replace(/\u0000/g, '').trim();
 const storedSchema = z.object({ schemaVersion: z.literal(1), config: z.object({ root: z.string().max(4096), digest, instance: z.string().max(128) }).strict(), instanceId: canvasInstance, origin: z.string().max(200), sessionId: z.uuid(), operationId: z.uuid(), view: canvasWorkflowSchema }).strict();
 type Stored = z.infer<typeof storedSchema>;
 
@@ -100,8 +104,9 @@ export class CanvasWorkflow {
     const previous = this.read();
     if (previous && !['preview', 'applied', 'denied', 'expired'].includes(previous.view.phase) && Date.parse(previous.view.expiresAt) > Date.now()) throw new CanvasError('WORKFLOW_PENDING', '请先处理当前画布审批；结果不明时先在画布检查。');
   }
-  private stage(plan: NativeCreativePlan, config: CanvasConfig, runtime: CanvasWorkflowRuntime,references?:CanvasAsset[]): CanvasWorkflowView {
+  private stage(plan: NativeCreativePlan, config: CanvasConfig, runtime: CanvasWorkflowRuntime,references?:CanvasAsset[],requestedGoal?:string): CanvasWorkflowView {
     const view = nativePlanView(plan);if(references?.length)view.references=references;
+    if(requestedGoal!==undefined&&requestedGoal!==plan.brief.goal)view.requestedGoal=requestedGoal;
     const record: Stored = { schemaVersion: 1, config, instanceId: runtime.instance.instanceId, origin: runtime.instance.origin, sessionId: runtime.sessionId, operationId: randomUUID(), view };
     this.matches(record, config, runtime); this.save(record); return view;
   }
@@ -140,10 +145,10 @@ export class CanvasWorkflow {
     const modelFields=Object.fromEntries(choices.flatMap(([kind,choice])=>[[kind+'Provider',choice.provider],[kind+'Model',choice.model]]));
     const plan = nativeCreativePlanSchema.parse((await runtime.client.requestAgentControl(runtime.instance, '/api/agent-control/v1/creative-plans', { accessToken: runtime.accessToken, method: 'POST', body: { projectId: request.projectId, canvasId: request.canvasId, input: { kind: request.kind, prompt: request.prompt, candidates: request.candidates??1, profile: request.profile??'economy',...(request.ratio===undefined?{}:{ratio:request.ratio}),...(request.duration===undefined?{}:{duration:request.duration}),...(keys.length?{assetIds:keys.map(key=>key.assetId)}:{}),...modelFields } } })).data);
     this.currentSession(config,runtime);
-    if (plan.projectId !== request.projectId || plan.canvasId !== request.canvasId || plan.kind !== request.kind || plan.brief.goal !== request.prompt || plan.action !== `create.${request.kind}` || Date.parse(plan.expiresAt) <= Date.now() || Date.parse(plan.expiresAt) > Date.now() + 31 * 60 * 1000) throw new CanvasError('WORKFLOW_PLAN_MISMATCH', '画布返回的计划与本次目标不一致。');
+    if (plan.projectId !== request.projectId || plan.canvasId !== request.canvasId || plan.kind !== request.kind || (plan.brief.goal !== request.prompt && plan.brief.goal !== nativeCreativeGoal(request.prompt)) || plan.action !== `create.${request.kind}` || Date.parse(plan.expiresAt) <= Date.now() || Date.parse(plan.expiresAt) > Date.now() + 31 * 60 * 1000) throw new CanvasError('WORKFLOW_PLAN_MISMATCH', '画布返回的计划与本次目标不一致。');
     if(choices.some(([kind,choice])=>plan.visibleAssumptions.models[kind]?.provider!==choice.provider||plan.visibleAssumptions.models[kind]?.model!==choice.model)||request.candidates!==undefined&&plan.candidateCount!==request.candidates||request.ratio!==undefined&&plan.visibleAssumptions.ratio!==request.ratio||request.duration!==undefined&&plan.visibleAssumptions.durationSec!==request.duration||request.profile!==undefined&&plan.brief.profile!==request.profile)throw new CanvasError('WORKFLOW_MODEL_MISMATCH','画布返回的模型或输出参数与选择不一致，请重新核对；本方案未进入审批。');
     if(references.length){const receipt=plan.modelDecisionReceipt;if(!receipt||receipt.schema!=='t8-model-decision-receipt-v1'||receipt.providerCalls!==0||receipt.canvasWrites!==0||receipt.attachmentEvidenceDigest!==nativeAttachmentDigest(references)||JSON.stringify(plan.brief.reuseAssetIds)!==JSON.stringify(keys.map(key=>key.assetId)))throw new CanvasError('WORKFLOW_REFERENCE_MISMATCH','画布返回的素材证据或顺序与选择不一致，本方案未进入审批。');if(!receipt.decisions?.length||receipt.decisions.some(item=>item.required&&item.status!=='ready'))throw new CanvasError('WORKFLOW_MODEL_UNAVAILABLE','参考理解或生成模型尚未在画布就绪，请选择模型或配置画布后重新预览。');const current=await this.readReferences(request.projectId,keys,config,runtime);if(nativeAttachmentDigest(current)!==nativeAttachmentDigest(references))throw new CanvasError('WORKFLOW_REFERENCE_CHANGED','素材在规划时发生变化，请重新预览。');}
-    return this.stage(plan, config, runtime,references);
+    return this.stage(plan, config, runtime,references,request.prompt);
   }); }
   approve(id: string, confirmation: boolean): Promise<CanvasWorkflowView> { return this.serial(async () => {
     const record = this.required(id);

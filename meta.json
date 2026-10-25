@@ -18,17 +18,17 @@
   "remoteBackup": {
     "repository": "https://github.com/T8mars/Deepseek-Harness-Zhenzhen",
     "branch": "main",
-    "policy": "commit-and-push-validated-updates",
+    "policy": "commit-and-push-validated-batches",
     "firstCheckpointTag": "v0.1.0-dev.1",
-    "latestCheckpointTag": "v0.1.0-dev.107"
+    "latestCheckpointTag": "v0.1.0-dev.109"
   },
   "repositoryVisibility": "public-owner-confirmed",
   "canaryPreparation": {
     "version": "0.1.0-canary.1",
     "branch": "codex/canary-readiness",
-    "status": "prepared-unverified-not-published",
-    "baseCommit": "4e3bf11ea5e373d80030009dd2be6cf728acfced",
-    "previousPreparationCommit": "13c971f4f5c7c69d995b9ba3d414075724384849",
+    "status": "local-batch-verified-pending-ci-not-published",
+    "baseCommit": "a4396e9d297de0fbe90a573ec8e54d0187463bf3",
+    "previousPreparationCommit": "453e02c379924a983ec287c0a38dae3bc2bd31ac",
     "ownerReleaseDecision": "ui-and-canvas-acceptance-first"
   }
 }
