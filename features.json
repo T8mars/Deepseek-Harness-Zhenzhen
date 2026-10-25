@@ -576,6 +576,11 @@
       "id": "knowledge-space-discovery",
       "status": "implemented-local-verified",
       "verification": "Decision0134: existing knowledge-space picker with bounded50-name cursor pages,explicit selection and refresh,manual new-name draft retained;no binding or permission mutation.C207 actual published Host/Owner Gateway and production handlers cover52 unique spaces,revoked/binding-only entries,anonymous/extra-input refusal,duplicate clicks,stale connections and explicit recovery.Focused23/build/clean types pass;full/package/public CLI/exact CI/installed GUI remain separate.Empty RAG results first suggest shorter queries;algorithm and authorization unchanged.Native not modified,Canary not published. First full1481/1482 C76 public-untracked-source omission retained;source-copy fixture fixed without weakening two-version build/byte comparison/actual installation assertions.Focused6/6 and corrected full1482/1482,235-file canonical archive/public CLI old-to-new replacement,normal Host/uninstall pass;exact remote CI and installed GUI separate."
+    },
+    {
+      "id": "first-use-connection-entry",
+      "status": "implemented-local-verified",
+      "verification": "Decision0136 C208 production async lifecycle/published root seat and C6/C7 pass7/7. Complete1487/1487;236-file canonical archive da86343904e6160315df36466a8ae18528e827f8b9e064a78afd939bf964517d and actual public CLI old-to-new replacement/normal Host/uninstall pass. Exact archive installed in fresh EXAMPLE Web profile;actual first-screen light/dark entry,keyboard/mouse settings navigation and reload verified;measured text/four-surface contrasts pass.No real credential/model/Native calls;user instance and exact remote CI separate;formal product not published."
     }
   ]
 }

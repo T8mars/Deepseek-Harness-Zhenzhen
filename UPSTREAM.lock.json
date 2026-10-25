@@ -2541,6 +2541,17 @@
       "schemaVersion": 1,
       "pageSize": 50,
       "verification": "C207 actual published Host/Owner Gateway: read-only unique names from collections and bindings,strict input/result,bounded binary cursor pages;no paths,contents,credential or network reads.No grants or bindings changed.Five new and23 related checks plus build/types pass.Installed GUI and exact CI separate. First C76 fixture failure retained;focused6/6 and corrected complete1482/1482,235-file canonical archive and actual public CLI replacement/start/uninstall passed;no user runtime replacement or Native write."
+    },
+    "firstUseConnectionEntry": {
+      "sdk": "0.2.1-rc.3",
+      "slot": "conversation.header.leading",
+      "readOnlyStatus": true,
+      "navigationOnly": true,
+      "verification": "C208 five production lifecycle/public root-seat cases plus C6/C7 pass7/7;complete1487,236-file same archive/public CLI replacement/Host/uninstall and actual fresh Web light/dark/key/mouse/reload pass. Exact CI/user instance/official Desktop/Native artwork remain separate.",
+      "fullTests": 1487,
+      "packageFiles": 236,
+      "artifactSha256": "da86343904e6160315df36466a8ae18528e827f8b9e064a78afd939bf964517d",
+      "installedExampleUiVerified": true
     }
   }
 }

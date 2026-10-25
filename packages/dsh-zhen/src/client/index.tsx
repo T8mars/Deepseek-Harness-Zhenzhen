@@ -30,6 +30,7 @@ import type {ToolCallViewProps} from '@deepseek-ai/dsh-client-ui-tool/client';
 import type {MainPanelId} from '@deepseek-ai/dsh-client-ui-layout/client';
 import ragCss from './rag.css';
 import { credentialLabel, canRemoveLocalCredential, credentialRemovalNotice } from './credential-source.ts';
+import { ConnectionEntry } from './ConnectionEntry.tsx';
 
 export const inject = ['slots', 'layout', 'theme', 'remote'];
 // Public layout identity is the same registered sidebar id and main-slot key.
@@ -142,8 +143,10 @@ export async function apply(ctx: Context): Promise<void> {
   ctx.inject(['remote.zhen'], inner => {
     const api=inner.remote.zhen;
     const openCanvas=()=>{navigation.open('connections');inner.layout.selectPanel(workspacePanel);};
+    const openSettings=()=>{navigation.open('settings');inner.layout.selectPanel(workspacePanel);};
     inner.effect(() => connectDefaultArt(inner.remote.zhen), 'zhen: confirmed local default art');
     inner.slots.inject('main', () => inner.slots.register({ name: 'main', key: workspacePanel, inject: () => ({ ctx: inner,navigation }) }, Workspace));
+    inner.slots.inject('conversation.header.leading',()=>inner.slots.register({name:'conversation.header.leading'},()=> <ConnectionEntry api={api} onOpen={openSettings}/>));
     inner.slots.inject('tool.call.toolview',()=>inner.slots.register({name:'tool.call.toolview',key:'mcp__t8canvas__canvas_plan'},(props:ToolCallViewProps)=><CanvasPlanToolView {...props} api={api} onOpen={openCanvas}/>));
     inner.slots.inject('tool.call.toolview',()=>inner.slots.register({name:'tool.call.toolview',key:'zhen_canvas_help'},(props:ToolCallViewProps)=><CanvasHelpToolView {...props} onOpen={openCanvas}/>));
   });
