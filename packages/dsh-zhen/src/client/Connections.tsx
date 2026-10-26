@@ -9,7 +9,7 @@ import {CanvasRunPanel} from './CanvasRun.tsx';
 import {CanvasConnectionChoices} from './CanvasConnectionChoices.tsx';
 function unwrap<T>(result:RemoteResult<T>):T{if(!result.ok)throw result.error;return result.value;}
 
-export function Connections({api}:{api:ZhenRemote}):React.ReactElement{
+export function Connections({api,onConversation}:{api:ZhenRemote;onConversation?:()=>void}):React.ReactElement{
   const [status,setStatus]=useState<CanvasConnection>(),[check,setCheck]=useState<CanvasConnectionCheck>();
   const [root,setRoot]=useState(''),[instance,setInstance]=useState('');
   const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[paired,setPaired]=useState(false);
@@ -19,6 +19,7 @@ export function Connections({api}:{api:ZhenRemote}):React.ReactElement{
   const alive=useRef(true),working=useRef(false),generation=useRef(0);
   const activeApi=useRef(api);activeApi.current=api;
   const compatible=check?.state==='ready';
+  const ready=compatible&&completeCanvasPairing(pairing);
   async function refresh(inventory=false):Promise<void>{
     const version=generation.current;
     const results=await Promise.all([api.canvasStatus(),api.canvasConnectionCheck(),inventory?api.canvasSetupDiscover():Promise.resolve(undefined)]);
@@ -42,13 +43,14 @@ export function Connections({api}:{api:ZhenRemote}):React.ReactElement{
   }
   const candidates=<CanvasConnectionChoices discovery={discovery} busy={busy} onConnect={(path,digest)=>void action(()=>connect(path,'',digest))}/>;
   return <div className="zhen-settings">
-    <section className="zhen-card"><h2>MCP 与创作工具</h2><p className="zhen-muted">连接画布后，在会话里直接描述想创作的内容。方案会先交给你审阅，生成前仍会确认。</p></section>
     <section className="zhen-card">
-      <div className="zhen-section-heading"><h2>T8 贞贞无限画布</h2><span>{busy?'正在连接…':paired?'已连接':pairing?.state==='pending'?'等待画布确认':'准备连接'}</span></div>
-      <p className="zhen-muted">打开桌面画布，点击连接，再在画布窗口确认一次即可。连接工具自动选择，默认开启全部创作能力。</p>
+      <h1>画布创作</h1>
+      <p className="zhen-muted">自动连接 T8 贞贞无限画布，开启全部创作能力。</p>
+      {ready&&onConversation&&<button type="button" className="zhen-primary zhen-margin" onClick={onConversation}>回到会话，开始创作</button>}
       {!completeCanvasPairing(pairing)&&pairing?.state!=='pending'&&<button type="button" className="zhen-primary zhen-margin" disabled={busy} onClick={()=>void action(async()=>{
         const result=await api.canvasQuickConnect();await refresh(true);unwrap(result);
       })}>连接画布，开始创作</button>}
+      {notice&&<p className="zhen-notice" role="status">{notice}</p>}
       {check?.state==='choose-instance'&&<div className="zhen-margin" aria-label="选择运行中的画布">
         {check.instances.map((item,index)=><button type="button" className="zhen-secondary zhen-margin" disabled={busy||!status?.configured} key={item.id} onClick={()=>void action(async()=>{await connect(status!.root,item.id,status!.digest);const result=await api.canvasQuickConnect();await refresh(true);unwrap(result);})}>使用画布 {index+1}</button>)}
       </div>}
@@ -66,7 +68,7 @@ export function Connections({api}:{api:ZhenRemote}):React.ReactElement{
           <button className="zhen-secondary zhen-margin" disabled={busy||!root.trim()}>信任并使用指定目录</button>
         </form>
       </details>
-      {paired&&status&&<><CanvasWorkflowPanel key={`workflow:${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible}/><CanvasRunPanel key={`run:${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible}/></>}
+      {paired&&status&&<details className="zhen-margin"><summary>手动规划与运行（进阶）</summary><CanvasWorkflowPanel key={`workflow:${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible}/><CanvasRunPanel key={`run:${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible}/></details>}
       {status?.configured&&<div className="zhen-actions zhen-wrap zhen-margin">
         <button type="button" className="zhen-secondary" disabled={busy||!paired} onClick={()=>void action(async()=>setCatalog(unwrap(await api.canvasTools())??undefined))}>查看创作能力</button>
         <button type="button" className="zhen-link" disabled={busy} onClick={()=>void action(async()=>{unwrap(await api.disconnectCanvas());setCatalog(undefined);setPaired(false);await refresh();})}>断开连接</button>
@@ -74,8 +76,7 @@ export function Connections({api}:{api:ZhenRemote}):React.ReactElement{
       {catalog&&<details className="zhen-margin" open><summary>可规划的创作能力 · {catalog.tools.length} 项</summary><ul className="zhen-canvas-tool-list" tabIndex={0} aria-label="画布创作能力">{catalog.tools.map(tool=><li key={tool.name}><strong>{tool.creatorLabel}</strong> · {tool.directOperations.join(' / ')}</li>)}</ul></details>}
       <details className="zhen-margin"><summary>诊断信息</summary><p className="zhen-muted">检查代码：{check?.code??'检查中'}。服务响应、版本匹配与窗口配对是分别检查的步骤。</p>{status?.compat!=null&&<pre className="zhen-excerpt">{JSON.stringify(status.compat,null,2)}</pre>}</details>
       <a className="zhen-link" href="https://github.com/T8mars/T8-penguin-canvas" target="_blank" rel="noreferrer">打开画布项目 ↗</a>
-      {notice&&<p className="zhen-notice" role="status">{notice}</p>}
     </section>
-    <McpMarket api={api}/>
+    <details className="zhen-card"><summary>添加其他创作工具（MCP 市场）</summary><McpMarket api={api}/></details>
   </div>;
 }

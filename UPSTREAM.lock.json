@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-26T07:56:10.115Z",
+  "checkedAt": "2026-10-26T10:08:47.363Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2660,6 +2660,13 @@
       "testCredentialRemoved": true,
       "packageRemoved": true,
       "wholeM0Complete": false
+    },
+    "canvasConnectionScreen": {
+      "decision": "0151",
+      "defaultCreationAccess": "all-seven-existing-scopes",
+      "manualToolsCollapsed": true,
+      "nativeApprovalRequired": true,
+      "verification": "Complete1526/1526,237-file958d archive,C63/C76,ordinary CLI replacement/uninstall and actual installed Web light/dark760/320 first-action/closed-fields/keyboard market pass. Actual user adoption,exact CI and Native grant/work remain separate."
     }
   }
 }

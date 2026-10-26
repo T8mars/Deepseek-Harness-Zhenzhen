@@ -78,7 +78,7 @@ function Workspace({ ctx,navigation }: { ctx: Context;navigation:WorkspaceNaviga
         <div><h1>{section === 'home' ? <>让灵感，<br/>有处落笔。</> : <>准备好，<br/>开始创作。</>}</h1>
           <p className="zhen-intro">从一个想法出发，整理素材、打磨脚本，<br className="zhen-wide"/>把你的下一部作品慢慢做出来。</p></div>
         <HeroArtwork/>
-      </div></> : <div className="zhen-page-heading"><div className="zhen-eyebrow"><span className="zhen-line"/>YOUR CREATIVE TOOLKIT</div><h1>{section === 'tasks' ? '让每次生成，有迹可循。' : section === 'market' ? '让好方法，随手可用。' : section === 'knowledge' ? '让资料，成为创作的底气。' : section === 'backup' ? '把创作积累，妥善保存。' : section === 'updates' ? '跟上变化，安心创作。' : section === 'art' ? '让工作空间，有你的印记。' : '连接你的创作工具。'}</h1></div>}
+      </div></> : section !== 'connections' && <div className="zhen-page-heading"><div className="zhen-eyebrow"><span className="zhen-line"/>YOUR CREATIVE TOOLKIT</div><h1>{section === 'tasks' ? '让每次生成，有迹可循。' : section === 'market' ? '让好方法，随手可用。' : section === 'knowledge' ? '让资料，成为创作的底气。' : section === 'backup' ? '把创作积累，妥善保存。' : section === 'updates' ? '跟上变化，安心创作。' : section === 'art' ? '让工作空间，有你的印记。' : '连接你的创作工具。'}</h1></div>}
       {section === 'home' ? <>
         <div className="zhen-start-card">
           <div className="zhen-start-copy"><span className="zhen-small-label">今天想创作点什么？</span><h2>把第一个念头写下来。</h2><p>在会话中继续构思，使用 / 调用已安装技能。</p></div>
@@ -93,7 +93,7 @@ function Workspace({ ctx,navigation }: { ctx: Context;navigation:WorkspaceNaviga
         <button type="button" className="zhen-market-entry" onClick={() => setSection('connections')}><div><span className="zhen-feature-number">CONNECTED TOOLS</span><h3>接上你的创作画布。</h3><p>连接现有 T8 画布，查看能力、项目和任务。</p></div><span aria-hidden="true">↗</span></button>
         <button type="button" className="zhen-market-entry" onClick={() => setSection('tasks')}><div><span className="zhen-feature-number">GENERATION TASKS</span><h3>看见创作进度与实扣费用。</h3><p>按已有任务编号持续追踪，断线后继续查询原任务。</p></div><span aria-hidden="true">↗</span></button>
         <button type="button" className="zhen-link zhen-margin" onClick={() => setSection('art')}>外观与社区角色素材 ↗</button>
-      </> : section === 'tasks' ? <TaskCenter api={ctx.remote.zhen} onSettings={() => setSection('settings')} onConnections={() => setSection('connections')}/> : section === 'knowledge' ? <Knowledge api={ctx.remote.zhen}/> : section === 'market' ? <Market api={ctx.remote.zhen}/> : section === 'connections' ? <Connections api={ctx.remote.zhen}/> : section === 'backup' ? <BackupCenter api={ctx.remote.zhen}/> : section === 'updates' ? <Updates api={ctx.remote.zhen}/> : section === 'art' ? <ArtSettings/> : <div className="zhen-settings">
+      </> : section === 'tasks' ? <TaskCenter api={ctx.remote.zhen} onSettings={() => setSection('settings')} onConnections={() => setSection('connections')}/> : section === 'knowledge' ? <Knowledge api={ctx.remote.zhen}/> : section === 'market' ? <Market api={ctx.remote.zhen}/> : section === 'connections' ? <Connections api={ctx.remote.zhen} onConversation={()=>ctx.layout.selectPanel(null)}/> : section === 'backup' ? <BackupCenter api={ctx.remote.zhen}/> : section === 'updates' ? <Updates api={ctx.remote.zhen}/> : section === 'art' ? <ArtSettings/> : <div className="zhen-settings">
         <section className="zhen-card"><div className="zhen-section-heading"><h2>Seedance 连接</h2><span>{credentialLabel(status)}</span></div>
           <p>默认模型 <strong>deepseek/deepseek-v4.1-flash</strong></p>
           <p className="zhen-muted">令牌由本机 DSH 凭据服务管理。本地保存的令牌优先使用，移除后会回退到其他已配置来源。钱包查询由 Host 发起；已配置不代表已验证聊天权限。</p>

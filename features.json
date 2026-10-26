@@ -590,6 +590,11 @@
       "wholeApplicationRestore": false,
       "installedExampleWelcomeUiVerified": true,
       "restoredStateMemoryPreviewVerified": true
+    },
+    {
+      "id": "canvas-connection-usability",
+      "status": "implemented",
+      "verification": "Decision0151 keeps the normal Canvas connection action first, collapses manual workflow/run and MCP tools, puts failures beside the action and returns a fully granted user directly to the conversation. C214 production-handler regression distinguishes partial/full grants; build,clean types and51 focused/full1526 pass. The237-file958d archive matches C63/C76; ordinary CLI old4d66 replacement,Host/workers and complete uninstall baseline restore pass. Actual same-archive installed Web light/dark760/320 shows the main action in the first viewport with no horizontal overflow,all text fields inside closed sections and keyboard MCP expansion/collapse;temporary Host exited0 and profile/auth removed. User adoption,candidate/exact CI and actual Native seven-scope approval/work generation remain separately verified. No Canvas repository/install/config/CLI changes or model requests."
     }
   ]
 }
