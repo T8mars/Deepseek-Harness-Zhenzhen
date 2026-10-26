@@ -41,23 +41,29 @@ export function Connections({api,onConversation}:{api:ZhenRemote;onConversation?
   async function connect(path:string,id='',digest=''):Promise<void>{
     setPaired(false);setCatalog(undefined);unwrap(await api.connectCanvas(path,id,digest));if(alive.current&&activeApi.current===api)await refresh();
   }
+  async function begin():Promise<void>{
+    const result=await api.canvasQuickConnect();await refresh(true);unwrap(result);
+  }
+  const running=discovery?.candidates?.filter(item=>item.source==='running-desktop')??[];
+  const chooseDesktop=!ready&&pairing?.state!=='pending'&&check?.state!=='choose-instance'&&running.length>1&&!running.some(item=>status?.configured&&item.root===status.root&&item.digest===status.digest);
   const candidates=<CanvasConnectionChoices discovery={discovery} busy={busy} onConnect={(path,digest)=>void action(()=>connect(path,'',digest))}/>;
   return <div className="zhen-settings">
     <section className="zhen-card">
       <h1>画布创作</h1>
-      <p className="zhen-muted">自动连接 T8 贞贞无限画布，开启全部创作能力。</p>
-      {ready&&onConversation&&<button type="button" className="zhen-primary zhen-margin" onClick={onConversation}>回到会话，开始创作</button>}
-      {!completeCanvasPairing(pairing)&&pairing?.state!=='pending'&&<button type="button" className="zhen-primary zhen-margin" disabled={busy} onClick={()=>void action(async()=>{
-        const result=await api.canvasQuickConnect();await refresh(true);unwrap(result);
-      })}>连接画布，开始创作</button>}
-      {notice&&<p className="zhen-notice" role="status">{notice}</p>}
-      {check?.state==='choose-instance'&&<div className="zhen-margin" aria-label="选择运行中的画布">
-        {check.instances.map((item,index)=><button type="button" className="zhen-secondary zhen-margin" disabled={busy||!status?.configured} key={item.id} onClick={()=>void action(async()=>{await connect(status!.root,item.id,status!.digest);const result=await api.canvasQuickConnect();await refresh(true);unwrap(result);})}>使用画布 {index+1}</button>)}
-      </div>}
+      <p className="zhen-muted">默认申请全部创作能力，连接后直接在会话里描述你的创作需求。</p>
       <CanvasPairingPanel key={`${status?.root??''}:${status?.digest??''}:${status?.instance??''}`} api={api} online={compatible} managed refreshRevision={pairingRevision} onPairedChange={setPaired} onPairingChange={setPairing}/>
-      <details className="zhen-margin"><summary>连接诊断与高级设置</summary>
+      {ready&&onConversation&&<button type="button" className="zhen-primary zhen-margin" onClick={onConversation}>回到会话，开始创作</button>}
+      {!chooseDesktop&&!completeCanvasPairing(pairing)&&pairing?.state!=='pending'&&check?.state!=='choose-instance'&&<button type="button" className="zhen-primary zhen-margin" disabled={busy} onClick={()=>void action(begin)}>连接画布，开始创作</button>}
+      {notice&&<p className="zhen-notice" role="status">{notice}</p>}
+      {chooseDesktop&&<CanvasConnectionChoices discovery={discovery} busy={busy} selectionOnly onConnect={(path,digest)=>void action(async()=>{await connect(path,'',digest);await begin();})}/>}
+      {check?.state==='choose-instance'&&<div className="zhen-margin" aria-label="选择运行中的画布">
+        {check.instances.map((item,index)=><button type="button" className="zhen-secondary zhen-margin" disabled={busy||!status?.configured} key={item.id} onClick={()=>void action(async()=>{await connect(status!.root,item.id,status!.digest);await begin();})}>使用画布 {index+1}</button>)}
+      </div>}
+      <details className="zhen-margin"><summary>连接遇到问题</summary>
         <button type="button" className="zhen-secondary zhen-margin" disabled={busy} onClick={()=>void action(()=>refresh(true))}>重新检测</button>
         <p className="zhen-muted">画布自身的“设置 → Agent连接工具”可以安装或修复连接工具。通常直接点击上方连接按钮即可。</p>
+        {pairing&&<><p className="zhen-muted">{pairing.message}</p>{pairing.state==='pending'&&<p>连接验证码：<code aria-label="配对验证码">{pairing.userCode}</code></p>}</>}
+        <details className="zhen-margin"><summary>连接诊断与高级设置</summary>
         {candidates}
         <form onSubmit={event=>{event.preventDefault();void action(()=>connect(root,instance));}}>
           <label className="zhen-label" htmlFor="zhen-canvas-root">已安装的 zcanvas-cli 目录</label>
@@ -67,7 +73,7 @@ export function Connections({api,onConversation}:{api:ZhenRemote;onConversation?
           <input id="zhen-canvas-instance" className="zhen-input" value={instance} onChange={event=>setInstance(event.currentTarget.value)} maxLength={128} disabled={busy}/>
           <button className="zhen-secondary zhen-margin" disabled={busy||!root.trim()}>信任并使用指定目录</button>
         </form>
-      </details>
+        </details>
       {paired&&status&&<details className="zhen-margin"><summary>手动规划与运行（进阶）</summary><CanvasWorkflowPanel key={`workflow:${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible}/><CanvasRunPanel key={`run:${status.root}:${status.digest}:${status.instance??''}`} api={api} online={compatible}/></details>}
       {status?.configured&&<div className="zhen-actions zhen-wrap zhen-margin">
         <button type="button" className="zhen-secondary" disabled={busy||!paired} onClick={()=>void action(async()=>setCatalog(unwrap(await api.canvasTools())??undefined))}>查看创作能力</button>
@@ -76,7 +82,8 @@ export function Connections({api,onConversation}:{api:ZhenRemote;onConversation?
       {catalog&&<details className="zhen-margin" open><summary>可规划的创作能力 · {catalog.tools.length} 项</summary><ul className="zhen-canvas-tool-list" tabIndex={0} aria-label="画布创作能力">{catalog.tools.map(tool=><li key={tool.name}><strong>{tool.creatorLabel}</strong> · {tool.directOperations.join(' / ')}</li>)}</ul></details>}
       <details className="zhen-margin"><summary>诊断信息</summary><p className="zhen-muted">检查代码：{check?.code??'检查中'}。服务响应、版本匹配与窗口配对是分别检查的步骤。</p>{status?.compat!=null&&<pre className="zhen-excerpt">{JSON.stringify(status.compat,null,2)}</pre>}</details>
       <a className="zhen-link" href="https://github.com/T8mars/T8-penguin-canvas" target="_blank" rel="noreferrer">打开画布项目 ↗</a>
+        <details className="zhen-margin"><summary>添加其他创作工具（MCP 市场）</summary><McpMarket api={api}/></details>
+      </details>
     </section>
-    <details className="zhen-card"><summary>添加其他创作工具（MCP 市场）</summary><McpMarket api={api}/></details>
   </div>;
 }
