@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-25T18:35:38.705Z",
+  "checkedAt": "2026-10-26T03:57:16.542Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2581,6 +2581,23 @@
       "finalRelatedTests": 130,
       "finalFullLocalRerunClaim": false,
       "installedExampleLightDarkWelcomeVerified": true
+    },
+    "mcpUpdateGuidance": {
+      "decision": "0143",
+      "status": "local-validated-batch-pending-exact-ci",
+      "schemaVersion": 2,
+      "persistedStateKeysChanged": false,
+      "upstreamSourceModified": false,
+      "nativeSourceModified": false,
+      "newContracts": 6,
+      "focusedTests": 29,
+      "verification": "Decision0143/C213: bounded per-tool diagnostics explain official npm metadata, source revision, runtime and immutable-version refusals; creator action precedes expandable technical details. Six new and29 focused cases plus final build/clean types/full1510 pass. Final237-file13356 archive matches all canonical current payloads and C63/C76; public CLI previous529e replacement,normal Host/workers and uninstall restore the complete SDK baseline. Actual same-archive installed EXAMPLE light/dark760/320 pages show safe summary,fixed versions and keyboard details without horizontal overflow;status contrast7.10/9.61. Test Host exited0 and temporary root/auth cleaned. Schema2 keys,selections,programs,grants and install guards unchanged. User runtime remains dev110;candidate synchronization and exact CI/adoption are verified separately for this combined batch. No Native writes,permission actions,model calls or formal release.",
+      "fullLocalTests": 1510,
+      "artifactSha256": "13356eeaf639213356ebd9c5b7dd239112e8d8b14bdc96f88f8604353eca5ff8",
+      "packageFiles": 237,
+      "installedExampleLightDark760And320Verified": true,
+      "publicCliReplacementAndUninstallVerified": true,
+      "userRuntimeAdopted": false
     }
   }
 }
