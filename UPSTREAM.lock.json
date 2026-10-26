@@ -2774,6 +2774,45 @@
       "newContracts": 2,
       "focusedTests": 22,
       "verification": "Empty task page hides unselected transfer setup;pending original transfer remains queryable without file/target reselection.Default-complete connection guidance corrected.Existing real PNG export/service and installed7785 UI pass;final new archive and UI remain separate. Final1536/1536,237-filec567 C63/C76,public CLI replacement/Host/workers/uninstall restore full baseline and actual installed Web light/dark760/320 empty-transfer/connection-entry checks pass.Host0/TEMP/auth cleaned;adoption,candidate/exact CI and actual Native return separate."
+    },
+    "simpleCanvasConnectionReview": {
+      "decision": "0157",
+      "upstreamVersion": "0.2.1-rc.3",
+      "visiblePrimaryActions": 1,
+      "defaultCreationScopes": 7,
+      "manualInputsHidden": true,
+      "multipleDesktopChoiceInNormalPage": true,
+      "selectionContinuesPairing": true,
+      "relatedChecksPassed": 61,
+      "actualInstalledWebVerified": true,
+      "simulatedApprovalOnly": true,
+      "realNativeApprovalVerified": false,
+      "fullCheck": "passed",
+      "canvasFilesModified": false,
+      "fullTests": 1538,
+      "packageFiles": 237,
+      "archiveSha256": "43ec184a6a05fc8bd68c3cb1c7708006069fd9714529546493fcc1ca72e6c93e",
+      "ordinaryCliReplacementAndUninstallVerified": true,
+      "userAdoptionVerified": false,
+      "exactCiVerified": false
+    },
+    "simpleConnectionCanarySync": {
+      "decision": "0158",
+      "baseCommit": "76c7fb79c4096cc792b6d4a547a645efefa4e214",
+      "upstreamVersion": "0.2.1-rc.3",
+      "mainFullTests": 1538,
+      "focusedInvocations": [
+        61,
+        1
+      ],
+      "focusedTests": 62,
+      "completeCandidateLocalRerun": false,
+      "packageFiles": 237,
+      "archiveSha256": "a9c3e01805a852d0236f76fa734fdd0c55c2f42767d4716388a6d943213b7cf4",
+      "otherPayloadFilesIdentical": 236,
+      "ordinaryCliReplacementAndUninstallVerified": true,
+      "exactCiVerified": false,
+      "formalReleasePublished": false
     }
   }
 }

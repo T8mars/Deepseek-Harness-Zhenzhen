@@ -38,16 +38,16 @@ export function CanvasPairingPanel({ api, online, managed=false, refreshRevision
     <h3>{pairing?.state==='paired'?'画布已连接':pending?'到桌面画布确认连接':'连接画布'}</h3>
     {busy&&<p role="status">正在检查连接…</p>}
     <p className="zhen-muted" role="status">{summary}</p>
-    {pending&&<p>连接验证码：<code aria-label="配对验证码">{pairing.userCode}</code></p>}
     {!managed&&!full&&!pending&&<button type="button" className="zhen-primary" disabled={busy} onClick={()=>void action(()=>typeof api.canvasQuickConnect==='function'?api.canvasQuickConnect():api.canvasPairingBegin(true,true,true,true))}>连接画布，开始创作</button>}
-    <details className="zhen-margin"><summary>连接详情与手动检查</summary>
+    {!managed&&<details className="zhen-margin"><summary>连接详情与手动检查</summary>
+      {pending&&<p>连接验证码：<code aria-label="配对验证码">{pairing.userCode}</code></p>}
       <p className="zhen-muted">默认申请读取、创作、执行生成和素材交接的完整能力；桌面画布会显示本次申请。生成任务仍在运行前审阅。</p>
       {pairing&&<><p>{pairing.message}</p>{pairing.expiresAt&&<p className="zhen-muted">有效期至 {new Date(pairing.expiresAt).toLocaleString()}</p>}{pairing.scopes.length>0&&<p className="zhen-muted">权限：{pairing.scopes.map(scope=>labels[scope]).join('、')}</p>}</>}
       <div className="zhen-actions zhen-wrap">
         <button type="button" className="zhen-secondary" disabled={busy||!online} onClick={()=>void action(()=>api.canvasPairingSnapshot())}>刷新配对状态</button>
         {pending&&<button type="button" className="zhen-secondary" disabled={busy||!online} onClick={()=>void action(()=>api.canvasPairingComplete())}>检查画布批准结果</button>}
       </div>
-    </details>
+    </details>}
     {notice&&<p className="zhen-notice" role="status">{notice}</p>}
   </section>;
 }

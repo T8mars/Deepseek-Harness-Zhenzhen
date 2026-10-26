@@ -696,7 +696,7 @@ export default class ZhenService extends TypertRemoteService {
         if (previous?.root !== afterDiscovery?.root || previous?.digest !== afterDiscovery?.digest || previous?.instance !== afterDiscovery?.instance) throw new CanvasError('CANVAS_CONFIG_CHANGED', '连接已变化，请重新点击连接画布。');
         const running = found.candidates.filter(item => item.source === 'running-desktop');
         const selected = running.find(item => item.root === previous?.root && item.digest === previous.digest) ?? (running.length === 1 ? running[0] : undefined);
-        if (!selected && running.length > 1) throw new CanvasError('CANVAS_DESKTOP_AMBIGUOUS', '检测到多个桌面画布。请关闭暂不用的画布后再次连接，或在高级设置中选择。');
+        if (!selected && running.length > 1) throw new CanvasError('CANVAS_DESKTOP_AMBIGUOUS', '检测到多个桌面画布，请在连接页选择这次要使用的一个。');
         if (!selected && !previous) throw new CanvasError('APP_NOT_RUNNING', '请先打开桌面画布，然后点击“连接画布，开始创作”。');
         if (selected) await this.connectCanvas(selected.root, selected.root === previous?.root ? previous.instance : '', selected.digest);
         let target = this.canvasConfig();
