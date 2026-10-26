@@ -249,7 +249,7 @@ export class CanvasBridge {
       return result('ready','COMPATIBLE','画布版本与连接工具匹配，可以在下方完成窗口配对。');
     }catch(error){
       const safe=safeCanvasError(error);
-      if(safe.code==='CLI_CHANGED'||safe.code==='ENOENT')return result('needs-review',safe.code,'连接工具已更新或移动。请重新检测，选择正在运行的桌面画布并连接。');
+      if(safe.code==='CLI_CHANGED'||safe.code==='ENOENT')return result('needs-review',safe.code,'连接工具已更新或移动。请点击“连接画布，开始创作”自动重新连接；仍有问题可展开高级设置查看诊断。');
       if(safe.code.endsWith('_MISMATCH')||safe.code==='APP_VERSION_INCOMPATIBLE')return result('incompatible',safe.code,'当前连接工具与画布版本不同。请点击“重新检测”，优先连接“正在运行的桌面画布”。');
       return result(safe.code==='APP_NOT_RUNNING'?'not-running':'error',safe.code,safe.message);
     }

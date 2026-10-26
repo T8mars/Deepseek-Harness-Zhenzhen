@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-26T04:52:01.930Z",
+  "checkedAt": "2026-10-26T07:56:10.115Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -55,16 +55,20 @@
       "defaultScopes": [
         "canvas:read",
         "run:read",
-        "asset:read"
-      ],
-      "optionalScopes": [
+        "asset:read",
         "asset:transfer",
         "browser:handoff",
         "canvas:write",
         "run:execute"
       ],
+      "optionalScopes": [],
       "automaticApproval": false,
-      "verification": "Default pairing remains three read scopes; handoff, canvas:write and run:execute are independent explicit opt-ins requiring native window grant. Existing C25/C26 native store and published Host/Remote/MCP boundaries remain. New run permission defaults false; no Agent pairing or automatic approval. Real UI/window remain unverified."
+      "verification": "0144 supersedes the old three-read-scope product flow: normal explicit quick connect requests all seven existing scopes and automatically completes after actual native approval. The low-level legacy API defaults remain compatible; this metadata does not grant actual Native access.",
+      "historicalDefaultScopes": [
+        "canvas:read",
+        "run:read",
+        "asset:read"
+      ]
     },
     "canvasNativeStoreTransactions": {
       "protocol": "t8-zcanvas-secure-store-transaction-v1",
@@ -2616,6 +2620,46 @@
       "actualInstalledGuiVerified": true,
       "automaticCompletionVerified": true,
       "realNativeDesktopApprovalVerified": false
+    },
+    "canvasChatEntryAlignment": {
+      "decision": "0148",
+      "skillVersion": "1.0.8",
+      "focusedTests": 32,
+      "status": "full-local-and-installed-web-validated-pending-batch",
+      "userExistingWebFileTurnVerified": true,
+      "officialDesktopVerified": false,
+      "fullTests": 1525,
+      "archiveSha256": "4d66824a80c72612e011a801fdc7b3e7cd6e397c8caef4fdb3bf4d59bacda2ae",
+      "installedWebHeaderVerified": true
+    },
+    "officialDesktopFileTurn": {
+      "decision": "0147",
+      "version": "0.2.1-rc.3",
+      "signedOriginalDistribution": true,
+      "archiveSha256": "39b46a1a4e2f6b28a87cee46243920b11a2c8dd59efd2df5c3702331bae138de",
+      "installedFiles": 237,
+      "realNativeGuiFileTurnCompleted": true,
+      "manualModelSelection": false,
+      "credentialApiOnly": true,
+      "temporaryCredentialRemoved": true,
+      "normalQuitAndPublicCliRemove": true,
+      "fullDesktopRowsRollbackVerified": false,
+      "fifteenMinutePacketCaptureVerified": false,
+      "noKeyFormFlowVerified": false,
+      "wholeObjectiveComplete": false
+    },
+    "officialDesktopNetworkMetadata": {
+      "decision": "0149",
+      "archiveSha256": "39ce0b105c628aa25df8d44046a51a8ed4bb3959bb4f4abe021a591a55c842df",
+      "captureMs": 900045,
+      "eventsLost": 0,
+      "processScoped": true,
+      "payloadCaptured": false,
+      "normalMenuQuitVerified": false,
+      "orchestratorExit": 1,
+      "testCredentialRemoved": true,
+      "packageRemoved": true,
+      "wholeM0Complete": false
     }
   }
 }

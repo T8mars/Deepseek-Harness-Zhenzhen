@@ -10,7 +10,7 @@ export function validCanvasHelp(block:{isError:boolean;content:readonly {type:st
 export function CanvasHelpCard({pending=false,valid=true,onOpen,inspect}:{pending?:boolean;valid?:boolean;onOpen:()=>void;inspect?:()=>void}):React.ReactElement{
   return <div className="zhen-rag-card" aria-label="画布连接入口">
     <strong>画布连接</strong>
-    <p role="status">{pending?'正在准备连接入口…':valid?'打开连接页面，按提示检测画布并完成窗口配对。':'连接引导暂不可用，可以打开连接页面查看当前状态。'}</p>
+    <p role="status">{pending?'正在准备连接入口…':valid?'点击会话顶部“画布创作”，再点“连接画布，开始创作”；画布确认后会自动完成。':'点击会话顶部“画布创作”，即可查看连接状态。'}</p>
     <p className="zhen-rag-note">连接、方案审阅和生成会分别确认。</p>
     <button type="button" onClick={onOpen}>打开画布连接</button>
     {inspect&&<>{' '}<button type="button" onClick={inspect}>查看工具记录</button></>}
