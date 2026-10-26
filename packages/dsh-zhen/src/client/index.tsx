@@ -154,7 +154,7 @@ export async function apply(ctx: Context): Promise<void> {
     const openSettings=()=>{navigation.open('settings');inner.layout.selectPanel(workspacePanel);};
     inner.effect(() => connectDefaultArt(inner.remote.zhen), 'zhen: confirmed local default art');
     inner.slots.inject('main', () => inner.slots.register({ name: 'main', key: workspacePanel, inject: () => ({ ctx: inner,navigation }) }, Workspace));
-    inner.slots.inject('conversation.header.leading',()=>inner.slots.register({name:'conversation.header.leading'},()=> <ConnectionEntry api={api} onOpen={openSettings}/>));
+    inner.slots.inject('conversation.header.leading',()=>inner.slots.register({name:'conversation.header.leading'},()=> <><ConnectionEntry api={api} onOpen={openSettings}/><button type="button" className="zhen-connection-entry" title="连接画布或继续创作" onClick={openCanvas}>画布创作</button></>));
     inner.slots.inject('tool.call.toolview',()=>inner.slots.register({name:'tool.call.toolview',key:'mcp__t8canvas__canvas_plan'},(props:ToolCallViewProps)=><CanvasPlanToolView {...props} api={api} onOpen={openCanvas}/>));
     inner.slots.inject('tool.call.toolview',()=>inner.slots.register({name:'tool.call.toolview',key:'zhen_canvas_help'},(props:ToolCallViewProps)=><CanvasHelpToolView {...props} onOpen={openCanvas}/>));
   });

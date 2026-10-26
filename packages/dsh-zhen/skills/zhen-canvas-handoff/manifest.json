@@ -1,6 +1,6 @@
 {
   "id": "zhen-canvas-handoff",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "title": "画布创作交接",
   "description": "在已连接的 T8 画布创作图片、视频、音频、剧本和 Story；使用 DSH 的画布 MCP 规划并交给界面审阅。",
   "category": "workflow",

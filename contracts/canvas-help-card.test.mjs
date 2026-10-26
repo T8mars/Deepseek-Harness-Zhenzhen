@@ -26,10 +26,13 @@ test('C106: actual client slot and help-button handler select the existing conne
     slots:{inject(_name,run){return run();},register(spec,component){slots.push({spec,component});}},
   };
   await client.apply(ctx);assert.equal(mounted,1);
-  const main=slots.find(row=>row.spec.name==='main'),help=slots.find(row=>row.spec.name==='tool.call.toolview'&&row.spec.key==='zhen_canvas_help');assert.ok(main&&help);
+  const main=slots.find(row=>row.spec.name==='main'),help=slots.find(row=>row.spec.name==='tool.call.toolview'&&row.spec.key==='zhen_canvas_help'),header=slots.find(row=>row.spec.name==='conversation.header.leading');assert.ok(main&&help&&header);
   const navigation=main.spec.inject().navigation;assert.equal(navigation.current(),'home');
+  // The tool group may be collapsed after completion. A resident entry must
+  // navigate without expanding or executing any tool, including on a blank session.
+  const resident=nodes(header.component()).find(row=>row.type==='button'&&row.props.children==='画布创作');assert.ok(resident,'Canvas navigation must remain outside collapsed tool records');assert.equal(resident.props.type,'button');resident.props.onClick();assert.equal(navigation.current(),'connections');assert.deepEqual(panels,['zhen']);
   const view=help.component({phase:'result',block:block(packet),callId:'EXAMPLE_CALL'}),card=view.type(view.props),tree=card.type(card.props);
   nodes(tree).find(row=>row.type==='button'&&row.props.children==='打开画布连接').props.onClick();
-  assert.equal(navigation.current(),'connections');assert.deepEqual(panels,['zhen']);
+  assert.equal(navigation.current(),'connections');assert.deepEqual(panels,['zhen','zhen']);
   console.log(JSON.stringify({contract:'C106',actualPublishedHostTool:true,fixedNavigationMetadata:true,actualClientSlotAndButtonHandler:true,existingConnectionsRouteSelected:true,remoteMutations:0,nativeWrites:0,modelRequests:0}));
 });

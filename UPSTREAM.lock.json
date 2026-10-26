@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-26T05:05:48.658Z",
+  "checkedAt": "2026-10-26T07:59:44.209Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2686,6 +2686,59 @@
       "ordinaryCliReplacementAndUninstallVerified": true,
       "userMainRuntimeAdopted": true,
       "userActualNewGrantVerified": false
+    },
+    "canvasChatEntryAlignment": {
+      "decision": "0148",
+      "skillVersion": "1.0.8",
+      "focusedTests": 32,
+      "status": "full-local-and-installed-web-validated-pending-batch",
+      "userExistingWebFileTurnVerified": true,
+      "officialDesktopVerified": false,
+      "fullTests": 1525,
+      "archiveSha256": "4d66824a80c72612e011a801fdc7b3e7cd6e397c8caef4fdb3bf4d59bacda2ae",
+      "installedWebHeaderVerified": true
+    },
+    "officialDesktopFileTurn": {
+      "decision": "0147",
+      "version": "0.2.1-rc.3",
+      "signedOriginalDistribution": true,
+      "archiveSha256": "39b46a1a4e2f6b28a87cee46243920b11a2c8dd59efd2df5c3702331bae138de",
+      "installedFiles": 237,
+      "realNativeGuiFileTurnCompleted": true,
+      "manualModelSelection": false,
+      "credentialApiOnly": true,
+      "temporaryCredentialRemoved": true,
+      "normalQuitAndPublicCliRemove": true,
+      "fullDesktopRowsRollbackVerified": false,
+      "fifteenMinutePacketCaptureVerified": false,
+      "noKeyFormFlowVerified": false,
+      "wholeObjectiveComplete": false
+    },
+    "officialDesktopNetworkMetadata": {
+      "decision": "0149",
+      "archiveSha256": "39ce0b105c628aa25df8d44046a51a8ed4bb3959bb4f4abe021a591a55c842df",
+      "captureMs": 900045,
+      "eventsLost": 0,
+      "processScoped": true,
+      "payloadCaptured": false,
+      "normalMenuQuitVerified": false,
+      "orchestratorExit": 1,
+      "testCredentialRemoved": true,
+      "packageRemoved": true,
+      "wholeM0Complete": false
+    },
+    "canvasResidentCanarySync": {
+      "decision": "0150",
+      "baseCommit": "7ebe97f55f08f5713aff6658cf729b2c0ee9fa8b",
+      "previousPreparationCommit": "4470c1d901129bddaf46452f0c7e72d72b7995f2",
+      "status": "local-focused-package-cli-validated-pending-exact-ci-not-published",
+      "expectedStableSha256": "4d66824a80c72612e011a801fdc7b3e7cd6e397c8caef4fdb3bf4d59bacda2ae",
+      "expectedCanarySha256": "c6b49c5f2ef73a75963e33359b442eec976044819842cffefdae7b4b2f6251ba",
+      "wholeObjectiveComplete": false,
+      "focusedTests": 76,
+      "packageFiles": 237,
+      "otherPayloadFilesIdentical": 236,
+      "ordinaryCliReplacementAndUninstallVerified": true
     }
   }
 }

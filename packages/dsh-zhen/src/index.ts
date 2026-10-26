@@ -820,7 +820,7 @@ export default class ZhenService extends TypertRemoteService {
   @Remote
   async canvasStatus(): Promise<CanvasConnection> {
     const config = this.canvasConfig();
-    if (!config) return { configured: false, root: '', digest: '', connected: false, code: 'NOT_CONFIGURED', message: '选择已安装的 zcanvas-cli 目录，连接现有画布。', compat: null };
+    if (!config) return { configured: false, root: '', digest: '', connected: false, code: 'NOT_CONFIGURED', message: '请打开桌面画布，在“创作空间 → 画布连接”点击“连接画布，开始创作”。', compat: null };
     return new CanvasBridge(config).status();
   }
   @Remote
