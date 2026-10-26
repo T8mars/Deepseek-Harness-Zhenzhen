@@ -20,15 +20,15 @@
     "branch": "main",
     "policy": "commit-and-push-validated-batches",
     "firstCheckpointTag": "v0.1.0-dev.1",
-    "latestCheckpointTag": "v0.1.0-dev.111"
+    "latestCheckpointTag": "v0.1.0-dev.113"
   },
   "repositoryVisibility": "public-owner-confirmed",
   "canaryPreparation": {
     "version": "0.1.0-canary.1",
     "branch": "codex/canary-readiness",
-    "status": "local-focused-and-package-validated-pending-exact-ci-not-published",
-    "baseCommit": "238b35a445266f73406e3093c1448dea55079f59",
-    "previousPreparationCommit": "366dd9ed95ce90ef27225ab660a486b610c43091",
+    "status": "local-focused-and-package-cli-validated-pending-exact-ci-not-published",
+    "baseCommit": "b2abf5098cf638cb40291492a01ce22032e4f9ab",
+    "previousPreparationCommit": "0ee340fd0e2b9d31c964cd6db44a679e13c15389",
     "ownerReleaseDecision": "ui-and-canvas-acceptance-first"
   }
 }

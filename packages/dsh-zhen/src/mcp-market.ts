@@ -65,14 +65,32 @@ export function inspectMcpInstallation(directory: string): { digest: string; pac
   return { digest: digest.digest('hex'), packages: packages.length };
 }
 
+class McpReleaseIssue extends Error {
+  constructor(readonly kind: 'source' | 'revision' | 'metadata', readonly version = '', readonly node = '') { super(kind === 'source' ? 'MCP 发布信息与固定来源不一致。' : 'MCP 发布信息尚未通过校验。'); }
+}
+function mcpUpdateNotice(id: McpId, issue: unknown): string {
+  const detail = issue instanceof McpReleaseIssue ? issue.kind === 'source' ? '发布来源校验未通过' : issue.kind === 'revision' ? '来源未提供有效固定提交，暂不能校验' : '发布校验信息不完整，暂不能使用此更新' : '暂时无法读取更新，请稍后重新检查';
+  const version = issue instanceof McpReleaseIssue && issue.version ? ` ${issue.version}` : '';
+  const requirement = issue instanceof McpReleaseIssue && issue.node && !mcpNodeCompatible(issue.node) ? `；需要 Node ${issue.node}，当前 ${process.versions.node}` : '';
+  return `${MCP_RECIPES[id].title}${version}：${detail}${requirement}`.slice(0, 120);
+}
 export async function inspectMcpRelease(idInput: string, version: string, fetcher: typeof fetch = fetch, signal?: AbortSignal): Promise<McpRelease> {
   const id = mcpId.parse(idInput), recipe = MCP_RECIPES[id];
   if (!/^(?:latest|\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?)$/.test(version) || version.length > 60) throw new Error('MCP 版本无效。');
   const metadata = JSON.parse(await readPublic(`https://registry.npmjs.org/${encodeURIComponent(recipe.package)}/${version}`, fetcher, signal, 256 * 1024));
-  if (metadata.name !== recipe.package || (version !== 'latest' && metadata.version !== version) || metadata.repository?.url !== REPOSITORY || metadata.bin?.[`mcp-server-${id}`] !== recipe.entry || typeof metadata.dist?.tarball !== 'string') throw new Error('MCP 发布信息与固定来源不一致。');
-  const tarball = new URL(metadata.dist.tarball);
-  if (tarball.origin !== 'https://registry.npmjs.org' || tarball.username || tarball.password || tarball.search || tarball.hash) throw new Error('MCP 注册表来源不受支持。');
-  return mcpReleaseSchema.parse({ id, version: metadata.version, integrity: metadata.dist.integrity, gitHead: metadata.gitHead, node: metadata.engines?.node ?? '', license: metadata.license ?? '', checkedAt: new Date().toISOString() });
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) throw new McpReleaseIssue('metadata');
+  if (metadata.name !== recipe.package || (version !== 'latest' && metadata.version !== version) || metadata.repository?.url !== REPOSITORY || metadata.bin?.[`mcp-server-${id}`] !== recipe.entry || typeof metadata.dist?.tarball !== 'string') throw new McpReleaseIssue('source');
+  let tarball: URL; try { tarball = new URL(metadata.dist.tarball); } catch { throw new McpReleaseIssue('source'); }
+  if (tarball.origin !== 'https://registry.npmjs.org' || tarball.username || tarball.password || tarball.search || tarball.hash) throw new McpReleaseIssue('source');
+  // Only bounded, validated public facts can enter a user-facing diagnosis.
+  // An incomplete publication still cannot become an installable candidate.
+  const parsedVersion = mcpReleaseSchema.shape.version.safeParse(metadata.version);
+  const publicVersion = parsedVersion.success ? parsedVersion.data : '';
+  const publicNode = typeof metadata.engines?.node === 'string' && metadata.engines.node.length <= 40 && semver.validRange(metadata.engines.node) ? metadata.engines.node : '';
+  if (!/^[a-f0-9]{40}$/.test(typeof metadata.gitHead === 'string' ? metadata.gitHead : '')) throw new McpReleaseIssue('revision', publicVersion, publicNode);
+  const parsed = mcpReleaseSchema.safeParse({ id, version: metadata.version, integrity: metadata.dist.integrity, gitHead: metadata.gitHead, node: metadata.engines?.node ?? '', license: metadata.license ?? '', checkedAt: new Date().toISOString() });
+  if (!parsed.success) throw new McpReleaseIssue('metadata', publicVersion, publicNode);
+  return parsed.data;
 }
 
 async function installDependencies(root: string, cache: string, signal?: AbortSignal): Promise<void> {
@@ -153,17 +171,19 @@ export class McpMarket {
   async check(signal?: AbortSignal): Promise<McpMarketSnapshot> {
     if (this.checking) return this.checking;
     const pending = (async () => {
-      const candidates = await Promise.allSettled((Object.keys(MCP_RECIPES) as McpId[]).map(id => inspectMcpRelease(id, 'latest', this.fetcher, signal)));
+      const ids = Object.keys(MCP_RECIPES) as McpId[];
+      const candidates = await Promise.allSettled(ids.map(id => inspectMcpRelease(id, 'latest', this.fetcher, signal)));
       if (signal?.aborted) return this.snapshot();
-      let rejected = false;
-      for (const result of candidates) {
-        if (result.status !== 'fulfilled') continue;
+      const notices: string[] = [];
+      for (const [index, result] of candidates.entries()) {
+        if (result.status !== 'fulfilled') { notices.push(mcpUpdateNotice(ids[index]!, result.reason)); continue; }
         const release = result.value;
         const known = [this.state.candidates.find(item => item.id === release.id && item.version === release.version), ...this.state.installations.map(item => item.release).filter(item => item.id === release.id && item.version === release.version)].filter(Boolean);
-        if (known.some(item => item!.integrity !== release.integrity || item!.gitHead !== release.gitHead || item!.node !== release.node || item!.license !== release.license)) { rejected = true; continue; }
+        if (known.some(item => item!.integrity !== release.integrity || item!.gitHead !== release.gitHead || item!.node !== release.node || item!.license !== release.license)) { notices.push(`${MCP_RECIPES[release.id].title}：此版本的校验信息发生变化，保留原记录。`); continue; }
         this.state.candidates = [...this.state.candidates.filter(item => item.id !== release.id), release];
+        if (!mcpNodeCompatible(release.node)) notices.push(`${MCP_RECIPES[release.id].title} ${release.version}：新版本需要 Node ${release.node}，当前 ${process.versions.node}`.slice(0, 120));
       }
-      this.state.checkedAt = new Date().toISOString(); this.state.message = !rejected && candidates.every(result => result.status === 'fulfilled') ? '已读取更新候选。安装固定版本前会核对 Node 要求和依赖。' : '部分来源不可用或校验未通过，保留已知版本与连接。'; this.save(); return this.snapshot();
+      this.state.checkedAt = new Date().toISOString(); this.state.message = notices.length ? `${notices.join('；')}。已保留当前版本与连接，也可选择页面中的固定版本。` : '已读取更新候选。安装固定版本前会核对 Node 要求和依赖。'; this.save(); return this.snapshot();
     })();
     this.checking = pending; try { return await pending; } finally { if (this.checking === pending) this.checking = undefined; }
   }

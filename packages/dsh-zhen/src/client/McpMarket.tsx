@@ -21,6 +21,8 @@ export function McpMarket({ api }: { api: ZhenRemote }): React.ReactElement {
     void refresh(current).catch(() => { if (current()) setNotice('MCP 市场暂时不可用。'); });
   }, [api]);
   const act = (task: RemoteAction): Promise<void> => scope.run(task, refresh);
+  const compatibleCandidates = view?.snapshot.candidates.filter(release => !view.incompatible.includes(`${release.id}@${release.version}`)) ?? [];
+  const updateSummary = view?.snapshot.checkedAt ? compatibleCandidates.length ? '已保留可查看的版本，现有连接保持。检查详情中可以查看本次更新结果。' : '暂时没有可用更新。可继续使用已有版本，或选择页面中的固定版本。' : view?.snapshot.message ?? '正在读取本机状态…';
   return <>
     <section className="zhen-card" aria-label="MCP 市场更新">
       <div className="zhen-section-heading"><h2>MCP 市场</h2><button type="button" className="zhen-secondary" disabled={busy} onClick={() => void act(async current => { unwrap(await api.mcpCheck()); })}>{busy ? '处理中…' : '检查更新'}</button></div>
@@ -28,7 +30,8 @@ export function McpMarket({ api }: { api: ZhenRemote }): React.ReactElement {
       <p className="zhen-muted">来源：<a href="https://github.com/modelcontextprotocol/servers" target="_blank" rel="noreferrer">Model Context Protocol 参考服务器 ↗</a>。程序以本机用户权限运行；启用前请核对来源和访问范围。</p>
       <label className="zhen-checkbox"><input type="checkbox" disabled={busy || !view} checked={view?.snapshot.automatic ?? false} onChange={event => { const enabled = event.target.checked; void act(async current => { unwrap(await api.mcpAutomatic(enabled)); }); }}/><span>每日检查，并为已启用连接下载兼容的更新候选</span></label>
       <p className="zhen-muted">下载后保留当前版本，审阅并确认后才安排下次启动。未启用的工具不会自动下载。</p>
-      <p className="zhen-muted" role="status">{view?.snapshot.message ?? '正在读取本机状态…'}{view && ` · 当前 Node ${view.node}`}</p>
+      <p className="zhen-muted" role="status">{updateSummary}</p>
+      {view?.snapshot.checkedAt && <details className="zhen-margin"><summary>更新检查详情</summary><p className="zhen-source-path">{view.snapshot.message}</p><p className="zhen-muted">当前运行环境：Node {view.node}</p></details>}
       {view?.snapshot.checkedAt && <p className="zhen-muted">最近检查：{new Date(view.snapshot.checkedAt).toLocaleString()}</p>}
     </section>
     {notice && <div className="zhen-notice" role="status">{notice}</div>}
@@ -57,7 +60,7 @@ export function McpMarket({ api }: { api: ZhenRemote }): React.ReactElement {
           const incompatible = view.incompatible.includes(`${recipe.id}@${release.version}`);
           return <details key={release.version} className="zhen-margin" open={release.version === recipe.version}>
             <summary>{release.version}{local ? ' · 已校验下载' : ' · 可下载'}{active ? ' · 当前启用' : ''}{selected?.pending === release.version ? ' · 待重启' : ''}</summary>
-            {incompatible && <p role="status">当前 Node 不满足此版本要求，请先更新运行环境。</p>}
+            {incompatible && <p role="status">此版本暂不适合当前应用。可继续使用已有版本，或选择页面中的固定版本。</p>}
             <details className="zhen-margin"><summary>来源与校验信息</summary>
             <p className="zhen-muted">Node 要求：{release.node || '发布包未声明，需在本机加载验证'}</p>
             <p className="zhen-source-path">SHA-512：{release.integrity}</p>
