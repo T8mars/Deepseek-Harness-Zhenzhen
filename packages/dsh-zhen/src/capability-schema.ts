@@ -23,6 +23,7 @@ export type CapabilityItem = z.infer<typeof capabilityItemSchema>;
 export type CapabilityPage = z.infer<typeof capabilityPageSchema>;
 export const capabilityCheckSchema = z.object({ checkedAt: z.string().max(40), automatic: z.boolean(), sources: z.array(z.object({
   id: z.enum(['docs', 'music', 'midjourney']), sha256: z.string().max(64), changed: z.boolean(), state: z.enum(['checked', 'unavailable']),
+  baselineSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   added: z.array(z.string().max(160)).max(200), removed: z.array(z.string().max(160)).max(200), modified: z.array(z.string().max(160)).max(200),
 }).strict()).max(3) }).strict();
 export type CapabilityCheck = z.infer<typeof capabilityCheckSchema>;

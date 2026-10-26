@@ -55,6 +55,10 @@ test('C141: actual published Host and Remote accept a generic TaskDto numeric ro
   },({response})=>{response.setHeader('Content-Type','application/json');response.end(JSON.stringify(exampleTask('image',{record:{id:12345,task_id:exampleTaskId,usage:{amount:1.23456789,currency:'EXAMPLE积分'}}})));});
 });
 
+test('C22: successful HTTP Retry-After survives the published Host and Remote boundary and restart without an early query',async()=>{
+ await environment(async({host,requests})=>{const first=await host(),item=await first.service.gatewayTaskAdd({protocol:'image',taskId:exampleTaskId});await first.service.gatewayTaskTracking(item.id,true);const pending=await first.service.gatewayTaskRefresh(item.id);assert.equal(pending.status,'running');const wait=Date.parse(pending.nextCheckAt)-Date.parse(pending.checkedAt);assert.ok(wait>=60000&&wait<61000);assert.deepEqual(TYPERT_REMOTE.methods['zhen/gatewayTaskRefresh'].result.create().parse(pending),pending);await first.ctx.fiber.dispose();const reopened=await host();assert.equal((await reopened.service.gatewayTaskList())[0].nextCheckAt,pending.nextCheckAt);await reopened.service.gatewayTaskRefresh(item.id);await delay(6100);assert.equal(requests.length,1);assert.equal(reopened.reads(),0);console.log(JSON.stringify({contract:'C22',successfulRetryAfterThroughActualHttp:true,persistedAcrossPublishedHostRestart:true,manualAndAutomaticWaitPreserved:true,readOnlyRequests:1,submitRequests:0}));},({response})=>{response.setHeader('Content-Type','application/json');response.setHeader('Retry-After','60');response.end(JSON.stringify(exampleTask('image',{record:{status:'IN_PROGRESS'}})));});
+});
+
 test('C22: published Host/Remote queries eight independent documented routes through a real isolated HTTP transport without returning provider material', async () => {
   await environment(async ({ host, requests }) => {
     const h = await host(); assert.deepEqual(await h.service.gatewayTaskList(), []); assert.equal(h.reads(), 0);

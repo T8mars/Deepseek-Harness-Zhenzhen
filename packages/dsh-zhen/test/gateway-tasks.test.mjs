@@ -106,6 +106,18 @@ test('rate limits honor Retry-After and manual refresh cannot bypass persisted b
   await f.value.refresh(item.id); await f.value.automatic(); assert.equal(calls, 2); f.advance(60001); await f.value.automatic(); assert.equal(calls, 3);
 });
 
+test('successful pending responses persist Retry-After across restart and neither manual nor automatic refresh bypasses it',async t=>{
+ let calls=0;const fetcher=async()=>{calls++;return Response.json(exampleTask('image',{record:{status:calls===1?'IN_PROGRESS':'SUCCESS'}}),{headers:{'Retry-After':'60'}});},f=store(t,fetcher),item=f.value.add(spec);f.value.tracking(item.id,true);const first=await f.value.refresh(item.id);assert.equal(Date.parse(first.nextCheckAt)-f.now(),60000);assert.equal(first.status,'running');await f.value.close();const reopened=new GatewayTasks(f.file,async()=>'EXAMPLE_TEST_ONLY_KEY',fetcher,f.now);try{f.advance(5001);await reopened.refresh(item.id);await reopened.automatic();assert.equal(calls,1);f.advance(54999);await reopened.automatic();assert.equal(calls,2);assert.equal(reopened.list()[0].status,'succeeded');assert.equal(reopened.list()[0].tracking,false);await reopened.automatic();assert.equal(calls,2);}finally{await reopened.close();}
+});
+
+test('pending image queries use the documented two-second interval while video keeps five seconds',async t=>{
+ for(const[protocol,wait]of[['image',2000],['video',5000]]){let calls=0;const f=store(t,async()=>{calls++;return Response.json(exampleTask(protocol,{record:{status:protocol==='image'?'IN_PROGRESS':'in_progress'}}));}),item=f.value.add({...spec,protocol}),first=await f.value.refresh(item.id);assert.equal(Date.parse(first.nextCheckAt)-f.now(),wait);f.advance(wait-1);await f.value.refresh(item.id);assert.equal(calls,1);f.advance(1);await f.value.refresh(item.id);assert.equal(calls,2);}
+});
+
+test('successful Retry-After supports dates, bounded waits and invalid headers without adding provider metadata to observations',async()=>{
+ const now=Date.parse('2026-10-20T00:00:00.000Z');for(const[header,expected]of[['60',60000],['Tue, 20 Oct 2026 00:01:00 GMT',60000],['0',0],['EXAMPLE_INVALID',0],['Mon, 19 Oct 2026 00:00:00 GMT',0],['999999999',86400000]]){const waits=[],result=await readGatewayTask(spec,'EXAMPLE_TEST_ONLY_KEY',async()=>Response.json(exampleTask('image',{record:{status:'IN_PROGRESS'}}),{headers:{'Retry-After':header}}),undefined,undefined,{now:()=>now,nextPoll:wait=>waits.push(wait)});assert.deepEqual(waits,[expected]);assert.deepEqual(Object.keys(result).sort(),['progress','resultCount','status','usage']);}const waits=[];await readGatewayTask(spec,'EXAMPLE_TEST_ONLY_KEY',async()=>Response.json(exampleTask('image'),{headers:{'Retry-After':'60'}}),undefined,undefined,{now:()=>now,nextPoll:wait=>waits.push(wait)});assert.deepEqual(waits,[]);
+});
+
 test('SQLite records never retain keys, prompt/lyrics, provider failures, signed media or old cost fields', async t => {
   const f = store(t, async () => Response.json(exampleTask('music'))), item = f.value.add({ protocol: 'music', taskId: exampleTaskId });
   await f.value.refresh(item.id); await f.value.close(); const text = readFileSync(f.file).toString('utf8');

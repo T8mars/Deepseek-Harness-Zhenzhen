@@ -32,7 +32,24 @@ export class CapabilityMonitor {
   constructor(private readonly file: string, private readonly catalog: CapabilityCatalog, private readonly fetcher: typeof fetch = fetch) {}
   snapshot(): CapabilityCheck {
     if (!existsSync(this.file)) return { checkedAt: '', automatic: true, sources: [] };
-    try { if (statSync(this.file).size > 128 * 1024) throw new Error(); return capabilityCheckSchema.parse(JSON.parse(readFileSync(this.file, 'utf8'))); }
+    try {
+      if (statSync(this.file).size > 128 * 1024) throw new Error();
+      const value = capabilityCheckSchema.parse(JSON.parse(readFileSync(this.file, 'utf8')));
+      let stale = false;
+      const sources = value.sources.map(source => {
+        if (source.state !== 'checked') return source;
+        const baseline = this.catalog.sources.find(item => item.id === source.id)!.sha256;
+        const same = source.sha256 === baseline, current = source.baselineSha256 === baseline;
+        if (!same && !current) stale = true;
+        return { ...source, ...(same ? { baselineSha256: baseline } : {}), changed: !same,
+          added: same || !current ? [] : source.added, removed: same || !current ? [] : source.removed, modified: same || !current ? [] : source.modified };
+      });
+      // A matching reviewed hash retires an old notice. Comparisons made against
+      // another catalog are refreshed under the existing automatic preference.
+      // Reading a snapshot never writes state, performs IO beyond this file or
+      // changes routes, credentials or the user's update choice.
+      return { ...value, checkedAt: stale ? '' : value.checkedAt, sources };
+    }
     catch { return { checkedAt: '', automatic: false, sources: [] }; }
   }
   private save(value: CapabilityCheck): void { capabilityCheckSchema.parse(value); mkdirSync(dirname(this.file), { recursive: true }); writeFileSync(this.file + '.tmp', JSON.stringify(value) + '\n', { mode: 0o600 }); renameSync(this.file + '.tmp', this.file); }
@@ -65,8 +82,8 @@ export class CapabilityMonitor {
             for (const key of old.keys()) if (!current.has(key)) removed.push(key);
           }
           if([added,removed,modified].some(items=>items.length>200))throw new Error('Capability difference limit.');
-          return { id: source.id, sha256: digest, changed: digest !== source.sha256, state: 'checked' as const, added, removed, modified };
-        } catch { return { id: source.id, sha256: '', changed: false, state: 'unavailable' as const, added: [], removed: [], modified: [] }; }
+          return { id: source.id, baselineSha256: source.sha256, sha256: digest, changed: digest !== source.sha256, state: 'checked' as const, added, removed, modified };
+        } catch { return { id: source.id, baselineSha256: source.sha256, sha256: '', changed: false, state: 'unavailable' as const, added: [], removed: [], modified: [] }; }
       }));
       const value = { checkedAt: new Date().toISOString(), automatic: this.snapshot().automatic, sources };
       if (!signal?.aborted) this.save(value); return value;

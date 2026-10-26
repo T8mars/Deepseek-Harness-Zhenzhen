@@ -12,6 +12,11 @@ export const GATEWAY_TASK_PATHS: Readonly<Record<GatewayTaskProtocol, string>> =
 const object = (value: unknown): Record<string, unknown> | undefined => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
 const terminal = (status: GatewayTaskObservation['status']): boolean => ['succeeded', 'failed', 'cancelled'].includes(status);
 const states: Readonly<Record<string, GatewayTaskObservation['status']>> = Object.freeze({ NOT_START: 'queued', SUBMITTED: 'queued', IN_PROGRESS: 'running', SUCCESS: 'succeeded', FAILURE: 'failed', queued: 'queued', pending: 'queued', submitted: 'queued', in_progress: 'running', processing: 'running', running: 'running', completed: 'succeeded', succeeded: 'succeeded', failed: 'failed', cancelled: 'cancelled' });
+function retryAfter(response:Response,now:number):number{
+  const value=response.headers.get('retry-after');if(!value||value.length>128)return 0;
+  const wait=/^\d+$/.test(value)?Number(value)*1000:Date.parse(value)-now;
+  return Number.isFinite(wait)&&wait>0?Math.min(wait,86400000):0;
+}
 
 /** Extract safe task facts only. Provider text, prompt, titles, lyrics, quota,
  * legacy cost fields and signed result URLs never enter public observations.
@@ -55,7 +60,7 @@ export function parseGatewayTask(spec: GatewayTaskSpec, input: unknown, collect?
 }
 
 /** Fixed authenticated GETs only. No submit, retry-create, delete or media fetch. */
-export async function readGatewayTask(spec: GatewayTaskSpec, key: string, fetcher: typeof fetch = fetch, signal?: AbortSignal, collect?: (sources: string[]) => void): Promise<GatewayTaskObservation> {
+export async function readGatewayTask(spec: GatewayTaskSpec, key: string, fetcher: typeof fetch = fetch, signal?: AbortSignal, collect?: (sources: string[]) => void, timing?:{now?:()=>number;nextPoll?:(waitMs:number)=>void}): Promise<GatewayTaskObservation> {
   gatewayTaskSpecSchema.parse(spec);
   const abort = AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(15000)]);
   let response: Response;
@@ -63,15 +68,17 @@ export async function readGatewayTask(spec: GatewayTaskSpec, key: string, fetche
   catch { throw new GatewayTaskError(abort.aborted && signal?.aborted ? 'CANCELLED' : 'NETWORK'); }
   if (!response.ok) {
     await response.body?.cancel().catch(() => {});
-    let retryMs = 0; const retry = response.headers.get('retry-after');
-    if (retry) { const seconds = /^\d+$/.test(retry) ? Number(retry) * 1000 : Date.parse(retry) - Date.now(); if (Number.isFinite(seconds) && seconds > 0) retryMs = Math.min(seconds, 86400000); }
+    const retryMs = retryAfter(response,(timing?.now??Date.now)());
     throw new GatewayTaskError([401, 403].includes(response.status) ? 'AUTH' : response.status === 404 ? 'NOT_FOUND' : response.status === 429 ? 'RATE_LIMIT' : response.status >= 500 ? 'SERVER' : 'RESPONSE', retryMs);
   }
   const reader = response.body?.getReader(); if (!reader) throw new GatewayTaskError('RESPONSE');
   const parts: Uint8Array[] = []; let size = 0, decoding = false;
   try {
     while (true) { const item = await reader.read(); if (item.done) break; size += item.value.byteLength; if (size > 1048576) throw new GatewayTaskError('RESPONSE'); parts.push(item.value); }
-    abort.throwIfAborted(); decoding = true; return parseGatewayTask(spec, JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(parts))), collect);
+    abort.throwIfAborted(); decoding = true;
+    const observation=parseGatewayTask(spec, JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(parts))), collect);
+    if(observation.status==='queued'||observation.status==='running')timing?.nextPoll?.(retryAfter(response,(timing.now??Date.now)()));
+    return observation;
   } catch (error) { throw error instanceof GatewayTaskError ? error : new GatewayTaskError(signal?.aborted ? 'CANCELLED' : decoding ? 'RESPONSE' : 'NETWORK'); }
   finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
 }
@@ -140,14 +147,15 @@ export class GatewayTasks {
       let key; try { key = await this.resolveKey(); } catch { throw new GatewayTaskError('MISSING_CREDENTIAL'); }
       if (signal.aborted || generation !== this.generation) throw new GatewayTaskError('CONFIG_CHANGED');
       if (!key) throw new GatewayTaskError('MISSING_CREDENTIAL');
-      let sources: string[] = [];
-      const observation = await readGatewayTask({ protocol: record.protocol, taskId: record.taskId }, key, this.fetcher, signal, value => { sources = value; });
+      let sources: string[] = [],retryMs=0;
+      const observation = await readGatewayTask({ protocol: record.protocol, taskId: record.taskId }, key, this.fetcher, signal, value => { sources = value; },{now:this.now,nextPoll:wait=>{retryMs=wait;}});
       if (signal.aborted || generation !== this.generation || this.closed) throw new GatewayTaskError('CONFIG_CHANGED');
       const current = this.get(record.id);
       this.media.delete(record.id);
       if (observation.status === 'succeeded' && sources.length) this.media.set(record.id, { sources, expires: this.now() + 300000 });
       while (this.media.size > 10) this.media.delete(this.media.keys().next().value!);
-      return this.save({ ...current, ...observation, checkedAt: new Date(this.now()).toISOString(), nextCheckAt: new Date(this.now() + 5000).toISOString(), failures: 0, code: observation.status === 'unknown' ? 'UNRECOGNIZED_STATUS' : '', tracking: current.tracking && !terminal(observation.status) && observation.status !== 'unknown' });
+      const wait=Math.max(record.protocol==='image'?2000:5000,retryMs);
+      return this.save({ ...current, ...observation, checkedAt: new Date(this.now()).toISOString(), nextCheckAt: new Date(this.now() + wait).toISOString(), failures: 0, code: observation.status === 'unknown' ? 'UNRECOGNIZED_STATUS' : '', tracking: current.tracking && !terminal(observation.status) && observation.status !== 'unknown' });
     } catch (error) {
       this.media.delete(record.id);
       if (this.closed) throw new GatewayTaskError('UNAVAILABLE');
