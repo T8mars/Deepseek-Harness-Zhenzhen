@@ -12,7 +12,7 @@ const labels: Record<CanvasTransferView['phase'], string> = {
   preview: '待你核对', requesting: '正在请求画布审批', pending: '等待画布窗口批准', submitting: '正在核对原生结果',
   available: '素材已在画布项目中', applied: '已找到原生放置回执', denied: '画布已拒绝', unknown: '结果待确认，只查询原操作', expired: '本次预览或审批已过期', reverted: '原生放置已撤销',
 };
-export function CanvasTransferPanel({ api, receiptId, onConnections }: { api: ZhenRemote; receiptId: string; onConnections: () => void }): React.ReactElement {
+export function CanvasTransferPanel({ api, receiptId, onConnections }: { api: ZhenRemote; receiptId: string; onConnections: () => void }): React.ReactElement | null {
   const [view, setView] = useState<CanvasTransferView | null>(null), [targets, setTargets] = useState<CanvasWorkspaces>({ canvases: [] });
   const [target, setTarget] = useState(''), [busy, setBusy] = useState(false), [confirmed, setConfirmed] = useState(false), [notice, setNotice] = useState('');
   const [targetsLoaded,setTargetsLoaded]=useState(false);
@@ -31,10 +31,12 @@ export function CanvasTransferPanel({ api, receiptId, onConnections }: { api: Zh
   const active = !!view && ['requesting', 'pending', 'submitting', 'unknown'].includes(view.phase);
   const selectedTarget=selectedCanvasTarget(targets,target);
   const changed = !!view && ((!!receiptId && receiptId !== view.receiptId) || ((targetsLoaded||!!target)&&(!selectedTarget||selectedTarget.id!==view.canvasId||selectedTarget.projectId!==view.projectId)));
+  if(!receiptId&&!view&&!notice)return null;
   return <section className="zhen-card" aria-label="已保存结果送到画布">
-    <div className="zhen-section-heading"><h2>送到画布</h2><button type="button" className="zhen-link" onClick={onConnections}>画布连接与权限 ↗</button></div>
+    <div className="zhen-section-heading"><h2>送到画布</h2><button type="button" className="zhen-link" onClick={onConnections}>连接画布 ↗</button></div>
+    {receiptId&&<>
     <p>选择已保存结果和目标画布，先核对文件。导入项目后，可再预览并确认放到画布上。</p>
-    <p className="zhen-muted">在配对页单独开启素材交接；放到画布还需要修改画布权限。每一步都由画布窗口确认。</p>
+    <p className="zhen-muted">连接时默认申请全部创作能力，无需另找权限开关。导入和放置前，画布窗口会显示本次操作供你确认。</p>
     <ActiveCanvasTargets report={activeTargets} disabled={busy||active} onRead={()=>void action(async version=>{
       const epoch=++targetEpoch.current;setActiveTargets(undefined);setTarget('');setTargetsLoaded(true);setConfirmed(false);
       const result=unwrap(await canvasTargetApi(api).canvasActiveTargets());if(generation.current!==version||targetEpoch.current!==epoch)return;
@@ -44,6 +46,7 @@ export function CanvasTransferPanel({ api, receiptId, onConnections }: { api: Zh
     <label className="zhen-label" htmlFor={`${field}-target`}>目标画布</label><select className="zhen-input" id={`${field}-target`} value={target} disabled={busy || active} onChange={event => {targetEpoch.current++;setActiveTargets(undefined); setTarget(event.currentTarget.value); setConfirmed(false); }}><option value="">读取列表后按名称选择画布</option>{targets.canvases.map(item => <option key={canvasTargetKey(item)} value={canvasTargetKey(item)}>{item.name} · 修订 {item.revision}</option>)}</select>
     {targets.canvases.length>1&&<p className="zhen-muted">请选择这次使用的画布；列表顺序不代表当前窗口。</p>}
     <button type="button" className="zhen-secondary zhen-margin" disabled={busy || active || !receiptId || !selectedTarget} onClick={() => { const selected = selectedTarget; if (selected) void action(async () => { unwrap(await canvasTargetApi(api, selected.connectionId).canvasTransferPreview({ receiptId, projectId: selected.projectId, canvasId: selected.id })); }); }}>核对所选保存结果</button>
+    </>}
     {!receiptId && <p className="zhen-muted">在上方保存记录点击“送到画布”选择文件。已有交接进度可继续查询。</p>}
     {view && <article className="zhen-task-row"><strong role="status">{labels[view.phase]}</strong>
       <p>{view.file.name} · {view.file.mime} · {view.file.size.toLocaleString()} B</p><p className="zhen-muted">项目 {view.projectId} · 画布 {view.canvasId} · revision {view.canvasRevision}</p>

@@ -16,6 +16,28 @@ async function fixture(){
 }
 function apiState(){const state={report:{canvases:[a,b],total:2,truncated:false},calls:[],transfer:null};const api={canvasWorkflowSnapshot:()=>ok(null),canvasRunSnapshot:()=>ok(null),canvasTransferSnapshot:()=>ok(state.transfer),canvasCandidates:()=>ok([]),canvasWorkspaces:()=>ok(structuredClone(state.report)),canvasWorkflowPreview:input=>{state.calls.push(input);return ok(null);},canvasTransferPreview:input=>{state.calls.push(input);return ok(null);},canvasRunNodes:(projectId,canvasId)=>{state.calls.push({projectId,canvasId});return ok({projectId,canvasId,revision:1,nodes:[],nextOffset:0});},canvasTasksList:input=>{state.calls.push(input);return ok({items:[]});}};return{state,api};}
 
+test('C65: transfer setup stays out of an empty task page and appears when a saved result is selected',async()=>{
+ const f=await fixture(),{api,state}=apiState(),props={api,receiptId:'',onConnections(){}},driver=clientHooks(f.modules.CanvasTransfer.CanvasTransferPanel,props);
+ try{
+  driver.render();await driver.settle();assert.equal(driver.render(),null);assert.equal(state.calls.length,0);
+  let tree=driver.render({...props,receiptId:'EXAMPLE_RECEIPT'});await driver.settle();tree=driver.render();
+  assert.ok(button(tree,'核对所选保存结果'));assert.equal(nodes(tree).filter(node=>node.type==='select').length,1);
+  const html=renderToStaticMarkup(tree);assert.equal(html.includes('单独开启'),false);assert.ok(html.includes('默认申请全部创作能力'));assert.equal(state.calls.length,0);
+ }finally{driver.dispose();f.dispose();}
+});
+
+test('C65: an existing transfer remains recoverable without selecting the saved result again',async()=>{
+ const f=await fixture(),{api,state}=apiState();
+ state.transfer={id:'EXAMPLE_TRANSFER',receiptId:'EXAMPLE_RECEIPT',phase:'pending',stage:'import',projectId:a.projectId,canvasId:a.id,canvasRevision:1,file:{name:'EXAMPLE.png',mime:'image/png',size:10,sha256:'a'.repeat(64)},maxImportBytes:100};
+ const completed=[];api.canvasTransferComplete=id=>{completed.push(id);return ok(state.transfer);};
+ const driver=clientHooks(f.modules.CanvasTransfer.CanvasTransferPanel,{api,receiptId:'',onConnections(){}});
+ try{
+  driver.render();await driver.settle();let tree=driver.render();assert.equal(nodes(tree).filter(node=>node.type==='select').length,0);
+  button(tree,'检查窗口审批并导入').props.onClick();await driver.settle();tree=driver.render();
+  assert.deepEqual(completed,['EXAMPLE_TRANSFER']);assert.equal(state.calls.length,0);assert.ok(text(tree).includes('EXAMPLE.png'));
+ }finally{driver.dispose();f.dispose();}
+});
+
 test('C209: production workflow review exposes changed characters and retained original after reload without prechecking approval',async()=>{
  const f=await fixture();let driver;
  try{
