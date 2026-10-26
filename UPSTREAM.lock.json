@@ -2702,8 +2702,12 @@
       "packageFiles": 237,
       "archiveSha256": "43ec184a6a05fc8bd68c3cb1c7708006069fd9714529546493fcc1ca72e6c93e",
       "ordinaryCliReplacementAndUninstallVerified": true,
-      "userAdoptionVerified": false,
-      "exactCiVerified": false
+      "userAdoptionVerified": true,
+      "exactCiVerified": false,
+      "preservedPublicRows": 194,
+      "actualUserUiVerified": true,
+      "candidateFocusedTests": 62,
+      "backupAndExactCi": "pending-this-batch"
     }
   }
 }
