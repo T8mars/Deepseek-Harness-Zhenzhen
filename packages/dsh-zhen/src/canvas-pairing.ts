@@ -90,10 +90,11 @@ export class CanvasPairing {
     const session = await this.session(config, runtime);
     return session.state !== 'paired' && locator && Date.parse(locator.expiresAt) <= Date.now() ? view('expired', '配对验证码已过期，可重新发起配对。') : session;
   }); }
-  begin(handoff = false, writable = false, runnable = false, assetTransfer = false): Promise<CanvasPairingView> {
+  begin(handoff = false, writable = false, runnable = false, assetTransfer = false, expectedConfig?: CanvasConfig): Promise<CanvasPairingView> {
     if (this.starting) return this.starting;
     const task = this.serial(async () => {
     const { config, runtime } = await this.binding(), locator = this.own(config, runtime);
+    if (expectedConfig && (config.root !== expectedConfig.root || config.digest !== expectedConfig.digest || config.instance !== expectedConfig.instance)) throw new CanvasError('CANVAS_CONFIG_CHANGED', '连接已变化，请重新点击连接画布。');
     if (locator && Date.parse(locator.expiresAt) > Date.now()) {
       const pending = this.pending(locator, runtime); if (pending) return pending;
     }

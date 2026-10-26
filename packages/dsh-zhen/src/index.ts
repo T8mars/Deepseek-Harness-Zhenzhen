@@ -223,6 +223,7 @@ export default class ZhenService extends TypertRemoteService {
   private mediaTasks?: GatewayTasks;
   private mediaExports?: GatewayMedia;
   private canvasPairing?: CanvasPairing;
+  private canvasQuickConnecting?: Promise<CanvasPairingView>;
   private canvasWorkflow?: CanvasWorkflow;
   private canvasRuns?: CanvasRuns;
   private canvasTasks?: CanvasTasks;
@@ -684,6 +685,43 @@ export default class ZhenService extends TypertRemoteService {
   }
   @Remote
   canvasPairingSnapshot(): Promise<CanvasPairingView> { return this.pairingOperation(() => this.pairings().snapshot()); }
+  /** One explicit owner action discovers the desktop, checks it and requests complete creation access. */
+  @Remote
+  canvasQuickConnect(): Promise<CanvasPairingView> {
+    if (this.canvasQuickConnecting) return this.canvasQuickConnecting;
+    const task = (async () => {
+      try {
+        const previous = this.canvasConfig(), found = await this.canvasSetupDiscover();
+        const afterDiscovery = this.canvasConfig();
+        if (previous?.root !== afterDiscovery?.root || previous?.digest !== afterDiscovery?.digest || previous?.instance !== afterDiscovery?.instance) throw new CanvasError('CANVAS_CONFIG_CHANGED', '连接已变化，请重新点击连接画布。');
+        const running = found.candidates.filter(item => item.source === 'running-desktop');
+        const selected = running.find(item => item.root === previous?.root && item.digest === previous.digest) ?? (running.length === 1 ? running[0] : undefined);
+        if (!selected && running.length > 1) throw new CanvasError('CANVAS_DESKTOP_AMBIGUOUS', '检测到多个桌面画布。请关闭暂不用的画布后再次连接，或在高级设置中选择。');
+        if (!selected && !previous) throw new CanvasError('APP_NOT_RUNNING', '请先打开桌面画布，然后点击“连接画布，开始创作”。');
+        if (selected) await this.connectCanvas(selected.root, selected.root === previous?.root ? previous.instance : '', selected.digest);
+        let target = this.canvasConfig();
+        if (!target) throw new CanvasError('CANVAS_NOT_CONFIGURED', '请打开桌面画布后重新连接。');
+        const current = () => { const value = this.canvasConfig(); if (!value || value.root !== target!.root || value.digest !== target!.digest || value.instance !== target!.instance) throw new CanvasError('CANVAS_CONFIG_CHANGED', '连接已变化，请重新点击连接画布。'); };
+        let check = await this.canvasConnectionCheck(); current();
+        // A restarted desktop with one live instance needs no manual instance selection.
+        if (check.state === 'choose-instance' && check.instances.length === 1) {
+          await this.connectCanvas(target.root, check.instances[0]!.id, target.digest);
+          target = this.canvasConfig()!; check = await this.canvasConnectionCheck(); current();
+        }
+        if (check.state !== 'ready') throw new CanvasError(check.code, check.state === 'choose-instance' ? '有多个画布窗口，请选择这次使用的画布。' : check.state === 'not-running' ? '请先打开桌面画布，然后重新点击连接。' : '暂时无法连接这份画布。请通过画布自身更新或修复连接工具后，再点击连接；详情在高级设置中。');
+        const existing = await this.pairings().snapshot(); current();
+        const complete = ['canvas:read','run:read','asset:read','asset:transfer','browser:handoff','canvas:write','run:execute'];
+        if (existing.state === 'paired' && complete.every(scope => existing.scopes.includes(scope as CanvasPairingView['scopes'][number]))) return existing;
+        return await this.pairings().begin(true, true, true, true, target);
+      } catch (error) {
+        if (error instanceof RemoteError) throw error;
+        const safe = safeCanvasError(error); throw new RemoteError('zhen/refused', safe.message, { reason: safe.code });
+      }
+    })();
+    this.canvasQuickConnecting = task;
+    const settled = () => { if (this.canvasQuickConnecting === task) this.canvasQuickConnecting = undefined; };
+    void task.then(settled, settled); return task;
+  }
   @Remote
   canvasPairingBegin(handoff = false, writable = false, runnable = false, assetTransfer = false): Promise<CanvasPairingView> { return this.pairingOperation(() => this.pairings().begin(handoff, writable, runnable, assetTransfer)); }
   @Remote

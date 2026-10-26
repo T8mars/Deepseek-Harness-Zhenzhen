@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-26T03:57:16.542Z",
+  "checkedAt": "2026-10-26T04:52:01.930Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -2598,6 +2598,24 @@
       "installedExampleLightDark760And320Verified": true,
       "publicCliReplacementAndUninstallVerified": true,
       "userRuntimeAdopted": false
+    },
+    "canvasQuickConnect": {
+      "decision": "0144",
+      "status": "local-validated-batch-pending-exact-ci-and-adoption",
+      "requestedScopes": 7,
+      "newContracts": 15,
+      "focusedTests": 53,
+      "persistedPairingFormatChanged": false,
+      "nativeSourceModified": false,
+      "upstreamSourceModified": false,
+      "userRuntimeAdopted": false,
+      "verification": "Decision0144/C214: one-click desktop setup and all seven requested scopes retain fingerprint/native exact compatibility;single-instance restart recovery and owner-selection races covered. Final build/clean types/full1525 pass. Final237-file39b4 archive binds C63/C76 and all current canonical payloads;ordinary public CLI old529e replacement,normal Host/workers and uninstall restore the entire SDK baseline. Actual same-archive installed EXAMPLE light/dark760/320 page has one main action and hidden technical fields,requests seven scopes once,auto-completes after simulated original-native-auth approval,and preserves the session after reload. GUI Host exited0,root/auth cleaned,viewport reset. Actual native OS discovery/window approval,production adoption,candidate and exact CI remain separate. No Native source/config/CLI mutation or provider submission.",
+      "fullLocalTests": 1525,
+      "packageFiles": 237,
+      "artifactSha256": "39b46a1a4e2f6b28a87cee46243920b11a2c8dd59efd2df5c3702331bae138de",
+      "actualInstalledGuiVerified": true,
+      "automaticCompletionVerified": true,
+      "realNativeDesktopApprovalVerified": false
     }
   }
 }

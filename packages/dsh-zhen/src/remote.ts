@@ -191,6 +191,7 @@ export interface ZhenRemote {
   canvasSetupDiscover():Promise<RemoteResult<CanvasSetupDiscovery>>;
   canvasConnectionCheck():Promise<RemoteResult<CanvasConnectionCheck>>;
   canvasPairingSnapshot(): Promise<RemoteResult<CanvasPairingView>>;
+  canvasQuickConnect(): Promise<RemoteResult<CanvasPairingView>>;
   canvasPairingBegin(handoff?: boolean, writable?: boolean, runnable?: boolean, assetTransfer?: boolean): Promise<RemoteResult<CanvasPairingView>>;
   canvasPairingComplete(): Promise<RemoteResult<CanvasPairingView>>;
   canvasStatus(): Promise<RemoteResult<CanvasConnection>>;
@@ -377,6 +378,7 @@ export const TYPERT_REMOTE = createTypertRemoteInfo({ package: 'dsh-zhen', metho
   'zhen/canvasSetupDiscover':method('canvasSetupDiscover',canvasSetupDiscoverySchema,'Owner setup: read bounded desktop executable paths and CLI metadata; never execute candidates or pair.'),
   'zhen/canvasConnectionCheck':method('canvasConnectionCheck',canvasConnectionCheckSchema,'Owner setup: discover live instances and perform the already-reviewed CLI exact handshake without reading credentials or pairing.'),
   'zhen/canvasPairingSnapshot': method('canvasPairingSnapshot', canvasPairingSchema, 'Read this connection UI pairing progress or verify a stored session without returning secrets.'),
+  'zhen/canvasQuickConnect': method('canvasQuickConnect', canvasPairingSchema, 'Owner click: discover the desktop, retain exact compatibility checks and request all creation scopes for native window approval.'),
   'zhen/canvasPairingBegin': method('canvasPairingBegin', canvasPairingSchema, 'Explicitly request pairing for the authoritative Canvas window to approve.', [['handoff', z.boolean().default(false)], ['writable', z.boolean().default(false)], ['runnable', z.boolean().default(false)], ['assetTransfer', z.boolean().default(false)]]),
   'zhen/canvasPairingComplete': method('canvasPairingComplete', canvasPairingSchema, 'Claim a window-approved pairing once and save only through the original CLI secureStore.'),
   'zhen/canvasStatus': method('canvasStatus', canvasSchema, 'Read the existing canvas compatibility status.'),
