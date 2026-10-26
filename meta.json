@@ -27,8 +27,8 @@
     "version": "0.1.0-canary.1",
     "branch": "codex/canary-readiness",
     "status": "local-validation-passed-exact-ci-pending-not-published",
-    "baseCommit": "76c7fb79c4096cc792b6d4a547a645efefa4e214",
-    "previousPreparationCommit": "fdd4ad047205d1e9aeddfc645098a00fea88ae6d",
+    "baseCommit": "90ee4d05596229dd4bdf80d91449c34c1c153a10",
+    "previousPreparationCommit": "961be5f244a169d2ab6d0e29220e0e6ba9b828d4",
     "ownerReleaseDecision": "ui-and-canvas-acceptance-first"
   }
 }
