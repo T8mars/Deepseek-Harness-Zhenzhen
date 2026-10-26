@@ -1,5 +1,7 @@
 # 给画布 Agent 的 DSH 接入交接
 
+> 当前用户体验要求：[新用户只确认一次连接](canvas-agent-simple-connection.md)。DSH自动发现并默认申请全部七项能力；请只核对和补充画布确认弹窗的简化，避免重复开发既有协议。
+
 > 0109新增[仅核对Moss模型契约](canvas-agent-moss-image.md)：尚未判定当前画布缺少实现，已有支持无需重复开发或发版；DSH只更新自己的目录和聊天路由。
 
 > 0107已换装DSH目录审阅界面；画布MCP字节与此前实测相同，当前仍CLI_CHANGED/待审阅，无新增必须画布修改项。见[接入现状](canvas-agent-active-context-dsh-status.md)。
