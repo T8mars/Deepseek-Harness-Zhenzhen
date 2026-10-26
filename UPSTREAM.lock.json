@@ -2675,6 +2675,14 @@
       "nativeApprovalRequired": true,
       "verification": "Complete1526/1526,237-file958d archive,C63/C76,ordinary CLI replacement/uninstall and actual installed Web light/dark760/320 first-action/closed-fields/keyboard market pass. Actual user adoption,exact CI and Native grant/work remain separate."
     },
+    "capabilitySourceBaselines": {
+      "decision": "0153",
+      "optionalBaselineDigest": true,
+      "reviewedRecords": 277,
+      "configuredChatModels": 19,
+      "verification": "Complete1534/1534 and237-file7785 C63/C76 archive pass. Ordinary CLI old958d replacement/Host/workers/uninstall restore full SDK baseline. Actual installed Web light/dark760/320 verifies counts,source-summary distinctions,retired accepted notices and preserved disabled preference with EXAMPLE metadata;Host exited0/TEMP/auth removed. A real fixed-public-source probe accepted copied existing metadata without touching the user source or preference. Adoption,candidate/exact CI and Native work remain separate.",
+      "existingStateReadable": true
+    },
     "canaryPreparation": {
       "decision": "0142",
       "version": "0.1.0-canary.1",
@@ -2753,19 +2761,19 @@
       "previousPreparationCommit": "423de7738da94f21c4e1cd08a81fa01ca32bf818",
       "status": "local-validation-passed-exact-ci-pending-not-published"
     },
-    "capabilitySourceBaselines": {
-      "decision": "0153",
-      "optionalBaselineDigest": true,
-      "reviewedRecords": 277,
-      "configuredChatModels": 19,
-      "verification": "Complete1534/1534 and237-file7785 C63/C76 archive pass. Ordinary CLI old958d replacement/Host/workers/uninstall restore full SDK baseline. Actual installed Web light/dark760/320 verifies counts,source-summary distinctions,retired accepted notices and preserved disabled preference with EXAMPLE metadata;Host exited0/TEMP/auth removed. A real fixed-public-source probe accepted copied existing metadata without touching the user source or preference. Adoption,candidate/exact CI and Native work remain separate.",
-      "existingStateReadable": true
-    },
     "gatewayCapabilityCanarySync": {
       "decision": "0154",
       "baseCommit": "03d8701ea59638e1fc68878fb988abca368207ab",
       "previousPreparationCommit": "7af154d36c704796733acf9b57602710dac304d6",
       "status": "local-validation-passed-exact-ci-pending-not-published"
+    },
+    "canvasTransferExperience": {
+      "decision": "0155",
+      "sourceApiChanged": false,
+      "nativeSourceModified": false,
+      "newContracts": 2,
+      "focusedTests": 22,
+      "verification": "Empty task page hides unselected transfer setup;pending original transfer remains queryable without file/target reselection.Default-complete connection guidance corrected.Existing real PNG export/service and installed7785 UI pass;final new archive and UI remain separate. Final1536/1536,237-filec567 C63/C76,public CLI replacement/Host/workers/uninstall restore full baseline and actual installed Web light/dark760/320 empty-transfer/connection-entry checks pass.Host0/TEMP/auth cleaned;adoption,candidate/exact CI and actual Native return separate."
     }
   }
 }
