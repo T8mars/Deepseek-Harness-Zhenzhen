@@ -52,6 +52,7 @@ test('C144: published Owner Gateway returns model changes from real public GET t
  try{
   const h=await ownerHost(t);await assert.rejects(h.call('gatewayCatalogCheck',{}, {kind:'anonymous'}));assert.equal(requests.length,0);
   const result=await h.call('gatewayCatalogCheck'),docs=result.sources.find(x=>x.id==='docs');assert.equal(docs.state,'checked');assert.deepEqual(docs.added,['model/EXAMPLE_NEW_IMAGE']);assert.deepEqual(docs.removed,[]);assert.deepEqual(docs.modified,[]);assert.equal(requests.length,3);assert.equal(blocked,0);assert.ok(requests.every(x=>x.method==='GET'&&x.authorization===undefined));
+  assert.equal(docs.baselineSha256,catalog.sources.find(source=>source.id==='docs').sha256);
   assert.deepEqual(await h.call('gatewayCatalog'),catalog);const searched=await h.ctx.tools.execute({callId:'EXAMPLE_REVIEWED_SEARCH',name:'zhen_capabilities',arguments:{query:'EXAMPLE_NEW_IMAGE',offset:0},signal:new AbortController().signal});assert.equal(searched.value.total,0);
   const unregistered=await h.ctx.tools.execute({callId:'EXAMPLE_UNREGISTERED',name:'EXAMPLE_NEW_IMAGE',arguments:{},signal:new AbortController().signal});assert.equal(unregistered.isError,true);
   await h.call('gatewayCatalogAutomatic',{enabled:false});const saved=await h.call('gatewayCatalogCheckSnapshot');assert.equal(saved.automatic,false);assert.deepEqual(saved.sources,result.sources);assert.equal(h.credentials(),0);assert.deepEqual(readFileSync('packages/dsh-zhen/cordis.patch.yml'),patch);

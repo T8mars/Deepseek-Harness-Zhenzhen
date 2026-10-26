@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-26T10:47:27.395Z",
+  "checkedAt": "2026-10-26T15:08:06.552Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -27,7 +27,7 @@
   },
   "seedance": {
     "docs": "https://api.seedance.nz/docs/llms.txt",
-    "sha256": "E2EC2F8FC4CA54F6FA75FC4C7CC83F75CA4DE61E56121FA9A6C175DD6888756F",
+    "sha256": "06059B00CF1C501BC2BB7E5C5948A0B87C79ECD3A29BC10A5AC65028D0AD0D5B",
     "liveChatVerified": true,
     "liveChatVerificationScope": "One explicitly authorized fixed default Flash text stream, max_tokens32, normal completion; not tools, vision, all-model coverage, browser or precise billing."
   },
@@ -2668,6 +2668,13 @@
       "packageRemoved": true,
       "wholeM0Complete": false
     },
+    "canvasConnectionScreen": {
+      "decision": "0151",
+      "defaultCreationAccess": "all-seven-existing-scopes",
+      "manualToolsCollapsed": true,
+      "nativeApprovalRequired": true,
+      "verification": "Complete1526/1526,237-file958d archive,C63/C76,ordinary CLI replacement/uninstall and actual installed Web light/dark760/320 first-action/closed-fields/keyboard market pass. Actual user adoption,exact CI and Native grant/work remain separate."
+    },
     "canaryPreparation": {
       "decision": "0142",
       "version": "0.1.0-canary.1",
@@ -2740,17 +2747,24 @@
       "otherPayloadFilesIdentical": 236,
       "ordinaryCliReplacementAndUninstallVerified": true
     },
-    "canvasConnectionScreen": {
-      "decision": "0151",
-      "defaultCreationAccess": "all-seven-existing-scopes",
-      "manualToolsCollapsed": true,
-      "nativeApprovalRequired": true,
-      "verification": "Complete1526/1526,237-file958d archive,C63/C76,ordinary CLI replacement/uninstall and actual installed Web light/dark760/320 first-action/closed-fields/keyboard market pass. Actual user adoption,exact CI and Native grant/work remain separate."
-    },
     "canvasSimpleCanarySync": {
       "decision": "0152",
       "baseCommit": "10a452d351f68ae5cc1b94dfe3b7e26b07f72ffe",
       "previousPreparationCommit": "423de7738da94f21c4e1cd08a81fa01ca32bf818",
+      "status": "local-validation-passed-exact-ci-pending-not-published"
+    },
+    "capabilitySourceBaselines": {
+      "decision": "0153",
+      "optionalBaselineDigest": true,
+      "reviewedRecords": 277,
+      "configuredChatModels": 19,
+      "verification": "Complete1534/1534 and237-file7785 C63/C76 archive pass. Ordinary CLI old958d replacement/Host/workers/uninstall restore full SDK baseline. Actual installed Web light/dark760/320 verifies counts,source-summary distinctions,retired accepted notices and preserved disabled preference with EXAMPLE metadata;Host exited0/TEMP/auth removed. A real fixed-public-source probe accepted copied existing metadata without touching the user source or preference. Adoption,candidate/exact CI and Native work remain separate.",
+      "existingStateReadable": true
+    },
+    "gatewayCapabilityCanarySync": {
+      "decision": "0154",
+      "baseCommit": "03d8701ea59638e1fc68878fb988abca368207ab",
+      "previousPreparationCommit": "7af154d36c704796733acf9b57602710dac304d6",
       "status": "local-validation-passed-exact-ci-pending-not-published"
     }
   }
