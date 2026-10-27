@@ -155,5 +155,16 @@ export async function prepareRestoredApplication(root:string,layouts:RecoveryCom
     }
     if(recipe.skills&&skillProviders.length)recipe.skills.projectBindings=await prepareRestoredSkillProjects(root,home,recipe.skills,projectDirectories,skillProviders,{signal});
     signal?.throwIfAborted();await writeFile(join(root,'dsh-zhen-application-restore.json'),backupJsonString(recipe)+'\n',{flag:'wx',mode:0o600});return recipe;
-  }catch(error){if(recipe.workspaces){await owned(root,recipe.workspaces.root,'directory');await rm(recipe.workspaces.root,{recursive:true,force:true,maxRetries:3,retryDelay:100});}if(recipe.sessions){await owned(root,recipe.sessions.root,'directory');await rm(recipe.sessions.root,{recursive:true,force:true,maxRetries:3,retryDelay:100});}if(ownsData){await owned(root,dataRoot,'directory');await rm(dataRoot,{recursive:true,force:true,maxRetries:3,retryDelay:100});}signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_APPLICATION_PREPARE_FAILED');}
+  }catch(error){
+    const cleanup=async(path:string):Promise<void>=>{
+      // Nested stages can already have removed their own directory. Verify the
+      // remaining parent boundary before the no-op; replacement links still fail.
+      await owned(root,path,'directory',true);
+      await rm(path,{recursive:true,force:true,maxRetries:3,retryDelay:100});
+    };
+    if(recipe.workspaces)await cleanup(recipe.workspaces.root);
+    if(recipe.sessions)await cleanup(recipe.sessions.root);
+    if(ownsData)await cleanup(dataRoot);
+    signal?.throwIfAborted();if(error instanceof BackupError)throw error;throw new BackupError('BACKUP_APPLICATION_PREPARE_FAILED');
+  }
 }

@@ -3,11 +3,27 @@ import assert from 'node:assert/strict';
 import { Context } from '@deepseek-ai/cordis';
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt';
 import ToolRuntime from '@deepseek-ai/dsh-tools';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import ZhenService from '../packages/dsh-zhen/lib/index.js';
 import { TYPERT_REMOTE } from '../packages/dsh-zhen/lib/remote.js';
 import { canvasPairingFixture } from './fixtures/canvas-pairing.mjs';
+import { inspectCanvasCli } from '../packages/dsh-zhen/lib/canvas.js';
+
+test('C218: actual Host recovery reuses one native pending request after discovery returns, retaining its exact grant and credential boundaries',async()=>{
+  const f=await canvasPairingFixture(),prior=process.env.DSH_HOME,ctx=new Context();let credentials=0;
+  const discoveryFile=join(f.root,'src/discovery.cjs'),original=readFileSync(discoveryFile,'utf8'),match=original.match(/globalThis\.__DSH_EXAMPLE_PAIRING_FIXTURES\.get\(("[^"\r\n]+")\)/);assert.ok(match);
+  writeFileSync(discoveryFile,`exports.discoverInstances=async()=>{const state=globalThis.__DSH_EXAMPLE_PAIRING_FIXTURES.get(${match[1]});if(state.discoveryUnavailable)throw Object.assign(Error('EXAMPLE_DISCOVERY_UNAVAILABLE'),{code:'APP_NOT_RUNNING'});return[state.descriptor];};`);
+  f.changeConfig(inspectCanvasCli(f.root));process.env.DSH_HOME=join(f.base,'EXAMPLE_RECOVERY_HOST');
+  ctx.provide('credentials',{resolve:async()=>{credentials++;throw Error('EXAMPLE_NO_PROVIDER_ACCESS');},describe:async()=>({configured:false,writable:true})});
+  try{
+    await ctx.plugin(SystemPrompt);await ctx.plugin(ToolRuntime);await ctx.plugin(ZhenService);const service=ctx.get('zhen'),config=f.config();await service.connectCanvas(config.root,'',config.digest);
+    const pending=await service.canvasPairingBegin(true,true,true,true);assert.equal(pending.scopes.length,7);f.state.discoveryUnavailable=true;
+    await assert.rejects(service.canvasPairingComplete(),error=>error.code==='zhen/refused'&&error.details?.reason==='APP_NOT_RUNNING');assert.equal(f.state.created.length,1);assert.equal(f.state.requests.filter(row=>row.path.endsWith('/poll')).length,0);
+    f.state.discoveryUnavailable=false;f.approve();const paired=await service.canvasPairingComplete();assert.equal(paired.state,'paired');assert.deepEqual(paired.scopes,pending.scopes);assert.deepEqual(TYPERT_REMOTE.methods['zhen/canvasPairingComplete'].result.create().parse(paired),paired);
+    assert.equal(f.state.created.length,1);assert.equal(f.state.requests.filter(row=>row.path.endsWith('/poll')).length,1);assert.equal(credentials,0);assert.equal(JSON.stringify(paired).includes('accessToken'),false);
+  }finally{await ctx.fiber.dispose();if(prior===undefined)delete process.env.DSH_HOME;else process.env.DSH_HOME=prior;await f.dispose();}
+});
 
 test('C25: actual published Host/Remote uses original auth/client/store contracts and exposes no pairing mutation to Agent tools', async () => {
   const f = await canvasPairingFixture(), previous = process.env.DSH_HOME;

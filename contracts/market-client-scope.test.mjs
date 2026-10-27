@@ -172,3 +172,27 @@ test('C217: a typed owner refusal keeps the specific actionable Canvas guidance'
  const f=await fixture('Connections'),message='请先打开桌面画布，然后重新点击连接。',api={canvasStatus:()=>Promise.resolve({ok:false,error:new RemoteError('zhen/refused',message,{reason:'APP_NOT_RUNNING'})}),canvasConnectionCheck:()=>ok({}),canvasSetupDiscover:()=>ok({})},d=await mount(f,api);
  try{const tree=d.render();assert.ok(nodes(tree).some(row=>row.props?.role==='status'&&text(row)===message));assert.doesNotMatch(text(tree),/连接暂时中断/);}finally{d.dispose();f.dispose();}
 });
+
+const creationScopes218=['canvas:read','run:read','asset:read','asset:transfer','browser:handoff','canvas:write','run:execute'];
+const pending218=()=>({...pairView('pending'),userCode:'ABCDEFGH',expiresAt:new Date(Date.now()+120000).toISOString(),scopes:creationScopes218});
+test('C218: a temporary discovery loss preserves the same pending confirmation and automatically checks it again without requesting access',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});const f=await fixture('CanvasPairing','CanvasPairingPanel'),pending=pending218(),states=[];let polls=0;
+ const api={canvasPairingSnapshot:()=>ok(pending),canvasPairingComplete:()=>++polls===1?Promise.resolve({ok:false,error:new RemoteError('zhen/refused','EXAMPLE_DISCOVERY_UNAVAILABLE',{reason:'APP_NOT_RUNNING'})}):ok({...pending,state:'paired'}),canvasPairingBegin:()=>assert.fail('EXAMPLE_NO_NEW_PAIRING'),canvasQuickConnect:()=>assert.fail('EXAMPLE_NO_NEW_CONNECTION')},d=clientHooks(f.Component,{api,online:true,onPairedChange:value=>states.push(value)});
+ try{d.render();await d.settle();d.render();t.mock.timers.tick(2000);await d.settle();let tree=d.render();assert.equal(polls,1);assert.equal(states.at(-1),false);assert.doesNotMatch(text(tree),/全部创作能力已开启/);assert.equal(nodes(tree).some(row=>row.type==='button'&&text(row)==='连接画布，开始创作'),false);assert.match(text(tree),/这次连接/);t.mock.timers.tick(4000);await d.settle();tree=d.render();assert.equal(polls,2);assert.match(text(tree),/全部创作能力已开启/);assert.equal(states.at(-1),true);t.mock.timers.tick(30000);await d.settle();assert.equal(polls,2);}finally{d.dispose();f.dispose();}
+});
+
+test('C218: persistent transport loss has a bounded automatic budget and a manual check continues the same request exactly once',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});const f=await fixture('CanvasPairing','CanvasPairingPanel'),pending=pending218();let polls=0,available=false;
+ const api={canvasPairingSnapshot:()=>ok(pending),canvasPairingComplete:()=>{polls++;return available?ok({...pending,state:'paired'}):Promise.reject(Error('EXAMPLE_TRANSPORT_UNAVAILABLE'));},canvasPairingBegin:()=>assert.fail('EXAMPLE_NO_NEW_PAIRING'),canvasQuickConnect:()=>assert.fail('EXAMPLE_NO_NEW_CONNECTION')},d=clientHooks(f.Component,{api,online:true});
+ try{d.render();await d.settle();d.render();for(let index=0;index<4;index++){t.mock.timers.tick(8000);await d.settle();d.render();}assert.equal(polls,4);assert.doesNotMatch(text(d.render()),/全部创作能力已开启|EXAMPLE_TRANSPORT/);t.mock.timers.tick(30000);await d.settle();assert.equal(polls,4);available=true;const check=button(d.render(),'检查这次连接');check.props.onClick();check.props.onClick();await d.settle();assert.equal(polls,5);assert.match(text(d.render()),/全部创作能力已开启/);}finally{d.dispose();f.dispose();}
+});
+
+for(const reason of ['CLI_CHANGED','CANVAS_CONFIG_CHANGED'])test('C218: '+reason+' stops recovery and never carries an old pending confirmation into a replacement binding',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});const f=await fixture('CanvasPairing','CanvasPairingPanel'),pending=pending218();let polls=0;const api={canvasPairingSnapshot:()=>ok(pending),canvasPairingComplete:()=>{polls++;return Promise.resolve({ok:false,error:new RemoteError('zhen/refused','EXAMPLE_REVIEW_CONNECTION',{reason})});}},d=clientHooks(f.Component,{api,online:true});
+ try{d.render();await d.settle();d.render();t.mock.timers.tick(2000);await d.settle();const tree=d.render();assert.doesNotMatch(text(tree),/全部创作能力已开启/);assert.ok(button(tree,'连接画布，开始创作'));t.mock.timers.tick(30000);await d.settle();assert.equal(polls,1);}finally{d.dispose();f.dispose();}
+});
+
+test('C218: replacing the API cancels a scheduled recovery without contacting or granting the old connection',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});const f=await fixture('CanvasPairing','CanvasPairingPanel'),pending=pending218();let polls=0;const old={canvasPairingSnapshot:()=>ok(pending),canvasPairingComplete:()=>{polls++;return Promise.reject(Error('EXAMPLE_OFFLINE'));}},next={canvasPairingSnapshot:()=>ok(pairView()),canvasPairingComplete:()=>assert.fail('EXAMPLE_NO_NEW_CONNECTION_POLL')},d=clientHooks(f.Component,{api:old,online:true});
+ try{d.render();await d.settle();d.render();t.mock.timers.tick(2000);await d.settle();assert.match(text(d.render()),/这次连接/);d.render({api:next,online:true});await d.settle();const tree=d.render();assert.doesNotMatch(text(tree),/全部创作能力已开启|检查这次连接/);t.mock.timers.tick(30000);await d.settle();assert.equal(polls,1);}finally{d.dispose();f.dispose();}
+});
