@@ -3,7 +3,7 @@ import type {ZhenRemote} from 'dsh-zhen/remote';
 import type {CanvasConnection,CanvasConnectionCheck,CanvasSetupDiscovery,CanvasToolCatalog,CanvasPairingView} from 'dsh-zhen';
 import type {RemoteResult} from '@deepseek-ai/dsh-typert-protocol';
 import {McpMarket} from './McpMarket.tsx';
-import {CanvasPairingPanel,completeCanvasPairing} from './CanvasPairing.tsx';
+import {CanvasPairingPanel,completeCanvasPairing,canvasConnectionNotice} from './CanvasPairing.tsx';
 import {CanvasWorkflowPanel} from './CanvasWorkflow.tsx';
 import {CanvasRunPanel} from './CanvasRun.tsx';
 import {CanvasConnectionChoices} from './CanvasConnectionChoices.tsx';
@@ -34,7 +34,7 @@ export function Connections({api,onConversation}:{api:ZhenRemote;onConversation?
   async function action(task:()=>Promise<void>):Promise<void>{
     if(working.current)return;working.current=true;const version=++generation.current;
     setBusy(true);setNotice('');
-    try{await task();}catch(error){if(alive.current&&generation.current===version)setNotice(error instanceof Error?error.message:'检查未完成，请重新检测；仍有问题可展开诊断信息。');}
+    try{await task();}catch(error){if(alive.current&&generation.current===version)setNotice(canvasConnectionNotice(error));}
     finally{if(alive.current&&generation.current===version){working.current=false;setBusy(false);}}
   }
   useEffect(()=>{alive.current=true;void action(()=>refresh(true));return()=>{alive.current=false;generation.current++;working.current=false;};},[api]);

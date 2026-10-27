@@ -52,13 +52,17 @@ function Workspace({ ctx,navigation }: { ctx: Context;navigation:WorkspaceNaviga
   const setSection=(value:WorkspaceSection)=>navigation.open(value);
   useEffect(() => {
     let mounted = true;
-    ctx.remote.zhen.status().then(value => { if (mounted) setStatus(unwrap(value)); }).catch(() => { if (mounted) setNotice('扩展服务暂时不可用，请检查连接。'); });
+    ctx.remote.zhen.status().then(value => { if (mounted) setStatus(unwrap(value)); }).catch(() => { if (mounted) setNotice('DSH 暂时没有响应，请重新打开 DSH 后再试。'); });
     return () => { mounted = false; };
   }, [ctx]);
   async function action(run: () => Promise<void>): Promise<void> {
     setBusy(true); setNotice('');
     try { await run(); } catch (error) { setNotice(error instanceof Error ? error.message : '操作未完成，请重试。'); }
     finally { setBusy(false); }
+  }
+  async function refreshWallet(reveal=false):Promise<void>{
+    setWallet(unwrap(await ctx.remote.zhen.wallet()));
+    if(reveal&&typeof document!=='undefined')document.getElementById('zhen-wallet-title')?.focus();
   }
   const configured = status?.credentialConfigured === true;
   return <div className="zhen-workspace">
@@ -104,10 +108,10 @@ function Workspace({ ctx,navigation }: { ctx: Context;navigation:WorkspaceNaviga
           </form>
           <div className="zhen-actions zhen-margin"><a href="https://api.seedance.nz/keys" target="_blank" rel="noreferrer">管理 API 令牌 ↗</a>{canRemoveLocalCredential(status) && <button type="button" className="zhen-link" disabled={busy || !status?.credentialWritable} onClick={() => void action(async () => { unwrap(await ctx.remote.zhen.removeCredential()); setWallet(undefined); const next = unwrap(await ctx.remote.zhen.status()); setStatus(next); setNotice(credentialRemovalNotice(next)); })}>移除本地令牌</button>}</div>
         </section>
-        <section className="zhen-card"><div className="zhen-section-heading"><h2>账户钱包</h2><button type="button" className="zhen-secondary" disabled={busy || !configured} onClick={() => void action(async () => { setWallet(unwrap(await ctx.remote.zhen.wallet())); })}>刷新余额</button></div>
-          <div className="zhen-balance">{wallet ? `${wallet.currency} ${wallet.amount.toFixed(2)}` : '尚未查询'}</div><p className="zhen-muted">{wallet ? `查询时间：${new Date(wallet.checkedAt).toLocaleString()}。账户余额不等于令牌可用额度。` : '只在你点击刷新时查询，不会发起生成任务。'}</p>
+        <section className="zhen-card"><div className="zhen-section-heading"><h2 id="zhen-wallet-title" tabIndex={-1}>账户钱包</h2><button type="button" className="zhen-secondary" disabled={busy || !configured} onClick={() => void action(refreshWallet)}>刷新余额</button></div>
+          <div className="zhen-balance">{wallet ? `${wallet.currency==='CUSTOM'?'可用额度':wallet.currency} ${wallet.amount.toFixed(2)}` : '尚未查询'}</div><p className="zhen-muted">{wallet ? `${wallet.currency==='CUSTOM'?'按服务商设置的账户计价单位显示。':''}查询时间：${new Date(wallet.checkedAt).toLocaleString()}。账户余额与令牌可用额度可能不同。` : '只在你点击刷新时查询，不会发起生成任务。'}</p>
         </section>
-        <GatewayCheck api={ctx.remote.zhen} configured={configured}/>
+        <GatewayCheck api={ctx.remote.zhen} configured={configured} onRefreshBalance={()=>refreshWallet(true)}/>
         <Capabilities api={ctx.remote.zhen} onConversation={() => ctx.layout.selectPanel(null)} onConnections={() => setSection('connections')}/>
       </div>}
       {notice && <div className="zhen-notice" role="status">{notice}</div>}

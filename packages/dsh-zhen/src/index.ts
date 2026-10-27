@@ -983,8 +983,9 @@ export default class ZhenService extends TypertRemoteService {
 
   private checks(): GatewayChecks {
     return this.gatewayChecks ??= new GatewayChecks(join(this.zhenHome,'gateway-checks.sqlite'), async signal => {
-      if (!this.ctx.llm) throw new Error('聊天服务尚未就绪。');
-      return this.ctx.llm.prepareCall({ provider: 'seedance', model: GATEWAY_CHECK_MODEL, maxTokens: 32 }, signal);
+      const llm=this.ctx.get('llm');
+      if (!llm) throw new Error('聊天服务尚未就绪。');
+      return llm.prepareCall({ provider: 'seedance', model: GATEWAY_CHECK_MODEL, maxTokens: 32 }, signal);
     });
   }
   /** Fixed short request preview; no stream dispatch or credential value read. */
