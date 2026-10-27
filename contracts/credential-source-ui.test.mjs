@@ -42,3 +42,8 @@ test('C85: an environment credential is labelled truthfully, cannot be removed a
   nodes(tree).find(e=>e.type==='input'&&e.props.id==='zhen-key').props.onChange({target:{value:'EXAMPLE_LOCAL_REPLACEMENT'}});tree=driver.render();nodes(tree).find(e=>e.type==='form').props.onSubmit({preventDefault(){}});await driver.settle();tree=driver.render();assert.equal(saves,1);assert.ok(text(tree).includes('已保存本地令牌'));assert.ok(button(tree,'移除本地令牌'));assert.equal(nodes(tree).find(e=>e.type==='input'&&e.props.id==='zhen-key').props.value,'');
  }finally{driver.dispose();f.dispose();}
 });
+
+test('C85: a quota recovery action refreshes the actual wallet and custom account units never invent a currency',async()=>{
+ const f=await fixture(),wallet={currency:'CUSTOM',amount:12.34,usedAmount:1,checkedAt:'2026-01-01T00:00:00Z'},before=structuredClone(wallet);let reads=0;const api={status:()=>ok(status('stored')),wallet:()=>{reads++;return ok(wallet);}},driver=clientHooks(f.Component,{ctx:{remote:{zhen:api}},navigation});
+ try{driver.render();await driver.settle();const check=nodes(driver.render()).find(row=>typeof row.type==='function'&&row.type.name==='GatewayCheck');assert.equal(typeof check.props.onRefreshBalance,'function');assert.equal(reads,0);await check.props.onRefreshBalance();await driver.settle();const next=text(driver.render());assert.match(next,/可用额度 12\.34/);assert.match(next,/账户计价单位/);assert.doesNotMatch(next,/CUSTOM|CNY|USD|¥|￥/);assert.equal(reads,1);assert.deepEqual(wallet,before);}finally{driver.dispose();f.dispose();}
+});

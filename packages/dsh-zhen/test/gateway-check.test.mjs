@@ -77,17 +77,21 @@ test('expired, cancelled and foreign-owner receipts cannot send or replay a requ
 });
 
 test('failed pre-dispatch metadata commit sends nothing; failed completion commit never makes an accepted request replayable', async () => {
+ for(const quota of [false,true]){
   const root = await folder(), path = join(root, 'checks.sqlite'); let calls = 0;
-  const checks = new GatewayChecks(path, prepareFixture(async function* () { calls++; yield* success(); }));
+  const checks = new GatewayChecks(path, prepareFixture(async function* () { calls++; if(quota)yield{type:'finish',reason:{kind:'error',failure:{code:'QUOTA',message:'EXAMPLE_QUOTA'}}};else yield* success(); }));
   const edit = new DatabaseSync(path);
   try {
     const preview = await checks.preview();
     edit.exec("CREATE TRIGGER fail_claim BEFORE UPDATE ON checks WHEN NEW.state='running' BEGIN SELECT RAISE(FAIL,'EXAMPLE_CLAIM_FAILURE'); END;");
     await assert.rejects(checks.run(preview.receipt.id, GATEWAY_CHECK_POLICY)); assert.equal(calls, 0);
-    edit.exec("DROP TRIGGER fail_claim; CREATE TRIGGER fail_finish BEFORE UPDATE ON checks WHEN NEW.state='passed' BEGIN SELECT RAISE(FAIL,'EXAMPLE_FINISH_FAILURE'); END;");
+    edit.exec('DROP TRIGGER fail_claim;');
+    edit.exec(quota?"CREATE TRIGGER fail_finish BEFORE INSERT ON check_diagnostics BEGIN SELECT RAISE(FAIL,'EXAMPLE_DIAGNOSTIC_FAILURE'); END;":"CREATE TRIGGER fail_finish BEFORE UPDATE ON checks WHEN NEW.state='passed' BEGIN SELECT RAISE(FAIL,'EXAMPLE_FINISH_FAILURE'); END;");
     await assert.rejects(checks.run(preview.receipt.id, GATEWAY_CHECK_POLICY)); assert.equal(calls, 1);
     assert.equal((await checks.run(preview.receipt.id, GATEWAY_CHECK_POLICY)).state, 'untracked'); assert.equal(calls, 1);
+    if(quota){assert.equal(edit.prepare('SELECT state FROM checks WHERE id=?').get(preview.receipt.id).state,'running');assert.equal(edit.prepare('SELECT COUNT(*) AS n FROM check_diagnostics').get().n,0);}
   } finally { edit.close(); await checks.close(); await remove(root); }
+ }
 });
 
 test('provider error messages and unknown codes never enter receipts; one failure is not automatically retried', async () => {

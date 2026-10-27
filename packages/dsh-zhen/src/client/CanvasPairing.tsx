@@ -6,6 +6,10 @@ const labels: Record<string, string> = { 'canvas:read': '读取画布', 'run:rea
 const creationScopes = Object.keys(labels);
 export function completeCanvasPairing(view?: CanvasPairingView): boolean { return view?.state === 'paired' && creationScopes.every(scope => view.scopes.includes(scope as CanvasPairingView['scopes'][number])); }
 function unwrap<T>(result: RemoteResult<T>): T { if (!result.ok) throw result.error; return result.value; }
+export function canvasConnectionNotice(error:unknown):string {
+  if(error&&typeof error==='object'&&'code' in error&&error.code==='zhen/refused'&&'message' in error&&typeof error.message==='string')return error.message;
+  return '连接暂时中断。请重新打开 DSH，确认桌面画布已打开，再点“连接画布，开始创作”。';
+}
 
 export function CanvasPairingPanel({ api, online, managed=false, refreshRevision=0, onPairedChange, onPairingChange }: { api: ZhenRemote; online: boolean; managed?:boolean; refreshRevision?:number; onPairedChange?: (paired:boolean)=>void; onPairingChange?: (pairing:CanvasPairingView|undefined)=>void }): React.ReactElement {
   const [pairing, setPairing] = useState<CanvasPairingView>();
@@ -15,7 +19,7 @@ export function CanvasPairingPanel({ api, online, managed=false, refreshRevision
   useEffect(()=>{onPairedChange?.(online&&pairing?.state==='paired');},[online,pairing?.state,onPairedChange]);
   useEffect(()=>{onPairingChange?.(online?pairing:undefined);},[online,pairing,onPairingChange]);
   useEffect(() => { let active = true; const version = ++generation.current; working.current=false;setBusy(online);setPairing(undefined);setNotice('');
-    if (online) api.canvasPairingSnapshot().then(result => { if (active && generation.current === version) setPairing(unwrap(result)); }).catch(error => { if (active && generation.current === version) setNotice(error instanceof Error?error.message:'连接状态尚未确认，请重新点击连接。'); }).finally(()=>{if(active&&generation.current===version)setBusy(false);});
+    if (online) api.canvasPairingSnapshot().then(result => { if (active && generation.current === version) setPairing(unwrap(result)); }).catch(error => { if (active && generation.current === version) setNotice(canvasConnectionNotice(error)); }).finally(()=>{if(active&&generation.current===version)setBusy(false);});
     else setPairing(undefined);
     return () => { active = false; generation.current++;working.current=false; };
   }, [api, online, refreshRevision]);
@@ -23,7 +27,7 @@ export function CanvasPairingPanel({ api, online, managed=false, refreshRevision
     if(working.current)return;working.current=true;const version = ++generation.current;
     setBusy(true); setNotice('');
     try { const result = unwrap(await work()); if (generation.current === version) setPairing(result); }
-    catch (error) { if (generation.current === version) {setPairing(undefined);setNotice(error instanceof Error ? error.message : '暂时未能确认连接，请重新点击连接或查看桌面画布。');} }
+    catch (error) { if (generation.current === version) {setPairing(undefined);setNotice(canvasConnectionNotice(error));} }
     finally { if (generation.current === version) {working.current=false;setBusy(false);setPollRevision(value=>value+1);} }
   }
   // Poll only the existing owner-initiated request, never a new pairing or run.
