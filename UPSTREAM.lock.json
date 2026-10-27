@@ -63,7 +63,7 @@
       ],
       "optionalScopes": [],
       "automaticApproval": false,
-      "verification": "0144 supersedes the old three-read-scope product flow: normal explicit quick connect requests all seven existing scopes and automatically completes after actual native approval. The low-level legacy API defaults remain compatible; this metadata does not grant actual Native access.",
+      "verification": "0144/0145 supersede the old three-scope product flow: the normal explicit quick-connect action requests all seven existing scopes and auto-completes after actual native approval. Legacy low-level pairing API defaults remain compatible. Real user UI and preserved old partial session verified; actual new native full grant and creative work remain unverified.",
       "historicalDefaultScopes": [
         "canvas:read",
         "run:read",
@@ -2562,7 +2562,14 @@
         "promote.yml"
       ],
       "otherWorkflowSemanticsUnchanged": true,
-      "newRemoteWorkflowVerified": false
+      "newRemoteWorkflowVerified": false,
+      "previousPreviewVerification": {
+        "recordedInCommit": "e8fa81f3a2d0df398ac271de30f3b61b936ae93c",
+        "newRemoteWorkflowVerified": true,
+        "releasePreviewRun": 40090006016,
+        "promotionPreviewRun": 40091023154,
+        "verificationScope": "Exact dev100 W4/W5 default previews complete1468 plus archive/install/profile/artifact readbacks;all publication jobs skipped."
+      }
     },
     "sdk3RealAgentRag": {
       "decision": "0129",
@@ -2788,6 +2795,121 @@
       "actualUserUiVerified": true,
       "preservedPublicRows": 194
     },
+    "canaryPreparation": {
+      "decision": "0142",
+      "version": "0.1.0-canary.1",
+      "branch": "codex/canary-readiness",
+      "baseCommit": "238b35a445266f73406e3093c1448dea55079f59",
+      "previousPreparationCommit": "366dd9ed95ce90ef27225ab660a486b610c43091",
+      "status": "local-focused-and-package-validated-pending-exact-ci-not-published",
+      "candidateExactCiVerified": false,
+      "productPublished": false,
+      "previousPreparationSnapshot": {
+        "decision": "0140",
+        "version": "0.1.0-canary.1",
+        "branch": "codex/canary-readiness",
+        "baseCommit": "a4396e9d297de0fbe90a573ec8e54d0187463bf3",
+        "previousPreparationCommit": "453e02c379924a983ec287c0a38dae3bc2bd31ac",
+        "status": "local-batch-verified-not-published",
+        "candidateExactCiVerified": false,
+        "productPublished": false,
+        "previousValidation": {
+          "commit": "13c971f4f5c7c69d995b9ba3d414075724384849",
+          "fullTests": 1482,
+          "packageFiles": 235,
+          "archiveSha256": "2a79352805ff3305fc64506f9fba55c2e57b92b2973f6a5fdd3f1cd1fe59e178",
+          "ciRun": 40147452124,
+          "scope": "Historical dev106 precise CI and package/install proof;not proof of current source."
+        },
+        "scope": "当前候选完整1490/1490、236文件归档与主线仅manifest版本不同（其余235文件与所有模式一致）、公开CLI正常Host安装/停止/卸载和同EXAMPLE配置main→候选→main完整载荷/194行设置/合成文件保留均通过；三阶段安装不冒充三次Host启动。精确CI和正式发布分别核对。",
+        "fullTests": 1490,
+        "packageFiles": 236,
+        "archiveSha256": "b2f6fac7a485a45c3aa17d8cefb24c3286dbf7082f81f0e7e63ed55b7d68ef73",
+        "manifestOnlyDifference": true
+      },
+      "scope": "候选保留0.1.0-canary.1，合入主线238b的恢复状态、社区欢迎和配对刷新。主线完整1504基线后末尾文案调整由相关130、构建和类型检查覆盖；候选构建/类型、相关130和单独原样C76通过。237文件归档仅manifest版本不同，其余236文件与模式完全一致；上一候选→新候选普通公开CLI替换、正常Host/工作器、停止及卸载还原完整SDK基线通过。原C76首次Windows子进程异常退出和错误选用相同载荷作替换源的检查拒绝均保留；未放宽断言，异常根因尚未确认。最终完整1504精确CI另验，不声称当前候选已重新完整本地检查。",
+      "focusedClientTests": 130,
+      "separateUnmodifiedVersionContractPassed": true,
+      "fullLocalRerunClaim": false,
+      "expectedFinalCiTests": 1504,
+      "packageFiles": 237,
+      "archiveSha256": "433641e6afb33026abe7fb7edc4ff4f39ed7f1c6a82427a963abd8a08aa7ff54",
+      "manifestOnlyDifference": true,
+      "otherFilesIdentical": 236,
+      "publicCliReplacementAndUninstall": true
+    },
+    "canvasCreationCanarySync": {
+      "decision": "0145",
+      "baseCommit": "b2abf5098cf638cb40291492a01ce22032e4f9ab",
+      "previousPreparationCommit": "0ee340fd0e2b9d31c964cd6db44a679e13c15389",
+      "status": "local-focused-package-cli-validated-pending-exact-ci-not-published",
+      "packageFiles": 237,
+      "expectedStableSha256": "39b46a1a4e2f6b28a87cee46243920b11a2c8dd59efd2df5c3702331bae138de",
+      "expectedCanarySha256": "beb847dc3a8e89906ddc75a7da4d2ff545127a6c8586b216858f0c1c06c29820",
+      "wholeObjectiveComplete": false,
+      "focusedTests": 60,
+      "sha256": "beb847dc3a8e89906ddc75a7da4d2ff545127a6c8586b216858f0c1c06c29820",
+      "otherFilesByteAndModeIdentical": 236,
+      "ordinaryCliReplacementAndUninstallVerified": true,
+      "userMainRuntimeAdopted": true,
+      "userActualNewGrantVerified": false
+    },
+    "canvasResidentCanarySync": {
+      "decision": "0150",
+      "baseCommit": "7ebe97f55f08f5713aff6658cf729b2c0ee9fa8b",
+      "previousPreparationCommit": "4470c1d901129bddaf46452f0c7e72d72b7995f2",
+      "status": "local-focused-package-cli-validated-pending-exact-ci-not-published",
+      "expectedStableSha256": "4d66824a80c72612e011a801fdc7b3e7cd6e397c8caef4fdb3bf4d59bacda2ae",
+      "expectedCanarySha256": "c6b49c5f2ef73a75963e33359b442eec976044819842cffefdae7b4b2f6251ba",
+      "wholeObjectiveComplete": false,
+      "focusedTests": 76,
+      "packageFiles": 237,
+      "otherPayloadFilesIdentical": 236,
+      "ordinaryCliReplacementAndUninstallVerified": true
+    },
+    "canvasSimpleCanarySync": {
+      "decision": "0152",
+      "baseCommit": "10a452d351f68ae5cc1b94dfe3b7e26b07f72ffe",
+      "previousPreparationCommit": "423de7738da94f21c4e1cd08a81fa01ca32bf818",
+      "status": "local-validation-passed-exact-ci-pending-not-published"
+    },
+    "gatewayCapabilityCanarySync": {
+      "decision": "0154",
+      "baseCommit": "03d8701ea59638e1fc68878fb988abca368207ab",
+      "previousPreparationCommit": "7af154d36c704796733acf9b57602710dac304d6",
+      "status": "local-validation-passed-exact-ci-pending-not-published"
+    },
+    "simpleConnectionCanarySync": {
+      "decision": "0158",
+      "baseCommit": "90ee4d05596229dd4bdf80d91449c34c1c153a10",
+      "upstreamVersion": "0.2.1-rc.3",
+      "mainFullTests": 1538,
+      "focusedInvocations": [
+        61,
+        1
+      ],
+      "focusedTests": 62,
+      "completeCandidateLocalRerun": false,
+      "packageFiles": 237,
+      "archiveSha256": "a9c3e01805a852d0236f76fa734fdd0c55c2f42767d4716388a6d943213b7cf4",
+      "otherPayloadFilesIdentical": 236,
+      "ordinaryCliReplacementAndUninstallVerified": true,
+      "exactCiVerified": false,
+      "formalReleasePublished": false
+    },
+    "accountGuidanceCanarySync": {
+      "decision": "0160",
+      "baseCommit": "bc63d5a0a10dccdb52633d97814151005280880b",
+      "mainFullTests": 1553,
+      "focusedTests": 132,
+      "focusedSuitePassedInOneRun": true,
+      "packageFiles": 237,
+      "manifestOnlyVersionDiffers": true,
+      "ordinaryCliVerified": true,
+      "sha256": "1206ddd526c8f3ca3534de11dc8932fc1981b78a8f0027d78001fbb244a1f56a",
+      "exactCiVerified": false,
+      "formalReleasePublished": false
+    },
     "applicationRecoveryCleanup": {
       "decision": "0162",
       "missingOwnedDirectory": "validate-remaining-parent-boundary-before-noop",
@@ -2799,6 +2921,21 @@
       "packageFiles": 237,
       "packageSha256": "c7b773806c9a236e4d1e3f76f58349916a66d7608ee97a6c44a086ea6e225efd",
       "ordinaryCliReplacementAndUninstallVerified": true,
+      "newInstalledGuiVerified": false,
+      "userRuntimeAdopted": false,
+      "exactCiVerified": false,
+      "formalReleasePublished": false
+    },
+    "connectionRecoveryCanarySync": {
+      "decision": "0163",
+      "baseCommit": "694632449368245ce78a50ec07b2892cf11be4f5",
+      "mainFullTests": 1562,
+      "focusedTests": 80,
+      "focusedSuitePassedInOneRun": true,
+      "packageFiles": 237,
+      "manifestOnlyVersionDiffers": true,
+      "ordinaryCliVerified": true,
+      "sha256": "9faeb0b35c6c0cb1976679bb3e41bf5f2a3c0245b0b5d6799cbcbb5a888bedd3",
       "newInstalledGuiVerified": false,
       "userRuntimeAdopted": false,
       "exactCiVerified": false,
