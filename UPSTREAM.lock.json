@@ -2753,8 +2753,10 @@
       "finalPackageFiles": 237,
       "finalPackageSha256": "97345a08ab0c3690d43b2d7b96b3fb5ea39914128a2c9d2ab52708288f75cd61",
       "ordinaryCliReplacementAndUninstallVerified": true,
-      "userRuntimeAdopted": false,
-      "backupAndExactCi": "pending-current-batch"
+      "userRuntimeAdopted": true,
+      "backupAndExactCi": "pending-current-batch",
+      "actualUserUiVerified": true,
+      "preservedPublicRows": 194
     }
   }
 }
