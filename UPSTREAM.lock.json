@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "checkedAt": "2026-10-26T15:08:06.552Z",
+  "checkedAt": "2026-10-27T09:06:43.519Z",
   "dsh": {
     "tag": "dsh-v0.2.1-rc.3",
     "commit": "1f81c047fc48fa190a683e469daa699857e9afe8",
@@ -68,7 +68,37 @@
         "canvas:read",
         "run:read",
         "asset:read"
-      ]
+      ],
+      "pendingRecovery": {
+        "maxConsecutiveFailures": 4,
+        "maxDelayMs": 8000,
+        "createsNewPairing": false,
+        "grantsAccessWithoutNativeApproval": false,
+        "verification": "C218 six checks: five actual client-handler scenarios (three initially failed), plus published Host/Remote with original native auth/client/store and restored discovery. Same pending request,exact seven approved scopes,no provider credentials,new requests or generation. Current runtime remains prior97345;new complete regression,archive and installed UI remain separate.",
+        "fullTests": 1562,
+        "fullPassed": 1562,
+        "packageFiles": 237,
+        "packageSha256": "c7b773806c9a236e4d1e3f76f58349916a66d7608ee97a6c44a086ea6e225efd",
+        "ordinaryCliReplacementAndUninstallVerified": true,
+        "newInstalledGuiVerified": false,
+        "userRuntimeAdopted": false,
+        "exactCiVerified": false,
+        "formalReleasePublished": false
+      },
+      "actualNativeApproval": {
+        "scopes": [
+          "canvas:read",
+          "run:read",
+          "asset:read",
+          "asset:transfer",
+          "browser:handoff",
+          "canvas:write",
+          "run:execute"
+        ],
+        "verifiedInPriorPackage": "97345a08ab0c3690d43b2d7b96b3fb5ea39914128a2c9d2ab52708288f75cd61",
+        "newPairingRequestsAfterApproval": 0,
+        "generationVerified": false
+      }
     },
     "canvasNativeStoreTransactions": {
       "protocol": "t8-zcanvas-secure-store-transaction-v1",
@@ -2727,6 +2757,44 @@
       "candidateFocusedTests": 62,
       "backupAndExactCi": "dev122/123 atomic backup and exact CI sealed"
     },
+    "gatewayFailureGuidance": {
+      "decision": "0159",
+      "upstreamVersion": "0.2.1-rc.3",
+      "stableCode": "QUOTA",
+      "receiptCodePreserved": true,
+      "generic402BalanceNotInferred": true,
+      "walletReadOnlyRecovery": true,
+      "customAmountUnconverted": true,
+      "historySchema": 1,
+      "legacyReaderWriterCommit": "90ee4d05596229dd4bdf80d91449c34c1c153a10",
+      "relatedChecksPassed": 126,
+      "fullCheck": 1553,
+      "installedGuiVerified": true,
+      "realAccount402Verified": false,
+      "upstreamFilesModified": false,
+      "scopedCallerRegressionVerified": true,
+      "optionalLlmAccess": "published-Context.get",
+      "intermediateInstalledGuiVerified": true,
+      "ownedArchiveSchema": "dsh-zhen-owned-state-v2",
+      "legacyOwnedArchiveSchema": "dsh-zhen-owned-state-v1",
+      "diagnosticsRestored": true,
+      "plainOfflineGuidance": true,
+      "firstFullResult": {
+        "tests": 1546,
+        "passed": 1503,
+        "failed": 43,
+        "reason": "diagnostic-table-not-in-owned-backup-schema",
+        "adopted": false
+      },
+      "fullPassed": 1553,
+      "finalPackageFiles": 237,
+      "finalPackageSha256": "97345a08ab0c3690d43b2d7b96b3fb5ea39914128a2c9d2ab52708288f75cd61",
+      "ordinaryCliReplacementAndUninstallVerified": true,
+      "userRuntimeAdopted": true,
+      "backupAndExactCi": "pending-current-batch",
+      "actualUserUiVerified": true,
+      "preservedPublicRows": 194
+    },
     "canaryPreparation": {
       "decision": "0142",
       "version": "0.1.0-canary.1",
@@ -2829,44 +2897,6 @@
       "exactCiVerified": false,
       "formalReleasePublished": false
     },
-    "gatewayFailureGuidance": {
-      "decision": "0159",
-      "upstreamVersion": "0.2.1-rc.3",
-      "stableCode": "QUOTA",
-      "receiptCodePreserved": true,
-      "generic402BalanceNotInferred": true,
-      "walletReadOnlyRecovery": true,
-      "customAmountUnconverted": true,
-      "historySchema": 1,
-      "legacyReaderWriterCommit": "90ee4d05596229dd4bdf80d91449c34c1c153a10",
-      "relatedChecksPassed": 126,
-      "fullCheck": 1553,
-      "installedGuiVerified": true,
-      "realAccount402Verified": false,
-      "upstreamFilesModified": false,
-      "scopedCallerRegressionVerified": true,
-      "optionalLlmAccess": "published-Context.get",
-      "intermediateInstalledGuiVerified": true,
-      "ownedArchiveSchema": "dsh-zhen-owned-state-v2",
-      "legacyOwnedArchiveSchema": "dsh-zhen-owned-state-v1",
-      "diagnosticsRestored": true,
-      "plainOfflineGuidance": true,
-      "firstFullResult": {
-        "tests": 1546,
-        "passed": 1503,
-        "failed": 43,
-        "reason": "diagnostic-table-not-in-owned-backup-schema",
-        "adopted": false
-      },
-      "fullPassed": 1553,
-      "finalPackageFiles": 237,
-      "finalPackageSha256": "97345a08ab0c3690d43b2d7b96b3fb5ea39914128a2c9d2ab52708288f75cd61",
-      "ordinaryCliReplacementAndUninstallVerified": true,
-      "userRuntimeAdopted": true,
-      "backupAndExactCi": "pending-current-batch",
-      "actualUserUiVerified": true,
-      "preservedPublicRows": 194
-    },
     "accountGuidanceCanarySync": {
       "decision": "0160",
       "baseCommit": "bc63d5a0a10dccdb52633d97814151005280880b",
@@ -2877,6 +2907,37 @@
       "manifestOnlyVersionDiffers": true,
       "ordinaryCliVerified": true,
       "sha256": "1206ddd526c8f3ca3534de11dc8932fc1981b78a8f0027d78001fbb244a1f56a",
+      "exactCiVerified": false,
+      "formalReleasePublished": false
+    },
+    "applicationRecoveryCleanup": {
+      "decision": "0162",
+      "missingOwnedDirectory": "validate-remaining-parent-boundary-before-noop",
+      "replacementLinks": "refused",
+      "originalFailure": "preserved",
+      "verification": "C219 actual prepare path: cancellation,original typed failure and outside-target link refusal all pass. Initial two checks were1fail/1pass. Prior complete1559 had1557pass/2fail;isolated originalC178/C197 pass without timeout/assertion changes. Root cause of original missing directory remains unconfirmed;new full/archive/installed verification pending.",
+      "fullTests": 1562,
+      "fullPassed": 1562,
+      "packageFiles": 237,
+      "packageSha256": "c7b773806c9a236e4d1e3f76f58349916a66d7608ee97a6c44a086ea6e225efd",
+      "ordinaryCliReplacementAndUninstallVerified": true,
+      "newInstalledGuiVerified": false,
+      "userRuntimeAdopted": false,
+      "exactCiVerified": false,
+      "formalReleasePublished": false
+    },
+    "connectionRecoveryCanarySync": {
+      "decision": "0163",
+      "baseCommit": "694632449368245ce78a50ec07b2892cf11be4f5",
+      "mainFullTests": 1562,
+      "focusedTests": 80,
+      "focusedSuitePassedInOneRun": true,
+      "packageFiles": 237,
+      "manifestOnlyVersionDiffers": true,
+      "ordinaryCliVerified": true,
+      "sha256": "9faeb0b35c6c0cb1976679bb3e41bf5f2a3c0245b0b5d6799cbcbb5a888bedd3",
+      "newInstalledGuiVerified": false,
+      "userRuntimeAdopted": false,
       "exactCiVerified": false,
       "formalReleasePublished": false
     }
