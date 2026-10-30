@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "activation": "requires-contracts-and-review",
+  "candidates": [
+    {
+      "id": "canvas",
+      "current": "3.3.7",
+      "available": "3.4.5",
+      "revision": "ddb90e8c3c06158e0c8dc92c104ce0221d200b29",
+      "url": "https://github.com/T8mars/T8-penguin-canvas/commits/main"
+    },
+    {
+      "id": "dsh",
+      "current": "0.2.1-rc.3",
+      "available": "0.2.1-rc.5",
+      "revision": "sha512-WkyJZv4zl9sCAxSzRctGm58m0rilGqwR6pniBiLOz5CPDfHfDuAUicg0AAazXI7oj/Cph6/cjNTncA/rpLTXpw==",
+      "url": "https://github.com/deepseek-ai/deepseek-harness/tags"
+    },
+    {
+      "id": "gateway",
+      "current": "06059b00cf1c501bc2bb7e5c5948a0b87c79ecd3a29bc10a5ac65028d0ad0d5b",
+      "available": "a18b95a6478fe54d67d3409101c26a054c5669b58f5838695912111fc933cd68",
+      "revision": "a18b95a6478fe54d67d3409101c26a054c5669b58f5838695912111fc933cd68",
+      "url": "https://api.seedance.nz/docs/llms.txt"
+    }
+  ]
+}
